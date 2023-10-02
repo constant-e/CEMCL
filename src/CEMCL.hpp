@@ -30,10 +30,11 @@ private:
     Ui::CEMCL *ui;
     struct Config
     {
-        // bool isOnline = false;
+        bool isOnline = false;
         string account = "Steve";
         string gameDir = ".minecraft";
-        // string key = "";
+        string javaDir = "";
+        string token = "";
     };
     Config cfg;
     vector<vector<string> > versionList;

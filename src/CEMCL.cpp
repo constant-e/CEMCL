@@ -7,13 +7,50 @@
 #include <QObject>
 #include <QTableWidget>
 
-#define DEFAULTCFG ""
+#define DEFAULTCFG "{\"account\":\"Steve\",\"gameDir\":\".minecraft\",\"javaDir\":\"\",\"token\": \"\"}"
+
+using namespace sonic_json;
 
 bool CEMCL::loadConfig()
 {
     string cfgText = openFile("config.json");
     if (cfgText.empty()) {
         saveFile("config.json", DEFAULTCFG);
+    } else {
+        Document doc;
+        doc.Parse(cfgText);
+        if (doc.HasParseError()) {
+            // dialog
+            return false;
+        }
+
+        if (doc.HasMember("token")) {
+            cfg.isOnline = !doc.FindMember("token")->value.Empty();
+        } else {
+            //dialog
+        }
+
+        if (cfg.isOnline) {
+            // online
+        } else {
+            // offline
+            if (doc.HasMember("account")) {
+                cfg.account = doc.FindMember("account")->value.GetString();
+            } else {
+                // online
+            }
+        }
+        if (doc.HasMember("gameDir")) {
+            cfg.gameDir = doc.FindMember("gameDir")->value.GetString();
+        } else {
+            // online
+        }
+        
+        if (doc.HasMember("javaDir")) {
+            cfg.javaDir = doc.FindMember("javaDir")->value.GetString();
+        } else {
+            // online
+        }
     }
 
     return true;
