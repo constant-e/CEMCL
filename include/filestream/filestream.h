@@ -1,6 +1,11 @@
-#include "filestream.hpp"
+#ifndef filestream_H
+#define filestream_H
 
 #include <fstream>
+#include <iostream>
+#include <vector>
+
+using namespace std;
 
 string openFile(string path)
 {
@@ -38,3 +43,5 @@ bool saveFile(string path, string content)
 
     return true;
 }
+
+#endif // filestream_H

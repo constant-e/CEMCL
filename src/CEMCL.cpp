@@ -1,9 +1,10 @@
 #include "CEMCL.hpp"
-#include "filestream/filestream.hpp"
+#include "filestream/filestream.h"
 #include "Settings/Settings.hpp"
 #include "sonic/sonic.h"
 #include "ui_CEMCL.h"
 
+#include <QMessageBox>
 #include <QObject>
 #include <QTableWidget>
 
@@ -20,14 +21,20 @@ bool CEMCL::loadConfig()
         Document doc;
         doc.Parse(cfgText);
         if (doc.HasParseError()) {
-            // dialog
-            return false;
+            QMessageBox::warning(
+                this, 
+                "错误", 
+                "加载配置文件错误：格式不正确。\n将使用默认配置文件。"); 
+            return true;
         }
 
         if (doc.HasMember("token")) {
             cfg.isOnline = !doc.FindMember("token")->value.Empty();
         } else {
-            //dialog
+            QMessageBox::warning(
+                this, 
+                "异常", 
+                "加载配置文件异常：不存在token。\n将使用离线模式。");
         }
 
         if (cfg.isOnline) {
@@ -37,22 +44,49 @@ bool CEMCL::loadConfig()
             if (doc.HasMember("account")) {
                 cfg.account = doc.FindMember("account")->value.GetString();
             } else {
-                // online
+                QMessageBox::warning(
+                this, 
+                "异常", 
+                "加载配置文件异常：不存在account。\n将使用默认用户名。");
             }
         }
+
         if (doc.HasMember("gameDir")) {
             cfg.gameDir = doc.FindMember("gameDir")->value.GetString();
         } else {
-            // online
+            QMessageBox::warning(
+                this, 
+                "异常", 
+                "加载配置文件异常：不存在gameDir。\n将使用默认值。");
         }
         
         if (doc.HasMember("javaDir")) {
             cfg.javaDir = doc.FindMember("javaDir")->value.GetString();
         } else {
-            // online
+            QMessageBox::warning(
+                this, 
+                "异常", 
+                "加载配置文件异常：不存在javaDir。\n将使用默认值。");
         }
     }
+    return true;
+}
 
+bool CEMCL::loadVersionList(bool ignoreIndexFile)
+{
+    if (!ignoreIndexFile) {
+        string cfgText = openFile("index.json");
+        if (!cfgText.empty()) {
+            Document doc;
+            doc.Parse(cfgText);
+            if (doc.HasParseError()) {
+                return loadVersionList(true);
+            }
+            // if md5sum different
+            return true;
+        }
+        return loadVersionList(true);
+    }
     return true;
 }
 
@@ -87,6 +121,7 @@ CEMCL::CEMCL(QWidget *parent)
     , ui(new Ui::CEMCL)
 {
     if (!loadConfig()) return;
+    if (!loadVersionList(false)) return;
     ui->setupUi(this);
     QObject::connect(ui->addButton, &QPushButton::clicked, this, &CEMCL::onClickAddBtn);
     QObject::connect(ui->configureBtn, &QPushButton::clicked, this, &CEMCL::onClickConfigureBtn);

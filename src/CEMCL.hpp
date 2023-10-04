@@ -39,6 +39,7 @@ private:
     Config cfg;
     vector<vector<string> > versionList;
     bool loadConfig();
+    bool loadVersionList(bool ignoreIndexFile);
     
 };
 #endif // CEMCL_H
