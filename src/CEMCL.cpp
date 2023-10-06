@@ -1,8 +1,11 @@
 #include "CEMCL.hpp"
+#include "ui_CEMCL.h"
+
+#include "AddDialog/AddDialog.hpp"
+#include "ConfigureDialog/ConfigureDialog.hpp"
 #include "filestream/filestream.h"
 #include "Settings/Settings.hpp"
 #include "sonic/sonic.h"
-#include "ui_CEMCL.h"
 
 #include <QMessageBox>
 #include <QObject>
@@ -76,28 +79,65 @@ bool CEMCL::loadVersionList(bool ignoreIndexFile)
 {
     if (!ignoreIndexFile) {
         string cfgText = openFile("index.json");
-        if (!cfgText.empty()) {
-            Document doc;
-            doc.Parse(cfgText);
-            if (doc.HasParseError()) {
-                return loadVersionList(true);
-            }
-            // if md5sum different
-            return true;
+        if (cfgText.empty()) {
+            return loadVersionList(true);
         }
-        return loadVersionList(true);
+        Document doc;
+        doc.Parse(cfgText);
+        if (doc.HasParseError()) {
+            return loadVersionList(true);
+        }
+        // TODO: if md5sum different {}
+        if (!doc.HasMember("versionCount")) {
+            return loadVersionList(true);
+        }
+        if (!doc.HasMember("versionList")) {
+            return loadVersionList(true);
+        }
+        int count = doc.FindMember("versionCount")->value.GetInt64();
+        Node * list = doc.AtPointer("versionList");
+        versionList.resize(count);
+        for (int i = 0; i < count; i++) {
+            versionList[i].resize(4);
+            versionList[i][0] = list->AtPointer(i)->FindMember("version")->value.GetString();
+            versionList[i][1] = list->AtPointer(i)->FindMember("args")->value.GetString();
+            versionList[i][2] = list->AtPointer(i)->FindMember("dir")->value.GetString();
+            versionList[i][3] = list->AtPointer(i)->FindMember("label")->value.GetString();
+        }
+    } else {
+        // TODO: create index.json from mc game path
+
+        // for test only:
+        versionList.resize(2);
+        for (int i = 0; i < 2; i++) {
+            versionList[i].resize(4);
+            versionList[i][0] = "1.0";
+            versionList[i][1] = "some args";
+            versionList[i][2] = "1.0";
+            versionList[i][3] = "1.0";
+        }
+    }
+    int c = versionList.size();
+    // cout << ui->tableWidget->rowCount();
+    // ui->tableWidget->setRowCount(c);
+    for (int i = 0; i < c; i++) {
+        
     }
     return true;
 }
 
 void CEMCL::onClickAddBtn()
 {
-
+    AddDialog * a = new AddDialog(this);
+    a->show();
+    a->exec();
 }
 
 void CEMCL::onClickConfigureBtn()
 {
-    
+    ConfigureDialog * d = new ConfigureDialog(this);
+    d->show();
+    d->exec();
 }
 
 void CEMCL::onClickSettingsBtn()

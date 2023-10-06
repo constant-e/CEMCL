@@ -8,6 +8,7 @@ set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 set(CMAKE_AUTOMOC ON)
+set(CMAKE_AUTORCC ON)
 
 add_compile_options(-mavx2 -mpclmul)
 
@@ -20,6 +21,6 @@ file(GLOB UI_FILES res/*.ui)
 include_directories(include src)
 
 QT6_WRAP_UI(WRAP_FILES ${UI_FILES})
-add_executable(CEMCL ${HEADER_FILES} ${SOURCE_FILES} ${WRAP_FILES})
+add_executable(CEMCL ${HEADER_FILES} ${SOURCE_FILES} ${WRAP_FILES} res/resource.qrc)
 
 target_link_libraries(CEMCL PRIVATE Qt6::Widgets)

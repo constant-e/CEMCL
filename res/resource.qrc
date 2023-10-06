@@ -1,0 +1,10 @@
+<!DOCTYPE RCC>
+<RCC>
+    <qresource>
+        <file>pic/icon.jpg</file>
+        <file alias="text/about.md">text/about-en.md</file>
+    </qresource>
+    <qresource lang="zh">
+        <file alias="text/about.md">text/about-zh.md</file>
+    </qresource>
+</RCC>

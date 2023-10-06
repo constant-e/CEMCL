@@ -30,14 +30,19 @@ private:
     Ui::CEMCL *ui;
     struct Config
     {
-        bool isOnline = false;
         string account = "Steve";
+        bool closeAfterLaunch = false;
+        string downloadSource = "";
         string gameDir = ".minecraft";
+        bool isOnline = false;
         string javaDir = "";
         string token = "";
     };
     Config cfg;
-    vector<vector<string> > versionList;
+    // versionList[i][j] i: index 
+    // j = 0: version;  j = 1: launch args;
+    // j = 2: dir;      j = 3: label
+    vector<vector<string>> versionList;
     bool loadConfig();
     bool loadVersionList(bool ignoreIndexFile);
     
