@@ -40,8 +40,8 @@ private:
     };
     Config cfg;
     // versionList[i][j] i: index 
-    // j = 0: version;  j = 1: launch args;
-    // j = 2: dir;      j = 3: label
+    // j = 0: label;        j = 1: version;
+    // j = 2: launch args;  j = 3: dir.
     vector<vector<string>> versionList;
     bool loadConfig();
     bool loadVersionList(bool ignoreIndexFile);

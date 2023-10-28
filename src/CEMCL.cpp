@@ -99,10 +99,10 @@ bool CEMCL::loadVersionList(bool ignoreIndexFile)
         versionList.resize(count);
         for (int i = 0; i < count; i++) {
             versionList[i].resize(4);
-            versionList[i][0] = list->AtPointer(i)->FindMember("version")->value.GetString();
-            versionList[i][1] = list->AtPointer(i)->FindMember("args")->value.GetString();
-            versionList[i][2] = list->AtPointer(i)->FindMember("dir")->value.GetString();
-            versionList[i][3] = list->AtPointer(i)->FindMember("label")->value.GetString();
+            versionList[i][0] = list->AtPointer(i)->FindMember("label")->value.GetString();
+            versionList[i][1] = list->AtPointer(i)->FindMember("version")->value.GetString();
+            versionList[i][2] = list->AtPointer(i)->FindMember("args")->value.GetString();
+            versionList[i][3] = list->AtPointer(i)->FindMember("dir")->value.GetString();
         }
     } else {
         // TODO: create index.json from mc game path
@@ -111,17 +111,23 @@ bool CEMCL::loadVersionList(bool ignoreIndexFile)
         versionList.resize(2);
         for (int i = 0; i < 2; i++) {
             versionList[i].resize(4);
-            versionList[i][0] = "1.0";
-            versionList[i][1] = "some args";
-            versionList[i][2] = "1.0";
-            versionList[i][3] = "1.0";
+            versionList[i][0] = "label";
+            versionList[i][1] = "version";
+            versionList[i][2] = "args";
+            versionList[i][3] = "dir";
         }
     }
     int c = versionList.size();
-    // cout << ui->tableWidget->rowCount();
-    // ui->tableWidget->setRowCount(c);
+    ui->tableWidget->setRowCount(c);
+    ui->tableWidget->setHorizontalHeaderItem(0, new QTableWidgetItem("名称"));
+    ui->tableWidget->setHorizontalHeaderItem(1, new QTableWidgetItem("版本"));
+    ui->tableWidget->setHorizontalHeaderItem(2, new QTableWidgetItem("参数"));
     for (int i = 0; i < c; i++) {
-        
+        for (int j = 0; j < 3; j++) {
+            QTableWidgetItem * item = new QTableWidgetItem();
+            item->setText(QString(versionList[i][j].c_str()));
+            ui->tableWidget->setItem(i, j, item);
+        }
     }
     return true;
 }
@@ -149,11 +155,44 @@ void CEMCL::onClickSettingsBtn()
 
 void CEMCL::onClickStartBtn()
 {
+    /*
+        minecraft launch args:
+        -Xss1M
+        -Djava.library.path=<.minecraft/bin/xxx>
+        -Djna.tmpdir=<.minecraft/bin/xxx>
+        -Dorg.lwjgl.system.SharedLibraryExtractPath=<.minecraft/bin/xxx>
+        -Dio.netty.native.workdir=<.minecraft/bin/xxx>
+        -Dminecraft.launcher.brand=CEMCL
+        -Dminecraft.launcher.version=1.0.0b4
+        -cp <文件>
+        -Xmx2G
+        -XX:+UnlockExperimentalVMOptions
+        -XX:+UseG1GC
+        -XX:G1NewSizePercent=20
+        -XX:G1ReservePercent=20
+        -XX:MaxGCPauseMillis=50
+        -XX:G1HeapRegionSize=32M
+        -Dlog4j.configurationFile=<.minecraft/assets/log_configs/xxx>
+        net.minecraft.client.main.Main
+        --username <username>
+        --version <version>
+        --gameDir <.minecraft>
+        --assetsDir <.minecraft/assets>
+        --assetIndex <index>
+        --uuid <uuid>
+        --accessToken <token>
+        --clientId <client>
+        --xuid <xuid>
+        --userType msa
+        --versionType release
+        --quickPlayPath <path>
+    */
     int c = ui->tableWidget->currentColumn();
     if (c == -1) return;
-    string cmd = "javaw ";
-    cmd.append(versionList[c][1]);
+    string cmd = "java ";
+    cmd.append(versionList[c][2]);
     system(cmd.c_str());
+    cout << cmd;
 }
 
 CEMCL::CEMCL(QWidget *parent)
@@ -161,8 +200,8 @@ CEMCL::CEMCL(QWidget *parent)
     , ui(new Ui::CEMCL)
 {
     if (!loadConfig()) return;
-    if (!loadVersionList(false)) return;
     ui->setupUi(this);
+    if (!loadVersionList(false)) return;
     QObject::connect(ui->addButton, &QPushButton::clicked, this, &CEMCL::onClickAddBtn);
     QObject::connect(ui->configureBtn, &QPushButton::clicked, this, &CEMCL::onClickConfigureBtn);
     QObject::connect(ui->settingsBtn, &QPushButton::clicked, this, &CEMCL::onClickSettingsBtn);   
