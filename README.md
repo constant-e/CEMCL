@@ -1,6 +1,9 @@
 # CE Minecraft Launcher (CEMCL)
 constant-e's Minecraft (Java Edition) Launcher
 
+## 注意
+项目开发初期，绝大部分尚未完成，暂时不可用
+
 ## 简介
 一个使用C++ Qt编写的小型MC Java版启动器（仍在开发中）
 
