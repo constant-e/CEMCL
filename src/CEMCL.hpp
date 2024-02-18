@@ -6,11 +6,13 @@
 #include <QObject>
 #include <vector>
 
+#include "mc_core/mc_core.hpp"
+
+#define DEFAULTCFG "{\"closeAfterLaunch\":false,\"forgeSource\":\"\",\"gameDir\":\".minecraft\",\"javaDir\":\"java\",\"MCSource\":\"\",\"optifineSource\":\"\",\"xms\":\"1G\",\"xmx\":\"2G\",\"width\":800,\"height\":600}"
+
 QT_BEGIN_NAMESPACE
 namespace Ui { class CEMCL; }
 QT_END_NAMESPACE
-
-using namespace std;
 
 class CEMCL : public QMainWindow
 {
@@ -27,24 +29,40 @@ public:
     ~CEMCL();
 
 private:
-    Ui::CEMCL *ui;
-    struct Config
-    {
-        string account = "Steve";
-        bool closeAfterLaunch = false;
-        string downloadSource = "";
-        string gameDir = ".minecraft";
-        bool isOnline = false;
-        string javaDir = "";
-        string token = "";
-    };
-    Config cfg;
-    // versionList[i][j] i: index 
-    // j = 0: label;        j = 1: version;
-    // j = 2: launch args;  j = 3: dir.
-    vector<vector<string>> versionList;
-    bool loadConfig();
-    bool loadVersionList(bool ignoreIndexFile);
+    // account
+    vector<Account> accountList;
+
+    // config
+    bool closeAfterLaunch;
+
+    // string fabricSource; not support yet
+
+    string forgeSource;
+    string gameDir;
+    int height;
+    // path to java or javaw, not dir
+    string javaDir;
+
+    // string liteLoaderSource; not support yet
+
+    string MCSource;
+    string optfineSource;
+
+    // string quiltSource; not support yet
     
+    int width;
+    string xms;
+    string xmx;
+    
+    // UI
+    Ui::CEMCL *ui;
+
+    //game
+    vector<Game> gameList;
+
+    // functions
+    bool loadAccount();
+    bool loadConfig();
+    bool loadUI();
 };
 #endif // CEMCL_H

@@ -1,8 +1,12 @@
 {
-    "account": "Steve",
     "closeAfterLaunch": false,
-    "downloadSource": "",
+    "forgeSource": "",
     "gameDir": ".minecraft",
-    "javaDir": "",
-    "token": ""
+    "height": 600,
+    "javaDir": "java",
+    "MCSource": "",
+    "optifineSource": "",
+    "width": 800,
+    "xms": "1G", 
+    "xmx": "2G"
 }

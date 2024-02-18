@@ -3,12 +3,10 @@
 
 ConfigureDialog::ConfigureDialog(QWidget *parent)
     : QDialog(parent)
-    , ui(new Ui::ConfigureDialog)
-{
+    , ui(new Ui::ConfigureDialog) {
     ui->setupUi(this);
 }
 
-ConfigureDialog::~ConfigureDialog()
-{
+ConfigureDialog::~ConfigureDialog() {
     delete ui;
 }

@@ -9,8 +9,6 @@ QT_BEGIN_NAMESPACE
 namespace Ui { class Settings; }
 QT_END_NAMESPACE
 
-using namespace std;
-
 class Settings : public QDialog
 {
     Q_OBJECT

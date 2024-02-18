@@ -11,7 +11,7 @@
    </rect>
   </property>
   <property name="windowTitle">
-   <string>设置</string>
+   <string>Settings</string>
   </property>
   <layout class="QVBoxLayout" name="verticalLayout">
    <item>
@@ -21,7 +21,7 @@
      </property>
      <widget class="QWidget" name="settingsTab">
       <attribute name="title">
-       <string>设置</string>
+       <string>Settings</string>
       </attribute>
       <layout class="QVBoxLayout" name="settingsLayout">
        <item>
@@ -33,7 +33,7 @@
           </sizepolicy>
          </property>
          <property name="text">
-          <string># 设置</string>
+          <string># Settings</string>
          </property>
          <property name="textFormat">
           <enum>Qt::MarkdownText</enum>
@@ -51,7 +51,7 @@
             </sizepolicy>
            </property>
            <property name="text">
-            <string>游戏账号</string>
+            <string>Account</string>
            </property>
           </widget>
          </item>
@@ -64,7 +64,7 @@
             </sizepolicy>
            </property>
            <property name="placeholderText">
-            <string>离线模式下填写游戏名</string>
+            <string>Enter username while using offline mode.</string>
            </property>
           </widget>
          </item>
@@ -81,7 +81,7 @@
             </sizepolicy>
            </property>
            <property name="text">
-            <string>验证token</string>
+            <string>accessToken</string>
            </property>
           </widget>
          </item>
@@ -94,7 +94,7 @@
             </sizepolicy>
            </property>
            <property name="placeholderText">
-            <string>留空以使用离线模式</string>
+            <string>Keep there empty to use offline mode.</string>
            </property>
           </widget>
          </item>
@@ -111,7 +111,7 @@
             </sizepolicy>
            </property>
            <property name="text">
-            <string>游戏路径</string>
+            <string>Game path</string>
            </property>
           </widget>
          </item>
@@ -148,7 +148,7 @@
             </sizepolicy>
            </property>
            <property name="text">
-            <string>Java路径</string>
+            <string>Java path</string>
            </property>
           </widget>
          </item>
@@ -161,7 +161,7 @@
             </sizepolicy>
            </property>
            <property name="placeholderText">
-            <string>留空将使用系统默认</string>
+            <string>java</string>
            </property>
           </widget>
          </item>
@@ -179,14 +179,14 @@
          <item>
           <widget class="QLabel" name="downloadSourceLabel">
            <property name="text">
-            <string>下载源</string>
+            <string>Download Source</string>
            </property>
           </widget>
          </item>
          <item>
           <widget class="QLineEdit" name="downloadSource">
            <property name="placeholderText">
-            <string>留空将使用官方</string>
+            <string>Official</string>
            </property>
           </widget>
          </item>
@@ -202,7 +202,7 @@
        <item>
         <widget class="QCheckBox" name="closeAfterLaunchCheckBox">
          <property name="text">
-          <string>游戏启动后关闭启动器</string>
+          <string>Close launcher after starting game</string>
          </property>
         </widget>
        </item>
@@ -252,7 +252,7 @@
             </size>
            </property>
            <property name="text">
-            <string>取消</string>
+            <string>Cancel</string>
            </property>
           </widget>
          </item>
@@ -271,7 +271,7 @@
             </size>
            </property>
            <property name="text">
-            <string>保存</string>
+            <string>Save</string>
            </property>
           </widget>
          </item>
@@ -281,13 +281,13 @@
      </widget>
      <widget class="QWidget" name="aboutTab">
       <attribute name="title">
-       <string>关于</string>
+       <string>About</string>
       </attribute>
       <layout class="QGridLayout" name="aboutLayout">
        <item row="0" column="0">
         <widget class="QLabel" name="aboutTitle">
          <property name="text">
-          <string># 关于</string>
+          <string># About</string>
          </property>
          <property name="textFormat">
           <enum>Qt::MarkdownText</enum>

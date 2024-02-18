@@ -3,7 +3,7 @@
 
 #include "AddDialog/AddDialog.hpp"
 #include "ConfigureDialog/ConfigureDialog.hpp"
-#include "filestream/filestream.h"
+#include "file/file.hpp"
 #include "Settings/Settings.hpp"
 #include "sonic/sonic.h"
 
@@ -11,204 +11,349 @@
 #include <QObject>
 #include <QTableWidget>
 
-#define DEFAULTCFG "{\"account\":\"Steve\",\"gameDir\":\".minecraft\",\"javaDir\":\"\",\"token\": \"\"}"
+using sonic_json::Document;
+using std::cout;
+using std::endl;
 
-using namespace sonic_json;
+bool CEMCL::loadAccount() {
+    #ifdef DEBUG
+        cout << "[Info] CEMCL::loadAccount : Loading account.json ..." << endl;
+    #endif
+    string accText = openFile("account.json");
+    #ifdef DEBUG
+        cout << "[Info] CEMCL::loadAccount : Successfully read account.json." << endl;
+    #endif
+    if (accText.empty()) {
+        #ifdef DEBUG
+            cout << "[Info] CEMCL::loadAccount : account.json is empty. Using DEFAULTACC." << endl;
+        #endif
+        saveFile("account.json", DEFAULTACC);
+    } else {
+        Document doc;
+        doc.Parse(accText);
+        if (doc.HasParseError()) {
+            cout << "[Warning] CEMCL::loadAccount : Failed to load account.json : "
+                 << "parse error in line " << doc.GetParseError() << ". Using default config." << endl;
+            QMessageBox::warning(
+                this, 
+                "Warning", 
+                QString("Failed to load account.json : parse error in line " + doc.GetParseError()).append(". Using default config.")); 
+            return true;
+        }
+        #ifdef DEBUG
+            cout << "[Info] CEMCL::loadAccount : Successfully parsed account.json." << endl;
+        #endif
 
-bool CEMCL::loadConfig()
-{
+        for (int i = 0; doc.AtPointer(i) != nullptr; i++) {
+            Account account;
+            if (doc.AtPointer(i)->HasMember("online")) {
+                account.online = doc.AtPointer(i, "online")->GetBool();
+            } else {
+                cout << "[Error] CEMCL::loadAccount : account doesn't have member "
+                     << "\"online\". Skipping." << endl;
+                continue;
+            }
+            
+            if (doc.AtPointer(i)->HasMember("token")) {
+                account.token = doc.AtPointer(i, "token")->GetString();
+            } else {
+                cout << "[Error] CEMCL::loadAccount : account doesn't have member "
+                     << "\"token\". Skipping." << endl;
+                continue;
+            }
+
+            if (doc.AtPointer(i)->HasMember("userName")) {
+                account.userName = doc.AtPointer(i, "userName")->GetString();
+            } else {
+                cout << "[Error] CEMCL::loadAccount : account doesn't have member "
+                     << "\"userName\". Skipping." << endl;
+                continue;
+            }
+
+            if (doc.AtPointer(i)->HasMember("uuid")) {
+                account.uuid = doc.AtPointer(i, "uuid")->GetString();
+            } else {
+                cout << "[Error] CEMCL::loadAccount : account doesn't have member "
+                     << "\"uuid\". Skipping." << endl;
+                continue;
+            }
+            accountList.push_back(account);
+        }
+    }
+
+    if (accountList.empty()) {
+        cout << "[Error] CEMCL::loadAccount : Failed to load account.json : No vailed account available." << endl;
+        QMessageBox::warning(
+            this, 
+            "Error", 
+            QString("Failed to load account.json : No vailed account available."));
+        return false;
+    } 
+
+    #ifdef DEBUG
+        cout << "[Info] CEMCL::loadAccount : Successfully loaded account. Current accounts are:\r"
+        for (Account a : accountList) {
+            cout << "online: " << a.online << "\r"
+                 << "token: " << a.token << "\r"
+                 << "userName: " << a.userName << "\r"
+                 << "---End---" << endl;
+        }
+    #endif
+    return true;
+}
+
+bool CEMCL::loadConfig() {
+    #ifdef DEBUG
+        cout << "[Info] CEMCL::loadConfig : Loading config.json ..." << endl;
+    #endif
+    // load config.json
     string cfgText = openFile("config.json");
+    #ifdef DEBUG
+        cout << "[Info] CEMCL::loadConfig : Successfully read config.json." << endl;
+    #endif
     if (cfgText.empty()) {
+        #ifdef DEBUG
+            cout << "[Info] CEMCL::loadConfig : config.json is empty. Using DEFAULTCFG." << endl;
+        #endif
         saveFile("config.json", DEFAULTCFG);
     } else {
         Document doc;
         doc.Parse(cfgText);
         if (doc.HasParseError()) {
+            cout << "[Warning] CEMCL::loadConfig : Failed to load config.json : "
+                 << "parse error in line " << doc.GetParseError() << ". Using default config." << endl;
             QMessageBox::warning(
                 this, 
-                "错误", 
-                "加载配置文件错误：格式不正确。\n将使用默认配置文件。"); 
+                "Warning", 
+                QString("Failed to load config.json : parse error in line " + doc.GetParseError()).append(". Using default config.")); 
             return true;
         }
+        #ifdef DEBUG
+            cout << "[Info] CEMCL::loadConfig : Successfully parsed config.json." << endl;
+        #endif
 
-        if (doc.HasMember("token")) {
-            cfg.isOnline = !doc.FindMember("token")->value.Empty();
+        if (doc.HasMember("closeAfterLaunch")) {
+            closeAfterLaunch = doc.AtPointer("closeAfterLaunch")->GetBool();
         } else {
+            cout << "[Warning] CEMCL::loadConfig : config.json doesn't have member "
+                 << "\"closeAfterLaunch\". Using the default value." << endl;
             QMessageBox::warning(
                 this, 
-                "异常", 
-                "加载配置文件异常：不存在token。\n将使用离线模式。");
+                "Warning", 
+                "config.json doesn't have member \"closeAfterLaunch\". Using the default value.");
         }
 
-        if (cfg.isOnline) {
-            // online
+        if (doc.HasMember("forgeSource")) {
+            forgeSource = doc.AtPointer("forgeSource")->GetString();
         } else {
-            // offline
-            if (doc.HasMember("account")) {
-                cfg.account = doc.FindMember("account")->value.GetString();
-            } else {
-                QMessageBox::warning(
-                this, 
-                "异常", 
-                "加载配置文件异常：不存在account。\n将使用默认用户名。");
-            }
-        }
-
-        if (doc.HasMember("gameDir")) {
-            cfg.gameDir = doc.FindMember("gameDir")->value.GetString();
-        } else {
+            cout << "[Warning] CEMCL::loadConfig : config.json doesn't have member "
+                 << "\"forgeSource\". Using the default value." << endl;
             QMessageBox::warning(
                 this, 
-                "异常", 
-                "加载配置文件异常：不存在gameDir。\n将使用默认值。");
+                "Warning", 
+                "config.json doesn't have member \"forgeSource\". Using the default value.");
         }
         
-        if (doc.HasMember("javaDir")) {
-            cfg.javaDir = doc.FindMember("javaDir")->value.GetString();
+        if (doc.HasMember("gameDir")) {
+            gameDir = doc.AtPointer("gameDir")->GetString();
         } else {
+            cout << "[Warning] CEMCL::loadConfig : config.json doesn't have member "
+                 << "\"gameDir\". Using the default value." << endl;
             QMessageBox::warning(
                 this, 
-                "异常", 
-                "加载配置文件异常：不存在javaDir。\n将使用默认值。");
+                "Warning", 
+                "config.json doesn't have member \"gameDir\". Using the default value.");
+        }
+
+        if (doc.HasMember("height")) {
+            height = doc.AtPointer("height")->GetInt64();
+        } else {
+            cout << "[Warning] CEMCL::loadConfig : config.json doesn't have member "
+                 << "\"height\". Using the default value." << endl;
+            QMessageBox::warning(
+                this, 
+                "Warning", 
+                "config.json doesn't have member \"height\". Using the default value.");
+        }
+
+        if (doc.HasMember("javaDir")) {
+            javaDir = doc.AtPointer("javaDir")->GetString();
+        } else {
+            cout << "[Warning] CEMCL::loadConfig : config.json doesn't have member "
+                 << "\"javaDir\". Using the default value." << endl;
+            QMessageBox::warning(
+                this, 
+                "Warning", 
+                "config.json doesn't have member \"javaDir\". Using the default value.");
+        }
+
+        if (doc.HasMember("MCSource")) {
+            MCSource = doc.AtPointer("MCSource")->GetString();
+        } else {
+            cout << "[Warning] CEMCL::loadConfig : config.json doesn't have member "
+                 << "\"MCSource\". Using the default value." << endl;
+            QMessageBox::warning(
+                this, 
+                "Warning", 
+                "config.json doesn't have member \"MCSource\". Using the default value.");
+        }
+
+        if (doc.HasMember("optifineSource")) {
+            optfineSource = doc.AtPointer("optifineSource")->GetString();
+        } else {
+            cout << "[Warning] CEMCL::loadConfig : config.json doesn't have member "
+                 << "\"optifineSource\". Using the default value." << endl;
+            QMessageBox::warning(
+                this, 
+                "Warning", 
+                "config.json doesn't have member \"optifineSource\". Using the default value.");
+        }
+
+        if (doc.HasMember("width")) {
+            width = doc.AtPointer("width")->GetInt64();
+        } else {
+            cout << "[Warning] CEMCL::loadConfig : config.json doesn't have member "
+                 << "\"width\". Using the default value." << endl;
+            QMessageBox::warning(
+                this, 
+                "Warning", 
+                "config.json doesn't have member \"width\". Using the default value.");
+        }
+
+        if (doc.HasMember("xms")) {
+            xms = doc.AtPointer("xms")->GetString();
+        } else {
+            cout << "[Warning] CEMCL::loadConfig : config.json doesn't have member "
+                 << "\"xms\". Using the default value." << endl;
+            QMessageBox::warning(
+                this, 
+                "Warning", 
+                "config.json doesn't have member \"xms\". Using the default value.");
+        }
+
+        if (doc.HasMember("xmx")) {
+            xmx = doc.AtPointer("xmx")->GetString();
+        } else {
+            cout << "[Warning] CEMCL::loadConfig : config.json doesn't have member "
+                 << "\"xmx\". Using the default value." << endl;
+            QMessageBox::warning(
+                this, 
+                "Warning", 
+                "config.json doesn't have member \"xmx\". Using the default value.");
         }
     }
+    #ifdef DEBUG
+        cout << "[Info] CEMCL::loadConfig : Successfully loaded config. Current configs are:\r"
+             << "closeAfterLaunch: " << closeAfterLaunch << "\r"
+             << "forgeSource: " << forgeSource << "\r"
+             << "gameDir: " << gameDir << "\r"
+             << "height: " << height << "\r"
+             << "javaDir: " << javaDir << "\r"
+             << "MCSource: " << MCSource << "\r"
+             << "optifineSource: " << optifineSource << "\r"
+             << "width: " << width << "\r"
+             << "xms: " << xms << "\r"
+             << "xmx: " << xmx << endl;
+    #endif
     return true;
 }
 
-bool CEMCL::loadVersionList(bool ignoreIndexFile)
-{
-    if (!ignoreIndexFile) {
-        string cfgText = openFile("index.json");
-        if (cfgText.empty()) {
-            return loadVersionList(true);
-        }
-        Document doc;
-        doc.Parse(cfgText);
-        if (doc.HasParseError()) {
-            return loadVersionList(true);
-        }
-        // TODO: if md5sum different {}
-        if (!doc.HasMember("versionCount")) {
-            return loadVersionList(true);
-        }
-        if (!doc.HasMember("versionList")) {
-            return loadVersionList(true);
-        }
-        int count = doc.FindMember("versionCount")->value.GetInt64();
-        Node * list = doc.AtPointer("versionList");
-        versionList.resize(count);
-        for (int i = 0; i < count; i++) {
-            versionList[i].resize(4);
-            versionList[i][0] = list->AtPointer(i)->FindMember("label")->value.GetString();
-            versionList[i][1] = list->AtPointer(i)->FindMember("version")->value.GetString();
-            versionList[i][2] = list->AtPointer(i)->FindMember("args")->value.GetString();
-            versionList[i][3] = list->AtPointer(i)->FindMember("dir")->value.GetString();
-        }
-    } else {
-        // TODO: create index.json from mc game path
-
-        // for test only:
-        versionList.resize(2);
-        for (int i = 0; i < 2; i++) {
-            versionList[i].resize(4);
-            versionList[i][0] = "label";
-            versionList[i][1] = "version";
-            versionList[i][2] = "args";
-            versionList[i][3] = "dir";
-        }
-    }
-    int c = versionList.size();
+bool CEMCL::loadUI() {
+    #ifdef DEBUG
+        cout << "[Info] CEMCL::loadUI : Loading UI ..." << endl;
+    #endif
+    int c = gameList.size();
     ui->tableWidget->setRowCount(c);
-    ui->tableWidget->setHorizontalHeaderItem(0, new QTableWidgetItem("名称"));
-    ui->tableWidget->setHorizontalHeaderItem(1, new QTableWidgetItem("版本"));
-    ui->tableWidget->setHorizontalHeaderItem(2, new QTableWidgetItem("参数"));
+    ui->tableWidget->setHorizontalHeaderItem(0, new QTableWidgetItem("Name"));
+    ui->tableWidget->setHorizontalHeaderItem(1, new QTableWidgetItem("Version"));
+    ui->tableWidget->setHorizontalHeaderItem(2, new QTableWidgetItem("Type"));
+    ui->tableWidget->setHorizontalHeaderItem(3, new QTableWidgetItem("Describe"));
     for (int i = 0; i < c; i++) {
-        for (int j = 0; j < 3; j++) {
-            QTableWidgetItem * item = new QTableWidgetItem();
-            item->setText(QString(versionList[i][j].c_str()));
-            ui->tableWidget->setItem(i, j, item);
-        }
+        // TODO 更新UI后一并修改
+        // QTableWidgetItem * item = new QTableWidgetItem();
+        // item->setText(QString(gameList[i][j].c_str()));
+        // ui->tableWidget->setItem(i, j, item);
     }
+    #ifdef DEBUG
+        cout << "[Info] CEMCL::loadUI : Successfully loaded UI." << endl;
+    #endif
     return true;
 }
 
-void CEMCL::onClickAddBtn()
-{
+void CEMCL::onClickAddBtn() {
+    #ifdef DEBUG
+        cout << "[Info] CEMCL::onClickAddBtn : Triggered." << endl;
+    #endif
     AddDialog * a = new AddDialog(this);
     a->show();
     a->exec();
 }
 
-void CEMCL::onClickConfigureBtn()
-{
+void CEMCL::onClickConfigureBtn() {
+    #ifdef DEBUG
+        cout << "[Info] CEMCL::onClickConfigureBtn : Triggered." << endl;
+    #endif
     ConfigureDialog * d = new ConfigureDialog(this);
     d->show();
     d->exec();
 }
 
-void CEMCL::onClickSettingsBtn()
-{
+void CEMCL::onClickSettingsBtn() {
+    #ifdef DEBUG
+        cout << "[Info] CEMCL::onClickSettingsBtn : Triggered." << endl;
+    #endif
     Settings * s = new Settings(this);
     s->show();
     s->exec();
 }
 
-void CEMCL::onClickStartBtn()
-{
-    /*
-        minecraft launch args:
-        -Xss1M
-        -Djava.library.path=<.minecraft/bin/xxx>
-        -Djna.tmpdir=<.minecraft/bin/xxx>
-        -Dorg.lwjgl.system.SharedLibraryExtractPath=<.minecraft/bin/xxx>
-        -Dio.netty.native.workdir=<.minecraft/bin/xxx>
-        -Dminecraft.launcher.brand=CEMCL
-        -Dminecraft.launcher.version=1.0.0b4
-        -cp <文件>
-        -Xmx2G
-        -XX:+UnlockExperimentalVMOptions
-        -XX:+UseG1GC
-        -XX:G1NewSizePercent=20
-        -XX:G1ReservePercent=20
-        -XX:MaxGCPauseMillis=50
-        -XX:G1HeapRegionSize=32M
-        -Dlog4j.configurationFile=<.minecraft/assets/log_configs/xxx>
-        net.minecraft.client.main.Main
-        --username <username>
-        --version <version>
-        --gameDir <.minecraft>
-        --assetsDir <.minecraft/assets>
-        --assetIndex <index>
-        --uuid <uuid>
-        --accessToken <token>
-        --clientId <client>
-        --xuid <xuid>
-        --userType msa
-        --versionType release
-        --quickPlayPath <path>
-    */
-    int c = ui->tableWidget->currentColumn();
-    if (c == -1) return;
-    string cmd = "java ";
-    cmd.append(versionList[c][2]);
-    system(cmd.c_str());
-    cout << cmd;
+void CEMCL::onClickStartBtn() {
+    #ifdef DEBUG
+        cout << "[Info] CEMCL::onClickStartBtn : Triggered." << endl;
+    #endif
+    // TODO 下载及账号选择
+    int c = ui->tableWidget->currentRow();
+    #ifdef DEBUG
+        cout << "[Info] CEMCL::onClickStartBtn : Game index selected: " << c << endl;
+    #endif
+    if (c == -1) {
+        #ifdef DEBUG
+            cout << "[Error] CEMCL::onClickStartBtn : Haven't select game yet." << endl;
+        #endif
+        QMessageBox::warning(
+            this, 
+            "Error", 
+            "Haven't select game yet. Please select one first.");
+        return;
+    }
+    system(getCMD(accountList[0], gameList[c], javaDir, gameDir).c_str());
 }
 
 CEMCL::CEMCL(QWidget *parent)
     : QMainWindow(parent)
-    , ui(new Ui::CEMCL)
-{
-    if (!loadConfig()) return;
+    , ui(new Ui::CEMCL) {
+    #ifdef DEBUG
+        cout << "[Info] CEMCL::CEMCL : APP start." << endl;
+    #endif
+    if (!loadAccount()) return; // 账户
+    if (!loadConfig()) return; // 启动器配置文件 + 游戏默认配置
+    gameList = loadGameList(false, gameDir, 600, 800, "1G", "2G"); // 游戏列表
+    // TODO UI设计确定后，合并以下内容至loadUI()，添加双语言。
     ui->setupUi(this);
-    if (!loadVersionList(false)) return;
+    if (!loadUI()) return; // UI
     QObject::connect(ui->addButton, &QPushButton::clicked, this, &CEMCL::onClickAddBtn);
     QObject::connect(ui->configureBtn, &QPushButton::clicked, this, &CEMCL::onClickConfigureBtn);
     QObject::connect(ui->settingsBtn, &QPushButton::clicked, this, &CEMCL::onClickSettingsBtn);   
     QObject::connect(ui->startBtn, &QPushButton::clicked, this, &CEMCL::onClickStartBtn);
+    #ifdef DEBUG
+        cout << "[Info] CEMCL::CEMCL : Finished loading." << endl;
+    #endif
 }
 
-CEMCL::~CEMCL()
-{
+CEMCL::~CEMCL() {
+    #ifdef DEBUG
+        cout << "[Info] CEMCL::~CEMCL : Closing APP." << endl;
+    #endif
+    // TODO 更新配置文件
     delete ui;
 }

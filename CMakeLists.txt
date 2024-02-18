@@ -15,7 +15,7 @@ add_compile_options(-mavx2 -mpclmul)
 find_package(Qt6 REQUIRED COMPONENTS Widgets)
 
 file(GLOB_RECURSE HEADER_FILES src/*.hpp)
-file(GLOB_RECURSE SOURCE_FILES src/*.cpp)
+file(GLOB_RECURSE SOURCE_FILES src/*.cpp include/*/*.cpp)
 file(GLOB UI_FILES res/*.ui)
 
 include_directories(include src)

@@ -1,19 +1,24 @@
 {
-    "md5": "",
-    "versionCount": 2,
-    "versionList" :
+    "sha1": "",
+    "gameList" :
     [
         {
-            "args": "xxx",
-            "dir": "1.0",
-            "label": "1.0",
-            "version": "1.0"
+            "args": "",
+            "height": 800,
+            "type": "release",
+            "version": "1.12.2",
+            "width": 600,
+            "xms": "1G",
+            "xmx": "2G"
         },
         {
-            "args": "xxx",
-            "dir": "1.0",
-            "label": "1.1",
-            "version": "1.1"
+            "args": "",
+            "height": 800,
+            "type": "release",
+            "version": "1.13.2",
+            "width": 600,
+            "xms": "1G",
+            "xmx": "2G"
         }
     ]
 }
