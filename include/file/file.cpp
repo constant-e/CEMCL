@@ -21,13 +21,15 @@ vector<string> getDirs(string path) {
 }
 
 string openFile(string path) {
-    string result;
+    #ifdef DEBUG
+		cout << "[info] file::openFile : Start reading " << path << "." << endl;
+	#endif
+	string result;
 	string temp = "";
     fstream fs;
-
 	fs.open(path, ios::in);
 	if (!fs.is_open()){
-		cout << "[Error] openFile: cannot open file." << endl;
+		cout << "[Error] file::openFile : Can't open " << path << "." << endl;
 		return "";
 	}
 	while (getline(fs, temp)) {
@@ -35,9 +37,10 @@ string openFile(string path) {
 			result.append("\n");
 		result.append(temp);
 	}
-	// cout << "[info] openFile: text:\n" << text.c_str() << "\n";
+	#ifdef DEBUG
+		cout << "[info] file::openFile : Done. Result:\r" << text << endl;
+	#endif
 	fs.close();
-    
     return result;
 }
 
@@ -47,18 +50,24 @@ bool isSame(string path, string name, string sha1Str) {
 	// hash<string> hashFunc(string text);
 	// if () return true;
 	// else return false;
+	return true;
 }
 
 bool saveFile(string path, string content) {
-    fstream fs;
-
+    #ifdef DEBUG
+		cout << "[info] file::saveFile : Start writing to " << path
+			 << ". Content:\r" << content << endl;
+	#endif
+	fstream fs;
     fs.open(path, ios::out);
 	if (!fs){
-		cout << "[Error] openFile: cannot open file. \n";
+		cout << "[Error] file::saveFile : Can't open " << path << "." << endl;
 		return false;
 	}
 	fs << content;
 	fs.close();
-
+	#ifdef DEBUG
+		cout << "[info] file::saveFile : Done." << endl;
+	#endif
     return true;
 }

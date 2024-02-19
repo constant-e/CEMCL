@@ -82,7 +82,6 @@ string getCMD(Account account, Game game, string javaDir, string gameDir) {
     // JVM参数
     if (!doc.HasMember("arguments")) {
         // 1.12.2-
-        cout << 112 << endl;
         result.append("-Djava.library.path=${natives_directory} -cp ${classpath} ");
         if (!doc.HasMember("minecraftArguments")) {
             cout << "[Error] mc_core : Failed to get launch command: " << path
@@ -132,10 +131,10 @@ string getCMD(Account account, Game game, string javaDir, string gameDir) {
 
     // Optifine --tweakClass调整至末尾
     if (result.find("--tweakClass optifine.OptiFineTweaker") != result.npos) {
-        result.replace(result.find("--tweakClass optifine.OptiFineTweaker"), 1, "");
+      strReplace(&result, "--tweakClass optifine.OptiFineTweaker", "");
     }
     if (result.find("--tweakClass optifine.OptiFineForgeTweaker") != result.npos) {
-        result.replace(result.find("--tweakClass optifine.OptiFineForgeTweaker"), 1, "");
+        strReplace(&result, "--tweakClass optifine.OptiFineForgeTweaker", "");
     }
 
     // width 和 height
@@ -178,9 +177,25 @@ string getCMD(Account account, Game game, string javaDir, string gameDir) {
         cp.append(gameDir + "/libraries/" + p + ";");
     }
     cp.append("\b ");
-    result.replace(result.find("${classpath}"), 1, cp);
 
     // TODO 完成剩余参数替换
+
+    strReplace(&result, "${auth_player_name}", account.userName);
+    strReplace(&result, "${version_name}", game.version);
+    strReplace(&result, "${game_directory}", gameDir.append("/versions/").append(game.version));
+    strReplace(&result, "${assets_root}", gameDir.append("/assets"));
+    strReplace(&result, "${assets_index_name}", game.version);
+    strReplace(&result, "${auth_uuid}", account.uuid);
+    strReplace(&result, "${auth_access_token}", account.token);
+    strReplace(&result, "${user_type}", account.online ? "Mojang" : "Legacy");
+    strReplace(&result, "${version_type}", game.type);
+    strReplace(&result, "${natives_directory}", "");
+    strReplace(&result, "${launcher_name}", "CE Minecraft Launcher");
+    strReplace(&result, "${launcher_version}", "1.0.0");
+    strReplace(&result, "${classpath}", cp);
+    strReplace(&result, "${library_directory}", gameDir + "/libraries");
+    strReplace(&result, "${classpath_separator}", ";");
+    strReplace(&result, "${authlib_injector_param}", ""); // offline
 
     #ifdef DEBUG
         cout << "[Info] mc_core::getCMD : Finished. Command: " << result << endl;
@@ -197,13 +212,27 @@ vector<Game> loadGameList(
     string defXmx) {
     vector<Game> gameList;
     if (reload) {
-        vector<string> versionList = getDirs(gameDir.append("/versions"));
+        vector<string> versionList = getDirs(gameDir + "/versions");
         int count = versionList.size();
         gameList.resize(count);
         for (int i = 0; i < count; i++) {
+            // Get version type
+            Document doc;
+            doc.Parse(openFile(gameDir + "/versions/" + versionList[i] + "/" + versionList[i] + ".json"));
+            if (doc.HasParseError()) {
+                cout << "[Error] mc_core::loadGameList : Failed to load " << gameDir + "/versions/" + versionList[i] + "/" + versionList[i] + ".json"
+                     << ": in line" << doc.GetErrorOffset() << ": has parse error." << endl;
+                continue;
+            }
+            if (!doc.HasMember("type")) {
+                cout << "[Error] mc_core::loadGameList : Failed to load " << gameDir + "/versions/" + versionList[i] + "/" + versionList[i] + ".json"
+                     << ": doesn't have member \"type\"" << endl;
+                continue;
+            }
+
             gameList[i].args = "";
             gameList[i].height = defHeight;
-            gameList[i].type = "";
+            gameList[i].type = doc.AtPointer("type")->GetString();
             gameList[i].version = versionList[i];
             gameList[i].width = defWidth;
             gameList[i].xms = defXms;
