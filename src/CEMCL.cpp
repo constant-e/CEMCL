@@ -5,7 +5,6 @@
 #include "ConfigureDialog/ConfigureDialog.hpp"
 #include "file/file.hpp"
 #include "Settings/Settings.hpp"
-#include "sonic/sonic.h"
 
 #include <QMessageBox>
 #include <QObject>
@@ -273,6 +272,9 @@ bool CEMCL::loadUI() {
         // QTableWidgetItem * item = new QTableWidgetItem();
         // item->setText(QString(gameList[i][j].c_str()));
         // ui->tableWidget->setItem(i, j, item);
+        QTableWidgetItem * item = new QTableWidgetItem();
+        item->setText(QString(gameList[i].version.c_str()));
+        ui->tableWidget->setItem(i, 0, item);
     }
     #ifdef DEBUG
         cout << "[Info] CEMCL::loadUI : Successfully loaded UI." << endl;

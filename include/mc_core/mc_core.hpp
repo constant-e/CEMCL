@@ -3,8 +3,11 @@
 #include <iostream>
 #include <vector>
 
+#include "sonic/sonic.h"
+
 #define DEFAULTACC "[{\"online\":false,\"userName\":\"Steve\",\"uuid\":\"\",\"token\":\"\"}]"
 
+using sonic_json::Node;
 using std::string;
 using std::vector;
 // 已有变量：gameDir - .minecraft位置    javaDir - java位置(可执行文件)
@@ -28,7 +31,9 @@ struct Game {
     string xmx;     // 最大jvm内存（留空 cfg.xmx > 默认）
 };
 
+string addArgs(Node & n);
 bool addGame();
+string addLibs(Node & n, string gameDir);
 Account addOfflineAccount();
 Account addOnlineAccount();
 bool delGame();
