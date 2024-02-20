@@ -1,8 +1,6 @@
 #include "CEMCL.hpp"
 #include "ui_CEMCL.h"
 
-#include "AddDialog/AddDialog.hpp"
-#include "ConfigureDialog/ConfigureDialog.hpp"
 #include "file/file.hpp"
 #include "Settings/Settings.hpp"
 
@@ -251,33 +249,33 @@ bool CEMCL::loadUI() {
     #endif
     // accTab
     int accCount = accountList.size();
-    ui->accTableWidget->setRowCount(accCount);
-    ui->accTableWidget->setHorizontalHeaderItem(0, new QTableWidgetItem("Name"));
-    ui->accTableWidget->setHorizontalHeaderItem(1, new QTableWidgetItem("Type"));
+    UI->AccTableWidget->setRowCount(accCount);
+    UI->AccTableWidget->setHorizontalHeaderItem(0, new QTableWidgetItem("Name"));
+    UI->AccTableWidget->setHorizontalHeaderItem(1, new QTableWidgetItem("Type"));
     for (int i = 0; i < accCount; i++) {
         QTableWidgetItem * item1 = new QTableWidgetItem();
         item1->setText(QString(accountList[i].userName.c_str()));
-        ui->accTableWidget->setItem(i, 0, item1);
+        UI->AccTableWidget->setItem(i, 0, item1);
 
         QTableWidgetItem * item2 = new QTableWidgetItem();
         item2->setText(QString(accountList[i].type.c_str()));
-        ui->accTableWidget->setItem(i, 1, item2);
+        UI->AccTableWidget->setItem(i, 1, item2);
     }
 
     // verTab
     int c = gameList.size();
-    ui->verTableWidget->setRowCount(c);
-    ui->verTableWidget->setHorizontalHeaderItem(0, new QTableWidgetItem("Version"));
-    ui->verTableWidget->setHorizontalHeaderItem(1, new QTableWidgetItem("Type"));
-    ui->verTableWidget->setHorizontalHeaderItem(2, new QTableWidgetItem("Describe"));
+    UI->VerTableWidget->setRowCount(c);
+    UI->VerTableWidget->setHorizontalHeaderItem(0, new QTableWidgetItem("Version"));
+    UI->VerTableWidget->setHorizontalHeaderItem(1, new QTableWidgetItem("Type"));
+    UI->VerTableWidget->setHorizontalHeaderItem(2, new QTableWidgetItem("Describe"));
     for (int i = 0; i < c; i++) {
         QTableWidgetItem * item1 = new QTableWidgetItem();
         item1->setText(QString(gameList[i].version.c_str()));
-        ui->verTableWidget->setItem(i, 0, item1);
+        UI->VerTableWidget->setItem(i, 0, item1);
 
         QTableWidgetItem * item2 = new QTableWidgetItem();
         item2->setText(QString(gameList[i].type.c_str()));
-        ui->verTableWidget->setItem(i, 1, item2);
+        UI->VerTableWidget->setItem(i, 1, item2);
     }
     #ifdef DEBUG
         cout << "[Info] CEMCL::loadUI : Successfully loaded UI." << endl;
@@ -285,22 +283,22 @@ bool CEMCL::loadUI() {
     return true;
 }
 
-void CEMCL::onClickAddBtn() {
+void CEMCL::onClickEditBtn() {
+    #ifdef DEBUG
+        cout << "[Info] CEMCL::onClickEditBtn : Triggered." << endl;
+    #endif
+    /*EditDialog * d = new EditDialog(this);
+    d->show();
+    d->exec();*/
+}
+
+void CEMCL::onClickNewBtn() {
     #ifdef DEBUG
         cout << "[Info] CEMCL::onClickAddBtn : Triggered." << endl;
     #endif
-    AddDialog * a = new AddDialog(this);
+    /*AddDialog * a = new AddDialog(this);
     a->show();
-    a->exec();
-}
-
-void CEMCL::onClickConfigureBtn() {
-    #ifdef DEBUG
-        cout << "[Info] CEMCL::onClickConfigureBtn : Triggered." << endl;
-    #endif
-    ConfigureDialog * d = new ConfigureDialog(this);
-    d->show();
-    d->exec();
+    a->exec();*/
 }
 
 void CEMCL::onClickSettingsBtn() {
@@ -317,8 +315,8 @@ void CEMCL::onClickStartBtn() {
         cout << "[Info] CEMCL::onClickStartBtn : Triggered." << endl;
     #endif
     // TODO 下载
-    int accIndex = ui->accTableWidget->currentRow();
-    int verIndex = ui->verTableWidget->currentRow();
+    int accIndex = UI->AccTableWidget->currentRow();
+    int verIndex = UI->VerTableWidget->currentRow();
     if (accIndex == -1) {
         #ifdef DEBUG
             cout << "[Error] CEMCL::onClickStartBtn : Haven't select account yet." << endl;
@@ -344,7 +342,7 @@ void CEMCL::onClickStartBtn() {
 
 CEMCL::CEMCL(QWidget *parent)
     : QMainWindow(parent)
-    , ui(new Ui::CEMCL) {
+    , UI(new Ui::CEMCL) {
     #ifdef DEBUG
         cout << "[Info] CEMCL::CEMCL : APP start." << endl;
     #endif
@@ -352,12 +350,12 @@ CEMCL::CEMCL(QWidget *parent)
     if (!loadConfig()) return; // 启动器配置文件 + 游戏默认配置
     gameList = loadGameList(false, gameDir, 600, 800, "1G", "2G"); // 游戏列表
     // TODO UI设计确定后，合并以下内容至loadUI()，添加双语言。
-    ui->setupUi(this);
+    UI->setupUi(this);
     if (!loadUI()) return; // UI
-    QObject::connect(ui->addButton, &QPushButton::clicked, this, &CEMCL::onClickAddBtn);
-    QObject::connect(ui->configureBtn, &QPushButton::clicked, this, &CEMCL::onClickConfigureBtn);
-    QObject::connect(ui->settingsBtn, &QPushButton::clicked, this, &CEMCL::onClickSettingsBtn);   
-    QObject::connect(ui->startBtn, &QPushButton::clicked, this, &CEMCL::onClickStartBtn);
+    QObject::connect(UI->EditBtn, &QPushButton::clicked, this, &CEMCL::onClickEditBtn);
+    QObject::connect(UI->NewBtn, &QPushButton::clicked, this, &CEMCL::onClickNewBtn);
+    QObject::connect(UI->SettingsBtn, &QPushButton::clicked, this, &CEMCL::onClickSettingsBtn);   
+    QObject::connect(UI->StartBtn, &QPushButton::clicked, this, &CEMCL::onClickStartBtn);
     #ifdef DEBUG
         cout << "[Info] CEMCL::CEMCL : Finished loading." << endl;
     #endif
@@ -368,5 +366,5 @@ CEMCL::~CEMCL() {
         cout << "[Info] CEMCL::~CEMCL : Closing APP." << endl;
     #endif
     // TODO 更新配置文件
-    delete ui;
+    delete UI;
 }

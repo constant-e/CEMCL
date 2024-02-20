@@ -13,10 +13,10 @@
   <property name="windowTitle">
    <string>CE Minecraft Launcher</string>
   </property>
-  <widget class="QWidget" name="centralwidget">
-   <layout class="QGridLayout" name="gridLayout">
+  <widget class="QWidget" name="CWidget">
+   <layout class="QGridLayout" name="GLayout">
     <item row="0" column="0">
-     <widget class="QLabel" name="title">
+     <widget class="QLabel" name="Title">
       <property name="sizePolicy">
        <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
         <horstretch>0</horstretch>
@@ -38,9 +38,9 @@
      </widget>
     </item>
     <item row="3" column="0">
-     <layout class="QHBoxLayout" name="mainHorizontalLayout">
+     <layout class="QHBoxLayout" name="MainHLayout">
       <item>
-       <widget class="QPushButton" name="settingsBtn">
+       <widget class="QPushButton" name="SettingsBtn">
         <property name="sizePolicy">
          <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
           <horstretch>0</horstretch>
@@ -62,7 +62,7 @@
        </widget>
       </item>
       <item>
-       <spacer name="horizontalSpacer">
+       <spacer name="HSpacer">
         <property name="locale">
          <locale language="English" country="UnitedStates"/>
         </property>
@@ -81,7 +81,7 @@
        </spacer>
       </item>
       <item>
-       <widget class="QPushButton" name="addButton">
+       <widget class="QPushButton" name="NewBtn">
         <property name="sizePolicy">
          <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
           <horstretch>0</horstretch>
@@ -103,7 +103,7 @@
        </widget>
       </item>
       <item>
-       <widget class="QPushButton" name="configureBtn">
+       <widget class="QPushButton" name="EditBtn">
         <property name="sizePolicy">
          <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
           <horstretch>0</horstretch>
@@ -125,7 +125,7 @@
        </widget>
       </item>
       <item>
-       <widget class="QPushButton" name="startBtn">
+       <widget class="QPushButton" name="StartBtn">
         <property name="sizePolicy">
          <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
           <horstretch>0</horstretch>
@@ -149,9 +149,9 @@
      </layout>
     </item>
     <item row="1" column="0">
-     <layout class="QGridLayout" name="mainGridLayout">
+     <layout class="QGridLayout" name="MainGLayout">
       <item row="1" column="0">
-       <widget class="QTableWidget" name="accTableWidget">
+       <widget class="QTableWidget" name="AccTableWidget">
         <property name="sizePolicy">
          <sizepolicy hsizetype="Preferred" vsizetype="Expanding">
           <horstretch>0</horstretch>
@@ -185,7 +185,7 @@
        </widget>
       </item>
       <item row="1" column="1">
-       <widget class="QTableWidget" name="verTableWidget">
+       <widget class="QTableWidget" name="VerTableWidget">
         <property name="locale">
          <locale language="English" country="UnitedStates"/>
         </property>
@@ -214,7 +214,7 @@
        </widget>
       </item>
       <item row="0" column="0">
-       <widget class="QLabel" name="accTitle">
+       <widget class="QLabel" name="AccTitle">
         <property name="locale">
          <locale language="English" country="UnitedStates"/>
         </property>
@@ -227,7 +227,7 @@
        </widget>
       </item>
       <item row="0" column="1">
-       <widget class="QLabel" name="verTitle">
+       <widget class="QLabel" name="VerTitle">
         <property name="locale">
          <locale language="English" country="UnitedStates"/>
         </property>

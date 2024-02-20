@@ -13,22 +13,22 @@
   <property name="windowTitle">
    <string>Settings</string>
   </property>
-  <layout class="QVBoxLayout" name="verticalLayout">
+  <layout class="QVBoxLayout" name="VLayout">
    <item>
-    <widget class="QTabWidget" name="tabWidget">
+    <widget class="QTabWidget" name="TabWidget">
      <property name="locale">
       <locale language="English" country="UnitedStates"/>
      </property>
      <property name="currentIndex">
       <number>0</number>
      </property>
-     <widget class="QWidget" name="settingsTab">
+     <widget class="QWidget" name="SettingsTab">
       <attribute name="title">
        <string>Settings</string>
       </attribute>
-      <layout class="QVBoxLayout" name="settingsLayout">
+      <layout class="QVBoxLayout" name="SettingsVLayout">
        <item>
-        <widget class="QLabel" name="settingsTitle">
+        <widget class="QLabel" name="SettingsTitle">
          <property name="sizePolicy">
           <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
            <horstretch>0</horstretch>
@@ -47,11 +47,11 @@
         </widget>
        </item>
        <item>
-        <widget class="QScrollArea" name="scrollArea">
+        <widget class="QScrollArea" name="ScrollArea">
          <property name="widgetResizable">
           <bool>true</bool>
          </property>
-         <widget class="QWidget" name="scrollAreaWidgetContents">
+         <widget class="QWidget" name="ScrollAreaWidgetContents">
           <property name="geometry">
            <rect>
             <x>0</x>
@@ -62,7 +62,7 @@
           </property>
           <layout class="QVBoxLayout" name="verticalLayout_3">
            <item>
-            <widget class="QLabel" name="genLabel">
+            <widget class="QLabel" name="GeneralTitle">
              <property name="sizePolicy">
               <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
                <horstretch>0</horstretch>
@@ -81,7 +81,7 @@
             </widget>
            </item>
            <item>
-            <widget class="QCheckBox" name="closeAfterLaunchCheckBox">
+            <widget class="QCheckBox" name="CloseCheckBox">
              <property name="sizePolicy">
               <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
                <horstretch>0</horstretch>
@@ -97,9 +97,9 @@
             </widget>
            </item>
            <item>
-            <layout class="QHBoxLayout" name="mcDirLayout">
+            <layout class="QHBoxLayout" name="MCHLayout">
              <item>
-              <widget class="QLabel" name="mcDirLabel">
+              <widget class="QLabel" name="MCLabel">
                <property name="sizePolicy">
                 <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
                  <horstretch>0</horstretch>
@@ -115,7 +115,7 @@
               </widget>
              </item>
              <item>
-              <widget class="QLineEdit" name="mcDirPath">
+              <widget class="QLineEdit" name="MCEdit">
                <property name="sizePolicy">
                 <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
                  <horstretch>0</horstretch>
@@ -131,7 +131,7 @@
               </widget>
              </item>
              <item>
-              <widget class="QToolButton" name="mcDirButton">
+              <widget class="QToolButton" name="MCBtn">
                <property name="locale">
                 <locale language="English" country="UnitedStates"/>
                </property>
@@ -143,9 +143,9 @@
             </layout>
            </item>
            <item>
-            <layout class="QHBoxLayout" name="javaDirLayout">
+            <layout class="QHBoxLayout" name="JavaHLayout">
              <item>
-              <widget class="QLabel" name="javaDirLabel">
+              <widget class="QLabel" name="JavaLabel">
                <property name="sizePolicy">
                 <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
                  <horstretch>0</horstretch>
@@ -161,7 +161,7 @@
               </widget>
              </item>
              <item>
-              <widget class="QLineEdit" name="javaDirPath">
+              <widget class="QLineEdit" name="JavaEdit">
                <property name="sizePolicy">
                 <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
                  <horstretch>0</horstretch>
@@ -177,7 +177,7 @@
               </widget>
              </item>
              <item>
-              <widget class="QToolButton" name="javaDirButton">
+              <widget class="QToolButton" name="JavaBtn">
                <property name="locale">
                 <locale language="English" country="UnitedStates"/>
                </property>
@@ -189,7 +189,7 @@
             </layout>
            </item>
            <item>
-            <widget class="QLabel" name="gameLabel">
+            <widget class="QLabel" name="GameTitle">
              <property name="sizePolicy">
               <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
                <horstretch>0</horstretch>
@@ -208,9 +208,9 @@
             </widget>
            </item>
            <item>
-            <layout class="QHBoxLayout" name="xmsLayout">
+            <layout class="QHBoxLayout" name="XmsHLayout">
              <item>
-              <widget class="QLabel" name="xmsLabel">
+              <widget class="QLabel" name="XmsLabel">
                <property name="locale">
                 <locale language="English" country="UnitedStates"/>
                </property>
@@ -220,7 +220,7 @@
               </widget>
              </item>
              <item>
-              <widget class="QLineEdit" name="xms">
+              <widget class="QLineEdit" name="XmsEdit">
                <property name="sizePolicy">
                 <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
                  <horstretch>0</horstretch>
@@ -238,9 +238,9 @@
             </layout>
            </item>
            <item>
-            <layout class="QHBoxLayout" name="xmxLayout">
+            <layout class="QHBoxLayout" name="XmxHLayout">
              <item>
-              <widget class="QLabel" name="xmxLabel">
+              <widget class="QLabel" name="XmxLabel">
                <property name="locale">
                 <locale language="English" country="UnitedStates"/>
                </property>
@@ -250,7 +250,7 @@
               </widget>
              </item>
              <item>
-              <widget class="QLineEdit" name="xmx">
+              <widget class="QLineEdit" name="XmxEdit">
                <property name="sizePolicy">
                 <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
                  <horstretch>0</horstretch>
@@ -268,9 +268,9 @@
             </layout>
            </item>
            <item>
-            <layout class="QHBoxLayout" name="heightLayout">
+            <layout class="QHBoxLayout" name="HeightHLayout">
              <item>
-              <widget class="QLabel" name="heightLabel">
+              <widget class="QLabel" name="HeightLabel">
                <property name="locale">
                 <locale language="English" country="UnitedStates"/>
                </property>
@@ -280,7 +280,7 @@
               </widget>
              </item>
              <item>
-              <widget class="QSpinBox" name="height">
+              <widget class="QSpinBox" name="HeightEdit">
                <property name="sizePolicy">
                 <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
                  <horstretch>0</horstretch>
@@ -301,9 +301,9 @@
             </layout>
            </item>
            <item>
-            <layout class="QHBoxLayout" name="widthLayout">
+            <layout class="QHBoxLayout" name="WidthHLayout">
              <item>
-              <widget class="QLabel" name="widthLabel">
+              <widget class="QLabel" name="WidthLabel">
                <property name="locale">
                 <locale language="English" country="UnitedStates"/>
                </property>
@@ -313,7 +313,7 @@
               </widget>
              </item>
              <item>
-              <widget class="QSpinBox" name="width">
+              <widget class="QSpinBox" name="WidthEdit">
                <property name="sizePolicy">
                 <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
                  <horstretch>0</horstretch>
@@ -334,7 +334,7 @@
             </layout>
            </item>
            <item>
-            <widget class="QLabel" name="downloadLabel">
+            <widget class="QLabel" name="DownloadTitle">
              <property name="sizePolicy">
               <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
                <horstretch>0</horstretch>
@@ -353,9 +353,9 @@
             </widget>
            </item>
            <item>
-            <layout class="QHBoxLayout" name="mcsLayout">
+            <layout class="QHBoxLayout" name="MCSourceHLayout">
              <item>
-              <widget class="QLabel" name="mcsLabel">
+              <widget class="QLabel" name="MCSourceLabel">
                <property name="locale">
                 <locale language="English" country="UnitedStates"/>
                </property>
@@ -365,7 +365,7 @@
               </widget>
              </item>
              <item>
-              <widget class="QLineEdit" name="mcs">
+              <widget class="QLineEdit" name="MCSourceEdit">
                <property name="sizePolicy">
                 <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
                  <horstretch>0</horstretch>
@@ -383,9 +383,9 @@
             </layout>
            </item>
            <item>
-            <layout class="QHBoxLayout" name="forgesLayout">
+            <layout class="QHBoxLayout" name="ForgeSourceHLayout">
              <item>
-              <widget class="QLabel" name="forgesLabel">
+              <widget class="QLabel" name="ForgeSourceLabel">
                <property name="locale">
                 <locale language="English" country="UnitedStates"/>
                </property>
@@ -395,7 +395,7 @@
               </widget>
              </item>
              <item>
-              <widget class="QLineEdit" name="forges">
+              <widget class="QLineEdit" name="ForgeSourceEdit">
                <property name="sizePolicy">
                 <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
                  <horstretch>0</horstretch>
@@ -413,7 +413,7 @@
             </layout>
            </item>
            <item>
-            <spacer name="settingsVSpacer">
+            <spacer name="VSpacer">
              <property name="locale">
               <locale language="English" country="UnitedStates"/>
              </property>
@@ -436,15 +436,9 @@
         </widget>
        </item>
        <item>
-        <layout class="QHBoxLayout" name="genLayout"/>
-       </item>
-       <item>
-        <layout class="QHBoxLayout" name="gameLayout"/>
-       </item>
-       <item>
-        <layout class="QHBoxLayout" name="settingsBtnsLayout">
+        <layout class="QHBoxLayout" name="MainHLayout">
          <item>
-          <spacer name="settingsHSpacer">
+          <spacer name="HSpacer">
            <property name="locale">
             <locale language="English" country="UnitedStates"/>
            </property>
@@ -460,7 +454,7 @@
           </spacer>
          </item>
          <item>
-          <widget class="QPushButton" name="cancelButton">
+          <widget class="QPushButton" name="CancelBtn">
            <property name="sizePolicy">
             <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
              <horstretch>0</horstretch>
@@ -482,7 +476,7 @@
           </widget>
          </item>
          <item>
-          <widget class="QPushButton" name="saveBtn">
+          <widget class="QPushButton" name="DoneBtn">
            <property name="sizePolicy">
             <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
              <horstretch>0</horstretch>
@@ -499,7 +493,7 @@
             <locale language="English" country="UnitedStates"/>
            </property>
            <property name="text">
-            <string>Save</string>
+            <string>Done</string>
            </property>
           </widget>
          </item>
@@ -507,13 +501,13 @@
        </item>
       </layout>
      </widget>
-     <widget class="QWidget" name="aboutTab">
+     <widget class="QWidget" name="AboutTab">
       <attribute name="title">
        <string>About</string>
       </attribute>
-      <layout class="QGridLayout" name="aboutLayout">
+      <layout class="QGridLayout" name="AboutGLayout">
        <item row="0" column="0">
-        <widget class="QLabel" name="aboutTitle">
+        <widget class="QLabel" name="AboutTitle">
          <property name="text">
           <string># About</string>
          </property>
@@ -523,7 +517,7 @@
         </widget>
        </item>
        <item row="1" column="0">
-        <widget class="QTextBrowser" name="aboutText">
+        <widget class="QTextBrowser" name="AboutText">
          <property name="source">
           <url>
            <string>qrc:/text/about.md</string>

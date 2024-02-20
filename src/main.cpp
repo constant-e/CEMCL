@@ -1,4 +1,4 @@
-#include "CEMCL.hpp"
+#include "CEMCL/CEMCL.hpp"
 
 #include <QApplication>
 

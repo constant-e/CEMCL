@@ -19,8 +19,8 @@ class CEMCL : public QMainWindow
     Q_OBJECT
 
 public slots:
-    void onClickAddBtn();
-    void onClickConfigureBtn();
+    void onClickEditBtn();
+    void onClickNewBtn();
     void onClickSettingsBtn();
     void onClickStartBtn();
 
@@ -54,7 +54,7 @@ private:
     string xmx;
     
     // UI
-    Ui::CEMCL *ui;
+    Ui::CEMCL *UI;
 
     //game
     vector<Game> gameList;

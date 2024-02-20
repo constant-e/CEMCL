@@ -1,24 +1,24 @@
-{
-    "sha1": "",
-    "gameList" :
-    [
-        {
-            "args": "",
-            "height": 800,
-            "type": "release",
-            "version": "1.12.2",
-            "width": 600,
-            "xms": "1G",
-            "xmx": "2G"
-        },
-        {
-            "args": "",
-            "height": 800,
-            "type": "release",
-            "version": "1.13.2",
-            "width": 600,
-            "xms": "1G",
-            "xmx": "2G"
-        }
-    ]
-}
+[
+    {
+        "args": "",
+        "describe": "",
+        "height": 800,
+        "sha1": "",
+        "type": "release",
+        "version": "1.12.2",
+        "width": 600,
+        "xms": "1G",
+        "xmx": "2G"
+    },
+    {
+        "args": "",
+        "describe": "",
+        "height": 800,
+        "sha1": "",
+        "type": "release",
+        "version": "1.20.2",
+        "width": 600,
+        "xms": "1G",
+        "xmx": "2G"
+    }
+]

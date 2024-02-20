@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.16)
 
-project(CEMCL VERSION 1.0 LANGUAGES CXX)
+project(CEMCL VERSION 1.0.0 LANGUAGES CXX)
 
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
 
@@ -10,15 +10,15 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTORCC ON)
 
+configure_file(src/config/config.h.in config.h)
 add_compile_options(-mavx2 -mpclmul)
 
 find_package(Qt6 REQUIRED COMPONENTS Widgets)
 
-file(GLOB_RECURSE HEADER_FILES src/*.hpp)
-file(GLOB_RECURSE SOURCE_FILES src/*.cpp include/*/*.cpp)
+file(GLOB_RECURSE SOURCE_FILES src/*.cpp src/*/*.cpp)
 file(GLOB UI_FILES res/*.ui)
 
-include_directories(include src)
+include_directories(src)
 
 QT6_WRAP_UI(WRAP_FILES ${UI_FILES})
 add_executable(CEMCL ${HEADER_FILES} ${SOURCE_FILES} ${WRAP_FILES} res/resource.qrc)
