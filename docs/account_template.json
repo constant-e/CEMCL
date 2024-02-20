@@ -1,8 +1,8 @@
 [
     {
-        "online": false,
+        "type": "Legacy",
         "userName": "Steve",
-        "uuid": "",
-        "token": ""
+        "uuid": "Please Enter UUID",
+        "token": "None"
     }
 ]

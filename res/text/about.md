@@ -1,10 +1,16 @@
 ## CE Minecraft Launcher
-### 版本信息
-版本：v1.0.0Dev (240218)
+### Basic Information
+Version: v1.0.0 Dev (240220)  
+Developers: constant-e (https://github.com/constant-e)  
+Copyright (c) 2024 constant-e. All rights reserved.
 
-### 更新日志
+### Update Logs
+#### 240220
+重构 项目结构  
+重构 UI  
+新增 部分参数加载
 #### 240218
-重构 项目结构
+重构 项目结构  
 新增 部分参数加载
 #### 231028
 新增 完善加载版本列表
@@ -22,6 +28,6 @@
 #### 231001
 初始化项目
 
-### 鸣谢
+### Credits
 Qt/Qt6  
 bytedance/sonic-cpp

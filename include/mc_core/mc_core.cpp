@@ -1,5 +1,8 @@
 #include "mc_core.hpp"
 
+#include <filesystem>
+#include <set>
+
 #include "file/file.hpp"
 #include "network/network.hpp"
 #include "strTools/strTools.hpp"
@@ -7,6 +10,8 @@
 using sonic_json::Document;
 using std::cout;
 using std::endl;
+using std::filesystem::exists;
+using std::set;
 using std::to_string;
 
 // 已有变量：gameDir - .minecraft位置    javaDir - java位置(可执行文件)
@@ -19,7 +24,7 @@ using std::to_string;
     string os = "linux";
 #else
     string os = ""
-    cout << "[Warning] mc_core: Your OS or compiler may not be supported." << endl;
+    #Warning mc_core: Your OS or compiler may not be supported.
 #endif
 
 #ifdef __aarch64__
@@ -32,10 +37,10 @@ using std::to_string;
     string arch = "x86";
 #else
     string arch = "";
-    cout << "[Warning] mc_core: Your OS arch or compiler may not be supported." << endl;
+    #Warning mc_core: Your OS or compiler may not be supported.
 #endif
 
-string addArgs(Node & n) {
+string addArgs(Node &n) {
     string result = "";
     for (int i = 0; n.AtPointer(i) != nullptr; i++) {
         if (n.AtPointer(i)->IsString()) {
@@ -45,41 +50,53 @@ string addArgs(Node & n) {
         }
 
         // 不是String，判断rules
+        if (!n.AtPointer(i)->HasMember("value")) continue; // 格式错误
         if (!n.AtPointer(i)->HasMember("rules")) continue; // 格式错误
         Node * r = n.AtPointer(i, "rules");
+        bool allow = true;
         for (int j = 0; r->AtPointer(j) != nullptr; j++) {
-            if (!r->AtPointer(j)->HasMember("action")) continue;
-            if (r->AtPointer(j)->HasMember("features")) continue; // not support yet
+            if (!r->AtPointer(j)->HasMember("action")) {
+                allow = false;
+                break;
+            }
+            if (r->AtPointer(j)->HasMember("features")) {
+                allow = false;
+                break; // not support yet
+            }
             if (r->AtPointer(j, "action")->GetString() == "allow") {
                 if (r->AtPointer(j, "os")->HasMember("name") &&
                     r->AtPointer(j, "os", "name")->GetString() != os) {
-                    continue;
+                    allow = false;
+                    break;
                 }
                 if (r->AtPointer(j, "os")->HasMember("arch") &&
                     r->AtPointer(j, "os", "arch")->GetString() != arch) {
-                    continue;
+                    allow = false;
+                    break;
                 }
             } else if (r->AtPointer(j, "action")->GetString() == "disallow") {
                 if (r->AtPointer(j, "os")->HasMember("name") &&
                     r->AtPointer(j, "os", "name")->GetString() == os) {
-                    continue;
+                    allow = false;
+                    break;
                 }
                 if (r->AtPointer(j, "os")->HasMember("arch") &&
                     r->AtPointer(j, "os", "arch")->GetString() == arch) {
-                    continue;
+                    allow = false;
+                    break;
                 }
             }
-
-            if (!n.AtPointer(i)->HasMember("value")) continue; // 格式错误
-            if (n.AtPointer(i, "value")->IsString()) {
-                // 是一条参数
-                result.append(n.AtPointer(i, "value")->GetString()).append(" ");
-            } else {
-                // 是数组
-                for (int k = 0; n.AtPointer(i, "value", k) != nullptr; k++) {
-                    if (!n.AtPointer(i, "value", k)->IsString()) continue; // 格式错误
-                    result.append(n.AtPointer(i, "value", k)->GetString()).append(" ");
-                }
+        }
+        
+        if (!allow) continue;
+        if (n.AtPointer(i, "value")->IsString()) {
+            // 是一条参数
+            result.append(n.AtPointer(i, "value")->GetString()).append(" ");
+        } else {
+            // 是数组
+            for (int k = 0; n.AtPointer(i, "value", k) != nullptr; k++) {
+                if (!n.AtPointer(i, "value", k)->IsString()) continue; // 格式错误
+                result.append(n.AtPointer(i, "value", k)->GetString()).append(" ");
             }
         }
     }
@@ -91,57 +108,64 @@ bool addGame() {
 }
 
 // TODO 下载相关
-string addLibs(Node & n, string gameDir) {
-    string result = "";
+vector<string> addLibs(Node &n, string gameDir) {
+    vector<string> result;
     for (int i = 0; n.AtPointer(i) != nullptr; i++) {
+        if (!n.AtPointer(i)->HasMember("name")) continue; // 格式错误
         string temp = gameDir + "/libraries/";
         bool allow = true;
         if (n.AtPointer(i)->HasMember("rules")) {
             // 有rules，进行判断
             Node * r = n.AtPointer(i, "rules");
             for (int j = 0; r->AtPointer(j) != nullptr; j++) {
-                if (!r->AtPointer(j)->HasMember("action")) allow = false;
+                if (!r->AtPointer(j)->HasMember("action")) {
+                    allow = false;
+                    break;
+                }
+                // ver < 1.13 存在{"action":"allow"}, etc.
+                if (!r->AtPointer(j)->HasMember("os")) continue;
                 if (r->AtPointer(j, "action")->GetString() == "allow") {
                     if (r->AtPointer(j, "os")->HasMember("name") &&
                         r->AtPointer(j, "os", "name")->GetString() != os) {
                         allow = false;
+                        break;
                     }
                     if (r->AtPointer(j, "os")->HasMember("arch") &&
                         r->AtPointer(j, "os", "arch")->GetString() != arch) {
                         allow = false;
+                        break;
                     }
                 } else if (r->AtPointer(j, "action")->GetString() == "disallow") {
                     if (r->AtPointer(j, "os")->HasMember("name") &&
                         r->AtPointer(j, "os", "name")->GetString() == os) {
                         allow = false;
+                        break;
                     }
                     if (r->AtPointer(j, "os")->HasMember("arch") &&
                         r->AtPointer(j, "os", "arch")->GetString() == arch) {
                         allow = false;
+                        break;
                     }
                 }
             }
         }
         if (!allow) continue;
-        if (!n.AtPointer(i)->HasMember("name")) continue; // 格式错误
-
         // name: 包名:jar名:版本
         vector<string> nameS = splitStr(n.AtPointer(i, "name")->GetString(), ':');
         if (nameS.size() != 3) continue; // 格式错误
         strReplace(&nameS[0], ".", "/"); // 包名转换路径
         temp.append(nameS[0])
-              .append("/")
-              .append(nameS[1])
-              .append("/")
-              .append(nameS[2])
-              .append("/")
-              .append(nameS[1])
-              .append("-")
-              .append(nameS[2])
-              .append(".jar;");
-        result.append(temp);
+            .append("/")
+            .append(nameS[1])
+            .append("/")
+            .append(nameS[2])
+            .append("/")
+            .append(nameS[1])
+            .append("-")
+            .append(nameS[2])
+            .append(".jar");
+        result.push_back(temp);
     }
-    result.append("\b "); // 去掉末尾的;
     return result;
 }
 
@@ -171,100 +195,103 @@ string getCMD(Account account, Game game, string javaDir, string gameDir) {
     #endif
 
     // 生成参数：
-    string result = javaDir +
-    " -XX:+UseG1GC " +
-    "-XX:-UseAdaptiveSizePolicy " +
-    "-XX:-OmitStackTraceInFastThrow " +
-    "-Dfml.ignoreInvalidMinecraftCertificates=True " +
-    "-Dfml.ignorePatchDiscrepancies=True " + 
-    "-Dlog4j2.formatMsgNoLookups=true ";
+
+    string result = javaDir + " "; // 结果
+    string jvmArg = string("-XX:+UseG1GC ") +
+                    "-XX:-UseAdaptiveSizePolicy " +
+                    "-XX:-OmitStackTraceInFastThrow " +
+                    "-Dfml.ignoreInvalidMinecraftCertificates=True " +
+                    "-Dfml.ignorePatchDiscrepancies=True " + 
+                    "-Dlog4j2.formatMsgNoLookups=true "; // JVM参数
+    string gameArg = ""; // 游戏参数
+    vector<string> cp; // -cp内容
+    string mainClass = ""; // mainClass值
+    string assetIndex = ""; // assetIndex值
 
     // TODO 添加操作系统信息
 
-    string path = gameDir + "/versions/" + game.version + "/" + game.version + ".json";
     Document doc;
-    doc.Parse(openFile(path));
+    doc.Parse(openFile(gameDir + "/versions/" + game.version + "/" + game.version + ".json"));
     if (doc.HasParseError()) {
-        cout << "[Error] mc_core::getCMD : Failed to get launch command: " << path
-        << ": in line" << doc.GetErrorOffset() << ": Parse Error." << endl;
+        cout << "[Error] mc_core::getCMD : Failed to get launch command: "
+             << gameDir + "/versions/" + game.version + "/" + game.version + ".json"
+             << ": in line" << doc.GetErrorOffset() << ": Parse Error." << endl;
         return "";
     }
 
-    Node * mcArg; // 游戏参数Node
-    // JVM参数
-    if (!doc.HasMember("arguments")) {
-        // 1.12.2-
-        result.append("-Djava.library.path=${natives_directory} -cp ${classpath} ");
-        if (!doc.HasMember("minecraftArguments")) {
-            cout << "[Error] mc_core::getCMD : Failed to get launch command: " << path
-            << ": member \"minecraftArguments\" is not found." << endl;
+    // 判断inheritsFrom
+    if (doc.HasMember("inheritsFrom")) {
+        string parentVer = doc.AtPointer("inheritsFrom")->GetString();
+        if (exists(gameDir + "/versions/" + parentVer)) {
+            Document par;
+            par.Parse(openFile(gameDir + "/versions/" + parentVer + "/" + parentVer + ".json"));
+            if (par.HasParseError()) {
+                cout << "[Error] mc_core::getCMD : Failed to get launch command: "
+                     << gameDir + "/versions/" + parentVer + "/" + parentVer + ".json"
+                     << ": in line" << par.GetErrorOffset() << ": Parse Error." << endl;
+                return "";
+            }
+            mainClass = doc.AtPointer("mainClass")->GetString() + " ";
+            assetIndex = par.AtPointer("assetIndex", "id")->GetString() + " ";
+            cp = addLibs(*par.AtPointer("libraries"), gameDir);
+            cp.push_back(gameDir + "/versions/" + parentVer + "/" + parentVer + ".jar:");
+            if (!(setArgs(par, &jvmArg, &gameArg) && setArgs(doc, &jvmArg, &gameArg))) return "";
+        } else {
+            // TODO 下载原版
             return "";
         }
-        mcArg = doc.AtPointer("minecraftArguments");
-    } else if (doc.HasMember("arguments")) {
-        // 1.13.2+
-        if (!doc.AtPointer("arguments")->HasMember("jvm")) {
-            cout << "[Error] mc_core::getCMD : Failed to get launch command: " << path
-            << ": member \"jvm\" is not found." << endl;
-            return "";
-        }
-        Node * jvm = doc.AtPointer("arguments", "jvm");
-        result.append(addArgs(*jvm));
-        if (!doc.AtPointer("arguments")->HasMember("game")) {
-            cout << "[Error] mc_core : Failed to get launch command: " << path
-            << ": not has mc arguments" << endl;
-            return "";
-        }
-        mcArg = doc.AtPointer("arguments", "game");
     } else {
-        // 错误
-        cout << "[Error] mc_core : Failed to get launch command: " << path
-        << ": format error." << endl;
-        return "";
+        if (!setArgs(doc, &jvmArg, &gameArg)) return "";
+        assetIndex = doc.AtPointer("assetIndex", "id")->GetString();
+        mainClass = doc.AtPointer("mainClass")->GetString() + " ";
     }
-    result.append("${authlib_injector_param} ");
 
-    // 游戏主类
-    result.append("-Xms" + game.xms + " -Xmx" + game.xmx + " " + doc.AtPointer("mainClass")->GetString() + " ");
+    result.append(jvmArg) // JVM
+          .append("${authlib_injector_param} -Xms" + game.xms + " -Xmx" + game.xmx + " ") // 额外JVM
+          .append(mainClass) // 主类
+          .append(gameArg) // 游戏参数
+          .append("--width " + to_string(game.width) + " --height " + to_string(game.height) + " "); // 额外游戏参数
 
-    // 游戏参数
-    result.append(addArgs(*mcArg));
-
-    // Optifine --tweakClass调整至末尾
+    // Optifine : --tweakClass调整至末尾
     if (result.find("--tweakClass optifine.OptiFineTweaker") != result.npos) {
-      strReplace(&result, "--tweakClass optifine.OptiFineTweaker", "");
+        strReplace(&result, "--tweakClass optifine.OptiFineTweaker", "");
     }
     if (result.find("--tweakClass optifine.OptiFineForgeTweaker") != result.npos) {
         strReplace(&result, "--tweakClass optifine.OptiFineForgeTweaker", "");
     }
 
-    // width 和 height
-    result.append("--width " + to_string(game.width) + " --height " + to_string(game.height) + " ");
-
     // 替换result中的模板
 
     // ${classpath}
-    string cp = addLibs(*doc.AtPointer("libraries"), gameDir);
-
-    // ${assets_index_name}
-    string assetIndex = doc.AtPointer("assetIndex", "id")->GetString();
+    string cps = "";
+    vector<string> cp2 = addLibs(*doc.AtPointer("libraries"), gameDir);
+    cp.insert(cp.end(), cp2.begin(), cp2.end());
+    cp.push_back(gameDir + "/versions/" + game.version + "/" + game.version + ".jar");
+    // 去重
+    set<string> s(cp.begin(), cp.end());
+    cp.assign(s.begin(), s.end());
+    for (string s : cp) {
+        cps.append(s).append(":");
+    }
 
     strReplace(&result, "${auth_player_name}", account.userName);
     strReplace(&result, "${version_name}", game.version);
-    strReplace(&result, "${game_directory}", gameDir.append("/versions/").append(game.version));
-    strReplace(&result, "${assets_root}", gameDir.append("/assets"));
+    strReplace(&result, "${game_directory}", gameDir);
+    strReplace(&result, "${assets_root}", gameDir + "/assets");
     strReplace(&result, "${assets_index_name}", assetIndex);
     strReplace(&result, "${auth_uuid}", account.uuid);
     strReplace(&result, "${auth_access_token}", account.token);
-    strReplace(&result, "${user_type}", account.online ? "Mojang" : "Legacy");
+    strReplace(&result, "${user_type}", account.type);
     strReplace(&result, "${version_type}", game.type);
-    strReplace(&result, "${natives_directory}", "");
+    strReplace(&result, "${natives_directory}", gameDir + "/versions/" + game.version + "/natives");
     strReplace(&result, "${launcher_name}", "\"CE Minecraft Launcher\"");
     strReplace(&result, "${launcher_version}", "1.0.0");
-    strReplace(&result, "${classpath}", cp);
+    strReplace(&result, "${classpath}", cps);
     strReplace(&result, "${library_directory}", gameDir + "/libraries");
-    strReplace(&result, "${classpath_separator}", ";");
-    strReplace(&result, "${authlib_injector_param}", ""); // offline
+    strReplace(&result, "${classpath_separator}", ":");
+    strReplace(&result, "${authlib_injector_param}", ""); // not support yet
+
+    // TODO natives
 
     cout << result << endl;
 
@@ -336,4 +363,21 @@ vector<Game> loadGameList(
         }
     }
     return gameList;
+}
+
+bool setArgs(Node &n, string *jvmArg, string *gameArg) {
+    if (!n.HasMember("arguments") && n.HasMember("minecraftArguments")) {
+        // ver < 1.13
+        jvmArg->append("-Djava.library.path=${natives_directory} -cp ${classpath} ");
+        gameArg->append(n.AtPointer("minecraftArguments")->GetString());
+    } else if (n.HasMember("arguments") && n.AtPointer("arguments")->HasMember("jvm") && n.AtPointer("arguments")->HasMember("game")) {
+        // ver >= 1.13
+        jvmArg->append(addArgs(*n.AtPointer("arguments", "jvm")));
+        gameArg->append(addArgs(*n.AtPointer("arguments", "game")));
+    } else {
+        // 错误
+        cout << "[Error] mc_core::setArgs : Failed to get jvm and game arguments: Format Error." << endl;
+        return false;
+    }
+    return true;
 }

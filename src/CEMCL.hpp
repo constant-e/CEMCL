@@ -8,7 +8,7 @@
 
 #include "mc_core/mc_core.hpp"
 
-#define DEFAULTCFG "{\"closeAfterLaunch\":false,\"forgeSource\":\"\",\"gameDir\":\".minecraft\",\"javaDir\":\"java\",\"MCSource\":\"\",\"optifineSource\":\"\",\"xms\":\"1G\",\"xmx\":\"2G\",\"width\":800,\"height\":600}"
+#define DEFAULTCFG "{\"closeAfterLaunch\":false,\"forgeSource\":\"\",\"gameDir\":\".minecraft\",\"javaDir\":\"java\",\"MCSource\":\"\",\"xms\":\"1G\",\"xmx\":\"2G\",\"width\":800,\"height\":600}"
 
 QT_BEGIN_NAMESPACE
 namespace Ui { class CEMCL; }
@@ -46,7 +46,6 @@ private:
     // string liteLoaderSource; not support yet
 
     string MCSource;
-    string optfineSource;
 
     // string quiltSource; not support yet
     

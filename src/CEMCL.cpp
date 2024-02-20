@@ -45,11 +45,11 @@ bool CEMCL::loadAccount() {
 
         for (int i = 0; doc.AtPointer(i) != nullptr; i++) {
             Account account;
-            if (doc.AtPointer(i)->HasMember("online")) {
-                account.online = doc.AtPointer(i, "online")->GetBool();
+            if (doc.AtPointer(i)->HasMember("type")) {
+                account.type = doc.AtPointer(i, "type")->GetString();
             } else {
                 cout << "[Error] CEMCL::loadAccount : account doesn't have member "
-                     << "\"online\". Skipping." << endl;
+                     << "\"type\". Skipping." << endl;
                 continue;
             }
             
@@ -197,17 +197,6 @@ bool CEMCL::loadConfig() {
                 "config.json doesn't have member \"MCSource\". Using the default value.");
         }
 
-        if (doc.HasMember("optifineSource")) {
-            optfineSource = doc.AtPointer("optifineSource")->GetString();
-        } else {
-            cout << "[Warning] CEMCL::loadConfig : config.json doesn't have member "
-                 << "\"optifineSource\". Using the default value." << endl;
-            QMessageBox::warning(
-                this, 
-                "Warning", 
-                "config.json doesn't have member \"optifineSource\". Using the default value.");
-        }
-
         if (doc.HasMember("width")) {
             width = doc.AtPointer("width")->GetInt64();
         } else {
@@ -249,7 +238,6 @@ bool CEMCL::loadConfig() {
              << "height: " << height << "\r"
              << "javaDir: " << javaDir << "\r"
              << "MCSource: " << MCSource << "\r"
-             << "optifineSource: " << optifineSource << "\r"
              << "width: " << width << "\r"
              << "xms: " << xms << "\r"
              << "xmx: " << xmx << endl;
@@ -261,20 +249,35 @@ bool CEMCL::loadUI() {
     #ifdef DEBUG
         cout << "[Info] CEMCL::loadUI : Loading UI ..." << endl;
     #endif
+    // accTab
+    int accCount = accountList.size();
+    ui->accTableWidget->setRowCount(accCount);
+    ui->accTableWidget->setHorizontalHeaderItem(0, new QTableWidgetItem("Name"));
+    ui->accTableWidget->setHorizontalHeaderItem(1, new QTableWidgetItem("Type"));
+    for (int i = 0; i < accCount; i++) {
+        QTableWidgetItem * item1 = new QTableWidgetItem();
+        item1->setText(QString(accountList[i].userName.c_str()));
+        ui->accTableWidget->setItem(i, 0, item1);
+
+        QTableWidgetItem * item2 = new QTableWidgetItem();
+        item2->setText(QString(accountList[i].type.c_str()));
+        ui->accTableWidget->setItem(i, 1, item2);
+    }
+
+    // verTab
     int c = gameList.size();
-    ui->tableWidget->setRowCount(c);
-    ui->tableWidget->setHorizontalHeaderItem(0, new QTableWidgetItem("Name"));
-    ui->tableWidget->setHorizontalHeaderItem(1, new QTableWidgetItem("Version"));
-    ui->tableWidget->setHorizontalHeaderItem(2, new QTableWidgetItem("Type"));
-    ui->tableWidget->setHorizontalHeaderItem(3, new QTableWidgetItem("Describe"));
+    ui->verTableWidget->setRowCount(c);
+    ui->verTableWidget->setHorizontalHeaderItem(0, new QTableWidgetItem("Version"));
+    ui->verTableWidget->setHorizontalHeaderItem(1, new QTableWidgetItem("Type"));
+    ui->verTableWidget->setHorizontalHeaderItem(2, new QTableWidgetItem("Describe"));
     for (int i = 0; i < c; i++) {
-        // TODO 更新UI后一并修改
-        // QTableWidgetItem * item = new QTableWidgetItem();
-        // item->setText(QString(gameList[i][j].c_str()));
-        // ui->tableWidget->setItem(i, j, item);
-        QTableWidgetItem * item = new QTableWidgetItem();
-        item->setText(QString(gameList[i].version.c_str()));
-        ui->tableWidget->setItem(i, 0, item);
+        QTableWidgetItem * item1 = new QTableWidgetItem();
+        item1->setText(QString(gameList[i].version.c_str()));
+        ui->verTableWidget->setItem(i, 0, item1);
+
+        QTableWidgetItem * item2 = new QTableWidgetItem();
+        item2->setText(QString(gameList[i].type.c_str()));
+        ui->verTableWidget->setItem(i, 1, item2);
     }
     #ifdef DEBUG
         cout << "[Info] CEMCL::loadUI : Successfully loaded UI." << endl;
@@ -313,12 +316,20 @@ void CEMCL::onClickStartBtn() {
     #ifdef DEBUG
         cout << "[Info] CEMCL::onClickStartBtn : Triggered." << endl;
     #endif
-    // TODO 下载及账号选择
-    int c = ui->tableWidget->currentRow();
-    #ifdef DEBUG
-        cout << "[Info] CEMCL::onClickStartBtn : Game index selected: " << c << endl;
-    #endif
-    if (c == -1) {
+    // TODO 下载
+    int accIndex = ui->accTableWidget->currentRow();
+    int verIndex = ui->verTableWidget->currentRow();
+    if (accIndex == -1) {
+        #ifdef DEBUG
+            cout << "[Error] CEMCL::onClickStartBtn : Haven't select account yet." << endl;
+        #endif
+        QMessageBox::warning(
+            this, 
+            "Error", 
+            "Haven't select account yet. Please select one first.");
+        return;
+    }
+    if (verIndex == -1) {
         #ifdef DEBUG
             cout << "[Error] CEMCL::onClickStartBtn : Haven't select game yet." << endl;
         #endif
@@ -328,7 +339,7 @@ void CEMCL::onClickStartBtn() {
             "Haven't select game yet. Please select one first.");
         return;
     }
-    system(getCMD(accountList[0], gameList[c], javaDir, gameDir).c_str());
+    system(getCMD(accountList[accIndex], gameList[verIndex], javaDir, gameDir).append(" &").c_str());
 }
 
 CEMCL::CEMCL(QWidget *parent)

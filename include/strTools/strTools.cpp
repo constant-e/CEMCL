@@ -15,7 +15,8 @@ vector<string> splitStr(const string & str, char delim) {
 
 void strReplace(string * str, string oldVaule, string newValue) {
 	int pos = str->find(oldVaule);
-	int len = oldVaule.length();
-	if (pos == string::npos) return;
-	str->replace(str->find(oldVaule), len, newValue);
+	while (pos != str->npos) {
+		str->replace(str->find(oldVaule), oldVaule.length(), newValue);
+		pos = str->find(oldVaule);
+	}
 }
