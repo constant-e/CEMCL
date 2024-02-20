@@ -292,8 +292,6 @@ string getCMD(Account account, Game game, string javaDir, string gameDir) {
 
     // TODO natives
 
-    cout << result << endl;
-
     #ifdef DEBUG
         cout << "[Info] mc_core::getCMD : Finished. Command: " << result << endl;
     #endif
@@ -336,8 +334,8 @@ vector<Game> loadGameList(
             gameList[i].xms = defXms;
             gameList[i].xmx = defXmx;
         }
-        // TODO SHA-1 sum
     } else {
+        // TODO SHA-1 sum
         string cfgText = openFile("index.json");
         if (cfgText.empty()) {
             return loadGameList(true, gameDir, defHeight, defWidth, defXms, defXmx);

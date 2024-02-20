@@ -2,8 +2,12 @@
 #include <QObject>
 #include <QTableWidget>
 
+#include "AddAccDialog/AddAccDialog.hpp"
+#include "AddVerDialog/AddVerDialog.hpp"
 #include "CEMCL.hpp"
 #include "CEMCLUI.hpp"
+#include "EditAccDialog/EditAccDialog.hpp"
+#include "EditVerDialog/EditVerDialog.hpp"
 #include "file/file.hpp"
 #include "Settings/Settings.hpp"
 
@@ -287,18 +291,66 @@ void CEMCL::onClickEditBtn() {
     #ifdef DEBUG
         cout << "[Info] CEMCL::onClickEditBtn : Triggered." << endl;
     #endif
-    /*EditDialog * d = new EditDialog(this);
-    d->show();
-    d->exec();*/
+    if (UI->AccTableWidget->currentRow() != -1 &&
+        UI->VerTableWidget->currentRow() == -1) {
+        // edit account
+        EditAccDialog * d = new EditAccDialog(this);
+        d->show();
+        d->exec();
+        UI->AccTableWidget->setCurrentCell(-1, -1);
+    } else if (UI->AccTableWidget->currentRow() == -1 &&
+               UI->VerTableWidget->currentRow() != -1) {
+        // edit version
+        EditVerDialog * d = new EditVerDialog(this);
+        d->show();
+        d->exec();
+        UI->VerTableWidget->setCurrentCell(-1, -1);
+    } else {
+        // error
+        #ifdef DEBUG
+            cout << "[Error] CEMCL::onClickEditBtn : Targets too few or too many." << endl;
+        #endif
+        QMessageBox::warning(
+            this, 
+            "Error", 
+            "Please select one account or Minecraft version.");
+        UI->AccTableWidget->setCurrentCell(-1, -1);
+        UI->VerTableWidget->setCurrentCell(-1, -1);
+        return;
+    }
 }
 
 void CEMCL::onClickNewBtn() {
     #ifdef DEBUG
         cout << "[Info] CEMCL::onClickAddBtn : Triggered." << endl;
     #endif
-    /*AddDialog * a = new AddDialog(this);
-    a->show();
-    a->exec();*/
+    if (UI->AccTableWidget->currentRow() != -1 &&
+        UI->VerTableWidget->currentRow() == -1) {
+        // new account
+        AddAccDialog * d = new AddAccDialog(this);
+        d->show();
+        d->exec();
+        UI->AccTableWidget->setCurrentCell(-1, -1);
+    } else if (UI->AccTableWidget->currentRow() == -1 &&
+               UI->VerTableWidget->currentRow() != -1) {
+        // edit version
+        AddVerDialog * d = new AddVerDialog(this);
+        d->show();
+        d->exec();
+        UI->VerTableWidget->setCurrentCell(-1, -1);
+    } else {
+        // error
+        #ifdef DEBUG
+            cout << "[Error] CEMCL::onClickNewBtn : Haven't select target." << endl;
+        #endif
+        QMessageBox::warning(
+            this, 
+            "Error", 
+            "Please select \"Account\" table or \"Minecraft Version\" table.");
+        UI->AccTableWidget->setCurrentCell(-1, -1);
+        UI->VerTableWidget->setCurrentCell(-1, -1);
+        return;
+    }
 }
 
 void CEMCL::onClickSettingsBtn() {
@@ -338,6 +390,8 @@ void CEMCL::onClickStartBtn() {
         return;
     }
     system(getCMD(accountList[accIndex], gameList[verIndex], javaDir, gameDir).append(" &").c_str());
+    UI->AccTableWidget->setCurrentCell(-1, -1);
+    UI->VerTableWidget->setCurrentCell(-1, -1);
 }
 
 CEMCL::CEMCL(QWidget *parent)

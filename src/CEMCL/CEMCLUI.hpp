@@ -119,6 +119,7 @@ public:
         AccTableWidget->setLocale(QLocale(QLocale::English, QLocale::UnitedStates));
         AccTableWidget->setEditTriggers(QAbstractItemView::NoEditTriggers);
         AccTableWidget->setSelectionBehavior(QAbstractItemView::SelectRows);
+        AccTableWidget->setSelectionMode(QAbstractItemView::SingleSelection);
         AccTableWidget->setRowCount(1);
         AccTableWidget->setColumnCount(2);
         AccTableWidget->horizontalHeader()->setStretchLastSection(true);
@@ -135,6 +136,7 @@ public:
         VerTableWidget->setLocale(QLocale(QLocale::English, QLocale::UnitedStates));
         VerTableWidget->setEditTriggers(QAbstractItemView::NoEditTriggers);
         VerTableWidget->setSelectionBehavior(QAbstractItemView::SelectRows);
+        VerTableWidget->setSelectionMode(QAbstractItemView::SingleSelection);
         VerTableWidget->setRowCount(1);
         VerTableWidget->setColumnCount(3);
         VerTableWidget->horizontalHeader()->setStretchLastSection(true);
