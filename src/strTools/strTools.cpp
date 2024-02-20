@@ -1,6 +1,6 @@
-#include "strTools.hpp"
-
 #include <regex>
+
+#include "strTools.hpp"
 
 using std::regex;
 using std::sregex_token_iterator;

@@ -34,7 +34,7 @@
      </property>
      <widget class="QWidget" name="LegacyTab">
       <attribute name="title">
-       <string>Offline (Legacy) Account</string>
+       <string>Offline ( Legacy ) Account</string>
       </attribute>
       <layout class="QGridLayout" name="LegacyGLayout">
        <item row="1" column="0">
@@ -82,7 +82,7 @@
      </widget>
      <widget class="QWidget" name="MSTab">
       <attribute name="title">
-       <string>Official (msa or Mojang) Account</string>
+       <string>Official ( msa / Mojang ) Account</string>
       </attribute>
       <layout class="QGridLayout" name="MSGLayout">
        <item row="1" column="0">

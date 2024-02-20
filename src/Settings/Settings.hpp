@@ -1,5 +1,4 @@
-#ifndef Settings_H
-#define Settings_H
+#pragma once
 
 #include <iostream>
 #include <QDialog>
@@ -20,7 +19,6 @@ public:
     ~Settings();
 
 private:
-    Ui::Settings *ui;
+    Ui::Settings *UI;
     
 };
-#endif // Settings_H

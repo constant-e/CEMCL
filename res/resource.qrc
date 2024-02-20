@@ -4,4 +4,7 @@
         <file>pic/icon.jpg</file>
         <file>text/about.md</file>
     </qresource>
+    <qresource lang="zh">
+        <file alias="text/about.md">text/about-zh.md</file>
+    </qresource>
 </RCC>

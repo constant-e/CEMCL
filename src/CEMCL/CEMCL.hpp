@@ -1,5 +1,4 @@
-#ifndef CEMCL_H
-#define CEMCL_H
+#pragma once
 
 #include <iostream>
 #include <QMainWindow>
@@ -8,7 +7,7 @@
 
 #include "MCCore/MCCore.hpp"
 
-#define DEFAULTCFG "{\"closeAfterLaunch\":false,\"forgeSource\":\"\",\"gameDir\":\".minecraft\",\"javaDir\":\"java\",\"MCSource\":\"\",\"xms\":\"1G\",\"xmx\":\"2G\",\"width\":800,\"height\":600}"
+#define DEFAULTCFG "{\"closeAfterLaunch\":false,\"forgeSource\":\"https://maven.minecraftforge.net\",\"gameDir\":\".minecraft\",\"javaDir\":\"java\",\"MCSource\":\"https://piston-meta.mojang.com\",\"xms\":\"1G\",\"xmx\":\"2G\",\"width\":800,\"height\":600}"
 
 QT_BEGIN_NAMESPACE
 namespace Ui { class CEMCL; }
@@ -64,4 +63,3 @@ private:
     bool loadConfig();
     bool loadUI();
 };
-#endif // CEMCL_H

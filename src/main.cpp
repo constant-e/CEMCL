@@ -1,6 +1,6 @@
-#include "CEMCL/CEMCL.hpp"
-
 #include <QApplication>
+
+#include "CEMCL/CEMCL.hpp"
 
 int main(int argc, char *argv[]) {
     QApplication a(argc, argv);

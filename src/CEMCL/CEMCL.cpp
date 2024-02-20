@@ -1,12 +1,11 @@
-#include "CEMCL.hpp"
-#include "ui_CEMCL.h"
-
-#include "file/file.hpp"
-#include "Settings/Settings.hpp"
-
 #include <QMessageBox>
 #include <QObject>
 #include <QTableWidget>
+
+#include "CEMCL.hpp"
+#include "CEMCLUI.hpp"
+#include "file/file.hpp"
+#include "Settings/Settings.hpp"
 
 using sonic_json::Document;
 using std::cout;
@@ -25,6 +24,7 @@ bool CEMCL::loadAccount() {
             cout << "[Info] CEMCL::loadAccount : account.json is empty. Using DEFAULTACC." << endl;
         #endif
         saveFile("account.json", DEFAULTACC);
+        return loadAccount();
     } else {
         Document doc;
         doc.Parse(accText);

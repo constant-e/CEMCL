@@ -26,7 +26,7 @@
       <attribute name="title">
        <string>Settings</string>
       </attribute>
-      <layout class="QVBoxLayout" name="SettingsVLayout">
+      <layout class="QVBoxLayout" name="verticalLayout">
        <item>
         <widget class="QLabel" name="SettingsTitle">
          <property name="sizePolicy">
@@ -57,7 +57,7 @@
             <x>0</x>
             <y>0</y>
             <width>844</width>
-            <height>496</height>
+            <height>537</height>
            </rect>
           </property>
           <layout class="QVBoxLayout" name="verticalLayout_3">
@@ -95,6 +95,29 @@
               <string>Close Launcher After Starting Game</string>
              </property>
             </widget>
+           </item>
+           <item>
+            <layout class="QHBoxLayout" name="LangHLayout">
+             <item>
+              <widget class="QLabel" name="LangLabel">
+               <property name="sizePolicy">
+                <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+                 <horstretch>0</horstretch>
+                 <verstretch>0</verstretch>
+                </sizepolicy>
+               </property>
+               <property name="locale">
+                <locale language="English" country="UnitedStates"/>
+               </property>
+               <property name="text">
+                <string>Language</string>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QComboBox" name="LangComboBox"/>
+             </item>
+            </layout>
            </item>
            <item>
             <layout class="QHBoxLayout" name="MCHLayout">

@@ -1,9 +1,8 @@
-#include "MCCore.hpp"
-
 #include <filesystem>
 #include <set>
 
 #include "file/file.hpp"
+#include "MCCore.hpp"
 #include "network/network.hpp"
 #include "strTools/strTools.hpp"
 
@@ -310,6 +309,7 @@ vector<Game> loadGameList(
     string defXmx) {
     vector<Game> gameList;
     if (reload) {
+        if (!exists(gameDir + "/versions")) return {};
         vector<string> versionList = getDirs(gameDir + "/versions");
         int count = versionList.size();
         gameList.resize(count);

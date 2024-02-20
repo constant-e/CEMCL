@@ -10,6 +10,7 @@
 using sonic_json::Node;
 using std::string;
 using std::vector;
+
 // 已有变量：gameDir - .minecraft位置    javaDir - java位置(可执行文件)
 
 // 账户
