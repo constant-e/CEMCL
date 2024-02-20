@@ -6,7 +6,7 @@
 #include <QObject>
 #include <vector>
 
-#include "mc_core/mc_core.hpp"
+#include "MCCore/MCCore.hpp"
 
 #define DEFAULTCFG "{\"closeAfterLaunch\":false,\"forgeSource\":\"\",\"gameDir\":\".minecraft\",\"javaDir\":\"java\",\"MCSource\":\"\",\"xms\":\"1G\",\"xmx\":\"2G\",\"width\":800,\"height\":600}"
 

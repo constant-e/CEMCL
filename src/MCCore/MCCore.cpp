@@ -1,4 +1,4 @@
-#include "mc_core.hpp"
+#include "MCCore.hpp"
 
 #include <filesystem>
 #include <set>
