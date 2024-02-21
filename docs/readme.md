@@ -18,7 +18,6 @@
         "type": "msa",
         "userName": "Steve",
         "uuid": "xxx",
-        
     }, 
     ...
 ]
@@ -54,7 +53,8 @@
         "args": "",
         "describe": "",
         "height": 800,
-        "sha1": "",
+        "javaDir": "",
+        "seperated": false,
         "type": "release",
         "version": "1.12.2",
         "width": 600,
@@ -65,7 +65,8 @@
         "args": "",
         "describe": "",
         "height": 800,
-        "sha1": "",
+        "javaDir": "",
+        "seperated": false,
         "type": "release",
         "version": "1.20.2",
         "width": 600,

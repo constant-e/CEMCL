@@ -402,7 +402,7 @@ CEMCL::CEMCL(QWidget *parent)
     #endif
     if (!loadAccount()) return; // 账户
     if (!loadConfig()) return; // 启动器配置文件 + 游戏默认配置
-    gameList = loadGameList(false, gameDir, 600, 800, "1G", "2G"); // 游戏列表
+    gameList = loadGameList(false, gameDir, javaDir, height, width, xms, xmx); // 游戏列表
     // TODO UI设计确定后，合并以下内容至loadUI()，添加双语言。
     UI->setupUi(this);
     if (!loadUI()) return; // UI

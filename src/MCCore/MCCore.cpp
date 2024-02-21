@@ -7,6 +7,7 @@
 #include "strTools/strTools.hpp"
 
 using sonic_json::Document;
+using sonic_json::WriteBuffer;
 using std::cout;
 using std::endl;
 using std::filesystem::exists;
@@ -151,7 +152,6 @@ vector<string> addLibs(Node &n, string gameDir) {
         if (!allow) continue;
         // name: 包名:jar名:版本
         vector<string> nameS = splitStr(n.AtPointer(i, "name")->GetString(), ':');
-        if (nameS.size() != 3) continue; // 格式错误
         strReplace(&nameS[0], ".", "/"); // 包名转换路径
         temp.append(nameS[0])
             .append("/")
@@ -161,8 +161,12 @@ vector<string> addLibs(Node &n, string gameDir) {
             .append("/")
             .append(nameS[1])
             .append("-")
-            .append(nameS[2])
-            .append(".jar");
+            .append(nameS[2]);
+        if (nameS.size() == 4) {
+            // 添加后缀
+            temp.append("-").append(nameS[3]);
+        }
+        temp.append(".jar");
         result.push_back(temp);
     }
     return result;
@@ -182,6 +186,38 @@ bool delGame() {
     return true;
 }
 
+string getConfig(vector<Game> gameList, string javaDir, int defHeight, int defWidth, string defXms, string defXmx) {
+    Document doc;
+    doc.SetArray();
+    for (Game game : gameList) {
+        Node n;
+        Node::AllocatorType alloc = doc.GetAllocator();
+
+        // 恢复默认项
+        if (game.height == defHeight) game.height = -1;
+        if (game.javaDir == javaDir) game.javaDir = "";
+        if (game.width == defWidth) game.width = -1;
+        if (game.xms == defXms) game.xms = "";
+        if (game.xmx == defXmx) game.xmx = "";
+
+        n.SetObject();
+        n.AddMember("args", Node::NodeType(game.args, alloc), alloc);
+        n.AddMember("height", Node::NodeType(game.height), alloc);
+        n.AddMember("javaDir", Node::NodeType(game.javaDir, alloc), alloc);
+        n.AddMember("seperated", Node::NodeType(game.seperated), alloc);
+        n.AddMember("type", Node::NodeType(game.type, alloc), alloc);
+        n.AddMember("version", Node::NodeType(game.version, alloc), alloc);
+        n.AddMember("width", Node::NodeType(game.width), alloc);
+        n.AddMember("xms", Node::NodeType(game.xms, alloc), alloc);
+        n.AddMember("xmx", Node::NodeType(game.xmx, alloc), alloc);
+
+        doc.PushBack(n, alloc);
+    }
+    WriteBuffer wb;
+    doc.Serialize(wb);
+    return wb.ToString();
+}
+
 string getCMD(Account account, Game game, string javaDir, string gameDir) {
     #ifdef DEBUG
         cout << "[Info] mc_core::getCMD : Start." << endl;
@@ -195,7 +231,7 @@ string getCMD(Account account, Game game, string javaDir, string gameDir) {
 
     // 生成参数：
 
-    string result = javaDir + " "; // 结果
+    string result = game.javaDir + " "; // 结果
     string jvmArg = string("-XX:+UseG1GC ") +
                     "-XX:-UseAdaptiveSizePolicy " +
                     "-XX:-OmitStackTraceInFastThrow " +
@@ -233,7 +269,6 @@ string getCMD(Account account, Game game, string javaDir, string gameDir) {
             mainClass = doc.AtPointer("mainClass")->GetString() + " ";
             assetIndex = par.AtPointer("assetIndex", "id")->GetString() + " ";
             cp = addLibs(*par.AtPointer("libraries"), gameDir);
-            cp.push_back(gameDir + "/versions/" + parentVer + "/" + parentVer + ".jar:");
             if (!(setArgs(par, &jvmArg, &gameArg) && setArgs(doc, &jvmArg, &gameArg))) return "";
         } else {
             // TODO 下载原版
@@ -301,6 +336,7 @@ string getCMD(Account account, Game game, string javaDir, string gameDir) {
 vector<Game> loadGameList(
     bool reload,
     string gameDir,
+    string javaDir,
     int defHeight,
     int defWidth,
     string defXms,
@@ -327,36 +363,42 @@ vector<Game> loadGameList(
             }
 
             gameList[i].args = "";
-            gameList[i].height = defHeight;
             gameList[i].type = doc.AtPointer("type")->GetString();
             gameList[i].version = versionList[i];
+            gameList[i].height = defHeight;
             gameList[i].width = defWidth;
             gameList[i].xms = defXms;
             gameList[i].xmx = defXmx;
         }
+        saveFile("index.json", getConfig(gameList, javaDir, defHeight, defWidth, defXms, defXmx));
     } else {
-        // TODO SHA-1 sum
         string cfgText = openFile("index.json");
         if (cfgText.empty()) {
-            return loadGameList(true, gameDir, defHeight, defWidth, defXms, defXmx);
+            return loadGameList(true, gameDir, javaDir, defHeight, defWidth, defXms, defXmx);
         }
         Document doc;
         doc.Parse(cfgText);
-        // TODO: if SHA-1 different, reload
         if (doc.HasParseError()) {
-            return loadGameList(true, gameDir, defHeight, defWidth, defXms, defXmx);
+            return loadGameList(true, gameDir, javaDir, defHeight, defWidth, defXms, defXmx);
         }
 
-        Node * list = doc.AtPointer("gameList");
-        for (int i = 0; list->AtPointer(i) != nullptr; i++) {
+        for (int i = 0; doc.AtPointer(i) != nullptr; i++) {
             Game g;
-            g.args = list->AtPointer(i, "args")->GetString();
-            g.height = list->AtPointer(i, "height")->GetInt64();
-            g.type = list->AtPointer(i, "type")->GetString();
-            g.version = list->AtPointer(i, "version")->GetString();
-            g.width = list->AtPointer(i, "width")->GetInt64();
-            g.xms = list->AtPointer(i, "xms")->GetString();
-            g.xmx = list->AtPointer(i, "xmx")->GetString();
+            g.args = doc.AtPointer(i, "args")->GetString();
+            g.height = doc.AtPointer(i, "height")->GetInt64();
+            g.javaDir = doc.AtPointer(i, "javaDir")->GetString();
+            g.seperated = doc.AtPointer(i, "seperated")->GetBool();
+            g.type = doc.AtPointer(i, "type")->GetString();
+            g.version = doc.AtPointer(i, "version")->GetString();
+            g.width = doc.AtPointer(i, "width")->GetInt64();
+            g.xms = doc.AtPointer(i, "xms")->GetString();
+            g.xmx = doc.AtPointer(i, "xmx")->GetString();
+            // 加载默认项
+            if (g.height == -1) g.height = defHeight;
+            if (g.javaDir.empty()) g.javaDir = javaDir;
+            if (g.width == -1) g.width = defWidth;
+            if (g.xms.empty()) g.xms = defXms;
+            if (g.xmx.empty()) g.xmx = defXmx;
             gameList.push_back(g);
         }
     }
