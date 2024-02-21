@@ -5,7 +5,6 @@
 #include "AddAccDialog/AddAccDialog.hpp"
 #include "AddVerDialog/AddVerDialog.hpp"
 #include "CEMCL.hpp"
-#include "CEMCLUI.hpp"
 #include "EditAccDialog/EditAccDialog.hpp"
 #include "EditVerDialog/EditVerDialog.hpp"
 #include "file/file.hpp"
@@ -396,7 +395,7 @@ void CEMCL::onClickStartBtn() {
 
 CEMCL::CEMCL(QWidget *parent)
     : QMainWindow(parent)
-    , UI(new Ui::CEMCL) {
+    , UI(new CEMCLUI) {
     #ifdef DEBUG
         cout << "[Info] CEMCL::CEMCL : APP start." << endl;
     #endif
@@ -404,7 +403,7 @@ CEMCL::CEMCL(QWidget *parent)
     if (!loadConfig()) return; // 启动器配置文件 + 游戏默认配置
     gameList = loadGameList(false, gameDir, javaDir, height, width, xms, xmx); // 游戏列表
     // TODO UI设计确定后，合并以下内容至loadUI()，添加双语言。
-    UI->setupUi(this);
+    UI->setupUI(this);
     if (!loadUI()) return; // UI
     QObject::connect(UI->EditBtn, &QPushButton::clicked, this, &CEMCL::onClickEditBtn);
     QObject::connect(UI->NewBtn, &QPushButton::clicked, this, &CEMCL::onClickNewBtn);

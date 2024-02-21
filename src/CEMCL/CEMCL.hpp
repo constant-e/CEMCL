@@ -5,13 +5,10 @@
 #include <QObject>
 #include <vector>
 
+#include "CEMCLUI.hpp"
 #include "MCCore/MCCore.hpp"
 
 #define DEFAULTCFG "{\"closeAfterLaunch\":false,\"forgeSource\":\"https://maven.minecraftforge.net\",\"gameDir\":\".minecraft\",\"javaDir\":\"java\",\"MCSource\":\"https://piston-meta.mojang.com\",\"xms\":\"1G\",\"xmx\":\"2G\",\"width\":800,\"height\":600}"
-
-QT_BEGIN_NAMESPACE
-namespace Ui { class CEMCL; }
-QT_END_NAMESPACE
 
 class CEMCL : public QMainWindow
 {
@@ -53,7 +50,7 @@ private:
     string xmx;
     
     // UI
-    Ui::CEMCL *UI;
+    CEMCLUI *UI;
 
     //game
     vector<Game> gameList;
