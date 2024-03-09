@@ -47,9 +47,6 @@ CEMCL
 │   └── resource.qrc            # qrc文件
 ├── src                         # 源代码文件夹
 │   ├── AddAccDialog            # 一个带GUI的模块 添加账号对话框
-│   │   ├── strings             # 字符串
-│   │   │   ├── strings.cpp     # 字符串定义（根据语言）
-│   │   │   └── strings.hpp     # 字符串声明
 │   │   ├── AddAccDialog.cpp    # 后端源文件
 │   │   ├── AddAccDialog.hpp    # 后端头文件
 │   │   └── AddAccDialogUI.hpp  # UI头文件
