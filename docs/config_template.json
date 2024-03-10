@@ -1,10 +1,11 @@
 {
     "closeAfterLaunch": false,
-    "forgeSource": "",
+    "forgeSource": "https://maven.minecraftforge.net",
     "gameDir": ".minecraft",
     "height": 600,
     "javaDir": "java",
-    "MCSource": "",
+    "lang": "en",
+    "MCSource": "https://piston-meta.mojang.com",
     "width": 800,
     "xms": "1G", 
     "xmx": "2G"

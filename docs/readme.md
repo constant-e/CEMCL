@@ -7,16 +7,16 @@
 ```json
 [
     {
-        "token": "xxx",
+        "access_token": "xxx",
         "type": "Legacy",
-        "userName": "Steve",
+        "user_name": "Steve",
         "uuid": "xxx",
         
     }, 
     {
-        "token": "xxx",
+        "access_token": "xxx",
         "type": "msa",
-        "userName": "Steve",
+        "user_name": "Steve",
         "uuid": "xxx",
     }, 
     ...
@@ -30,12 +30,12 @@
 样例：
 ```json
 {
-    "closeAfterLaunch": false,
-    "forgeSource": "",
-    "gameDir": ".minecraft",
+    "close_after_launch": false,
+    "forge_s_ource": "",
+    "game_dir": ".minecraft",
     "height": 600,
-    "javaDir": "java",
-    "MCSource": "",
+    "java_path": "java",
+    "mc_source": "",
     "width": 800,
     "xms": "1G", 
     "xmx": "2G"
@@ -51,25 +51,25 @@
 [
     {
         "args": "",
-        "describe": "",
-        "height": 800,
-        "javaDir": "",
+        "description": "",
+        "height": -1,
+        "java_path": "",
         "seperated": false,
         "type": "release",
         "version": "1.12.2",
-        "width": 600,
+        "width": -1,
         "xms": "1G",
         "xmx": "2G"
     },
     {
         "args": "",
-        "describe": "",
-        "height": 800,
-        "javaDir": "",
+        "description": "",
+        "height": -1,
+        "java_path": "",
         "seperated": false,
         "type": "release",
         "version": "1.20.2",
-        "width": 600,
+        "width": -1,
         "xms": "1G",
         "xmx": "2G"
     }

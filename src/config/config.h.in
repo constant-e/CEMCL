@@ -1,6 +1,0 @@
-#pragma once
-
-#define ARCH "${CMAKE_HOST_SYSTEM_PROCESSOR}"
-#define BUILD_TYPE "${CMAKE_BUILD_TYPE}"
-#define OS "${CMAKE_SYSTEM_NAME}"
-#define VERSION "${PROJECT_VERSION}"
