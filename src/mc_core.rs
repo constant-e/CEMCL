@@ -4,38 +4,38 @@ use std::env::consts as env;
 use crate::file_tools;
 
 // 游戏账号
-struct Account {
+pub struct Account {
     // 登录类型，直接填入
-    account_type: String,
+    pub account_type: String,
     // access_token,直接填入
-    token: String,
+    pub token: String,
     // uuid，直接填入
-    uuid: String,
+    pub uuid: String,
     // user_name，直接填入
-    user_name: String,
+    pub user_name: String,
 }
 
-struct Game {
+pub struct Game {
     // 自定义参数，留空则使用默认
-    args: String,
+    pub args: String,
     // 描述，由用户输入
-    description: String,
+    pub description: String,
     // 窗口高度，-1默认
-    height: i32,
+    pub height: i32,
     // java可执行文件路径
-    java_path: String,
+    pub java_path: String,
     // 启用版本隔离
-    seperated: bool,
+    pub seperated: bool,
     // 游戏类型，直接填入
-    game_type: String,
+    pub game_type: String,
     // 游戏版本，直接填入
-    version: String,
+    pub version: String,
     // 窗口宽度，-1默认
-    width: i32,
+    pub width: i32,
     // xms参数，留空默认
-    xms: String,
+    pub xms: String,
     // xmx参数，留空默认
-    xmx: String,
+    pub xmx: String,
 }
 
 fn add_args(n: &Value) -> String {
@@ -48,49 +48,7 @@ fn add_args(n: &Value) -> String {
         }
         
         // 判断是否满足限制条件
-
-        let rules = item.get("rules").expect("[Error] mc_core: Failed to get rules");
-        let mut allow = true;
-
-        // 获取操作系统名称
-        let mut os = "";
-        if env::OS == "windows" || env::OS == "linux" {
-            os = env::OS;
-        } else if env::OS == "macOS" {
-            os = "osx";
-        } else {
-            os = "";
-            println!("[Warning] mc_core: Your OS may not be supported.");
-        }
-
-        for r in item.as_array().expect("[Error] mc_core: Failed to get arguments.") {
-            if !r["features"].is_null() {
-                // 暂时不支持
-                allow = false;
-                break;
-            }
-            if r["action"] == "allow" {
-                if r["os"]["arch"] != env::ARCH {
-                    allow = false;
-                    break;
-                }
-                if r["os"]["name"] != os {
-                    allow = false;
-                    break;
-                }
-            } else if r["action"] == "disallow" {
-                if r["os"]["arch"] == env::ARCH {
-                    allow = false;
-                    break;
-                }
-                if r["os"]["name"] == os {
-                    allow = false;
-                    break;
-                }
-            }
-        }
-
-        if !allow {
+        if !check_rules(item.get("rules").expect("[Error] mc_core: Failed to get rules")) {
             continue;
         }
 
@@ -110,15 +68,87 @@ fn add_args(n: &Value) -> String {
 
 }
 
-fn add_classpaths(n: &Value, game_dir: &String) {
-    
+fn add_classpaths(n: &Value, game_dir: &String) -> Vec<String> {
+    let mut result: Vec<String> = Vec::new();
+    for item in n.as_array().expect("[Error] mc_core: Failed to get -cp arguments.") {
+        let mut temp: String = game_dir.clone() + "/libraries/";
+
+        if !item["rules"].is_null() &&
+            check_rules(item.get("rules").expect("[Error] mc_core: Failed to get rules")) {
+            continue;
+        }
+
+        let name = String::from(item["name"].as_str().expect("msg"));
+        let mut name_split: Vec<&str> = name.split(":").collect();
+        temp.push_str(name_split[0].replace(".", "/").as_str());
+        temp.push_str("/");
+        temp.push_str(name_split[1]);
+        temp.push_str("/");
+        temp.push_str(name_split[2]);
+        temp.push_str("/");
+        temp.push_str(name_split[1]);
+        temp.push_str("-");
+        temp.push_str(name_split[2]);
+        if name_split.len() == 4 {
+            // 添加后缀
+            temp.push_str("-");
+            temp.push_str(name_split[3]);
+        }
+        temp.push_str(".jar");
+
+        result.push(temp);
+    }
+    result
+}
+
+fn check_rules(n: &Value) -> bool {
+    let mut allow = true; 
+
+    // 获取操作系统名称
+    let mut os = "";
+    if env::OS == "windows" || env::OS == "linux" {
+        os = env::OS;
+    } else if env::OS == "macOS" {
+        os = "osx";
+    } else {
+        os = "";
+        println!("[Warning] mc_core: Your OS may not be supported.");
+    }
+
+    for r in n.as_array().expect("[Error] mc_core: Failed to get arguments.") {
+        if !r["features"].is_null() {
+            // 暂时不支持
+            allow = false;
+            break;
+        }
+        if r["action"] == "allow" {
+            if r["os"]["arch"] != env::ARCH {
+                allow = false;
+                break;
+            }
+            if r["os"]["name"] != os {
+                allow = false;
+                break;
+            }
+        } else if r["action"] == "disallow" {
+            if r["os"]["arch"] == env::ARCH {
+                allow = false;
+                break;
+            }
+            if r["os"]["name"] == os {
+                allow = false;
+                break;
+            }
+        }
+    }
+    allow
 }
 
 fn get_launch_args() {
 
 }
 
-fn get_launch_command(account: &Account, game: &Game, java_path: &String, game_dir: &String) -> String {
+pub fn get_launch_command(account: &Account, game: &Game, java_path: &String, game_dir: &String) -> String {
     println!("[Info] mc_core: Start.");
     let mut result: String = String::new();
 
