@@ -1,0 +1,57 @@
+import { ListView, Button } from "std-widgets.slint";
+export component CEMCL inherits Window {
+    width: 800px;
+    height: 600px;
+    title: @tr("CE Minecraft Launcher");
+    VerticalLayout {
+        Text {
+            preferred-width: 100%;
+            text: @tr("CE Minecraft Launcher");
+            font-size: 24px;
+            font-weight: 800;
+        }
+
+        GridLayout {
+            Row {
+                Text {
+                    text: @tr("Account");
+                }
+
+                Text {
+                    text: @tr("Minecraft Version");
+                }
+            }
+            
+            Row {
+                acc_list_view := ListView {
+                    
+                }
+
+                ver_list_view := ListView {
+    
+                }
+            }
+        }
+
+        HorizontalLayout {
+            preferred-height: 50px;
+            preferred-width: 100%;
+
+            settings_btn := Button {
+                text: @tr("Settings");
+            }
+
+            add_btn := Button {
+                text: @tr("New");
+            }
+
+            edit_btn := Button {
+                text: @tr("Edit");
+            }
+
+            start_btn := Button {
+                text: @tr("Start");
+            }
+        }
+    }
+}

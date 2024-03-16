@@ -1,0 +1,49 @@
+
+msgid ""
+msgstr ""
+"Project-Id-Version: cemcl v1.0.0\n"
+"POT-Creation-Date: 2024-03-16 08:05+0000\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: constant-e <fmn_tzx@outlook.com>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Language: \n"
+"Plural-Forms: nplurals=1; plural=0;\n"
+
+#: cemcl.slint:5 cemcl.slint:9
+msgctxt "CEMCL"
+msgid "CE Minecraft Launcher"
+msgstr ""
+
+#: cemcl.slint:17
+msgctxt "CEMCL"
+msgid "Account"
+msgstr ""
+
+#: cemcl.slint:21
+msgctxt "CEMCL"
+msgid "Minecraft Version"
+msgstr ""
+
+#: cemcl.slint:41
+msgctxt "CEMCL"
+msgid "Settings"
+msgstr ""
+
+#: cemcl.slint:45
+msgctxt "CEMCL"
+msgid "New"
+msgstr ""
+
+#: cemcl.slint:49
+msgctxt "CEMCL"
+msgid "Edit"
+msgstr ""
+
+#: cemcl.slint:53
+msgctxt "CEMCL"
+msgid "Start"
+msgstr ""
+
