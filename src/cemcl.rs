@@ -3,7 +3,7 @@ use slint::{};
 slint::include_modules!();
 
 pub fn init() {
-    let cemcl = CEMCL::new().expect("msg");
+    let window = CEMCL::new().expect("[Error] cemcl: Couldn't create window");
     slint::init_translations!(std::env::current_exe().unwrap().parent().unwrap().join("translations"));
-    cemcl.run().expect("msg");
+    window.run().expect("[Error] cemcl: Could't start.");
 }

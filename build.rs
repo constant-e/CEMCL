@@ -7,7 +7,7 @@ fn main() {
     println!("cargo:rerun-if-changed=res");
     // slint ui files
     slint_build::compile("res/ui/cemcl.slint").unwrap();
-    // translate files
+    /*// translate files
     Command::new("msgfmt -V").output().expect("[Error] build: Counld't run msgfmt");
     if path::Path::new(&std::env::var("OUT_DIR").unwrap()).exists() {
         fs::remove_dir(&std::env::var("OUT_DIR").unwrap()).unwrap();
@@ -17,5 +17,5 @@ fn main() {
             let file_name = p.unwrap().file_name().into_string();
 
         }
-    }
+    }*/
 }

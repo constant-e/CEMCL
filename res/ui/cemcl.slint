@@ -1,13 +1,23 @@
-import { ListView, Button } from "std-widgets.slint";
+import { Button, StandardTableView } from "std-widgets.slint";
+
 export component CEMCL inherits Window {
-    width: 800px;
-    height: 600px;
+    callback clicked-add-btn();
+    callback clicked-edit-btn();
+    callback clicked-settings-btn();
+    callback clicked-start-btn();
+
+    out property <int> acc-index <=> acc-table-view.current-row;
+    out property <int> ver-index <=> ver-table-view.current-row;
+
+    preferred-width: 800px;
+    preferred-height: 600px;
+    padding: 8px;
     title: @tr("CE Minecraft Launcher");
     VerticalLayout {
         Text {
             preferred-width: 100%;
             text: @tr("CE Minecraft Launcher");
-            font-size: 24px;
+            font-size: 32px;
             font-weight: 800;
         }
 
@@ -23,11 +33,11 @@ export component CEMCL inherits Window {
             }
             
             Row {
-                acc_list_view := ListView {
+                acc-table-view := StandardTableView {
                     
                 }
 
-                ver_list_view := ListView {
+                ver-table-view := StandardTableView {
     
                 }
             }
@@ -37,20 +47,36 @@ export component CEMCL inherits Window {
             preferred-height: 50px;
             preferred-width: 100%;
 
-            settings_btn := Button {
+            settings-btn := Button {
                 text: @tr("Settings");
+                preferred-width: 100px;
+                clicked => {
+                    clicked-settings-btn();
+                }
             }
 
-            add_btn := Button {
+            add-btn := Button {
                 text: @tr("New");
+                preferred-width: 100px;
+                clicked => {
+                    clicked-add-btn();
+                }
             }
 
-            edit_btn := Button {
+            edit-btn := Button {
                 text: @tr("Edit");
+                preferred-width: 100px;
+                clicked => {
+                    clicked-edit-btn();
+                }
             }
 
-            start_btn := Button {
+            start-btn := Button {
                 text: @tr("Start");
+                preferred-width: 100px;
+                clicked => {
+                    clicked-start-btn();
+                }
             }
         }
     }

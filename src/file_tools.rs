@@ -1,4 +1,10 @@
 use std::fs;
+use std::path::Path;
+
+pub fn exists(path: &String) -> bool {
+    let file = Path::new(&path);
+    file.exists()
+}
 
 pub fn open_file(path: &String) -> String {
     fs::read_to_string(path)
