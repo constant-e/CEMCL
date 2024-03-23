@@ -2,4 +2,4 @@
 .git
 .idea
 .vscode
-build
+target

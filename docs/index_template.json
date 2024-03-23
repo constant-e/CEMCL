@@ -2,24 +2,24 @@
     {
         "args": "",
         "describe": "",
-        "height": 800,
-        "javaDir": "",
+        "height": -1,
+        "game_type": "release",
+        "java_path": "",
         "seperated": false,
-        "type": "release",
         "version": "1.12.2",
-        "width": 600,
+        "width": -1,
         "xms": "1G",
         "xmx": "2G"
     },
     {
         "args": "",
         "describe": "",
-        "height": 800,
-        "javaDir": "",
+        "height": -1,
+        "game_type": "release",
+        "java_path": "",
         "seperated": false,
-        "type": "release",
         "version": "1.20.2",
-        "width": 600,
+        "width": -1,
         "xms": "1G",
         "xmx": "2G"
     }
