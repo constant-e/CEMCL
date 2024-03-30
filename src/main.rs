@@ -2,7 +2,9 @@ mod cemcl;
 mod file_tools;
 mod mc_core;
 
+use log::info;
+
 fn main() {
-    println!("[Info] cemcl: Program start.");
+    info!(target: "main", "Program start.");
     cemcl::init();
 }

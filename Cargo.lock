@@ -620,6 +620,7 @@ dependencies = [
 name = "cemcl"
 version = "1.0.0"
 dependencies = [
+ "log",
  "serde_json",
  "slint",
  "slint-build",

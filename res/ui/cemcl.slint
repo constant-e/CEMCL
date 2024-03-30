@@ -1,4 +1,15 @@
-import { Button, StandardTableView } from "std-widgets.slint";
+import { Button, ListView } from "std-widgets.slint";
+
+struct Account {
+    account-type: string,
+    user-name: string
+}
+
+struct Game {
+    description: string,
+    game-type: string,
+    version: string
+}
 
 export component CEMCL inherits Window {
     callback clicked-add-btn();
@@ -6,8 +17,11 @@ export component CEMCL inherits Window {
     callback clicked-settings-btn();
     callback clicked-start-btn();
 
-    out property <int> acc-index <=> acc-table-view.current-row;
-    out property <int> ver-index <=> ver-table-view.current-row;
+    out property <int> acc-list-index <=> acc-list-view.row;
+    out property <int> ver-list-index <=> ver-list-view.row;
+
+    in-out property <[Account]> acc-list : [{account-type: "test", user-name: "test"}, {account-type: "test2", user-name: "test2"}];
+    in-out property <[Game]> ver-list;
 
     preferred-width: 800px;
     preferred-height: 600px;
@@ -33,12 +47,22 @@ export component CEMCL inherits Window {
             }
             
             Row {
-                acc-table-view := StandardTableView {
-                    
+                acc-list-view := ListView {
+                    for acc[i] in acc-list: Rectangle {
+                        Text { text: acc.user-name; }
+                        Text { text: acc.account-type; }
+                    }
                 }
 
-                ver-table-view := StandardTableView {
-    
+                ver-list-view := ListView {
+                    for ver[i] in ver-list: Rectangle {
+                        Text { text: ver.version; }
+                        Text { text: ver.game-type; }
+                        Text {
+                            text: ver.description;
+                            preferred-width: 100%;
+                        }
+                    }
                 }
             }
         }
@@ -53,6 +77,10 @@ export component CEMCL inherits Window {
                 clicked => {
                     clicked-settings-btn();
                 }
+            }
+            
+            Rectangle {
+                preferred-width: 100%;
             }
 
             add-btn := Button {
