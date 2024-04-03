@@ -1,5 +1,5 @@
 use log::{info};
-use slint::{include_modules};
+use slint::{include_modules, Model, StandardListViewItem};
 
 include_modules!();
 
@@ -17,7 +17,8 @@ pub fn init() {
     slint::init_translations!(std::env::current_exe().unwrap().parent().unwrap().join("translations"));
     window.run().expect("Could't start.");
 
-    println!("{}", window.get_acc_list_index());
+    let mut acc_rows = window.get_acc_table_rows();
+    let mut ver_rows = window.get_ver_table_rows();
 
     window.on_clicked_add_btn(|| {
 

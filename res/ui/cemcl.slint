@@ -1,15 +1,4 @@
-import { Button, ListView } from "std-widgets.slint";
-
-struct Account {
-    account-type: string,
-    user-name: string
-}
-
-struct Game {
-    description: string,
-    game-type: string,
-    version: string
-}
+import { Button, ListView, StandardTableView } from "std-widgets.slint";
 
 export component CEMCL inherits Window {
     callback clicked-add-btn();
@@ -17,11 +6,8 @@ export component CEMCL inherits Window {
     callback clicked-settings-btn();
     callback clicked-start-btn();
 
-    out property <int> acc-list-index <=> acc-list-view.row;
-    out property <int> ver-list-index <=> ver-list-view.row;
-
-    in-out property <[Account]> acc-list : [{account-type: "test", user-name: "test"}, {account-type: "test2", user-name: "test2"}];
-    in-out property <[Game]> ver-list;
+    out property <[[StandardListViewItem]]> acc-table-rows <=> acc-table-view.rows;
+    out property <[[StandardListViewItem]]> ver-table-rows <=> ver-table-view.rows;
 
     preferred-width: 800px;
     preferred-height: 600px;
@@ -47,22 +33,12 @@ export component CEMCL inherits Window {
             }
             
             Row {
-                acc-list-view := ListView {
-                    for acc[i] in acc-list: Rectangle {
-                        Text { text: acc.user-name; }
-                        Text { text: acc.account-type; }
-                    }
+                acc-table-view := StandardTableView {
+
                 }
 
-                ver-list-view := ListView {
-                    for ver[i] in ver-list: Rectangle {
-                        Text { text: ver.version; }
-                        Text { text: ver.game-type; }
-                        Text {
-                            text: ver.description;
-                            preferred-width: 100%;
-                        }
-                    }
+                ver-table-view := StandardTableView {
+
                 }
             }
         }
