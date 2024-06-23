@@ -7,19 +7,17 @@
 ```json
 [
     {
-        "access_token": "xxx",
-        "type": "Legacy",
-        "user_name": "Steve",
+        "account_type": "Legacy",
+        "token": "xxx",
         "uuid": "xxx",
-        
+        "user_name": "Steve"
     }, 
     {
-        "access_token": "xxx",
-        "type": "msa",
-        "user_name": "Steve",
+        "account_type": "msa",
+        "token": "xxx",
         "uuid": "xxx",
-    }, 
-    ...
+        "user_name": "Alex"
+    }
 ]
 ```
 说明：为一个数组，每个元素作为一个账户被加载。其中`token`是启动参数中的accessToken，对于离线用户请勿留空，建议输入None；`type`是登录方式，直接作为启动参数，`Legacy`代表离线，`msa`代表微软，`Mojang`代表Mojang。暂未支持其他方式。`userName`和`uuid`分别是用户名和UUID。
@@ -31,7 +29,7 @@
 ```json
 {
     "close_after_launch": false,
-    "forge_s_ource": "",
+    "forge_source": "",
     "game_dir": ".minecraft",
     "height": 600,
     "java_path": "java",

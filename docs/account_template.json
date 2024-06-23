@@ -1,8 +1,8 @@
 [
     {
-        "type": "Legacy",
-        "userName": "Steve",
+        "account_type": "Legacy",
+        "token": "None",
         "uuid": "Please Enter UUID",
-        "token": "None"
+        "user_name": "Steve"
     }
 ]

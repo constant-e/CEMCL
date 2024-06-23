@@ -6,7 +6,9 @@ export component CEMCL inherits Window {
     callback clicked-settings-btn();
     callback clicked-start-btn();
 
+    out property <int> acc-table-index <=> acc-table-view.current-row;
     out property <[[StandardListViewItem]]> acc-table-rows <=> acc-table-view.rows;
+    out property <int> ver-table-index <=> ver-table-view.current-row;
     out property <[[StandardListViewItem]]> ver-table-rows <=> ver-table-view.rows;
 
     preferred-width: 800px;

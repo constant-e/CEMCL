@@ -1,7 +1,7 @@
 use serde_json::{Result, Value};
 use std::env::consts as env;
 
-use crate::file_tools;
+use crate::file_tools::{exists, open_file};
 
 // 游戏账号
 pub struct Account {
@@ -22,7 +22,7 @@ pub struct Game {
     // 描述，由用户输入
     pub description: String,
     // 窗口高度，-1默认
-    pub height: i32,
+    pub height: isize,
     // java可执行文件路径
     pub java_path: String,
     // 启用版本隔离
@@ -32,7 +32,7 @@ pub struct Game {
     // 游戏版本，直接填入
     pub version: String,
     // 窗口宽度，-1默认
-    pub width: i32,
+    pub width: isize,
     // xms参数，留空默认
     pub xms: String,
     // xmx参数，留空默认
@@ -141,10 +141,10 @@ fn get_args(n: &Value) -> (String, String) {
 }
 
 // 获取-cp参数 
-fn get_classpaths(n: &Value, game_dir: &String) -> Vec<String> {
+fn get_classpaths(n: &Value, game_path: &String) -> Vec<String> {
     let mut result: Vec<String> = Vec::new();
     for item in n.as_array().expect("[Error] mc_core: Failed to get -cp arguments.") {
-        let mut temp: String = game_dir.clone() + "/libraries/";
+        let mut temp: String = game_path.clone() + "/libraries/";
 
         if !item["rules"].is_null() &&
             check_rules(item.get("rules").expect("[Error] mc_core: Failed to get rules")) {
@@ -175,7 +175,7 @@ fn get_classpaths(n: &Value, game_dir: &String) -> Vec<String> {
 }
 
 // 获取启动总命令
-pub fn get_launch_command(account: &Account, game: &Game, java_path: &String, game_dir: &String) -> String {
+pub fn get_launch_command(account: &Account, game: &Game, java_path: &String, game_path: &String) -> String {
     println!("[Info] mc_core: Start.");
     let mut result = String::new();
 
@@ -188,8 +188,8 @@ pub fn get_launch_command(account: &Account, game: &Game, java_path: &String, ga
     }
 
     // 游戏目录
-    let mut dir = game_dir.clone();
-    dir.push_str(game_dir.as_str());
+    let mut dir = game_path.clone();
+    dir.push_str(game_path.as_str());
     dir.push_str("/versions/");
     dir.push_str(game.version.as_str());
     
@@ -198,7 +198,7 @@ pub fn get_launch_command(account: &Account, game: &Game, java_path: &String, ga
     cfg_path.push_str("/");
     cfg_path.push_str(game.version.as_str());
     cfg_path.push_str(".json");
-    let config: Value = serde_json::from_str(&file_tools::open_file(&cfg_path).as_str())
+    let config: Value = serde_json::from_str(&open_file(&cfg_path).as_str())
         .expect(&format!("[Error] mc_core: failed to load {cfg_path}."));
 
     // 参数
@@ -217,18 +217,18 @@ pub fn get_launch_command(account: &Account, game: &Game, java_path: &String, ga
     } else{
         // 有forge
         let parent_version = config["inheritsFrom"].as_str().expect("[Error] mc_core: Couldn't get inheritsFrom.");
-        let mut parent_path = game_dir.clone();
+        let mut parent_path = game_path.clone();
         parent_path.push_str("/versions");
         parent_path.push_str(&parent_version);
-        if file_tools::exists(&parent_path) {
-            let parent: Value = serde_json::from_str(&file_tools::open_file(&parent_path).as_str())
+        if exists(&parent_path) {
+            let parent: Value = serde_json::from_str(&open_file(&parent_path).as_str())
                 .expect(&format!("[Error] mc_core: failed to load {parent_path}."));
             (game_args, jvm_args) = get_args(&parent);
             let (temp_game_args, temp_jvm_args) = get_args(&config);
             game_args.push_str(&temp_game_args);
             jvm_args.push_str(&temp_jvm_args);
             asset_index.push_str(&parent["assetIndex"]["id"].as_str().expect("[Error] mc_core: Couldn't get assetIndex."));
-            classpaths = get_classpaths(&parent["libraries"], game_dir);
+            classpaths = get_classpaths(&parent["libraries"], game_path);
         } else {
             // TODO: 下载原版
         }
@@ -240,7 +240,7 @@ pub fn get_launch_command(account: &Account, game: &Game, java_path: &String, ga
     game_jar.push_str(game.version.as_str());
     game_jar.push_str(".jar");
 
-    classpaths.append(&mut get_classpaths(&config["libraries"], game_dir));
+    classpaths.append(&mut get_classpaths(&config["libraries"], game_path));
     classpaths.push(game_jar);
     
     let mut i = 0;
@@ -275,21 +275,27 @@ pub fn get_launch_command(account: &Account, game: &Game, java_path: &String, ga
     // 替换模板
     result = result
         .replace("${assets_index_name}", &asset_index)
-        .replace("${assets_root}", &(game_dir.clone() + "/assets"))
+        .replace("${assets_root}", &(game_path.clone() + "/assets"))
         .replace("${auth_access_token}", &account.token)
         .replace("${auth_player_name}", &account.user_name)
         .replace("${auth_uuid}", &account.uuid)
         .replace("${authlib_injector_param}", "") // 暂不支持
         .replace("${classpath}", &cp)
         .replace("${classpath_separator}", ":")
-        .replace("${game_directory}", &game_dir)
+        .replace("${game_pathectory}", &game_path)
         .replace("${launcher_name}", "\"CE Minecraft Launcher\"")
         .replace("${launcher_version}", "1.0.0")
-        .replace("${library_directory}", &(game_dir.clone() + "/libraries"))
+        .replace("${library_directory}", &(game_path.clone() + "/libraries"))
         .replace("${natives_directory}", &(dir.clone() + "/natives"))
         .replace("${user_type}", &account.account_type)
         .replace("${version_name}", &game.version)
         .replace("${version_type}", &game.game_type);
 
     result
+}
+
+pub fn refresh_game_list(old_game_list: &Vec<Game>) -> Vec<Game> {
+    let mut game_list: Vec<Game> = Vec::new();
+
+    game_list
 }
