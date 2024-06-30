@@ -7,9 +7,9 @@ export component CEMCL inherits Window {
     callback clicked-start-btn();
 
     out property <int> acc-table-index <=> acc-table-view.current-row;
-    out property <[[StandardListViewItem]]> acc-table-rows <=> acc-table-view.rows;
+    out property <[[StandardListViewItem]]> acc-table-rows;
     out property <int> ver-table-index <=> ver-table-view.current-row;
-    out property <[[StandardListViewItem]]> ver-table-rows <=> ver-table-view.rows;
+    out property <[[StandardListViewItem]]> ver-table-rows;
 
     preferred-width: 800px;
     preferred-height: 600px;
@@ -36,11 +36,20 @@ export component CEMCL inherits Window {
             
             Row {
                 acc-table-view := StandardTableView {
-
+                    columns: [
+                        { title: @tr("Name") },
+                        { title: @tr("Type") }
+                    ];
+                    rows: acc-table-rows;
                 }
 
                 ver-table-view := StandardTableView {
-
+                    columns: [
+                        { title: @tr("Name") },
+                        { title: @tr("Type") },
+                        { title: @tr("Description") }
+                    ];
+                    rows: ver-table-rows;
                 }
             }
         }

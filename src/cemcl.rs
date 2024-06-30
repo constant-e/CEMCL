@@ -1,7 +1,6 @@
-use log::{info};
+use log::info;
 use serde_json::Value;
-use slint::{include_modules, Model, StandardListViewItem};
-use std::default;
+use slint::{include_modules, StandardListViewItem, VecModel};
 use std::process::Command;
 
 use crate::file_tools::{exists, open_file, save_file};
@@ -12,7 +11,7 @@ use crate::mc_core::{
     refresh_game_list
 };
 
-const default_config: &str = "{
+const DEFAULT_CONFIG: &str = "{
         \"close_after_launch\": false,
         \"forge_source\": \"https://maven.minecraftforge.net\",
         \"game_path\": \".minecraft\",
@@ -65,10 +64,10 @@ fn load_account() -> Vec<Account> {
 
 // load config from config.json
 fn load_config() -> Config {
-    let mut config: Config;
+    let config: Config;
     
     if !exists(&"config.json".to_string()) {
-        save_file(&"config.json".to_string(), &default_config.to_string());
+        save_file(&"config.json".to_string(), &DEFAULT_CONFIG.to_string());
     }
 
     let json: Value = serde_json::from_str(&open_file(&"config.json".to_string()).as_str())
@@ -134,6 +133,10 @@ pub fn init() {
     let mut acc_list = load_account();
     let mut config = load_config();
     let mut game_list = load_game_list();
+    
+    for (i, acc) in acc_list.iter().enumerate() {
+        
+    }
 
     window.on_clicked_add_btn(|| {
 
