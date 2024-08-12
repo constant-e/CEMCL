@@ -1,8 +1,15 @@
 import { Button, StandardTableView } from "std-widgets.slint";
+import { ErrorDialog } from "dialogs.slint";
+import { Settings } from "settings.slint";
+
+export { ErrorDialog, Settings }
+
 export component AppWindow inherits Window {
     preferred-height: 600px;
     preferred-width: 800px;
     title: "CE Minecraft Launcher";
+    default-font-family: "Sans Serif";
+    default-font-size: 12px;
 
     in-out property <int> acc-index <=> acc-table.current-row;
     in-out property <int> game-index <=> game-table.current-row;
@@ -11,14 +18,17 @@ export component AppWindow inherits Window {
 
     callback click-add-acc-btn();
     callback click-add-game-btn();
-    callback click-start-btn();
     callback click-edit-acc-btn();
     callback click-edit-game-btn();
+    callback click-settings-btn();
+    callback click-start-btn();
 
     VerticalLayout {
+        padding: 4px;
+
         Text {
             text: "CE Minecraft Launcher";
-            font-size: 24px;
+            font-size: 28px;
         }
 
         HorizontalLayout {
@@ -27,7 +37,7 @@ export component AppWindow inherits Window {
 
                 Text {
                     text: @tr("Account");
-                    font-size: 14px;
+                    font-size: 20px;
                 }
 
                 acc-table := StandardTableView {
@@ -38,6 +48,8 @@ export component AppWindow inherits Window {
                 }
 
                 HorizontalLayout {
+                    Rectangle { preferred-width: 100%; }
+
                     Button {
                         text: @tr("Add");
                         clicked => { root.click-add-acc-btn() } 
@@ -55,7 +67,7 @@ export component AppWindow inherits Window {
 
                 Text {
                     text: @tr("Minecraft Version");
-                    font-size: 14px;
+                    font-size: 20px;
                 }
 
                 game-table := StandardTableView {
@@ -67,6 +79,8 @@ export component AppWindow inherits Window {
                 }
 
                 HorizontalLayout {
+                    Rectangle { preferred-width: 100%; }
+
                     Button {
                         text: @tr("Add");
                         clicked => { root.click-add-game-btn() } 
@@ -81,14 +95,12 @@ export component AppWindow inherits Window {
         }
 
         HorizontalLayout {
-            preferred-height: 50px;
             Button {
                 text: @tr("Settings");
+                clicked => { root.click-settings-btn() }
             }
 
-            Rectangle {
-                preferred-width: 100%;
-            }
+            Rectangle { preferred-width: 100%; }
 
             Button {
                 text: @tr("Start");

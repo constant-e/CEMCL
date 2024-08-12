@@ -158,6 +158,15 @@ fn main() -> Result<(), slint::PlatformError> {
     ui.set_game_list(ModelRc::from(Rc::new(VecModel::from(ui_game_list))));
 
     // callbacks
+    ui.on_click_settings_btn({
+        move || {
+            let dialog = Settings::new().unwrap();
+            dialog.set_authors(env!("CARGO_PKG_AUTHORS").into());
+            dialog.set_version(env!("CARGO_PKG_VERSION").into());
+            dialog.show().unwrap();
+        }
+    });
+
     ui.on_click_start_btn({
         let ui_handle = ui.as_weak();
         move || {
@@ -166,7 +175,16 @@ fn main() -> Result<(), slint::PlatformError> {
             let game_index = ui.get_game_index() as usize;
             println!("{acc_index} {game_index}");
             if acc_index > acc_list.len() || game_index > game_list.len() {
-                println!("Haven't select account or game yet.");
+                let dialog = ErrorDialog::new().unwrap();
+                dialog.set_msg("Haven't select account or game yet.".into());
+                dialog.on_close({
+                    let dialog_handle = dialog.as_weak();
+                    move || {
+                        let dialog = dialog_handle.unwrap();
+                        dialog.hide().unwrap();
+                    }
+                });
+                dialog.show().unwrap();
                 return;
             }
             let cmd = mc_core::get_launch_command(&acc_list[acc_index], &game_list[game_index], &config.game_path);

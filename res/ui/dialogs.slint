@@ -1,0 +1,14 @@
+import { StandardButton } from "std-widgets.slint";
+export component ErrorDialog inherits Dialog {
+    title: @tr("Error");
+
+    in-out property <string> msg;
+
+    callback close();
+
+    Text { text: msg; }
+    StandardButton {
+        kind: ok;
+        clicked => { root.close() }
+    }
+}

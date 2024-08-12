@@ -1,0 +1,113 @@
+import { TabWidget, CheckBox, ScrollView } from "std-widgets.slint";
+
+export component Settings inherits Dialog {
+    preferred-height: 600px;
+    preferred-width: 800px;
+    title: @tr("Settings");
+    default-font-family: "Sans Serif";
+    default-font-size: 12px;
+
+    in-out property <string> authors;
+    in-out property <string> version;
+
+    VerticalLayout {
+        Text {
+            text: @tr("Settings");
+            font-size: 28px;
+        }
+        
+        TabWidget {
+            Tab {
+                title: @tr("Launcher Settings");
+
+                ScrollView {
+                    VerticalLayout {
+                        Text {
+                            text: @tr("General"); 
+                            font-weight: 700;
+                        }
+                        HorizontalLayout {
+                            Text { text: @tr("Java Path: "); }
+                            TextInput {}
+                        }
+                        HorizontalLayout {
+                            Text { text: @tr("Minecraft Path: "); }
+                            TextInput {}
+                        }
+                        CheckBox { text: @tr("Close after Launching Game"); }
+    
+                        Text {
+                            text: @tr("\nDownload Sources");
+                            font-weight: 700;
+                        }
+                        HorizontalLayout {
+                            Text { text: @tr("Minecraft Source: "); }
+                            TextInput {}
+                        }
+                        HorizontalLayout {
+                            Text { text: @tr("Fabric Source: "); }
+                            TextInput {}
+                        }
+                        HorizontalLayout {
+                            Text { text: @tr("Forge Source: "); }
+                            TextInput {}
+                        }
+                        HorizontalLayout {
+                            Text { text: @tr("OptiFine Source: "); }
+                            TextInput {}
+                        }
+    
+                        Rectangle { preferred-height: 100%; }
+                    }
+                }
+            }
+
+            Tab {
+                title: @tr("Default Minecraft Settings");
+
+                ScrollView {
+                    VerticalLayout {
+                        HorizontalLayout {
+                            Text { text: @tr("Window Height: "); }
+                            TextInput {}
+                        }
+                        HorizontalLayout {
+                            Text { text: @tr("Window Width: "); }
+                            TextInput {}
+                        }
+                        HorizontalLayout {
+                            Text { text: @tr("Minimum Memory: "); }
+                            TextInput {}
+                        }
+                        HorizontalLayout {
+                            Text { text: @tr("Maximum Memory: "); }
+                            TextInput {}
+                        }
+    
+                        Rectangle { preferred-height: 100%; }
+                    }
+                }
+            }
+
+            Tab {
+                title: @tr("About");
+
+                VerticalLayout {
+                    Text {
+                        text: @tr("CE Minecraft Launcher");
+                        horizontal-alignment: center;
+                        font-size: 24px;
+                        font-weight: 700;
+                    }
+
+                    Text { text: @tr("Version: ") + root.version; }
+                    Text { text: @tr("Github Repository: ") + "github.com/constant-e/CEMCL"; }
+                    Text { text: @tr("Developers: ") + root.authors; }
+                    Text { text: @tr("License: ") + "Apache License 2.0"; }
+                    Text { text: @tr("Credits: ") + "slint-ui/slint"; }
+                    Rectangle { preferred-height: 100%; }
+                }
+            }
+        }
+    }
+}
