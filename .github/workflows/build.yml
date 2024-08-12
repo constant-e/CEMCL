@@ -19,13 +19,14 @@ jobs:
         os: [windows-latest, macos-latest, ubuntu-latest]
 
     steps:
-    - uses: actions/checkout@v4
-    - name: Build Debug
+    - name: Checkout
+      uses: actions/checkout@v4
+    - name: Build debug
       run: cargo build --verbose
-    - name: Build Release
+    - name: Build release
       run: cargo build --release --verbose
-    - name: Upload a Build Artifact
+    - name: Upload artifact
       uses: actions/upload-artifact@v4.3.6
       with:
         name: artifact-${{ matrix.os }}
-        path: target/*/cemcl
+        path: target/*/cemcl(.exe)?
