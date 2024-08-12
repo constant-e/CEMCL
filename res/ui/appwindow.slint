@@ -1,0 +1,86 @@
+import { Button, StandardTableView } from "std-widgets.slint";
+export component AppWindow inherits Window {
+    preferred-height: 600px;
+    preferred-width: 800px;
+    title: "CE Minecraft Launcher";
+
+    in-out property <int> acc-index <=> acc-table.current-row;
+    in-out property <int> game-index <=> game-table.current-row;
+    in-out property <[[StandardListViewItem]]> acc-list <=> acc-table.rows;
+    in-out property <[[StandardListViewItem]]> game-list <=> game-table.rows;
+
+    callback click-start-btn();
+
+    VerticalLayout {
+        Text {
+            text: "CE Minecraft Launcher";
+            font-size: 24px;
+        }
+
+        HorizontalLayout {
+            VerticalLayout{
+                Text {
+                    text: "Account";
+                    font-size: 14px;
+                }
+
+                acc-table := StandardTableView {
+                    columns: [
+                        { title: "Name" },
+                        { title: "Type" }
+                    ];
+                }
+
+                HorizontalLayout {
+                    Button {
+                        text: "Add"; 
+                    }
+        
+                    Button {
+                        text: "Edit";
+                    }
+                }
+            }
+
+            VerticalLayout {
+                Text {
+                    text: "Minecraft Version";
+                    font-size: 14px;
+                }
+
+                game-table := StandardTableView {
+                    columns: [
+                        { title: "Version" },
+                        { title: "Type" },
+                        { title: "Description" }
+                    ];
+                }
+
+                HorizontalLayout {
+                    Button {
+                        text: "Add"; 
+                    }
+        
+                    Button {
+                        text: "Edit";
+                    }
+                }
+            }
+        }
+
+        HorizontalLayout {
+            Button {
+                text: "Settings";
+            }
+
+            Rectangle {
+                preferred-width: 100%;
+            }
+
+            Button {
+                text: "Start";
+                clicked => { root.click-start-btn() }
+            }
+        }
+    }
+}
