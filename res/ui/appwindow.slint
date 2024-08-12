@@ -9,7 +9,11 @@ export component AppWindow inherits Window {
     in-out property <[[StandardListViewItem]]> acc-list <=> acc-table.rows;
     in-out property <[[StandardListViewItem]]> game-list <=> game-table.rows;
 
+    callback click-add-acc-btn();
+    callback click-add-game-btn();
     callback click-start-btn();
+    callback click-edit-acc-btn();
+    callback click-edit-game-btn();
 
     VerticalLayout {
         Text {
@@ -20,49 +24,53 @@ export component AppWindow inherits Window {
         HorizontalLayout {
             VerticalLayout{
                 Text {
-                    text: "Account";
+                    text: @tr("Account");
                     font-size: 14px;
                 }
 
                 acc-table := StandardTableView {
                     columns: [
-                        { title: "Name" },
-                        { title: "Type" }
+                        { title: @tr("Name") },
+                        { title: @tr("Type") }
                     ];
                 }
 
                 HorizontalLayout {
                     Button {
-                        text: "Add"; 
+                        text: @tr("Add");
+                        clicked => { root.click-add-acc-btn() } 
                     }
         
                     Button {
-                        text: "Edit";
+                        text: @tr("Edit");
+                        clicked => { root.click-edit-acc-btn() }
                     }
                 }
             }
 
             VerticalLayout {
                 Text {
-                    text: "Minecraft Version";
+                    text: @tr("Minecraft Version");
                     font-size: 14px;
                 }
 
                 game-table := StandardTableView {
                     columns: [
-                        { title: "Version" },
-                        { title: "Type" },
-                        { title: "Description" }
+                        { title: @tr("Version") },
+                        { title: @tr("Type") },
+                        { title: @tr("Description") }
                     ];
                 }
 
                 HorizontalLayout {
                     Button {
-                        text: "Add"; 
+                        text: @tr("Add");
+                        clicked => { root.click-add-game-btn() } 
                     }
         
                     Button {
-                        text: "Edit";
+                        text: @tr("Edit");
+                        clicked => { root.click-edit-game-btn() }
                     }
                 }
             }
@@ -70,7 +78,7 @@ export component AppWindow inherits Window {
 
         HorizontalLayout {
             Button {
-                text: "Settings";
+                text: @tr("Settings");
             }
 
             Rectangle {
@@ -78,7 +86,7 @@ export component AppWindow inherits Window {
             }
 
             Button {
-                text: "Start";
+                text: @tr("Start");
                 clicked => { root.click-start-btn() }
             }
         }

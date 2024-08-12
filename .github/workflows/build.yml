@@ -29,4 +29,4 @@ jobs:
       uses: actions/upload-artifact@v4.3.6
       with:
         name: artifact-${{ matrix.os }}
-        path: target/*/cemcl(.exe)?
+        path: target/*/cemcl{,.exe}
