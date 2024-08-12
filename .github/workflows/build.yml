@@ -1,4 +1,4 @@
-name: Rust
+name: Build
 
 on:
   push:
@@ -27,4 +27,5 @@ jobs:
     - name: Upload a Build Artifact
       uses: actions/upload-artifact@v4.3.6
       with:
-        path: target/*/cemcl*
+        name: artifact-${{ matrix.os }}
+        path: target/*/cemcl
