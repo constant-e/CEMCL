@@ -23,6 +23,8 @@ export component AppWindow inherits Window {
 
         HorizontalLayout {
             VerticalLayout{
+                horizontal-stretch: 0.25;
+
                 Text {
                     text: @tr("Account");
                     font-size: 14px;
@@ -49,6 +51,8 @@ export component AppWindow inherits Window {
             }
 
             VerticalLayout {
+                horizontal-stretch: 0.75;
+
                 Text {
                     text: @tr("Minecraft Version");
                     font-size: 14px;
@@ -77,6 +81,7 @@ export component AppWindow inherits Window {
         }
 
         HorizontalLayout {
+            preferred-height: 50px;
             Button {
                 text: @tr("Settings");
             }
