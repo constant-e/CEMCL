@@ -9,7 +9,7 @@ constant-e's Minecraft: Java Edition Launcher
 
 ## TODO List
 1. （已完成）启动Minecraft
-2. 将index.json分散至各个版本内部
+2. （已完成）将index.json分散至各个版本内部
 3. 支持版本隔离
 4. 下载依赖
 5. 支持安装新版本等

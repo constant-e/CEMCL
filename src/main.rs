@@ -1,14 +1,15 @@
 mod file_tools;
 mod mc_core;
 
-use log::info;
+use log::{debug, error, info};
 use serde_json::Value;
 use slint::{ModelRc, StandardListViewItem, VecModel};
+use std::fs::{read_to_string, write};
 use std::io::{self, Write};
 use std::process::Command;
 use std::rc::Rc;
-use file_tools::{exists, open_file, save_file};
-use mc_core::{Account, Game, get_launch_command, refresh_game_list};
+use file_tools::exists;
+use mc_core::{get_launch_command, load_game_list, Account, Game};
 
 slint::include_modules!();
 
@@ -38,10 +39,10 @@ struct Config {
 }
 
 // load account from account.json
-fn load_account() -> Vec<Account> {
+fn load_account() -> Option<Vec<Account>> {
     let mut acc_list: Vec<Account> = Vec::new();
 
-    if !exists(&"account.json".to_string()) {
+    if !exists(&"account.json".into()) {
         acc_list.push(
             Account {
                 account_type: "Legacy".into(),
@@ -50,87 +51,79 @@ fn load_account() -> Vec<Account> {
                 user_name: "Steve".into()
             }
         );
-        return acc_list;
+        return Some(acc_list);
     }
 
-    let json: Value = serde_json::from_str(&open_file(&"account.json".to_string()).as_str())
-        .expect("[Error] mc_core: failed to load account.json.");
-
-    for item in json.as_array().expect("") {
-        let account = Account {
-            account_type: item["account_type"].as_str().expect("").to_string(),
-            token: item["token"].as_str().expect("").to_string(), 
-            uuid: item["uuid"].as_str().expect("").to_string(),
-            user_name: item["user_name"].as_str().expect("").to_string()
-        };
-        acc_list.push(account);
+    if let Ok(json) = serde_json::from_str::<Value>(&read_to_string("account.json").ok()?) {
+        for item in json.as_object() {
+            let account = Account {
+                account_type: item["account_type"].as_str()?.into(),
+                token: item["token"].as_str()?.into(), 
+                uuid: item["uuid"].as_str()?.into(),
+                user_name: item["user_name"].as_str()?.into()
+            };
+            acc_list.push(account);
+        }
+        return Some(acc_list);
+    } else {
+        return None;
     }
-
-    acc_list
 }
 
 // load config from config.json
-fn load_config() -> Config {
+fn load_config() -> Option<Config> {
     let config: Config;
 
-    if !exists(&"config.json".to_string()) {
-        save_file(&"config.json".to_string(), &DEFAULT_CONFIG.to_string());
+    if !exists(&"config.json".into()) {
+        write("config.json", &DEFAULT_CONFIG).ok()?;
     }
 
-    let json: Value = serde_json::from_str(&open_file(&"config.json".to_string()).as_str())
-        .expect("[Error] mc_core: failed to load config.json.");
+    let json: Value = serde_json::from_str(&read_to_string("config.json").ok()?.as_str()).ok()?;
     config = Config {
-        close_after_launch: json["close_after_launch"].as_bool().expect(""),
-        forge_source: json["forge_source"].as_str().expect("").to_string(),
-        game_path: json["game_path"].as_str().expect("").to_string(),
-        height: json["height"].as_i64().expect("") as isize,
-        java_path: json["java_path"].as_str().expect("").to_string(),
-        mc_source: json["mc_source"].as_str().expect("").to_string(),
-        width: json["width"].as_i64().expect("") as isize,
-        xms: json["xms"].as_str().expect("").to_string(),
-        xmx: json["xmx"].as_str().expect("").to_string(),
+        close_after_launch: json["close_after_launch"].as_bool()?,
+        forge_source: json["forge_source"].as_str()?.into(),
+        game_path: json["game_path"].as_str()?.into(),
+        height: json["height"].as_i64()? as isize,
+        java_path: json["java_path"].as_str()?.into(),
+        mc_source: json["mc_source"].as_str()?.into(),
+        width: json["width"].as_i64()? as isize,
+        xms: json["xms"].as_str()?.into(),
+        xmx: json["xmx"].as_str()?.into(),
     };
-    config
-}
 
-// load game list from index.json
-pub fn load_game_list(config: &Config) -> Vec<Game> {
-    let mut game_list: Vec<Game> = Vec::new();
-
-    if !exists(&"index.json".to_string()) {
-        game_list = refresh_game_list(&game_list, &config);
-        return game_list;
-    }
-
-    let json: Value = serde_json::from_str(&open_file(&"index.json".to_string()).as_str())
-        .expect("[Error] mc_core: failed to load index.json.");
-
-    for item in json.as_array().expect("") {
-        let game = Game {
-            args: item["args"].as_str().expect("").to_string(),
-            description: item["description"].as_str().expect("").to_string(),
-            height: item["height"].as_i64().expect("") as isize,
-            java_path: item["java_path"].as_str().expect("").to_string(),
-            seperated: item["seperated"].as_bool().expect(""),
-            game_type: item["game_type"].as_str().expect("").to_string(),
-            version: item["version"].as_str().expect("").to_string(),
-            width: item["width"].as_i64().expect("") as isize,
-            xms: item["xms"].as_str().expect("").to_string(),
-            xmx: item["xmx"].as_str().expect("").to_string()
-        };
-        game_list.push(game);
-    }
-
-    game_list
+    Some(config)
 }
 
 fn main() -> Result<(), slint::PlatformError> {
+    env_logger::init();
+    info!("App start.");
     let ui = AppWindow::new()?;
 
     // load config
-    let mut acc_list = load_account();
-    let mut config = load_config();
-    let mut game_list = load_game_list(&config); 
+    let acc_list: Vec<Account>;
+    let config: Config;
+    let game_list: Vec<Game>;
+
+    if let Some(temp_config) = load_config() {
+        config = temp_config;
+    } else {
+        error!("Failed to load config.json.");
+        return Err(slint::PlatformError::from("Failed to load config.json."));
+    }
+
+    if let Some(temp_acc_list) = load_account() {
+        acc_list = temp_acc_list;
+    } else {
+        error!("Failed to load account.json.");
+        return Err(slint::PlatformError::from("Failed to load account.json."));
+    }
+
+    if let Some(temp_game_list) = load_game_list(&config) {
+        game_list = temp_game_list;
+    } else {
+        error!("Failed to load game list.");
+        return Err(slint::PlatformError::from("Failed to load game list."));
+    }
 
     // load account list in ui
     let mut ui_acc_list: Vec<ModelRc<StandardListViewItem>> = Vec::new();
@@ -187,14 +180,21 @@ fn main() -> Result<(), slint::PlatformError> {
                 dialog.show().unwrap();
                 return;
             }
-            let cmd = mc_core::get_launch_command(&acc_list[acc_index], &game_list[game_index], &config.game_path);
-            for i in &cmd {
-                println!("{i}");
+            if let Some(cmd) = get_launch_command(&acc_list[acc_index], &game_list[game_index], &config.game_path) {
+                let mut str = String::new();
+                for i in &cmd {
+                    str.push_str(i);
+                    str.push_str(" ");
+                }
+                debug!("{str}");
+                if let Ok(out) = Command::new(config.java_path.clone()).args(cmd).output() {
+                    io::stdout().write_all(&out.stdout);
+                } else {
+                    error!("Failed to run command.")
+                }
+            } else {
+                error!("Failed to get launch command.")
             }
-            let out = Command::new(config.java_path.clone()).args(cmd).output().expect("Error");
-            println!("status: {}", out.status);
-            io::stdout().write_all(&out.stdout).unwrap();
-            io::stderr().write_all(&out.stderr).unwrap();
         }
     });
 
