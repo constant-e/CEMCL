@@ -1,5 +1,7 @@
+mod add_account;
 mod file_tools;
 mod mc_core;
+mod settings;
 
 use log::{debug, error, info};
 use serde_json::Value;
@@ -15,24 +17,29 @@ slint::include_modules!();
 
 const DEFAULT_CONFIG: &str = "{
     \"close_after_launch\": false,
+    \"fabric_source\": \"https://maven.fabricmc.net\",
     \"forge_source\": \"https://maven.minecraftforge.net\",
     \"game_path\": \".minecraft\",
     \"height\": 600,
     \"java_path\": \"java\",
-    \"mc_source\": \"https://piston-meta.mojang.com\",
+    \"game_source\": \"https://piston-meta.mojang.com\",
+    \"optifine_source\": \"https://optifine.net\",
     \"width\": 800,
     \"xms\": \"1G\", 
     \"xmx\": \"2G\"
 }";
 
 // configs for cemcl
+#[derive(Clone)]
 struct Config {
     pub close_after_launch: bool,
+    pub fabric_source: String,
     pub forge_source: String,
     pub game_path: String,
     pub height: isize,
     pub java_path: String,
-    pub mc_source: String,
+    pub game_source: String,
+    pub optifine_source: String,
     pub width: isize,
     pub xms: String,
     pub xmx: String,
@@ -81,11 +88,13 @@ fn load_config() -> Option<Config> {
     let json: Value = serde_json::from_str(&read_to_string("config.json").ok()?.as_str()).ok()?;
     config = Config {
         close_after_launch: json["close_after_launch"].as_bool()?,
+        fabric_source: json["fabric_source"].as_str()?.into(),
         forge_source: json["forge_source"].as_str()?.into(),
         game_path: json["game_path"].as_str()?.into(),
         height: json["height"].as_i64()? as isize,
         java_path: json["java_path"].as_str()?.into(),
-        mc_source: json["mc_source"].as_str()?.into(),
+        game_source: json["game_source"].as_str()?.into(),
+        optifine_source: json["optifine_source"].as_str()?.into(),
         width: json["width"].as_i64()? as isize,
         xms: json["xms"].as_str()?.into(),
         xmx: json["xmx"].as_str()?.into(),
@@ -101,7 +110,7 @@ fn main() -> Result<(), slint::PlatformError> {
 
     // load config
     let acc_list: Vec<Account>;
-    let config: Config;
+    let mut config: Config;
     let game_list: Vec<Game>;
 
     if let Some(temp_config) = load_config() {
@@ -151,22 +160,26 @@ fn main() -> Result<(), slint::PlatformError> {
     ui.set_game_list(ModelRc::from(Rc::new(VecModel::from(ui_game_list))));
 
     // callbacks
-    ui.on_click_settings_btn({
+    ui.on_click_add_acc_btn({
         move || {
-            let dialog = Settings::new().unwrap();
-            dialog.set_authors(env!("CARGO_PKG_AUTHORS").into());
-            dialog.set_version(env!("CARGO_PKG_VERSION").into());
-            dialog.show().unwrap();
+            add_account::init();
+        }
+    });
+
+    ui.on_click_settings_btn({
+        let temp_config = config.clone();
+        move || {
+            settings::init(&temp_config);
         }
     });
 
     ui.on_click_start_btn({
         let ui_handle = ui.as_weak();
+        let temp_config = config.clone();
         move || {
             let ui = ui_handle.unwrap();
             let acc_index = ui.get_acc_index() as usize;
             let game_index = ui.get_game_index() as usize;
-            println!("{acc_index} {game_index}");
             if acc_index > acc_list.len() || game_index > game_list.len() {
                 let dialog = ErrorDialog::new().unwrap();
                 dialog.set_msg("Haven't select account or game yet.".into());
@@ -180,14 +193,14 @@ fn main() -> Result<(), slint::PlatformError> {
                 dialog.show().unwrap();
                 return;
             }
-            if let Some(cmd) = get_launch_command(&acc_list[acc_index], &game_list[game_index], &config.game_path) {
+            if let Some(cmd) = get_launch_command(&acc_list[acc_index], &game_list[game_index], &temp_config.game_path) {
                 let mut str = String::new();
                 for i in &cmd {
                     str.push_str(i);
                     str.push_str(" ");
                 }
                 debug!("{str}");
-                if let Ok(out) = Command::new(config.java_path.clone()).args(cmd).output() {
+                if let Ok(out) = Command::new(temp_config.java_path.clone()).args(cmd).output() {
                     io::stdout().write_all(&out.stdout);
                 } else {
                     error!("Failed to run command.")

@@ -5,7 +5,7 @@
     "game_path": ".minecraft",
     "height": 600,
     "java_path": "java",
-    "mc_source": "https://piston-meta.mojang.com",
+    "game_source": "https://piston-meta.mojang.com",
     "optifine_source": "https://optifine.net",
     "width": 800,
     "xms": "1G", 

@@ -15,13 +15,14 @@ A Minecraft: Java Edition launcher using Rust and Slint.
 ## Roadmap
 1. (Completed) Launch Minecraft
 2. (Completed) Store configuration files for each version in its directory
-3. Support seperated versions
-4. Support downloading dependencies
-5. Support installing new versions
-6. Support online login
-7. UI improvements
-8. Multi-language support
-9. More log
+3. Support configurations editing
+4. Support seperated versions
+5. Support downloading dependencies
+6. Support installing new versions
+7. Support online login
+8. UI improvements
+9. Multi-language support
+10. More log
 
 ## Credits
 [slint-ui/slint](https://github.com/slint-ui/slint)

@@ -1,0 +1,149 @@
+import { StandardButton, TabWidget } from "std-widgets.slint";
+
+export component AddAccDialog inherits Dialog {
+    title: @tr("Add a Account");
+
+    in-out property <int> account-type-index <=> tab-widget.current-index;
+    in-out property <string> online-acc <=> online-acc-input.text;
+    in-out property <string> online-pwd <=> online-pwd-input.text;
+    in-out property <string> offline-name <=> offline-name-input.text;
+    in-out property <string> offline-uuid <=> offline-uuid-input.text;
+    in-out property <string> other-acc-type <=> other-acc-type-input.text;
+    in-out property <string> other-name <=> other-name-input.text;
+    in-out property <string> other-token <=> other-token-input.text;
+    in-out property <string> other-uuid <=> other-uuid-input.text;
+
+    callback click-cancel-btn();
+    callback click-ok-btn();
+
+    tab-widget := TabWidget {
+        Tab {
+            title: @tr("Online Account");
+
+            GridLayout {
+                padding: 4px;
+
+                Text {
+                    text: @tr("Account: ");
+                    col: 0;
+                    row: 0;
+                }
+                online-acc-input := TextInput {
+                    col: 1;
+                    row: 0;
+                }
+            
+                Text {
+                    text: @tr("Password: ");
+                    col: 0;
+                    row: 1;
+                }
+                online-pwd-input := TextInput {
+                    col: 1;
+                    row: 1;
+                }
+
+                Rectangle {
+                    preferred-height: 100%;
+                    row: 2;
+                }
+            }
+        }
+
+        Tab {
+            title: @tr("Offline Account");
+
+            GridLayout {
+                padding: 4px;
+
+                Text {
+                    text: @tr("Name: ");
+                    col: 0;
+                    row: 0;
+                }
+                offline-name-input := TextInput {
+                    col: 1;
+                    row: 0;
+                }
+            
+                Text {
+                    text: @tr("UUID: ");
+                    col: 0;
+                    row: 1;
+                }
+                offline-uuid-input := TextInput {
+                    col: 1;
+                    row: 1;
+                }
+
+                Rectangle {
+                    preferred-height: 100%;
+                    row: 2;
+                }
+            }
+        }
+
+        Tab {
+            title: @tr("Other Account");
+
+            GridLayout {
+                padding: 4px;
+
+                Text {
+                    text: @tr("Account Type: ");
+                    col: 0;
+                    row: 0;
+                }
+                other-acc-type-input := TextInput {
+                    col: 1;
+                    row: 0;
+                }
+            
+                Text {
+                    text: @tr("Token: ");
+                    col: 0;
+                    row: 1;
+                }
+                other-token-input := TextInput {
+                    col: 1;
+                    row: 1;
+                }
+
+                Text {
+                    text: @tr("User Name: ");
+                    col: 0;
+                    row: 2;
+                }
+                other-name-input := TextInput {
+                    col: 1;
+                    row: 2;
+                }
+
+                Text {
+                    text: @tr("UUID: ");
+                    col: 0;
+                    row: 3;
+                }
+                other-uuid-input := TextInput {
+                    col: 1;
+                    row: 3;
+                }
+
+                Rectangle {
+                    preferred-height: 100%;
+                    row: 4;
+                }
+            }
+        }
+    }
+
+    StandardButton {
+        kind: cancel;
+        clicked => { root.click-cancel-btn() }
+    }
+
+    StandardButton {
+        kind: ok;
+        clicked => { root.click-ok-btn() }
+    }
+}

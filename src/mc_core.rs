@@ -332,7 +332,7 @@ pub fn load_game_list(config: &Config) -> Option<Vec<Game>> {
     if !exists(&dir) {
         // 空目录
         warn!("{dir} is empty.");
-        return None;
+        return Some(game_list);
     }
 
     for version in list_dir(&dir)? {

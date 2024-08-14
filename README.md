@@ -15,13 +15,14 @@ constant-e's Minecraft: Java Edition Launcher
 ## 路线图
 1. （已完成）启动Minecraft
 2. （已完成）在各个版本内部储存自定义设置
-3. 支持版本隔离
-4. 下载依赖
-5. 支持安装新版本等
-6. 正版登录
-7. UI改进
-8. 多语言支持
-9. 完善log
+3. 完善配置系统
+4. 支持版本隔离
+5. 下载依赖
+6. 支持安装新版本等
+7. 正版登录
+8. UI改进
+9. 多语言支持
+10. 完善log
 
 ## 鸣谢
 [slint-ui/slint](https://github.com/slint-ui/slint)

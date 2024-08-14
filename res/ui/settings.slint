@@ -1,63 +1,122 @@
-import { TabWidget, CheckBox, ScrollView } from "std-widgets.slint";
+import { TabWidget, CheckBox, ScrollView, StandardButton } from "std-widgets.slint";
+import { Title, SectionTitle } from "components/components.slint";
 
 export component Settings inherits Dialog {
     preferred-height: 600px;
     preferred-width: 800px;
     title: @tr("Settings");
-    default-font-family: "Sans Serif";
-    default-font-size: 12px;
 
     in-out property <string> authors;
     in-out property <string> version;
 
+    in-out property <bool> close-after-launch <=> close-after-launch-box.checked;
+    in-out property <string> java-path <=> java-path-input.text;
+    in-out property <string> game-path <=> game-path-input.text;
+    in-out property <string> game-source <=> game-source-input.text;
+    in-out property <string> fabric-source <=> fabric-source-input.text;
+    in-out property <string> forge-source <=> forge-source-input.text;
+    in-out property <string> optifine-source <=> optifine-source-input.text;
+    in-out property <string> config-height <=> height-input.text;
+    in-out property <string> config-width <=> width-input.text;
+    in-out property <string> xms <=> xms-input.text;
+    in-out property <string> xmx <=> xmx-input.text;
+
+    callback click-apply-btn();
+    callback click-cancel-btn();
+
     VerticalLayout {
-        Text {
-            text: @tr("Settings");
-            font-size: 28px;
-        }
+        Title { text: @tr("Settings"); }
         
         TabWidget {
             Tab {
                 title: @tr("Launcher Settings");
 
                 ScrollView {
-                    VerticalLayout {
+                    GridLayout {
+                        padding: 4px;
+
+                        SectionTitle { 
+                            text: @tr("General");
+                            col: 0;
+                            row: 0;
+                        }
+
                         Text {
-                            text: @tr("General"); 
-                            font-weight: 700;
+                            text: @tr("Java Path: ");
+                            col: 0;
+                            row: 1;
                         }
-                        HorizontalLayout {
-                            Text { text: @tr("Java Path: "); }
-                            TextInput {}
+                        java-path-input := TextInput {
+                            col: 1;
+                            row: 1;
                         }
-                        HorizontalLayout {
-                            Text { text: @tr("Minecraft Path: "); }
-                            TextInput {}
-                        }
-                        CheckBox { text: @tr("Close after Launching Game"); }
-    
+                        
                         Text {
-                            text: @tr("\nDownload Sources");
-                            font-weight: 700;
+                            text: @tr("Minecraft Path: ");
+                            col: 0;
+                            row: 2;
                         }
-                        HorizontalLayout {
-                            Text { text: @tr("Minecraft Source: "); }
-                            TextInput {}
+                        game-path-input := TextInput {
+                            col: 1;
+                            row: 2;
                         }
-                        HorizontalLayout {
-                            Text { text: @tr("Fabric Source: "); }
-                            TextInput {}
+
+                        close-after-launch-box := CheckBox {
+                            text: @tr("Close after Launching Game");
+                            col: 0;
+                            row: 3;
                         }
-                        HorizontalLayout {
-                            Text { text: @tr("Forge Source: "); }
-                            TextInput {}
+                        
+                        SectionTitle {
+                            text: @tr("Download Sources");
+                            col: 0;
+                            row: 4;
                         }
-                        HorizontalLayout {
-                            Text { text: @tr("OptiFine Source: "); }
-                            TextInput {}
+
+                        Text {
+                            text: @tr("Minecraft Source: ");
+                            col: 0;
+                            row: 5;
                         }
-    
-                        Rectangle { preferred-height: 100%; }
+                        game-source-input := TextInput {
+                            col: 1;
+                            row: 5;
+                        }
+                        
+                        Text {
+                            text: @tr("Fabric Source: ");
+                            col: 0;
+                            row: 6;
+                        }
+                        fabric-source-input := TextInput {
+                            col: 1;
+                            row: 6;
+                        }
+                        
+                        Text {
+                            text: @tr("Forge Source: ");
+                            col: 0;
+                            row: 7;
+                        }
+                        forge-source-input := TextInput {
+                            col: 1;
+                            row: 7;
+                        }
+                        
+                        Text {
+                            text: @tr("OptiFine Source: ");
+                            col: 0;
+                            row: 8;
+                        }
+                        optifine-source-input := TextInput {
+                            col: 1;
+                            row: 8;
+                        }
+
+                        Rectangle {
+                            preferred-height: 100%; 
+                            row: 9;
+                        }
                     }
                 }
             }
@@ -66,25 +125,53 @@ export component Settings inherits Dialog {
                 title: @tr("Default Minecraft Settings");
 
                 ScrollView {
-                    VerticalLayout {
-                        HorizontalLayout {
-                            Text { text: @tr("Window Height: "); }
-                            TextInput {}
+                    GridLayout {
+                        padding: 4px;
+
+                        Text {
+                            text: @tr("Window Height: ");
+                            col: 0;
+                            row: 0;
                         }
-                        HorizontalLayout {
-                            Text { text: @tr("Window Width: "); }
-                            TextInput {}
+                        height-input := TextInput {
+                            col: 1;
+                            row: 0;
                         }
-                        HorizontalLayout {
-                            Text { text: @tr("Minimum Memory: "); }
-                            TextInput {}
+                    
+                        Text {
+                            text: @tr("Window Width: ");
+                            col: 0;
+                            row: 1;
                         }
-                        HorizontalLayout {
-                            Text { text: @tr("Maximum Memory: "); }
-                            TextInput {}
+                        width-input := TextInput {
+                            col: 1;
+                            row: 1;
+                        }
+                    
+                        Text {
+                            text: @tr("Minimum Memory: ");
+                            col: 0;
+                            row: 2;
+                        }
+                        xms-input := TextInput {
+                            col: 1;
+                            row: 2;
+                        }
+                    
+                        Text {
+                            text: @tr("Maximum Memory: ");
+                            col: 0;
+                            row: 3;
+                        }
+                        xmx-input := TextInput {
+                            col: 1;
+                            row: 3;
                         }
     
-                        Rectangle { preferred-height: 100%; }
+                        Rectangle {
+                            preferred-height: 100%;
+                            row: 4;
+                        }
                     }
                 }
             }
@@ -93,11 +180,14 @@ export component Settings inherits Dialog {
                 title: @tr("About");
 
                 VerticalLayout {
+                    padding: 4px;
+
                     Text {
-                        text: @tr("CE Minecraft Launcher");
+                        text: "CE Minecraft Launcher";
                         horizontal-alignment: center;
-                        font-size: 24px;
+                        font-size: 28px;
                         font-weight: 700;
+                        padding: 8px;
                     }
 
                     Text { text: @tr("Version: ") + root.version; }
@@ -109,5 +199,15 @@ export component Settings inherits Dialog {
                 }
             }
         }
+    }
+
+    StandardButton {
+        kind: cancel;
+        clicked => {root.click-cancel-btn()}
+    }
+
+    StandardButton {
+        kind: apply;
+        clicked => { root.click-apply-btn() }
     }
 }
