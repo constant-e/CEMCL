@@ -4,7 +4,7 @@ constant-e's Minecraft: Java Edition Launcher
 Language: [简体中文](README.md) | English
 
 ## Warning
-项目开发初期，绝大部分尚未完成，暂时不可用
+Most of the functions are still under development.
 
 ## Introduction
 A Minecraft: Java Edition launcher using Rust and Slint.
