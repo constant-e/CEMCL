@@ -1,15 +1,20 @@
 # CE Minecraft Launcher (CEMCL)
 constant-e's Minecraft: Java Edition Launcher
 
+语言：简体中文 | [English](README_EN.md)
+
 ## 注意
 项目开发初期，绝大部分尚未完成，暂时不可用
 
 ## 项目介绍
 使用Rust和Slint开发的Minecraft: Java Edition启动器
 
-## TODO List
+## 文档
+[配置文件说明](docs/README.md)
+
+## 路线图
 1. （已完成）启动Minecraft
-2. （已完成）将index.json分散至各个版本内部
+2. （已完成）在各个版本内部储存自定义设置
 3. 支持版本隔离
 4. 下载依赖
 5. 支持安装新版本等
@@ -18,8 +23,8 @@ constant-e's Minecraft: Java Edition Launcher
 8. 多语言支持
 9. 完善log
 
-## Credits
+## 鸣谢
 [slint-ui/slint](https://github.com/slint-ui/slint)
 
-## License
+## 许可证
 Apache License 2.0
