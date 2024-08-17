@@ -6,6 +6,7 @@ mod settings;
 use log::{debug, error, info};
 use serde_json::Value;
 use slint::{ModelRc, StandardListViewItem, VecModel};
+use std::borrow::Borrow;
 use std::fs::{read_to_string, write};
 use std::io::{self, Write};
 use std::process::Command;
@@ -110,11 +111,11 @@ fn main() -> Result<(), slint::PlatformError> {
 
     // load config
     let acc_list: Vec<Account>;
-    let mut config: Config;
+    let mut config: Rc<Config>;
     let game_list: Vec<Game>;
 
     if let Some(temp_config) = load_config() {
-        config = temp_config;
+        config = Rc::new(temp_config);
     } else {
         error!("Failed to load config.json.");
         return Err(slint::PlatformError::from("Failed to load config.json."));
@@ -167,46 +168,50 @@ fn main() -> Result<(), slint::PlatformError> {
     });
 
     ui.on_click_settings_btn({
-        let temp_config = config.clone();
+        let config_handle = Rc::downgrade(&config);
         move || {
-            settings::init(&temp_config);
+            if let Some(config) = config_handle.upgrade() {
+                settings::init(&config);
+            }
         }
     });
 
     ui.on_click_start_btn({
         let ui_handle = ui.as_weak();
-        let temp_config = config.clone();
+        let config_handle = Rc::downgrade(&config);
         move || {
             let ui = ui_handle.unwrap();
-            let acc_index = ui.get_acc_index() as usize;
-            let game_index = ui.get_game_index() as usize;
-            if acc_index > acc_list.len() || game_index > game_list.len() {
-                let dialog = ErrorDialog::new().unwrap();
-                dialog.set_msg("Haven't select account or game yet.".into());
-                dialog.on_close({
-                    let dialog_handle = dialog.as_weak();
-                    move || {
-                        let dialog = dialog_handle.unwrap();
-                        dialog.hide().unwrap();
+            if let Some(config) = config_handle.upgrade() {
+                let acc_index = ui.get_acc_index() as usize;
+                let game_index = ui.get_game_index() as usize;
+                if acc_index > acc_list.len() || game_index > game_list.len() {
+                    let dialog = ErrorDialog::new().unwrap();
+                    dialog.set_msg("Haven't select account or game yet.".into());
+                    dialog.on_close({
+                        let dialog_handle = dialog.as_weak();
+                        move || {
+                            let dialog = dialog_handle.unwrap();
+                            dialog.hide().unwrap();
+                        }
+                    });
+                    dialog.show().unwrap();
+                    return;
+                }
+                if let Some(cmd) = get_launch_command(&acc_list[acc_index], &game_list[game_index], &config.game_path) {
+                    let mut str = String::new();
+                    for i in &cmd {
+                        str.push_str(i);
+                        str.push_str(" ");
                     }
-                });
-                dialog.show().unwrap();
-                return;
-            }
-            if let Some(cmd) = get_launch_command(&acc_list[acc_index], &game_list[game_index], &temp_config.game_path) {
-                let mut str = String::new();
-                for i in &cmd {
-                    str.push_str(i);
-                    str.push_str(" ");
-                }
-                debug!("{str}");
-                if let Ok(out) = Command::new(temp_config.java_path.clone()).args(cmd).output() {
-                    io::stdout().write_all(&out.stdout);
+                    debug!("{str}");
+                    if let Ok(out) = Command::new(config.java_path.clone()).args(cmd).output() {
+                        io::stdout().write_all(&out.stdout);
+                    } else {
+                        error!("Failed to run command.")
+                    }
                 } else {
-                    error!("Failed to run command.")
+                    error!("Failed to get launch command.")
                 }
-            } else {
-                error!("Failed to get launch command.")
             }
         }
     });
