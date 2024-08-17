@@ -54,10 +54,11 @@ fn load_account() -> Option<Vec<Account>> {
             Account {
                 account_type: "Legacy".into(),
                 token: "None".into(),
-                uuid: "Enter uuid".into(),
+                uuid: uuid::Uuid::new_v4().into(),
                 user_name: "Steve".into()
             }
         );
+        save_account(&acc_list)?;
         return Some(acc_list);
     }
 
@@ -98,6 +99,23 @@ fn load_config() -> Option<Config> {
     };
 
     Some(config)
+}
+
+fn save_account(acc_list: &Vec<Account>) -> Option<()> {
+    let mut json = serde_json::json!([]);
+    for account in acc_list {
+        let node = serde_json::json!(
+            {
+                "account_type": account.account_type.clone(),
+                "token": account.token.clone(),
+                "uuid": account.uuid.clone(),
+                "user_name": account.user_name.clone()
+            }
+        );
+        json.as_array_mut()?.push(node);
+    }
+    write("account.json", json.to_string()).ok()?;
+    Some(())
 }
 
 fn main() -> Result<(), slint::PlatformError> {
@@ -201,6 +219,7 @@ fn main() -> Result<(), slint::PlatformError> {
                     }
                     debug!("{str}");
                     if let Ok(out) = Command::new(config.java_path.clone()).args(cmd).output() {
+                        io::stdout().write_all(&out.stderr).unwrap();
                         io::stdout().write_all(&out.stdout).unwrap();
                     } else {
                         error!("Failed to run command.")
