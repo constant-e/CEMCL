@@ -1,6 +1,4 @@
-use log::warn;
-use std::io;
-use std::fs::{self, ReadDir};
+use std::fs;
 use std::path::Path;
 
 pub fn list_dir(path: &String) -> Option<Vec<String>> {

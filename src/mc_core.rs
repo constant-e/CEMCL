@@ -1,5 +1,5 @@
 use log::{info, warn, error};
-use serde_json::{error, Value};
+use serde_json::Value;
 use std::{env::consts as env, fs::read_to_string};
 
 use crate::{file_tools::{exists, list_dir}, Config};

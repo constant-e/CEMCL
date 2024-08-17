@@ -6,7 +6,6 @@ mod settings;
 use log::{debug, error, info};
 use serde_json::Value;
 use slint::{ModelRc, StandardListViewItem, VecModel};
-use std::borrow::Borrow;
 use std::fs::{read_to_string, write};
 use std::io::{self, Write};
 use std::process::Command;
@@ -62,20 +61,17 @@ fn load_account() -> Option<Vec<Account>> {
         return Some(acc_list);
     }
 
-    if let Ok(json) = serde_json::from_str::<Value>(&read_to_string("account.json").ok()?) {
-        for item in json.as_object() {
-            let account = Account {
-                account_type: item["account_type"].as_str()?.into(),
-                token: item["token"].as_str()?.into(), 
-                uuid: item["uuid"].as_str()?.into(),
-                user_name: item["user_name"].as_str()?.into()
-            };
-            acc_list.push(account);
-        }
-        return Some(acc_list);
-    } else {
-        return None;
+    let json = serde_json::from_str::<Value>(&read_to_string("account.json").ok()?).ok()?;
+    for item in json.as_array()? {
+        let account = Account {
+            account_type: item["account_type"].as_str()?.into(),
+            token: item["token"].as_str()?.into(), 
+            uuid: item["uuid"].as_str()?.into(),
+            user_name: item["user_name"].as_str()?.into()
+        };
+        acc_list.push(account);
     }
+    return Some(acc_list);
 }
 
 // load config from config.json
@@ -111,7 +107,7 @@ fn main() -> Result<(), slint::PlatformError> {
 
     // load config
     let acc_list: Vec<Account>;
-    let mut config: Rc<Config>;
+    let config: Rc<Config>;
     let game_list: Vec<Game>;
 
     if let Some(temp_config) = load_config() {
@@ -205,7 +201,7 @@ fn main() -> Result<(), slint::PlatformError> {
                     }
                     debug!("{str}");
                     if let Ok(out) = Command::new(config.java_path.clone()).args(cmd).output() {
-                        io::stdout().write_all(&out.stdout);
+                        io::stdout().write_all(&out.stdout).unwrap();
                     } else {
                         error!("Failed to run command.")
                     }
