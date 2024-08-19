@@ -1,127 +1,109 @@
-mod add_account;
+//! main 程序入口
+
 mod file_tools;
-mod mc_core;
+mod mc;
 mod settings;
 
-use log::{debug, error, info};
-use serde_json::Value;
-use slint::{ModelRc, StandardListViewItem, VecModel};
+use log::{debug, error};
 use std::cell::RefCell;
-use std::fs::{read_to_string, write};
-use std::io::{self, Write};
+use std::{fs, sync};
 use std::process::Command;
 use std::rc::Rc;
-use std::{sync, thread};
-use file_tools::exists;
-use mc_core::{get_launch_command, load_game_list, Account, Game};
+use std::thread;
+use serde_json::{json, Value};
+use slint::{ModelRc, VecModel, StandardListViewItem};
+use crate::file_tools::exists;
+use crate::mc::{Account, account, Game, game, launch};
 
 slint::include_modules!();
 
-const DEFAULT_CONFIG: &str = "{
-    \"close_after_launch\": false,
-    \"fabric_source\": \"https://maven.fabricmc.net\",
-    \"forge_source\": \"https://maven.minecraftforge.net\",
-    \"game_path\": \".minecraft\",
-    \"height\": 600,
-    \"java_path\": \"java\",
-    \"game_source\": \"https://piston-meta.mojang.com\",
-    \"optifine_source\": \"https://optifine.net\",
-    \"width\": 800,
-    \"xms\": \"1G\", 
-    \"xmx\": \"2G\"
-}";
-
-// configs for cemcl
+/// 启动器配置
 struct Config {
+    /// 启动后关闭启动器
     pub close_after_launch: RefCell<bool>,
+    /// Fabric下载源
     pub fabric_source: RefCell<String>,
+    /// Forge下载源
     pub forge_source: RefCell<String>,
+    /// .minecraft路径
     pub game_path: RefCell<String>,
-    pub height: RefCell<isize>,
-    pub java_path: RefCell<String>,
+    /// MC下载源
     pub game_source: RefCell<String>,
+    /// 默认游戏窗口高度
+    pub height: RefCell<String>,
+    /// java可执行文件路径
+    pub java_path: RefCell<String>,
+    /// OptiFine下载源
     pub optifine_source: RefCell<String>,
-    pub width: RefCell<isize>,
+    /// 默认游戏窗口宽度
+    pub width: RefCell<String>,
+    /// 默认JVM最小内存
     pub xms: RefCell<String>,
+    /// 默认JVM最大内存
     pub xmx: RefCell<String>,
 }
 
-// load account from account.json
-fn load_account() -> Option<Vec<Account>> {
-    let mut acc_list: Vec<Account> = Vec::new();
-
-    if !exists(&"account.json".into()) {
-        acc_list.push(
-            Account {
-                account_type: "Legacy".into(),
-                token: "None".into(),
-                uuid: uuid::Uuid::new_v4().into(),
-                user_name: "Steve".into()
-            }
-        );
-        save_account(&acc_list)?;
-        return Some(acc_list);
-    }
-
-    let json = serde_json::from_str::<Value>(&read_to_string("account.json").ok()?).ok()?;
-    for item in json.as_array()? {
-        let account = Account {
-            account_type: item["account_type"].as_str()?.into(),
-            token: item["token"].as_str()?.into(), 
-            uuid: item["uuid"].as_str()?.into(),
-            user_name: item["user_name"].as_str()?.into()
-        };
-        acc_list.push(account);
-    }
-    return Some(acc_list);
-}
-
-// load config from config.json
+/// 从config.json加载配置文件
 fn load_config() -> Option<Config> {
-    let config: Config;
+    if exists(&"config.json".into()) {
+        let json: Value = serde_json::from_str(&fs::read_to_string("config.json").ok()?.as_str()).ok()?;
+        let config = Config {
+            close_after_launch: RefCell::from(json["close_after_launch"].as_bool()?),
+            fabric_source: RefCell::from(String::from(json["fabric_source"].as_str()?)),
+            forge_source: RefCell::from(String::from(json["forge_source"].as_str()?)),
+            game_path: RefCell::from(String::from(json["game_path"].as_str()?)),
+            game_source: RefCell::from(String::from(json["game_source"].as_str()?)),
+            height: RefCell::from(String::from(json["height"].as_str()?)),
+            java_path: RefCell::from(String::from(json["java_path"].as_str()?)),
+            optifine_source: RefCell::from(String::from(json["optifine_source"].as_str()?)),
+            width: RefCell::from(String::from(json["width"].as_str()?)),
+            xms: RefCell::from(String::from(json["xms"].as_str()?)),
+            xmx: RefCell::from(String::from(json["xmx"].as_str()?)),
+        };
 
-    if !exists(&"config.json".into()) {
-        write("config.json", &DEFAULT_CONFIG).ok()?;
+        Some(config)
+    } else {
+        let config = Config {
+            close_after_launch: RefCell::from(false),
+            fabric_source: RefCell::from(String::from("https://maven.fabricmc.net")),
+            forge_source: RefCell::from(String::from("")),
+            game_path: RefCell::from(String::from("")),
+            game_source: RefCell::from(String::from("")),
+            height: RefCell::from(String::from("600")),
+            java_path: RefCell::from(String::from("")),
+            optifine_source: RefCell::from(String::from("")),
+            width: RefCell::from(String::from("800")),
+            xms: RefCell::from(String::from("")),
+            xmx: RefCell::from(String::from("")),
+        };
+        save_config(&config);
+
+        Some(config)
     }
-
-    let json: Value = serde_json::from_str(&read_to_string("config.json").ok()?.as_str()).ok()?;
-    config = Config {
-        close_after_launch: RefCell::from(json["close_after_launch"].as_bool()?),
-        fabric_source: RefCell::from(json["fabric_source"].as_str()?.to_string()),
-        forge_source: RefCell::from(json["forge_source"].as_str()?.to_string()),
-        game_path: RefCell::from(json["game_path"].as_str()?.to_string()),
-        height: RefCell::from(json["height"].as_i64()? as isize),
-        java_path: RefCell::from(json["java_path"].as_str()?.to_string()),
-        game_source: RefCell::from(json["game_source"].as_str()?.to_string()),
-        optifine_source: RefCell::from(json["optifine_source"].as_str()?.to_string()),
-        width: RefCell::from(json["width"].as_i64()? as isize),
-        xms: RefCell::from(json["xms"].as_str()?.to_string()),
-        xmx: RefCell::from(json["xmx"].as_str()?.to_string()),
-    };
-
-    Some(config)
 }
 
-fn save_account(acc_list: &Vec<Account>) -> Option<()> {
-    let mut json = serde_json::json!([]);
-    for account in acc_list {
-        let node = serde_json::json!(
-            {
-                "account_type": account.account_type.clone(),
-                "token": account.token.clone(),
-                "uuid": account.uuid.clone(),
-                "user_name": account.user_name.clone()
-            }
-        );
-        json.as_array_mut()?.push(node);
-    }
-    write("account.json", json.to_string()).ok()?;
-    Some(())
+/// 保存配置文件
+fn save_config(config: &Config) -> Option<()> {
+    let json = json!(
+        {
+            "close_after_launch": *config.close_after_launch.borrow(),
+            "fabric_source": *config.fabric_source.borrow(),
+            "forge_source": *config.forge_source.borrow(),
+            "game_path": *config.game_path.borrow(),
+            "game_source": *config.game_source.borrow(),
+            "height": *config.height.borrow(),
+            "java_path": *config.java_path.borrow(),
+            "optifine_source": *config.optifine_source.borrow(),
+            "width": *config.width.borrow(),
+            "xms": *config.xms.borrow(),
+            "xmx": *config.xmx.borrow(),
+        }
+    );
+    fs::write("config.json", json.to_string()).ok()
 }
 
 fn main() -> Result<(), slint::PlatformError> {
     env_logger::init();
-    info!("App start.");
     let ui = AppWindow::new()?;
 
     // load config
@@ -136,14 +118,14 @@ fn main() -> Result<(), slint::PlatformError> {
         return Err(slint::PlatformError::from("Failed to load config.json."));
     }
 
-    if let Some(temp_acc_list) = load_account() {
+    if let Some(temp_acc_list) = account::load() {
         acc_list = temp_acc_list;
     } else {
         error!("Failed to load account.json.");
         return Err(slint::PlatformError::from("Failed to load account.json."));
     }
 
-    if let Some(temp_game_list) = load_game_list(&config) {
+    if let Some(temp_game_list) = game::load(&config) {
         game_list = temp_game_list;
     } else {
         error!("Failed to load game list.");
@@ -153,8 +135,8 @@ fn main() -> Result<(), slint::PlatformError> {
     // load account list in ui
     let mut ui_acc_list: Vec<ModelRc<StandardListViewItem>> = Vec::new();
     for item in &acc_list {
-        let account_name = StandardListViewItem::from(item.user_name.as_str());
-        let account_type = StandardListViewItem::from(item.account_type.as_str());
+        let account_name = StandardListViewItem::from(item.user_name.borrow().as_str());
+        let account_type = StandardListViewItem::from(item.account_type.borrow().as_str());
         let model: Rc<VecModel<StandardListViewItem>> = Rc::new(VecModel::from(vec![account_name.into(), account_type.into()]));
         let row: ModelRc<StandardListViewItem> = ModelRc::from(model);
         ui_acc_list.push(row);
@@ -165,9 +147,9 @@ fn main() -> Result<(), slint::PlatformError> {
     // load game list in ui
     let mut ui_game_list: Vec<ModelRc<StandardListViewItem>> = Vec::new();
     for item in &game_list {
-        let version = StandardListViewItem::from(item.version.as_str());
-        let game_type = StandardListViewItem::from(item.game_type.as_str());
-        let description = StandardListViewItem::from(item.description.as_str());
+        let version = StandardListViewItem::from(item.version.borrow().as_str());
+        let game_type = StandardListViewItem::from(item.game_type.borrow().as_str());
+        let description = StandardListViewItem::from(item.description.borrow().as_str());
         let model: Rc<VecModel<StandardListViewItem>> = Rc::new(VecModel::from(vec![version.into(), game_type.into(), description.into()]));
         let row: ModelRc<StandardListViewItem> = ModelRc::from(model);
         ui_game_list.push(row);
@@ -178,7 +160,7 @@ fn main() -> Result<(), slint::PlatformError> {
     // callbacks
     ui.on_click_add_acc_btn({
         move || {
-            add_account::init();
+            account::add_dialog();
         }
     });
 
@@ -211,7 +193,7 @@ fn main() -> Result<(), slint::PlatformError> {
                     dialog.show().unwrap();
                     return;
                 }
-                if let Some(cmd) = get_launch_command(&acc_list[acc_index], &game_list[game_index], &config.game_path.borrow()) {
+                if let Some(cmd) = launch::get_launch_command(&acc_list[acc_index], &game_list[game_index], &config.game_path.borrow()) {
                     let mut str = String::new();
                     for i in &cmd {
                         str.push_str(i);
@@ -232,7 +214,7 @@ fn main() -> Result<(), slint::PlatformError> {
                     });
 
                     if r.recv().unwrap().is_some() {
-                        if config.close_after_launch.borrow().clone() {
+                        if *config.close_after_launch.borrow() {
                             ui.hide();
                         }
                     } else {

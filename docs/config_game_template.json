@@ -1,10 +1,10 @@
 {
     "args": "",
     "description": "",
-    "height": -1,
+    "height": "",
     "java_path": "",
     "seperated": false,
-    "width": -1,
+    "width": "",
     "xms": "1G",
     "xmx": "2G"
 }

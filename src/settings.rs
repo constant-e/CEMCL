@@ -9,9 +9,9 @@ pub fn init(config: &Rc<Config>) -> Option<()> {
 
     // init
     ui.set_authors(env!("CARGO_PKG_AUTHORS").into());
-    ui.set_close_after_launch(*config.close_after_launch.borrow());
-    ui.set_config_height(config.height.borrow().to_string().into());
-    ui.set_config_width(config.width.borrow().to_string().into());
+    ui.set_close_after_launch(config.close_after_launch.borrow().clone());
+    ui.set_config_height(config.height.borrow().clone().into());
+    ui.set_config_width(config.width.borrow().clone().into());
     ui.set_fabric_source(config.fabric_source.borrow().clone().into());
     ui.set_forge_source(config.forge_source.borrow().clone().into());
     ui.set_game_path(config.game_path.borrow().clone().into());
@@ -34,10 +34,10 @@ pub fn init(config: &Rc<Config>) -> Option<()> {
                 *config.forge_source.borrow_mut() = ui.get_forge_source().into();
                 *config.game_path.borrow_mut() = ui.get_game_path().into();
                 *config.game_source.borrow_mut() = ui.get_game_source().into();
-                *config.height.borrow_mut() = ui.get_config_height().parse::<isize>().unwrap();
+                *config.height.borrow_mut() = ui.get_config_height().into();
                 *config.java_path.borrow_mut() = ui.get_java_path().into();
                 *config.optifine_source.borrow_mut() = ui.get_optifine_source().into();
-                *config.width.borrow_mut() = ui.get_config_width().parse::<isize>().unwrap();
+                *config.width.borrow_mut() = ui.get_config_width().into();
                 *config.xms.borrow_mut() = ui.get_xms().into();
                 *config.xmx.borrow_mut() = ui.get_xmx().into();
             } else {
