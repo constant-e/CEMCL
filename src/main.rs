@@ -125,7 +125,7 @@ fn main() -> Result<(), slint::PlatformError> {
 
     // load config
     let acc_list: Vec<Account>;
-    let mut config: Rc<Config>;
+    let config: Rc<Config>;
     let game_list: Vec<Game>;
 
     if let Some(temp_config) = load_config() {
@@ -182,7 +182,7 @@ fn main() -> Result<(), slint::PlatformError> {
     });
 
     ui.on_click_settings_btn({
-        let config_handle = Rc::downgrade(&mut config);
+        let config_handle = Rc::downgrade(&config);
         move || {
             let config = config_handle.upgrade().unwrap();
             settings::init(&config);
