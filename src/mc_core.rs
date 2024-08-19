@@ -327,7 +327,7 @@ pub fn get_launch_command(account: &Account, game: &Game, game_path: &String) ->
 
 pub fn load_game_list(config: &Config) -> Option<Vec<Game>> {
     let mut game_list: Vec<Game> = Vec::new();
-    let dir = config.game_path.clone() + "/versions";
+    let dir = config.game_path.borrow().clone() + "/versions";
 
     if !exists(&dir) {
         // 空目录
@@ -344,14 +344,14 @@ pub fn load_game_list(config: &Config) -> Option<Vec<Game>> {
             game = Game {
                 args: "".into(),
                 description: "".into(),
-                height: config.height,
-                java_path: config.java_path.clone(),
+                height: config.height.borrow().clone(),
+                java_path: config.java_path.borrow().clone(),
                 seperated: false,
                 game_type: json["type"].as_str()?.into(),
                 version: version.into(),
-                width: config.width,
-                xms: config.xms.clone(),
-                xmx: config.xmx.clone()
+                width: config.width.borrow().clone(),
+                xms: config.xms.borrow().clone(),
+                xmx: config.xmx.borrow().clone()
             };
         } else {
             // 异常，跳过此次加载

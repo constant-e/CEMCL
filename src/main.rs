@@ -6,6 +6,7 @@ mod settings;
 use log::{debug, error, info};
 use serde_json::Value;
 use slint::{ModelRc, StandardListViewItem, VecModel};
+use std::cell::RefCell;
 use std::fs::{read_to_string, write};
 use std::io::{self, Write};
 use std::process::Command;
@@ -30,19 +31,18 @@ const DEFAULT_CONFIG: &str = "{
 }";
 
 // configs for cemcl
-#[derive(Clone)]
 struct Config {
-    pub close_after_launch: bool,
-    pub fabric_source: String,
-    pub forge_source: String,
-    pub game_path: String,
-    pub height: isize,
-    pub java_path: String,
-    pub game_source: String,
-    pub optifine_source: String,
-    pub width: isize,
-    pub xms: String,
-    pub xmx: String,
+    pub close_after_launch: RefCell<bool>,
+    pub fabric_source: RefCell<String>,
+    pub forge_source: RefCell<String>,
+    pub game_path: RefCell<String>,
+    pub height: RefCell<isize>,
+    pub java_path: RefCell<String>,
+    pub game_source: RefCell<String>,
+    pub optifine_source: RefCell<String>,
+    pub width: RefCell<isize>,
+    pub xms: RefCell<String>,
+    pub xmx: RefCell<String>,
 }
 
 // load account from account.json
@@ -85,17 +85,17 @@ fn load_config() -> Option<Config> {
 
     let json: Value = serde_json::from_str(&read_to_string("config.json").ok()?.as_str()).ok()?;
     config = Config {
-        close_after_launch: json["close_after_launch"].as_bool()?,
-        fabric_source: json["fabric_source"].as_str()?.into(),
-        forge_source: json["forge_source"].as_str()?.into(),
-        game_path: json["game_path"].as_str()?.into(),
-        height: json["height"].as_i64()? as isize,
-        java_path: json["java_path"].as_str()?.into(),
-        game_source: json["game_source"].as_str()?.into(),
-        optifine_source: json["optifine_source"].as_str()?.into(),
-        width: json["width"].as_i64()? as isize,
-        xms: json["xms"].as_str()?.into(),
-        xmx: json["xmx"].as_str()?.into(),
+        close_after_launch: RefCell::from(json["close_after_launch"].as_bool()?),
+        fabric_source: RefCell::from(json["fabric_source"].as_str()?.to_string()),
+        forge_source: RefCell::from(json["forge_source"].as_str()?.to_string()),
+        game_path: RefCell::from(json["game_path"].as_str()?.to_string()),
+        height: RefCell::from(json["height"].as_i64()? as isize),
+        java_path: RefCell::from(json["java_path"].as_str()?.to_string()),
+        game_source: RefCell::from(json["game_source"].as_str()?.to_string()),
+        optifine_source: RefCell::from(json["optifine_source"].as_str()?.to_string()),
+        width: RefCell::from(json["width"].as_i64()? as isize),
+        xms: RefCell::from(json["xms"].as_str()?.to_string()),
+        xmx: RefCell::from(json["xmx"].as_str()?.to_string()),
     };
 
     Some(config)
@@ -125,7 +125,7 @@ fn main() -> Result<(), slint::PlatformError> {
 
     // load config
     let acc_list: Vec<Account>;
-    let config: Rc<Config>;
+    let mut config: Rc<Config>;
     let game_list: Vec<Game>;
 
     if let Some(temp_config) = load_config() {
@@ -182,11 +182,10 @@ fn main() -> Result<(), slint::PlatformError> {
     });
 
     ui.on_click_settings_btn({
-        let config_handle = Rc::downgrade(&config);
+        let config_handle = Rc::downgrade(&mut config);
         move || {
-            if let Some(config) = config_handle.upgrade() {
-                settings::init(&config);
-            }
+            let config = config_handle.upgrade().unwrap();
+            settings::init(&config);
         }
     });
 
@@ -211,14 +210,14 @@ fn main() -> Result<(), slint::PlatformError> {
                     dialog.show().unwrap();
                     return;
                 }
-                if let Some(cmd) = get_launch_command(&acc_list[acc_index], &game_list[game_index], &config.game_path) {
+                if let Some(cmd) = get_launch_command(&acc_list[acc_index], &game_list[game_index], &config.game_path.borrow()) {
                     let mut str = String::new();
                     for i in &cmd {
                         str.push_str(i);
                         str.push_str(" ");
                     }
                     debug!("{str}");
-                    if let Ok(out) = Command::new(config.java_path.clone()).args(cmd).output() {
+                    if let Ok(out) = Command::new(config.java_path.borrow().clone()).args(cmd).output() {
                         io::stdout().write_all(&out.stderr).unwrap();
                         io::stdout().write_all(&out.stdout).unwrap();
                     } else {
