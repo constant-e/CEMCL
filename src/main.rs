@@ -11,6 +11,7 @@ use std::fs::{read_to_string, write};
 use std::io::{self, Write};
 use std::process::Command;
 use std::rc::Rc;
+use std::{sync, thread};
 use file_tools::exists;
 use mc_core::{get_launch_command, load_game_list, Account, Game};
 
@@ -217,11 +218,34 @@ fn main() -> Result<(), slint::PlatformError> {
                         str.push_str(" ");
                     }
                     debug!("{str}");
-                    if let Ok(out) = Command::new(config.java_path.borrow().clone()).args(cmd).output() {
-                        io::stdout().write_all(&out.stderr).unwrap();
-                        io::stdout().write_all(&out.stdout).unwrap();
+                    
+                    let java_path = config.java_path.borrow().clone();
+                    let (s, r) = sync::mpsc::channel();
+
+                    thread::spawn(move || {
+                        if let Ok(child) = Command::new(java_path).args(cmd).spawn() {
+                            s.send(Some(()));
+                        } else {
+                            s.send(None);
+                            error!("Failed to run command.");
+                        }
+                    });
+
+                    if r.recv().unwrap().is_some() {
+                        if config.close_after_launch.borrow().clone() {
+                            ui.hide();
+                        }
                     } else {
-                        error!("Failed to run command.")
+                        let dialog = ErrorDialog::new().unwrap();
+                        dialog.set_msg("Failed to run command.".into());
+                        dialog.on_close({
+                            let dialog_handle = dialog.as_weak();
+                            move || {
+                                let dialog = dialog_handle.unwrap();
+                                dialog.hide().unwrap();
+                            }
+                        });
+                        dialog.show().unwrap();
                     }
                 } else {
                     error!("Failed to get launch command.")
