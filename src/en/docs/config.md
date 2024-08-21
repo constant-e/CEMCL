@@ -1,5 +1,4 @@
 # Configuration Files
-Language: [简体中文](config.md) | English
 
 ## account.json
 Configuration file for accounts.

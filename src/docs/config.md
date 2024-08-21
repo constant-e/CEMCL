@@ -1,5 +1,4 @@
 # 配置文件说明
-语言: 简体中文 | [English](config_en.md)
 
 ## account.json
 账号配置文件。
