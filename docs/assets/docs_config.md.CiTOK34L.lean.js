@@ -1,1 +1,0 @@
-import{_ as s,c as i,o as a,a4 as n}from"./chunks/framework.DyPx2nSE.js";const g=JSON.parse('{"title":"配置文件说明","description":"","frontmatter":{},"headers":[],"relativePath":"docs/config.md","filePath":"docs/config.md"}'),t={name:"docs/config.md"},h=n("",26),l=[h];function e(p,k,o,E,d,c){return a(),i("div",null,l)}const u=s(t,[["render",e]]);export{g as __pageData,u as default};

@@ -1,1 +1,0 @@
-import{_ as a,c as e,o as t,a4 as r}from"./chunks/framework.DyPx2nSE.js";const p=JSON.parse('{"title":"关于","description":"","frontmatter":{},"headers":[],"relativePath":"about.md","filePath":"about.md"}'),o={name:"about.md"},s=r("",5),i=[s];function n(h,_,c,l,u,d){return t(),e("div",null,i)}const f=a(o,[["render",n]]);export{p as __pageData,f as default};
