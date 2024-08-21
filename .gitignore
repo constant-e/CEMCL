@@ -1,5 +1,4 @@
-.vscode
-/*.json
-/logs
-/target
-Cargo.lock
+cache
+dist
+node_modules
+package-lock.json
