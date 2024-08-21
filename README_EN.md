@@ -9,8 +9,8 @@ Most of the functions are still under development.
 ## Introduction
 A Minecraft: Java Edition launcher using Rust and Slint.
 
-## Documentations
-[Documentations for configuration files](docs/README_EN.md)
+## Documents
+[Documents](https://constant-e.github.io/CEMCL/en/docs)
 
 ## Roadmap
 1. (Completed) Launch Minecraft

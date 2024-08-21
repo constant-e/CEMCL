@@ -10,7 +10,7 @@ constant-e's Minecraft: Java Edition Launcher
 使用Rust和Slint开发的Minecraft: Java Edition启动器
 
 ## 文档
-[配置文件说明](docs/README.md)
+[文档](https://constant-e.github.io/CEMCL/docs)
 
 ## 路线图
 1. （已完成）启动Minecraft
