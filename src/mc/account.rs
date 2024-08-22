@@ -1,19 +1,56 @@
 use std::cell::RefCell;
 use std::fs;
+use std::rc::Rc;
 use serde_json::Value;
+use slint::{ModelRc, VecModel, StandardListViewItem};
 use crate::file_tools::exists;
 use super::Account;
 
 slint::include_modules!();
 
-pub fn add_dialog() {
+pub fn add_dialog(acc_list: &Rc<RefCell<Vec<Account>>>, app: &crate::AppWindow) {
     let ui = AddAccDialog::new().unwrap();
+    ui.set_offline_uuid(uuid::Uuid::new_v4().to_string().into());
     
     ui.on_click_ok_btn({
+        let app_handle = app.as_weak();
         let ui_handle = ui.as_weak();
+        let acc_list_handle = Rc::downgrade(&acc_list);
         move || {
+            let app = app_handle.unwrap();
             let ui = ui_handle.unwrap();
-            // TODO: Save changes
+            let acc_list = acc_list_handle.upgrade().unwrap();
+            let index = ui.get_account_type_index();
+            if index == 0 {
+                // TODO: Online login
+            } else if index == 1 {
+                // Offline Account
+                acc_list.borrow_mut().push(Account {
+                    account_type: RefCell::from("Legacy".to_string()),
+                    token: RefCell::from("None".to_string()),
+                    uuid: RefCell::from(ui.get_offline_uuid().to_string()),
+                    user_name: RefCell::from(ui.get_offline_name().to_string()),
+                });
+            } else {
+                // Costumized Account
+                acc_list.borrow_mut().push(Account {
+                    account_type: RefCell::from(ui.get_other_acc_type().to_string()),
+                    token: RefCell::from(ui.get_other_token().to_string()),
+                    uuid: RefCell::from(ui.get_other_uuid().to_string()),
+                    user_name: RefCell::from(ui.get_other_name().to_string()),
+                });
+            }
+            save(&*acc_list.borrow());
+            let mut ui_acc_list: Vec<ModelRc<StandardListViewItem>> = Vec::new();
+            for item in acc_list.borrow().iter() {
+                let account_name = StandardListViewItem::from(item.user_name.borrow().as_str());
+                let account_type = StandardListViewItem::from(item.account_type.borrow().as_str());
+                let model: Rc<VecModel<StandardListViewItem>> = Rc::new(VecModel::from(vec![account_name.into(), account_type.into()]));
+                let row: ModelRc<StandardListViewItem> = ModelRc::from(model);
+                ui_acc_list.push(row);
+            }
+            app.set_acc_list(ModelRc::from(Rc::new(VecModel::from(ui_acc_list))));
+            
             ui.hide();
         }
     });

@@ -107,7 +107,7 @@ fn main() -> Result<(), slint::PlatformError> {
     let ui = AppWindow::new()?;
 
     // load config
-    let acc_list: Vec<Account>;
+    let acc_list: Rc<RefCell<Vec<Account>>>;
     let config: Rc<Config>;
     let game_list: Vec<Game>;
 
@@ -119,7 +119,7 @@ fn main() -> Result<(), slint::PlatformError> {
     }
 
     if let Some(temp_acc_list) = account::load() {
-        acc_list = temp_acc_list;
+        acc_list = Rc::new(RefCell::from(temp_acc_list));
     } else {
         error!("Failed to load account.json.");
         return Err(slint::PlatformError::from("Failed to load account.json."));
@@ -134,14 +134,14 @@ fn main() -> Result<(), slint::PlatformError> {
 
     // load account list in ui
     let mut ui_acc_list: Vec<ModelRc<StandardListViewItem>> = Vec::new();
-    for item in &acc_list {
+    for item in acc_list.borrow().iter() {
         let account_name = StandardListViewItem::from(item.user_name.borrow().as_str());
         let account_type = StandardListViewItem::from(item.account_type.borrow().as_str());
         let model: Rc<VecModel<StandardListViewItem>> = Rc::new(VecModel::from(vec![account_name.into(), account_type.into()]));
         let row: ModelRc<StandardListViewItem> = ModelRc::from(model);
         ui_acc_list.push(row);
     }
-
+    
     ui.set_acc_list(ModelRc::from(Rc::new(VecModel::from(ui_acc_list))));
 
     // load game list in ui
@@ -159,8 +159,15 @@ fn main() -> Result<(), slint::PlatformError> {
 
     // callbacks
     ui.on_click_add_acc_btn({
+        let acc_list_handle = Rc::downgrade(&acc_list);
+        let ui_handle = ui.as_weak();
         move || {
-            account::add_dialog();
+            if let (Some(acc_list), Some(ui)) = (acc_list_handle.upgrade(), ui_handle.upgrade()) {
+                account::add_dialog(&acc_list, &ui);
+                println!("{}", acc_list.borrow().len());
+            } else {
+                error!("Failed to get acc_list.");
+            }
         }
     });
 
@@ -186,7 +193,7 @@ fn main() -> Result<(), slint::PlatformError> {
             if let Some(config) = config_handle.upgrade() {
                 let acc_index = ui.get_acc_index() as usize;
                 let game_index = ui.get_game_index() as usize;
-                if acc_index > acc_list.len() || game_index > game_list.len() {
+                if acc_index > acc_list.borrow().len() || game_index > game_list.len() {
                     let dialog = ErrorDialog::new().unwrap();
                     dialog.set_msg("Haven't select account or game yet.".into());
                     dialog.on_close({
@@ -199,7 +206,7 @@ fn main() -> Result<(), slint::PlatformError> {
                     dialog.show().unwrap();
                     return;
                 }
-                if let Some(cmd) = launch::get_launch_command(&acc_list[acc_index], &game_list[game_index], &config.game_path.borrow()) {
+                if let Some(cmd) = launch::get_launch_command(&acc_list.borrow()[acc_index], &game_list[game_index], &config.game_path.borrow()) {
                     let mut str = String::new();
                     for i in &cmd {
                         str.push_str(i);
