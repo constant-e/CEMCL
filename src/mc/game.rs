@@ -44,16 +44,15 @@ pub fn load(config: &Config) -> Option<Vec<Game>> {
         let cfg_path = path.clone() + "/" + "config.json";
         if exists(&cfg_path) {
             if let Ok(json) = serde_json::from_str::<Value>(&fs::read_to_string(&cfg_path).ok()?.as_str()) {
-                for item in json.as_array()? {
-                    game.args = RefCell::from(String::from(item["args"].as_str()?));
-                    game.description = RefCell::from(String::from(item["description"].as_str()?));
-                    game.height = RefCell::from(String::from(item["height"].as_str()?));
-                    game.java_path = RefCell::from(String::from(item["java_path"].as_str()?));
-                    game.seperated = RefCell::from(item["seperated"].as_bool()?);
-                    game.width = RefCell::from(String::from(item["width"].as_str()?));
-                    game.xms = RefCell::from(String::from(item["xms"].as_str()?));
-                    game.xmx = RefCell::from(String::from(item["xmx"].as_str()?));
-                }
+                println!("1");
+                game.args = RefCell::from(String::from(json["args"].as_str()?));
+                game.description = RefCell::from(String::from(json["description"].as_str()?));
+                game.height = RefCell::from(String::from(json["height"].as_str()?));
+                game.java_path = RefCell::from(String::from(json["java_path"].as_str()?));
+                game.seperated = RefCell::from(json["seperated"].as_bool()?);
+                game.width = RefCell::from(String::from(json["width"].as_str()?));
+                game.xms = RefCell::from(String::from(json["xms"].as_str()?));
+                game.xmx = RefCell::from(String::from(json["xmx"].as_str()?));
             } else {
                 warn!("Failed to load {cfg_path}.");
                 continue;
