@@ -258,8 +258,12 @@ pub fn get_launch_command(account: &Account, game: &Game, game_path: &String) ->
         }
         result.append(&mut game_args);
 
+        // 版本隔离
+        let game_dir = if *game.seperated.borrow() { &dir } else { game_path };
+
         // 替换模板
         for item in result.iter_mut() {
+            
             // TODO: 优化替换
             *item = item
                 .replace("${assets_index_name}", &asset_index)
@@ -270,7 +274,7 @@ pub fn get_launch_command(account: &Account, game: &Game, game_path: &String) ->
                 // .replace("${authlib_injector_param}", "") // 暂不支持
                 .replace("${classpath}", &cp)
                 .replace("${classpath_separator}", ":")
-                .replace("${game_directory}", &game_path)
+                .replace("${game_directory}", &game_dir)
                 .replace("${launcher_name}", "\"CE Minecraft Launcher\"")
                 .replace("${launcher_version}", env!("CARGO_PKG_VERSION"))
                 .replace("${library_directory}", &(game_path.clone() + "/libraries"))
