@@ -27,7 +27,7 @@ Explanations:
 2. `token`: Token. It will be a part of launch arguments. Type: `string`.
 3. `uuid`: UUID. Type: `string`.  
 **NOTICE for offline users: UUID must match the format, or MC won't be launched. Do not change UUID, or your character may not be recognized by MC.**
-1. `user_name`: User name. It will be a part of launch arguments. Type: `string`.
+4. `user_name`: User name. It will be a part of launch arguments. Type: `string`.
 
 ## config.json (In the launcher's folder)
 Configuration file for CEMCL.
@@ -60,7 +60,7 @@ Explanations:
 6. `width`: Default game window width. Type: `string`.
 7. `xms`: Minimum memory for jvm. Type: `string`.  
 **It will be a part of launch arguments. Format: `1024M`, `2G`, etc.**
-1. `xmx`: Maximum memory for jvm. Type: `string`.  
+8. `xmx`: Maximum memory for jvm. Type: `string`.  
 **It will be a part of launch arguments. Format: `1024M`, `2G`, etc.**
 
 ## config.json (In the game's folder)
@@ -73,10 +73,10 @@ Example:
 {
     "args": "",
     "description": "",
-    "height": "",
-    "java_path": "",
-    "seperated": false,
-    "width": "",
+    "height": "600",
+    "java_path": "java",
+    "separated": false,
+    "width": "800",
     "xms": "1G",
     "xmx": "2G"
 }
@@ -84,5 +84,5 @@ Example:
 Explanations:
 1. `args`: Customized launcher arguments. If not blank, it will be the launch arguments, and **CEMCL won't add other arguments**.Type: `string`.
 2. `description`: Description. Type: `string`.
-3. `seperated`: Whether to seperate different versions. Type: `bool`.
+3. `separated`: Whether to separate different versions. Type: `bool`.
 4. Others are the same as *config.json (In the launcher's folder)*.

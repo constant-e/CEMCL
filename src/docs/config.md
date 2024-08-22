@@ -5,8 +5,6 @@
 
 数据类型：`[object]`
 
-模板：[docs/account_template.json](account_template.json)
-
 样例：
 ```json
 [
@@ -35,8 +33,6 @@
 启动器配置文件。
 
 数据类型：`object`
-
-模板：[docs/config_launcher_template.json](config_launcher_template.json)
 
 样例：
 ```json
@@ -72,17 +68,15 @@
 
 数据类型：`object`
 
-模板：[docs/config_game_template.json](config_game_template.json)
-
 样例：
 ```json
 {
     "args": "",
     "description": "",
-    "height": "",
-    "java_path": "",
-    "seperated": false,
-    "width": "",
+    "height": "600",
+    "java_path": "java",
+    "separated": false,
+    "width": "800",
     "xms": "1G",
     "xmx": "2G"
 }
@@ -90,5 +84,5 @@
 说明：
 1. `args`：自定义启动参数。若此项非空，将直接填入启动参数，并且**不会再添加其他参数**。数据类型：`string`。
 2. `description`：备注。数据类型：`string`。
-3. `seperated`：是否启用版本隔离。数据类型：`bool`。
+3. `separated`：是否启用版本隔离。数据类型：`bool`。
 4. 其余同*config.json（位于启动器目录下）*。
