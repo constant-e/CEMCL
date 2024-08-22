@@ -259,7 +259,7 @@ pub fn get_launch_command(account: &Account, game: &Game, game_path: &String) ->
         result.append(&mut game_args);
 
         // 版本隔离
-        let game_dir = if *game.seperated.borrow() { &dir } else { game_path };
+        let game_dir = if *game.separated.borrow() { &dir } else { game_path };
 
         // 替换模板
         for item in result.iter_mut() {

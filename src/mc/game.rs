@@ -27,7 +27,7 @@ pub fn load(config: &Config) -> Option<Vec<Game>> {
                 description: RefCell::from(String::from("")),
                 height: config.height.clone(),
                 java_path: config.java_path.clone(),
-                seperated: RefCell::from(false),
+                separated: RefCell::from(false),
                 game_type: RefCell::from(String::from(json["type"].as_str()?)),
                 version: RefCell::from(version),
                 width: config.width.clone(),
@@ -49,7 +49,7 @@ pub fn load(config: &Config) -> Option<Vec<Game>> {
                 game.description = RefCell::from(String::from(json["description"].as_str()?));
                 game.height = RefCell::from(String::from(json["height"].as_str()?));
                 game.java_path = RefCell::from(String::from(json["java_path"].as_str()?));
-                game.seperated = RefCell::from(json["seperated"].as_bool()?);
+                game.separated = RefCell::from(json["separated"].as_bool()?);
                 game.width = RefCell::from(String::from(json["width"].as_str()?));
                 game.xms = RefCell::from(String::from(json["xms"].as_str()?));
                 game.xmx = RefCell::from(String::from(json["xmx"].as_str()?));
@@ -70,7 +70,7 @@ fn save(path: &str, game: &Game) -> Option<()> {
             "description": *game.description.borrow(),
             "height": *game.height.borrow(),
             "java_path": *game.java_path.borrow(),
-            "seperated": *game.seperated.borrow(),
+            "separated": *game.separated.borrow(),
             "width": *game.width.borrow(),
             "xms": *game.xms.borrow(),
             "xmx": *game.xmx.borrow(),

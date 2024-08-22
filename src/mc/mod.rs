@@ -30,7 +30,7 @@ pub struct Game {
     // java可执行文件路径
     pub java_path: std::cell::RefCell<String>,
     // 启用版本隔离
-    pub seperated: std::cell::RefCell<bool>,
+    pub separated: std::cell::RefCell<bool>,
     // 游戏类型，直接填入
     pub game_type: std::cell::RefCell<String>,
     // 游戏版本，直接填入
