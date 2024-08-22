@@ -1,6 +1,7 @@
 use log::warn;
 use std::cell::RefCell;
 use std::fs;
+use std::rc::Rc;
 use serde_json::{json, Value};
 use crate::Config;
 use crate::file_tools::{exists, list_dir};
@@ -8,7 +9,7 @@ use super::Game;
 
 slint::include_modules!();
 
-pub fn add_dialog() {
+pub fn add_dialog(game_list: &Rc<RefCell<Vec<Game>>>, app: &crate::AppWindow) {
     let ui = AddGameDialog::new().unwrap();
     
     ui.on_click_ok_btn({

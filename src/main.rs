@@ -109,7 +109,7 @@ fn main() -> Result<(), slint::PlatformError> {
     // load config
     let acc_list: Rc<RefCell<Vec<Account>>>;
     let config: Rc<Config>;
-    let game_list: Vec<Game>;
+    let game_list: Rc<RefCell<Vec<Game>>>;
 
     if let Some(temp_config) = load_config() {
         config = Rc::new(temp_config);
@@ -126,7 +126,7 @@ fn main() -> Result<(), slint::PlatformError> {
     }
 
     if let Some(temp_game_list) = game::load(&config) {
-        game_list = temp_game_list;
+        game_list = Rc::new(RefCell::from(temp_game_list));
     } else {
         error!("Failed to load game list.");
         return Err(slint::PlatformError::from("Failed to load game list."));
@@ -146,7 +146,7 @@ fn main() -> Result<(), slint::PlatformError> {
 
     // load game list in ui
     let mut ui_game_list: Vec<ModelRc<StandardListViewItem>> = Vec::new();
-    for item in &game_list {
+    for item in game_list.borrow().iter() {
         let version = StandardListViewItem::from(item.version.borrow().as_str());
         let game_type = StandardListViewItem::from(item.game_type.borrow().as_str());
         let description = StandardListViewItem::from(item.description.borrow().as_str());
@@ -164,7 +164,6 @@ fn main() -> Result<(), slint::PlatformError> {
         move || {
             if let (Some(acc_list), Some(ui)) = (acc_list_handle.upgrade(), ui_handle.upgrade()) {
                 account::add_dialog(&acc_list, &ui);
-                println!("{}", acc_list.borrow().len());
             } else {
                 error!("Failed to get acc_list.");
             }
@@ -172,8 +171,14 @@ fn main() -> Result<(), slint::PlatformError> {
     });
 
     ui.on_click_add_game_btn({
+        let game_list_handle = Rc::downgrade(&game_list);
+        let ui_handle = ui.as_weak();
         move || {
-            game::add_dialog();
+            if let (Some(game_list), Some(ui)) = (game_list_handle.upgrade(), ui_handle.upgrade()) {
+                game::add_dialog(&game_list, &ui);
+            } else {
+                error!("Failed to get game_list.");
+            }
         }
     });
 
@@ -193,7 +198,7 @@ fn main() -> Result<(), slint::PlatformError> {
             if let Some(config) = config_handle.upgrade() {
                 let acc_index = ui.get_acc_index() as usize;
                 let game_index = ui.get_game_index() as usize;
-                if acc_index > acc_list.borrow().len() || game_index > game_list.len() {
+                if acc_index > acc_list.borrow().len() || game_index > game_list.borrow().len() {
                     let dialog = ErrorDialog::new().unwrap();
                     dialog.set_msg("Haven't select account or game yet.".into());
                     dialog.on_close({
@@ -206,7 +211,7 @@ fn main() -> Result<(), slint::PlatformError> {
                     dialog.show().unwrap();
                     return;
                 }
-                if let Some(cmd) = launch::get_launch_command(&acc_list.borrow()[acc_index], &game_list[game_index], &config.game_path.borrow()) {
+                if let Some(cmd) = launch::get_launch_command(&acc_list.borrow()[acc_index], &game_list.borrow()[game_index], &config.game_path.borrow()) {
                     let mut str = String::new();
                     for i in &cmd {
                         str.push_str(i);
