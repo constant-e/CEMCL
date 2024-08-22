@@ -164,6 +164,12 @@ fn main() -> Result<(), slint::PlatformError> {
         }
     });
 
+    ui.on_click_add_game_btn({
+        move || {
+            game::add_dialog();
+        }
+    });
+
     ui.on_click_settings_btn({
         let config_handle = Rc::downgrade(&config);
         move || {

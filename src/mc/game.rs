@@ -6,6 +6,31 @@ use crate::Config;
 use crate::file_tools::{exists, list_dir};
 use super::Game;
 
+slint::include_modules!();
+
+pub fn add_dialog() {
+    let ui = AddGameDialog::new().unwrap();
+    
+    ui.on_click_ok_btn({
+        let ui_handle = ui.as_weak();
+        move || {
+            let ui = ui_handle.unwrap();
+            // TODO: Save changes
+            ui.hide();
+        }
+    });
+
+    ui.on_click_cancel_btn({
+        let ui_handle = ui.as_weak();
+        move || {
+            let ui = ui_handle.unwrap();
+            ui.hide();
+        }
+    });
+
+    ui.show().unwrap();
+}
+
 pub fn load(config: &Config) -> Option<Vec<Game>> {
     let mut game_list: Vec<Game> = Vec::new();
     let dir = config.game_path.borrow().clone() + "/versions";
@@ -44,7 +69,6 @@ pub fn load(config: &Config) -> Option<Vec<Game>> {
         let cfg_path = path.clone() + "/" + "config.json";
         if exists(&cfg_path) {
             if let Ok(json) = serde_json::from_str::<Value>(&fs::read_to_string(&cfg_path).ok()?.as_str()) {
-                println!("1");
                 game.args = RefCell::from(String::from(json["args"].as_str()?));
                 game.description = RefCell::from(String::from(json["description"].as_str()?));
                 game.height = RefCell::from(String::from(json["height"].as_str()?));

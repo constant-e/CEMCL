@@ -1,4 +1,4 @@
-import { TabWidget, CheckBox, ScrollView, StandardButton } from "std-widgets.slint";
+import { TabWidget, ScrollView, StandardButton, Switch } from "std-widgets.slint";
 import { Title, SectionTitle } from "components/components.slint";
 
 export component Settings inherits Dialog {
@@ -61,7 +61,7 @@ export component Settings inherits Dialog {
                             row: 2;
                         }
 
-                        close-after-launch-box := CheckBox {
+                        close-after-launch-box := Switch {
                             text: @tr("Close after Launching Game");
                             col: 0;
                             row: 3;

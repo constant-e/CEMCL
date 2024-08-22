@@ -1,10 +1,11 @@
 import { Button, StandardTableView } from "std-widgets.slint";
-import { ErrorDialog } from "dialogs.slint";
+import { ErrorDialog, WarnDialog } from "dialogs.slint";
 import { Settings } from "settings.slint";
 import { Title, SubTitle } from "components/components.slint";
 import { AddAccDialog } from "add-acc-dialog.slint";
+import { AddGameDialog } from "add-game-dialog.slint";
 
-export { AddAccDialog, ErrorDialog, Settings }
+export { AddAccDialog, AddGameDialog, ErrorDialog, Settings, WarnDialog }
 
 export component AppWindow inherits Window {
     preferred-height: 600px;

@@ -1,0 +1,113 @@
+import { SubTitle } from "components/components.slint";
+import { ComboBox, StandardButton, StandardListView, Switch } from "std-widgets.slint";
+
+export component AddGameDialog inherits Dialog {
+    title: @tr("Add a Game");
+    preferred-height: 600px;
+    preferred-width: 800px;
+
+    in-out property <int> game-type <=> game-combo-box.current-index;
+    in-out property <int> mod-type <=> mod-combo-box.current-index;
+
+    callback click-cancel-btn();
+    callback click-ok-btn();
+
+    HorizontalLayout {
+        spacing: 4px;
+
+        VerticalLayout {
+            SubTitle { text: @tr("Minecraft Version"); }
+            game-combo-box := ComboBox { model: ["All", "Release", "Snapshot"]; }
+            game-list := StandardListView { preferred-height: 100%; }
+        }
+
+        VerticalLayout {
+            SubTitle { text: @tr("Mod Loader"); }
+            mod-combo-box := ComboBox { model: ["None", "Forge", "Fabric"]; }
+            mod-list := StandardListView {
+                preferred-height: 100%;
+                min-height: root.height / 3;
+            }
+            optifine-switch := Switch { text: @tr("Install OptiFine"); }
+            optifine-list := StandardListView {
+                height: optifine-switch.checked ? root.height / 3 : 0px;
+                visible: optifine-switch.checked;
+            }
+        }
+
+        VerticalLayout {
+            SubTitle { text: @tr("Customize"); }
+            GridLayout {
+                Text {
+                    text: @tr("Description: ");
+                    col: 0;
+                    row: 0;
+                }
+                description-input := TextInput {
+                    col: 1;
+                    row: 0;
+                }
+            
+                Text {
+                    text: @tr("Java Path: ");
+                    col: 0;
+                    row: 1;
+                }
+                java-path-input := TextInput {
+                    col: 1;
+                    row: 1;
+                }
+
+                Text {
+                    text: @tr("Window Height: ");
+                    col: 0;
+                    row: 2;
+                }
+                height-input := TextInput {
+                    col: 1;
+                    row: 2;
+                }
+
+                Text {
+                    text: @tr("Window Width: ");
+                    col: 0;
+                    row: 3;
+                }
+                width-input := TextInput {
+                    col: 1;
+                    row: 3;
+                }
+
+                Text {
+                    text: @tr("Launch Arguments: ");
+                    col: 0;
+                    row: 4;
+                }
+                args-input := TextInput {
+                    col: 1;
+                    row: 4;
+                }
+                
+                Switch {
+                    text: @tr("Enable Separated Version");
+                    row: 5;
+                }
+
+                Rectangle {
+                    preferred-height: 100%;
+                    row: 6;
+                }
+            }
+        }
+    }
+
+    StandardButton {
+        kind: cancel;
+        clicked => { root.click-cancel-btn() }
+    }
+
+    StandardButton {
+        kind: ok;
+        clicked => { root.click-ok-btn() }
+    }
+}
