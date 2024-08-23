@@ -21,9 +21,6 @@ export component Settings inherits Dialog {
     in-out property <string> xms <=> xms-input.text;
     in-out property <string> xmx <=> xmx-input.text;
 
-    callback click-apply-btn();
-    callback click-cancel-btn();
-
     VerticalLayout {
         Title { text: @tr("Settings"); }
         
@@ -33,7 +30,7 @@ export component Settings inherits Dialog {
 
                 ScrollView {
                     GridLayout {
-                        padding: 4px;
+                        padding: 8px;
 
                         SectionTitle { 
                             text: @tr("General");
@@ -126,7 +123,7 @@ export component Settings inherits Dialog {
 
                 ScrollView {
                     GridLayout {
-                        padding: 4px;
+                        padding: 8px;
 
                         Text {
                             text: @tr("Window Height: ");
@@ -180,7 +177,7 @@ export component Settings inherits Dialog {
                 title: @tr("About");
 
                 VerticalLayout {
-                    padding: 4px;
+                    padding: 8px;
 
                     Text {
                         text: "CE Minecraft Launcher";
@@ -201,13 +198,6 @@ export component Settings inherits Dialog {
         }
     }
 
-    StandardButton {
-        kind: cancel;
-        clicked => {root.click-cancel-btn()}
-    }
-
-    StandardButton {
-        kind: apply;
-        clicked => { root.click-apply-btn() }
-    }
+    StandardButton { kind: cancel;}
+    StandardButton { kind: apply; }
 }

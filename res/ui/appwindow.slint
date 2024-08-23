@@ -4,8 +4,9 @@ import { Settings } from "settings.slint";
 import { Title, SubTitle } from "components/components.slint";
 import { AddAccDialog } from "add-acc-dialog.slint";
 import { AddGameDialog } from "add-game-dialog.slint";
+import { EditAccDialog } from "edit-acc-dialog.slint";
 
-export { AddAccDialog, AddGameDialog, ErrorDialog, Settings, WarnDialog }
+export { AddAccDialog, AddGameDialog, EditAccDialog, ErrorDialog, Settings, WarnDialog }
 
 export component AppWindow inherits Window {
     preferred-height: 600px;
@@ -25,7 +26,7 @@ export component AppWindow inherits Window {
     callback click-start-btn();
 
     VerticalLayout {
-        padding: 4px;
+        padding: 8px;
 
         Title { text: "CE Minecraft Launcher"; }
 

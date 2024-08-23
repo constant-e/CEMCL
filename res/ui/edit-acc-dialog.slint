@@ -1,0 +1,69 @@
+import { StandardButton, Button } from "std-widgets.slint";
+
+export component EditAccDialog inherits Dialog {
+    title: @tr("Edit a Account");
+    preferred-height: 200px;
+    preferred-width: 400px;
+
+    in-out property <string> acc-type <=> acc-type-input.text;
+    in-out property <string> name <=> name-input.text;
+    in-out property <string> token <=> token-input.text;
+    in-out property <string> uuid <=> uuid-input.text;
+
+    callback click-del-btn();
+
+    GridLayout {
+        Text {
+            text: @tr("Account Type: ");
+            col: 0;
+            row: 0;
+        }
+        acc-type-input := TextInput {
+            col: 1;
+            row: 0;
+        }
+    
+        Text {
+            text: @tr("Token: ");
+            col: 0;
+            row: 1;
+        }
+        token-input := TextInput {
+            col: 1;
+            row: 1;
+        }
+
+        Text {
+            text: @tr("User Name: ");
+            col: 0;
+            row: 2;
+        }
+        name-input := TextInput {
+            col: 1;
+            row: 2;
+        }
+
+        Text {
+            text: @tr("UUID: ");
+            col: 0;
+            row: 3;
+        }
+        uuid-input := TextInput {
+            col: 1;
+            row: 3;
+        }
+
+        Rectangle {
+            preferred-height: 100%;
+            row: 4;
+        }
+    }
+
+    Button {
+        text: "Delete this Account";
+        dialog-button-role: action;
+        clicked => { root.click-del-btn() }
+    }
+    StandardButton { kind: cancel; }
+    StandardButton { kind: ok; }
+}

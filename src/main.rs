@@ -1,5 +1,6 @@
 //! main 程序入口
 
+mod dialogs;
 mod file_tools;
 mod mc;
 mod settings;
@@ -12,8 +13,9 @@ use std::rc::Rc;
 use std::thread;
 use serde_json::{json, Value};
 use slint::{ModelRc, VecModel, StandardListViewItem};
-use crate::file_tools::exists;
-use crate::mc::{Account, account, Game, game, launch};
+use dialogs::err_dialog;
+use file_tools::exists;
+use mc::{Account, account, Game, game, launch};
 
 slint::include_modules!();
 
@@ -102,6 +104,31 @@ fn save_config(config: &Config) -> Option<()> {
     fs::write("config.json", json.to_string()).ok()
 }
 
+pub fn ui_acc_list(acc_list: &Vec<Account>) -> ModelRc<ModelRc<StandardListViewItem>> {
+    let mut ui_acc_list: Vec<ModelRc<StandardListViewItem>> = Vec::new();
+    for item in acc_list {
+        let account_name = StandardListViewItem::from(item.user_name.borrow().as_str());
+        let account_type = StandardListViewItem::from(item.account_type.borrow().as_str());
+        let model: Rc<VecModel<StandardListViewItem>> = Rc::new(VecModel::from(vec![account_name.into(), account_type.into()]));
+        let row: ModelRc<StandardListViewItem> = ModelRc::from(model);
+        ui_acc_list.push(row);
+    }
+    ModelRc::from(Rc::new(VecModel::from(ui_acc_list)))
+}
+
+pub fn ui_game_list(game_list: &Vec<Game>) -> ModelRc<ModelRc<StandardListViewItem>> {
+    let mut ui_game_list: Vec<ModelRc<StandardListViewItem>> = Vec::new();
+    for item in game_list {
+        let version = StandardListViewItem::from(item.version.borrow().as_str());
+        let game_type = StandardListViewItem::from(item.game_type.borrow().as_str());
+        let description = StandardListViewItem::from(item.description.borrow().as_str());
+        let model: Rc<VecModel<StandardListViewItem>> = Rc::new(VecModel::from(vec![version.into(), game_type.into(), description.into()]));
+        let row: ModelRc<StandardListViewItem> = ModelRc::from(model);
+        ui_game_list.push(row);
+    }
+    ModelRc::from(Rc::new(VecModel::from(ui_game_list)))
+}
+
 fn main() -> Result<(), slint::PlatformError> {
     env_logger::init();
     let ui = AppWindow::new()?;
@@ -133,29 +160,10 @@ fn main() -> Result<(), slint::PlatformError> {
     }
 
     // load account list in ui
-    let mut ui_acc_list: Vec<ModelRc<StandardListViewItem>> = Vec::new();
-    for item in acc_list.borrow().iter() {
-        let account_name = StandardListViewItem::from(item.user_name.borrow().as_str());
-        let account_type = StandardListViewItem::from(item.account_type.borrow().as_str());
-        let model: Rc<VecModel<StandardListViewItem>> = Rc::new(VecModel::from(vec![account_name.into(), account_type.into()]));
-        let row: ModelRc<StandardListViewItem> = ModelRc::from(model);
-        ui_acc_list.push(row);
-    }
-    
-    ui.set_acc_list(ModelRc::from(Rc::new(VecModel::from(ui_acc_list))));
+    ui.set_acc_list(ui_acc_list(acc_list.borrow().as_ref()));
 
     // load game list in ui
-    let mut ui_game_list: Vec<ModelRc<StandardListViewItem>> = Vec::new();
-    for item in game_list.borrow().iter() {
-        let version = StandardListViewItem::from(item.version.borrow().as_str());
-        let game_type = StandardListViewItem::from(item.game_type.borrow().as_str());
-        let description = StandardListViewItem::from(item.description.borrow().as_str());
-        let model: Rc<VecModel<StandardListViewItem>> = Rc::new(VecModel::from(vec![version.into(), game_type.into(), description.into()]));
-        let row: ModelRc<StandardListViewItem> = ModelRc::from(model);
-        ui_game_list.push(row);
-    }
-
-    ui.set_game_list(ModelRc::from(Rc::new(VecModel::from(ui_game_list))));
+    ui.set_game_list(ui_game_list(game_list.borrow().as_ref()));
 
     // callbacks
     ui.on_click_add_acc_btn({
@@ -182,6 +190,23 @@ fn main() -> Result<(), slint::PlatformError> {
         }
     });
 
+    ui.on_click_edit_acc_btn({
+        let acc_list_handle = Rc::downgrade(&acc_list);
+        let ui_handle = ui.as_weak();
+        move || {
+            if let (Some(acc_list), Some(ui)) = (acc_list_handle.upgrade(), ui_handle.upgrade()) {
+                let index = ui.get_acc_index() as usize;
+                if index > acc_list.borrow().len() {
+                    err_dialog("Please select a account first.");
+                    return;
+                }
+                account::edit_dialog(&acc_list, ui.get_acc_index() as usize, &ui);
+            } else {
+                error!("Failed to get acc_list.");
+            }
+        }
+    });
+
     ui.on_click_settings_btn({
         let config_handle = Rc::downgrade(&config);
         move || {
@@ -199,16 +224,7 @@ fn main() -> Result<(), slint::PlatformError> {
                 let acc_index = ui.get_acc_index() as usize;
                 let game_index = ui.get_game_index() as usize;
                 if acc_index > acc_list.borrow().len() || game_index > game_list.borrow().len() {
-                    let dialog = ErrorDialog::new().unwrap();
-                    dialog.set_msg("Haven't select account or game yet.".into());
-                    dialog.on_close({
-                        let dialog_handle = dialog.as_weak();
-                        move || {
-                            let dialog = dialog_handle.unwrap();
-                            dialog.hide().unwrap();
-                        }
-                    });
-                    dialog.show().unwrap();
+                    err_dialog("Please select a account and a game first.");
                     return;
                 }
                 if let Some(cmd) = launch::get_launch_command(&acc_list.borrow()[acc_index], &game_list.borrow()[game_index], &config.game_path.borrow()) {
@@ -238,7 +254,7 @@ fn main() -> Result<(), slint::PlatformError> {
                     } else {
                         let dialog = ErrorDialog::new().unwrap();
                         dialog.set_msg("Failed to run command.".into());
-                        dialog.on_close({
+                        dialog.on_ok_clicked({
                             let dialog_handle = dialog.as_weak();
                             move || {
                                 let dialog = dialog_handle.unwrap();

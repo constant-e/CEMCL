@@ -5,13 +5,8 @@ export component WarnDialog inherits Dialog {
 
     in-out property <string> msg;
 
-    callback close();
-
     Text { text: msg; }
-    StandardButton {
-        kind: ok;
-        clicked => { root.close() }
-    }
+    StandardButton { kind: ok; }
 }
 
 export component ErrorDialog inherits Dialog {
@@ -19,11 +14,6 @@ export component ErrorDialog inherits Dialog {
 
     in-out property <string> msg;
 
-    callback close();
-
     Text { text: msg; }
-    StandardButton {
-        kind: ok;
-        clicked => { root.close() }
-    }
+    StandardButton { kind: ok; }
 }

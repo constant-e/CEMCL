@@ -2,6 +2,8 @@ import { StandardButton, TabWidget } from "std-widgets.slint";
 
 export component AddAccDialog inherits Dialog {
     title: @tr("Add a Account");
+    preferred-height: 200px;
+    preferred-width: 400px;
 
     in-out property <int> account-type-index <=> tab-widget.current-index;
     in-out property <string> online-acc <=> online-acc-input.text;
@@ -13,15 +15,12 @@ export component AddAccDialog inherits Dialog {
     in-out property <string> other-token <=> other-token-input.text;
     in-out property <string> other-uuid <=> other-uuid-input.text;
 
-    callback click-cancel-btn();
-    callback click-ok-btn();
-
     tab-widget := TabWidget {
         Tab {
             title: @tr("Online Account");
 
             GridLayout {
-                padding: 4px;
+                padding: 8px;
 
                 Text {
                     text: @tr("Account: ");
@@ -54,7 +53,7 @@ export component AddAccDialog inherits Dialog {
             title: @tr("Offline Account");
 
             GridLayout {
-                padding: 4px;
+                padding: 8px;
 
                 Text {
                     text: @tr("Name: ");
@@ -87,8 +86,8 @@ export component AddAccDialog inherits Dialog {
             title: @tr("Other Account");
 
             GridLayout {
-                padding: 4px;
-
+                padding: 8px;
+                
                 Text {
                     text: @tr("Account Type: ");
                     col: 0;
@@ -137,13 +136,6 @@ export component AddAccDialog inherits Dialog {
         }
     }
 
-    StandardButton {
-        kind: cancel;
-        clicked => { root.click-cancel-btn() }
-    }
-
-    StandardButton {
-        kind: ok;
-        clicked => { root.click-ok-btn() }
-    }
+    StandardButton { kind: cancel; }
+    StandardButton { kind: ok; }
 }

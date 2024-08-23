@@ -12,7 +12,7 @@ slint::include_modules!();
 pub fn add_dialog(game_list: &Rc<RefCell<Vec<Game>>>, app: &crate::AppWindow) {
     let ui = AddGameDialog::new().unwrap();
     
-    ui.on_click_ok_btn({
+    ui.on_ok_clicked({
         let ui_handle = ui.as_weak();
         move || {
             let ui = ui_handle.unwrap();
@@ -21,7 +21,7 @@ pub fn add_dialog(game_list: &Rc<RefCell<Vec<Game>>>, app: &crate::AppWindow) {
         }
     });
 
-    ui.on_click_cancel_btn({
+    ui.on_cancel_clicked({
         let ui_handle = ui.as_weak();
         move || {
             let ui = ui_handle.unwrap();

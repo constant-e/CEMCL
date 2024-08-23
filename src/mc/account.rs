@@ -2,8 +2,8 @@ use std::cell::RefCell;
 use std::fs;
 use std::rc::Rc;
 use serde_json::Value;
-use slint::{ModelRc, VecModel, StandardListViewItem};
 use crate::file_tools::exists;
+use crate::ui_acc_list;
 use super::Account;
 
 slint::include_modules!();
@@ -12,7 +12,7 @@ pub fn add_dialog(acc_list: &Rc<RefCell<Vec<Account>>>, app: &crate::AppWindow) 
     let ui = AddAccDialog::new().unwrap();
     ui.set_offline_uuid(uuid::Uuid::new_v4().to_string().into());
     
-    ui.on_click_ok_btn({
+    ui.on_ok_clicked({
         let app_handle = app.as_weak();
         let ui_handle = ui.as_weak();
         let acc_list_handle = Rc::downgrade(&acc_list);
@@ -40,25 +40,69 @@ pub fn add_dialog(acc_list: &Rc<RefCell<Vec<Account>>>, app: &crate::AppWindow) 
                     user_name: RefCell::from(ui.get_other_name().to_string()),
                 });
             }
-            save(&*acc_list.borrow());
-            let mut ui_acc_list: Vec<ModelRc<StandardListViewItem>> = Vec::new();
-            for item in acc_list.borrow().iter() {
-                let account_name = StandardListViewItem::from(item.user_name.borrow().as_str());
-                let account_type = StandardListViewItem::from(item.account_type.borrow().as_str());
-                let model: Rc<VecModel<StandardListViewItem>> = Rc::new(VecModel::from(vec![account_name.into(), account_type.into()]));
-                let row: ModelRc<StandardListViewItem> = ModelRc::from(model);
-                ui_acc_list.push(row);
-            }
-            app.set_acc_list(ModelRc::from(Rc::new(VecModel::from(ui_acc_list))));
-            
+            save(acc_list.borrow().as_ref());
+            app.set_acc_list(ui_acc_list(acc_list.borrow().as_ref()));
             ui.hide();
         }
     });
 
-    ui.on_click_cancel_btn({
+    ui.on_cancel_clicked({
         let ui_handle = ui.as_weak();
         move || {
             let ui = ui_handle.unwrap();
+            ui.hide();
+        }
+    });
+
+    ui.show().unwrap();
+}
+
+pub fn edit_dialog(acc_list: &Rc<RefCell<Vec<Account>>>, index: usize, app: &crate::AppWindow) {
+    let ui = EditAccDialog::new().unwrap();
+    let account = &acc_list.borrow()[index.clone()];
+    ui.set_acc_type(account.account_type.borrow().to_string().into());
+    ui.set_name(account.user_name.borrow().to_string().into());
+    ui.set_token(account.token.borrow().to_string().into());
+    ui.set_uuid(account.uuid.borrow().to_string().into());
+
+    ui.on_ok_clicked({
+        let acc_list_handle = Rc::downgrade(acc_list);
+        let app_handle = app.as_weak();
+        let ui_handle = ui.as_weak();
+        move || {
+            let acc_list = acc_list_handle.upgrade().unwrap();
+            let app = app_handle.unwrap();
+            let ui = ui_handle.unwrap();
+            let account = &acc_list.borrow()[index];
+            *account.account_type.borrow_mut() = ui.get_acc_type().into();
+            *account.token.borrow_mut() = ui.get_token().into();
+            *account.user_name.borrow_mut() = ui.get_name().into();
+            *account.uuid.borrow_mut() = ui.get_uuid().into();
+            save(acc_list.borrow().as_ref());
+            app.set_acc_list(ui_acc_list(acc_list.borrow().as_ref()));
+            ui.hide();
+        }
+    });
+
+    ui.on_cancel_clicked({
+        let ui_handle = ui.as_weak();
+        move || {
+            let ui = ui_handle.unwrap();
+            ui.hide();
+        }
+    });
+
+    ui.on_click_del_btn({
+        let acc_list_handle = Rc::downgrade(acc_list);
+        let app_handle = app.as_weak();
+        let ui_handle = ui.as_weak();
+        move || {
+            let acc_list = acc_list_handle.upgrade().unwrap();
+            let app = app_handle.unwrap();
+            let ui = ui_handle.unwrap();
+            acc_list.borrow_mut().remove(index);
+            save(acc_list.borrow().as_ref());
+            app.set_acc_list(ui_acc_list(acc_list.borrow().as_ref()));
             ui.hide();
         }
     });

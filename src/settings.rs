@@ -22,7 +22,7 @@ pub fn init(config: &Rc<Config>) -> Option<()> {
     ui.set_xms(config.xms.borrow().clone().into());
     ui.set_xmx(config.xmx.borrow().clone().into());
     
-    ui.on_click_apply_btn({
+    ui.on_apply_clicked({
         let ui_handle = ui.as_weak();
         let config_handle = Rc::downgrade(config);
         move || {
@@ -47,7 +47,7 @@ pub fn init(config: &Rc<Config>) -> Option<()> {
         }
     });
 
-    ui.on_click_cancel_btn({
+    ui.on_cancel_clicked({
         let ui_handle = ui.as_weak();
         move || {
             let ui = ui_handle.unwrap();
