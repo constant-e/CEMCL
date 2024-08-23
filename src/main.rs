@@ -259,17 +259,17 @@ fn main() -> Result<(), slint::PlatformError> {
                     let (s, r) = sync::mpsc::channel();
 
                     thread::spawn(move || {
-                        if let Ok(child) = Command::new(java_path).args(cmd).spawn() {
-                            s.send(Some(()));
+                        if let Ok(_child) = Command::new(java_path).args(cmd).spawn() {
+                            s.send(Some(())).unwrap();
                         } else {
-                            s.send(None);
+                            s.send(None).unwrap();
                             error!("Failed to run command.");
                         }
                     });
 
                     if r.recv().unwrap().is_some() {
                         if *config.close_after_launch.borrow() {
-                            ui.hide();
+                            ui.hide().unwrap();
                         }
                     } else {
                         let dialog = ErrorDialog::new().unwrap();

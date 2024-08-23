@@ -18,7 +18,7 @@ pub fn add_dialog(game_list: &Rc<RefCell<Vec<Game>>>, app: &crate::AppWindow) {
         move || {
             let ui = ui_handle.unwrap();
             // TODO: Save changes
-            ui.hide();
+            ui.hide().unwrap();
         }
     });
 
@@ -26,7 +26,7 @@ pub fn add_dialog(game_list: &Rc<RefCell<Vec<Game>>>, app: &crate::AppWindow) {
         let ui_handle = ui.as_weak();
         move || {
             let ui = ui_handle.unwrap();
-            ui.hide();
+            ui.hide().unwrap();
         }
     });
 
@@ -66,7 +66,7 @@ pub fn edit_dialog(game_list: &Rc<RefCell<Vec<Game>>>, index: usize, game_path: 
             let path = game_path.clone() + "/versions/" + game.version.borrow().as_ref();
             save(&path, game);
             app.set_game_list(ui_game_list(game_list.borrow().as_ref()));
-            ui.hide();
+            ui.hide().unwrap();
         }
     });
 
@@ -74,7 +74,7 @@ pub fn edit_dialog(game_list: &Rc<RefCell<Vec<Game>>>, index: usize, game_path: 
         let ui_handle = ui.as_weak();
         move || {
             let ui = ui_handle.unwrap();
-            ui.hide();
+            ui.hide().unwrap();
         }
     });
 
@@ -96,10 +96,10 @@ pub fn edit_dialog(game_list: &Rc<RefCell<Vec<Game>>>, index: usize, game_path: 
                     let app = app_handle.unwrap();
                     let game_list = game_list_handle.upgrade().unwrap();
                     let ui = ui_handle.unwrap();
-                    fs::remove_dir_all(path.clone());
+                    fs::remove_dir_all(path.clone()).unwrap();
                     game_list.borrow_mut().remove(index);
                     app.set_game_list(ui_game_list(game_list.borrow().as_ref()));
-                    ui.hide();
+                    ui.hide().unwrap();
                 }
             });
         }

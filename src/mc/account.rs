@@ -42,7 +42,7 @@ pub fn add_dialog(acc_list: &Rc<RefCell<Vec<Account>>>, app: &crate::AppWindow) 
             }
             save(acc_list.borrow().as_ref());
             app.set_acc_list(ui_acc_list(acc_list.borrow().as_ref()));
-            ui.hide();
+            ui.hide().unwrap();
         }
     });
 
@@ -50,7 +50,7 @@ pub fn add_dialog(acc_list: &Rc<RefCell<Vec<Account>>>, app: &crate::AppWindow) 
         let ui_handle = ui.as_weak();
         move || {
             let ui = ui_handle.unwrap();
-            ui.hide();
+            ui.hide().unwrap();
         }
     });
 
@@ -80,7 +80,7 @@ pub fn edit_dialog(acc_list: &Rc<RefCell<Vec<Account>>>, index: usize, app: &cra
             *account.uuid.borrow_mut() = ui.get_uuid().into();
             save(acc_list.borrow().as_ref());
             app.set_acc_list(ui_acc_list(acc_list.borrow().as_ref()));
-            ui.hide();
+            ui.hide().unwrap();
         }
     });
 
@@ -88,7 +88,7 @@ pub fn edit_dialog(acc_list: &Rc<RefCell<Vec<Account>>>, index: usize, app: &cra
         let ui_handle = ui.as_weak();
         move || {
             let ui = ui_handle.unwrap();
-            ui.hide();
+            ui.hide().unwrap();
         }
     });
 
@@ -103,7 +103,7 @@ pub fn edit_dialog(acc_list: &Rc<RefCell<Vec<Account>>>, index: usize, app: &cra
             acc_list.borrow_mut().remove(index);
             save(acc_list.borrow().as_ref());
             app.set_acc_list(ui_acc_list(acc_list.borrow().as_ref()));
-            ui.hide();
+            ui.hide().unwrap();
         }
     });
 

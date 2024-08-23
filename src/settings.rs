@@ -43,7 +43,7 @@ pub fn init(config: &Rc<Config>) -> Option<()> {
             } else {
 
             }
-            ui.hide();
+            ui.hide().unwrap();
         }
     });
 
@@ -51,7 +51,7 @@ pub fn init(config: &Rc<Config>) -> Option<()> {
         let ui_handle = ui.as_weak();
         move || {
             let ui = ui_handle.unwrap();
-            ui.hide();
+            ui.hide().unwrap();
         }
     });
 
