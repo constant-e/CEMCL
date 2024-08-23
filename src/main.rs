@@ -200,9 +200,29 @@ fn main() -> Result<(), slint::PlatformError> {
                     err_dialog("Please select a account first.");
                     return;
                 }
-                account::edit_dialog(&acc_list, ui.get_acc_index() as usize, &ui);
+                account::edit_dialog(&acc_list, index, &ui);
             } else {
                 error!("Failed to get acc_list.");
+            }
+        }
+    });
+
+    ui.on_click_edit_game_btn({
+        let config_handle = Rc::downgrade(&config);
+        let game_list_handle = Rc::downgrade(&game_list);
+        let ui_handle = ui.as_weak();
+        move || {
+            if let (Some(config), Some(game_list), Some(ui)) =
+                (config_handle.upgrade(), game_list_handle.upgrade(), ui_handle.upgrade())
+            {
+                let index = ui.get_game_index() as usize;
+                if index > game_list.borrow().len() {
+                    err_dialog("Please select a game first.");
+                    return;
+                }
+                game::edit_dialog(&game_list, index, &config.game_path.borrow().clone(), &ui);
+            } else {
+                error!("Failed to get game_list.");
             }
         }
     });

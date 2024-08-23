@@ -1,5 +1,15 @@
 import { StandardButton } from "std-widgets.slint";
 
+export component AskDialog inherits Dialog {
+    in-out property <string> msg;
+    in-out property <string> title_text;
+    title: title_text;
+
+    Text { text: msg; }
+    StandardButton { kind: yes; }
+    StandardButton { kind: no; }
+}
+
 export component WarnDialog inherits Dialog {
     title: @tr("Warn");
 

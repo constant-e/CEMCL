@@ -1,0 +1,108 @@
+import { StandardButton, Button, Switch } from "std-widgets.slint";
+
+export component EditGameDialog inherits Dialog {
+    title: @tr("Edit a Game");
+    preferred-height: 200px;
+    preferred-width: 400px;
+
+    in-out property <string> args <=> args-input.text;
+    in-out property <string> config-height <=> height-input.text;
+    in-out property <string> config-width <=> width-input.text;
+    in-out property <string> description <=> description-input.text;
+    in-out property <string> java-path <=> java-path-input.text;
+    in-out property <bool> separated <=> separated-switch.checked;
+    in-out property <string> xms <=> xms-input.text;
+    in-out property <string> xmx <=> xmx-input.text;
+
+    callback click-del-btn();
+
+    GridLayout {
+        Text {
+            text: @tr("Description: ");
+            col: 0;
+            row: 0;
+        }
+        description-input := TextInput {
+            col: 1;
+            row: 0;
+        }
+    
+        Text {
+            text: @tr("Java Path: ");
+            col: 0;
+            row: 1;
+        }
+        java-path-input := TextInput {
+            col: 1;
+            row: 1;
+        }
+
+        Text {
+            text: @tr("Window Height: ");
+            col: 0;
+            row: 2;
+        }
+        height-input := TextInput {
+            col: 1;
+            row: 2;
+        }
+
+        Text {
+            text: @tr("Window Width: ");
+            col: 0;
+            row: 3;
+        }
+        width-input := TextInput {
+            col: 1;
+            row: 3;
+        }
+
+        Text {
+            text: @tr("Minimum Memory: ");
+            col: 0;
+            row: 4;
+        }
+        xms-input := TextInput {
+            col: 1;
+            row: 4;
+        }
+
+        Text {
+            text: @tr("Maximum Memory: ");
+            col: 0;
+            row: 5;
+        }
+        xmx-input := TextInput {
+            col: 1;
+            row: 5;
+        }
+
+        Text {
+            text: @tr("Launch Arguments: ");
+            col: 0;
+            row: 6;
+        }
+        args-input := TextInput {
+            col: 1;
+            row: 6;
+        }
+        
+        separated-switch := Switch {
+            text: @tr("Enable Separated Version");
+            row: 7;
+        }
+
+        Rectangle {
+            preferred-height: 100%;
+            row: 8;
+        }
+    }
+
+    Button {
+        text: "Delete this Version";
+        dialog-button-role: action;
+        clicked => { root.click-del-btn() }
+    }
+    StandardButton { kind: cancel; }
+    StandardButton { kind: ok; }
+}

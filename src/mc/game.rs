@@ -3,7 +3,8 @@ use std::cell::RefCell;
 use std::fs;
 use std::rc::Rc;
 use serde_json::{json, Value};
-use crate::Config;
+use crate::{Config, ui_game_list};
+use crate::dialogs::ask_dialog;
 use crate::file_tools::{exists, list_dir};
 use super::Game;
 
@@ -26,6 +27,81 @@ pub fn add_dialog(game_list: &Rc<RefCell<Vec<Game>>>, app: &crate::AppWindow) {
         move || {
             let ui = ui_handle.unwrap();
             ui.hide();
+        }
+    });
+
+    ui.show().unwrap();
+}
+
+pub fn edit_dialog(game_list: &Rc<RefCell<Vec<Game>>>, index: usize, game_path: &String, app: &crate::AppWindow) {
+    let ui = EditGameDialog::new().unwrap();
+    let game = &game_list.borrow()[index.clone()];
+    ui.set_args(game.args.borrow().clone().into());
+    ui.set_config_height(game.height.borrow().clone().into());
+    ui.set_config_width(game.width.borrow().clone().into());
+    ui.set_description(game.description.borrow().clone().into());
+    ui.set_java_path(game.java_path.borrow().clone().into());
+    ui.set_separated(game.separated.borrow().clone());
+    ui.set_xms(game.xms.borrow().clone().into());
+    ui.set_xmx(game.xmx.borrow().clone().into());
+    
+    ui.on_ok_clicked({
+        let app_handle = app.as_weak();
+        let game_list_handle = Rc::downgrade(game_list);
+        let game_path = game_path.clone();
+        let ui_handle = ui.as_weak();
+        move || {
+            let game_list = game_list_handle.upgrade().unwrap();
+            let app = app_handle.unwrap();
+            let ui = ui_handle.unwrap();
+            let game = &game_list.borrow()[index];
+            *game.args.borrow_mut() = ui.get_args().into();
+            *game.description.borrow_mut() = ui.get_description().into();
+            *game.height.borrow_mut() = ui.get_config_height().into();
+            *game.java_path.borrow_mut() = ui.get_java_path().into();
+            *game.separated.borrow_mut() = ui.get_separated();
+            *game.width.borrow_mut() = ui.get_config_width().into();
+            *game.xms.borrow_mut() = ui.get_xms().into();
+            *game.xmx.borrow_mut() = ui.get_xmx().into();
+            let path = game_path.clone() + "/versions/" + game.version.borrow().as_ref();
+            save(&path, game);
+            app.set_game_list(ui_game_list(game_list.borrow().as_ref()));
+            ui.hide();
+        }
+    });
+
+    ui.on_cancel_clicked({
+        let ui_handle = ui.as_weak();
+        move || {
+            let ui = ui_handle.unwrap();
+            ui.hide();
+        }
+    });
+
+    ui.on_click_del_btn({
+        let app_handle = app.as_weak();
+        let game_list_handle = Rc::downgrade(game_list);
+        let game_path = game_path.clone();
+        let ui_handle = ui.as_weak();
+        move || {
+            let app = app_handle.unwrap();
+            let game_list = game_list_handle.upgrade().unwrap();
+            let ui = ui_handle.unwrap();
+            ask_dialog("Warning", "All the files under this game's dir will be deleted. Continue?", {
+                let app_handle = app.as_weak();
+                let game_list_handle = Rc::downgrade(&game_list);
+                let ui_handle = ui.as_weak();
+                let path = game_path.clone() + "/versions/" + &game_list.borrow()[index].version.borrow().as_ref();
+                move || {
+                    let app = app_handle.unwrap();
+                    let game_list = game_list_handle.upgrade().unwrap();
+                    let ui = ui_handle.unwrap();
+                    fs::remove_dir_all(path.clone());
+                    game_list.borrow_mut().remove(index);
+                    app.set_game_list(ui_game_list(game_list.borrow().as_ref()));
+                    ui.hide();
+                }
+            });
         }
     });
 

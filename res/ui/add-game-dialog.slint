@@ -78,23 +78,43 @@ export component AddGameDialog inherits Dialog {
                     }
     
                     Text {
-                        text: @tr("Launch Arguments: ");
+                        text: @tr("Minimum Memory: ");
                         col: 0;
                         row: 4;
                     }
-                    args-input := TextInput {
+                    xms-input := TextInput {
                         col: 1;
                         row: 4;
                     }
-                    
-                    Switch {
-                        text: @tr("Enable Separated Version");
+            
+                    Text {
+                        text: @tr("Maximum Memory: ");
+                        col: 0;
                         row: 5;
                     }
-    
+                    xmx-input := TextInput {
+                        col: 1;
+                        row: 5;
+                    }
+            
+                    Text {
+                        text: @tr("Launch Arguments: ");
+                        col: 0;
+                        row: 6;
+                    }
+                    args-input := TextInput {
+                        col: 1;
+                        row: 6;
+                    }
+                    
+                    separated-switch := Switch {
+                        text: @tr("Enable Separated Version");
+                        row: 7;
+                    }
+            
                     Rectangle {
                         preferred-height: 100%;
-                        row: 6;
+                        row: 8;
                     }
                 }
             }

@@ -60,10 +60,10 @@ pub fn add_dialog(acc_list: &Rc<RefCell<Vec<Account>>>, app: &crate::AppWindow) 
 pub fn edit_dialog(acc_list: &Rc<RefCell<Vec<Account>>>, index: usize, app: &crate::AppWindow) {
     let ui = EditAccDialog::new().unwrap();
     let account = &acc_list.borrow()[index.clone()];
-    ui.set_acc_type(account.account_type.borrow().to_string().into());
-    ui.set_name(account.user_name.borrow().to_string().into());
-    ui.set_token(account.token.borrow().to_string().into());
-    ui.set_uuid(account.uuid.borrow().to_string().into());
+    ui.set_acc_type(account.account_type.borrow().clone().into());
+    ui.set_name(account.user_name.borrow().clone().into());
+    ui.set_token(account.token.borrow().clone().into());
+    ui.set_uuid(account.uuid.borrow().clone().into());
 
     ui.on_ok_clicked({
         let acc_list_handle = Rc::downgrade(acc_list);
