@@ -15,8 +15,8 @@ A Minecraft: Java Edition launcher using Rust and Slint.
 ## Roadmap
 1. (Completed) Launch Minecraft
 2. (Completed) Store configuration files for each version in its directory
-3. Support configurations editing
-4. Support seperated versions
+3. (Completed) Support configurations editing
+4. (Completed) Support separated versions
 5. Support downloading dependencies
 6. Support installing new versions
 7. Support online login
