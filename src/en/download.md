@@ -21,4 +21,15 @@ Download Links:
 Get it in [GitHub Actions](https://github.com/constant-e/CEMCL/actions).
 
 ## Build
-Please read [GitHub](https://github.com/constant-e/CEMCL/).
+1. Install Rust (with Cargo).
+2. Clone the repository:
+   ```sh
+   git clone https://github.com/constant-e/CEMCL.git && cd CEMCL
+   ```
+3. Build:
+   ```sh
+   # Build debug:
+   cargo build
+   # Build release:
+   cargo build --release
+   ```

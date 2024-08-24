@@ -20,4 +20,15 @@
 请前往[GitHub Actions](https://github.com/constant-e/CEMCL/actions)获取。
 
 ## 自行构建
-请参考[GitHub](https://github.com/constant-e/CEMCL/)。
+1. 安装Rust（与Cargo）。
+2. 克隆仓库:
+   ```sh
+   git clone https://github.com/constant-e/CEMCL.git && cd CEMCL
+   ```
+3. 构建:
+   ```sh
+   # Build debug:
+   cargo build
+   # Build release:
+   cargo build --release
+   ```
