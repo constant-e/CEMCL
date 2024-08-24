@@ -1,9 +1,10 @@
-use std::rc::Rc;
+use log::error;
+use std::{borrow::Borrow, rc::Rc};
 use slint::ComponentHandle;
 
-use crate::{Config, Settings};
+use crate::{AppWindow, Config, game, save_config, Settings, ui_game_list};
 
-pub fn init(config: &Rc<Config>) -> Option<()> {
+pub fn init(config: &Rc<Config>, app: &AppWindow) -> Option<()> {
     let ui = Settings::new().ok()?;
 
     // init
@@ -22,12 +23,13 @@ pub fn init(config: &Rc<Config>) -> Option<()> {
     ui.set_xmx(config.xmx.borrow().clone().into());
     
     ui.on_apply_clicked({
+        let app_handle = app.as_weak();
         let ui_handle = ui.as_weak();
         let config_handle = Rc::downgrade(config);
         move || {
+            let app = app_handle.unwrap();
             let ui = ui_handle.unwrap();
             if let Some(config) = config_handle.upgrade() {
-                // TODO: Save changes
                 *config.close_after_launch.borrow_mut() = ui.get_close_after_launch();
                 *config.fabric_source.borrow_mut() = ui.get_fabric_source().into();
                 *config.forge_source.borrow_mut() = ui.get_forge_source().into();
@@ -39,8 +41,11 @@ pub fn init(config: &Rc<Config>) -> Option<()> {
                 *config.width.borrow_mut() = ui.get_config_width().into();
                 *config.xms.borrow_mut() = ui.get_xms().into();
                 *config.xmx.borrow_mut() = ui.get_xmx().into();
+                save_config(config.borrow());
+                let game_list = game::load(config.borrow()).unwrap();
+                app.set_game_list(ui_game_list(&game_list));
             } else {
-
+                error!("Failed to get config.");
             }
             ui.hide().unwrap();
         }

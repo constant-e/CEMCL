@@ -229,9 +229,11 @@ fn main() -> Result<(), slint::PlatformError> {
 
     ui.on_click_settings_btn({
         let config_handle = Rc::downgrade(&config);
+        let ui_handle = ui.as_weak();
         move || {
             let config = config_handle.upgrade().unwrap();
-            settings::init(&config);
+            let ui = ui_handle.unwrap();
+            settings::init(&config, &ui);
         }
     });
 
