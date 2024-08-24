@@ -1,4 +1,5 @@
-slint::include_modules!();
+use crate::{AskDialog, WarnDialog, ErrorDialog};
+use slint::ComponentHandle;
 
 pub fn ask_dialog(title: &str, msg: &str, mut on_yes: impl FnMut() -> () + 'static) {
     let dialog = AskDialog::new().unwrap();

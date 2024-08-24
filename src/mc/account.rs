@@ -2,13 +2,12 @@ use std::cell::RefCell;
 use std::fs;
 use std::rc::Rc;
 use serde_json::Value;
+use slint::ComponentHandle;
 use crate::file_tools::exists;
-use crate::ui_acc_list;
+use crate::{AddAccDialog, AppWindow, EditAccDialog, ui_acc_list};
 use super::Account;
 
-slint::include_modules!();
-
-pub fn add_dialog(acc_list: &Rc<RefCell<Vec<Account>>>, app: &crate::AppWindow) {
+pub fn add_dialog(acc_list: &Rc<RefCell<Vec<Account>>>, app: &AppWindow) {
     let ui = AddAccDialog::new().unwrap();
     ui.set_offline_uuid(uuid::Uuid::new_v4().to_string().into());
     
@@ -57,7 +56,7 @@ pub fn add_dialog(acc_list: &Rc<RefCell<Vec<Account>>>, app: &crate::AppWindow) 
     ui.show().unwrap();
 }
 
-pub fn edit_dialog(acc_list: &Rc<RefCell<Vec<Account>>>, index: usize, app: &crate::AppWindow) {
+pub fn edit_dialog(acc_list: &Rc<RefCell<Vec<Account>>>, index: usize, app: &AppWindow) {
     let ui = EditAccDialog::new().unwrap();
     let account = &acc_list.borrow()[index.clone()];
     ui.set_acc_type(account.account_type.borrow().clone().into());

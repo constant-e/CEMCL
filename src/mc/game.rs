@@ -3,14 +3,13 @@ use std::cell::RefCell;
 use std::fs;
 use std::rc::Rc;
 use serde_json::{json, Value};
-use crate::{Config, ui_game_list};
+use slint::ComponentHandle;
+use crate::{AddGameDialog, AppWindow, Config, EditGameDialog, ui_game_list};
 use crate::dialogs::ask_dialog;
 use crate::file_tools::{exists, list_dir};
 use super::Game;
 
-slint::include_modules!();
-
-pub fn add_dialog(game_list: &Rc<RefCell<Vec<Game>>>, app: &crate::AppWindow) {
+pub fn add_dialog(game_list: &Rc<RefCell<Vec<Game>>>, app: &AppWindow) {
     let ui = AddGameDialog::new().unwrap();
     
     ui.on_ok_clicked({
@@ -33,7 +32,7 @@ pub fn add_dialog(game_list: &Rc<RefCell<Vec<Game>>>, app: &crate::AppWindow) {
     ui.show().unwrap();
 }
 
-pub fn edit_dialog(game_list: &Rc<RefCell<Vec<Game>>>, index: usize, game_path: &String, app: &crate::AppWindow) {
+pub fn edit_dialog(game_list: &Rc<RefCell<Vec<Game>>>, index: usize, game_path: &String, app: &AppWindow) {
     let ui = EditGameDialog::new().unwrap();
     let game = &game_list.borrow()[index.clone()];
     ui.set_args(game.args.borrow().clone().into());

@@ -1,8 +1,7 @@
 use std::rc::Rc;
+use slint::ComponentHandle;
 
-use crate::Config;
-
-slint::include_modules!();
+use crate::{Config, Settings};
 
 pub fn init(config: &Rc<Config>) -> Option<()> {
     let ui = Settings::new().ok()?;
