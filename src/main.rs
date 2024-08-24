@@ -68,15 +68,15 @@ fn load_config() -> Option<Config> {
         let config = Config {
             close_after_launch: RefCell::from(false),
             fabric_source: RefCell::from(String::from("https://maven.fabricmc.net")),
-            forge_source: RefCell::from(String::from("")),
-            game_path: RefCell::from(String::from("")),
-            game_source: RefCell::from(String::from("")),
+            forge_source: RefCell::from(String::from("https://maven.minecraftforge.net")),
+            game_path: RefCell::from(String::from(".minecraft")),
+            game_source: RefCell::from(String::from("https://piston-meta.mojang.com")),
             height: RefCell::from(String::from("600")),
-            java_path: RefCell::from(String::from("")),
-            optifine_source: RefCell::from(String::from("")),
+            java_path: RefCell::from(String::from("java")),
+            optifine_source: RefCell::from(String::from("https://optifine.net")),
             width: RefCell::from(String::from("800")),
-            xms: RefCell::from(String::from("")),
-            xmx: RefCell::from(String::from("")),
+            xms: RefCell::from(String::from("1G")),
+            xmx: RefCell::from(String::from("2G")),
         };
         save_config(&config);
 
