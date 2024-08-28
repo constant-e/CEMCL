@@ -1,20 +1,21 @@
 # 下载
 
 ## Release
-### v0.1.0
-注意：这是一个预览版。仅实现了离线功能，并且未经过充分测试。
+### v0.1.1
+**注意**：这是一个预览版。仅实现了离线功能，并且未经过充分测试。
 
-功能：
-1. 从.minecraft文件夹启动MC（包括forge版等，但不能下载依赖）。
-2. 添加或修改账户（在线用户需要手动输入token和uuid）。
-3. 修改MC（调整java路径、窗口大小、jvm内存或手动输入启动参数）。支持版本隔离。
+更新日志：
+1. 修复 默认配置不全
+2. 修复 不保存设置
+3. 修复 判断数组下标是否越界的逻辑
+4. 修复 更改设置时不重新加载游戏列表
 
-下面上传的文件UI似乎有些问题（因为它们是使用GitHub Actions构建的）。如果可以，请自行构建。
+**注意**：这是最后一个0.1.x版本。我正在开发下载相关的功能，这可能引入一些不向下兼容的改变（如config.json的修改）。并且在这些功能完成前，我不会发布新版本（也就不会发布新的修复bug版本）。v0.1.x不应被正式使用。
 
-下载连接：
-[Linux](https://github.com/constant-e/CEMCL/releases/download/v0.1.0/cemcl-0.1.0-linux-x86_64) |
-[macOS](https://github.com/constant-e/CEMCL/releases/download/v0.1.0/cemcl-0.1.0-macos-x86_64) |
-[Windows](https://github.com/constant-e/CEMCL/releases/download/v0.1.0/cemcl-0.1.0-windows-x86_64.exe)
+下载链接：
+[Linux](https://github.com/constant-e/CEMCL/releases/download/v0.1.1/cemcl-0.1.1-linux) |
+[macOS](https://github.com/constant-e/CEMCL/releases/download/v0.1.1/cemcl-0.1.1-macos) |
+[Windows](https://github.com/constant-e/CEMCL/releases/download/v0.1.1/cemcl-0.1.1-windows.exe)
 
 ## GitHub CI
 请前往[GitHub Actions](https://github.com/constant-e/CEMCL/actions)获取。

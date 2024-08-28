@@ -1,21 +1,21 @@
 # Download
 
 ## Release
-### v0.1.0
+### v0.1.1
 **Warning**: This is a alpha release. Only features not requiring network connection are implemented. And all the features haven't been fully tested.
 
-The features:
+Change Log:
+1. fix not loading all default configs when config.json not exists
+2. fix not saving changes for config.json
+3. fix the logic when judging if the index is out of range
+4. fix not reloading game list when changing settings
 
-1. Launch Minecraft (including forge, etc.) from .minecraft (but cannot download dependencies).
-2. Add or edit a account (For online accounts, you have to enter your token and uuid manually).
-3. Edit a game (you can adjust java path, window height/width, xms, xmx or enter the launch args manually). And separated versions are supported.
-
-It seems there is something wrong with the UI of the artifacts uploaded below (Because they're build by GitHub Actions). Build one by yourself if you can.
+**Warning**: This is the latest version of 0.1.x. I'm currently working on features related to downloading, which may import some breaking changes (e.g. new keys in config.json). And there won't be any new releases before these features are completed (so you won't get bug fix versions for v0.1.x). This version is still not ready to use.
 
 Download Links:
-[Linux](https://github.com/constant-e/CEMCL/releases/download/v0.1.0/cemcl-0.1.0-linux-x86_64) |
-[macOS](https://github.com/constant-e/CEMCL/releases/download/v0.1.0/cemcl-0.1.0-macos-x86_64) |
-[Windows](https://github.com/constant-e/CEMCL/releases/download/v0.1.0/cemcl-0.1.0-windows-x86_64.exe)
+[Linux](https://github.com/constant-e/CEMCL/releases/download/v0.1.1/cemcl-0.1.1-linux) |
+[macOS](https://github.com/constant-e/CEMCL/releases/download/v0.1.1/cemcl-0.1.1-macos) |
+[Windows](https://github.com/constant-e/CEMCL/releases/download/v0.1.1/cemcl-0.1.1-windows.exe)
 
 ## GitHub CI
 Get it in [GitHub Actions](https://github.com/constant-e/CEMCL/actions).
