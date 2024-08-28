@@ -229,11 +229,13 @@ fn main() -> Result<(), slint::PlatformError> {
 
     ui.on_click_settings_btn({
         let config_handle = Rc::downgrade(&config);
+        let game_list_handle = Rc::downgrade(&game_list);
         let ui_handle = ui.as_weak();
         move || {
             let config = config_handle.upgrade().unwrap();
+            let game_list = game_list_handle.upgrade().unwrap();
             let ui = ui_handle.unwrap();
-            settings::init(&config, &ui);
+            settings::init(&config, &game_list, &ui);
         }
     });
 
@@ -246,6 +248,7 @@ fn main() -> Result<(), slint::PlatformError> {
                 let acc_index = ui.get_acc_index() as usize;
                 let game_index = ui.get_game_index() as usize;
                 if acc_index >= acc_list.borrow().len() || game_index >= game_list.borrow().len() {
+                    error!("({acc_index}, {game_index}) is out of range (max: ({}, {})).", acc_list.borrow().len(), game_list.borrow().len());
                     err_dialog("Please select a account and a game first.");
                     return;
                 }

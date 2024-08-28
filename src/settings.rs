@@ -1,10 +1,10 @@
 use log::error;
-use std::{borrow::Borrow, rc::Rc};
+use std::{cell::RefCell, rc::Rc};
 use slint::ComponentHandle;
 
-use crate::{AppWindow, Config, game, save_config, Settings, ui_game_list};
+use crate::{game, mc::Game, save_config, ui_game_list, AppWindow, Config, Settings};
 
-pub fn init(config: &Rc<Config>, app: &AppWindow) -> Option<()> {
+pub fn init(config: &Rc<Config>, game_list: &Rc<RefCell<Vec<Game>>>, app: &AppWindow) -> Option<()> {
     let ui = Settings::new().ok()?;
 
     // init
@@ -26,10 +26,11 @@ pub fn init(config: &Rc<Config>, app: &AppWindow) -> Option<()> {
         let app_handle = app.as_weak();
         let ui_handle = ui.as_weak();
         let config_handle = Rc::downgrade(config);
+        let game_list_handle = Rc::downgrade(game_list);
         move || {
-            let app = app_handle.unwrap();
-            let ui = ui_handle.unwrap();
-            if let Some(config) = config_handle.upgrade() {
+            if let (Some(app), Some(ui), Some(config), Some(game_list)) =
+                (app_handle.upgrade(), ui_handle.upgrade(), config_handle.upgrade(), game_list_handle.upgrade())
+            {
                 *config.close_after_launch.borrow_mut() = ui.get_close_after_launch();
                 *config.fabric_source.borrow_mut() = ui.get_fabric_source().into();
                 *config.forge_source.borrow_mut() = ui.get_forge_source().into();
@@ -41,13 +42,13 @@ pub fn init(config: &Rc<Config>, app: &AppWindow) -> Option<()> {
                 *config.width.borrow_mut() = ui.get_config_width().into();
                 *config.xms.borrow_mut() = ui.get_xms().into();
                 *config.xmx.borrow_mut() = ui.get_xmx().into();
-                save_config(config.borrow());
-                let game_list = game::load(config.borrow()).unwrap();
-                app.set_game_list(ui_game_list(&game_list));
+                save_config(&config);
+                *game_list.borrow_mut() = game::load(&config).unwrap();
+                app.set_game_list(ui_game_list(game_list.borrow().as_ref()));
+                ui.hide().unwrap();
             } else {
                 error!("Failed to get config.");
             }
-            ui.hide().unwrap();
         }
     });
 
