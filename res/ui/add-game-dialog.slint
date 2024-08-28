@@ -1,13 +1,26 @@
 import { Title, SubTitle } from "components/components.slint";
-import { ComboBox, StandardButton, StandardListView, Switch } from "std-widgets.slint";
+import { ComboBox, StandardButton, StandardTableView, Switch } from "std-widgets.slint";
 
 export component AddGameDialog inherits Dialog {
     title: @tr("Add a Game");
     preferred-height: 600px;
     preferred-width: 800px;
 
+    in-out property <[[StandardListViewItem]]> game-list <=> game-table.rows;
     in-out property <int> game-type <=> game-combo-box.current-index;
+    in-out property <[[StandardListViewItem]]> mod-list <=> mod-table.rows;
     in-out property <int> mod-type <=> mod-combo-box.current-index;
+    in-out property <[[StandardListViewItem]]> optifine-list <=> optifine-table.rows;
+    in-out property <string> args <=> args-input.text;
+    in-out property <string> config-height <=> height-input.text;
+    in-out property <string> config-width <=> width-input.text;
+    in-out property <string> description <=> description-input.text;
+    in-out property <string> java-path <=> java-path-input.text;
+    in-out property <bool> separated <=> separated-switch.checked;
+    in-out property <string> xms <=> xms-input.text;
+    in-out property <string> xmx <=> xmx-input.text;
+
+    callback game-combo-box-changed(string);
 
     VerticalLayout {
         Title { text: @tr("Add a Game"); }
@@ -16,21 +29,38 @@ export component AddGameDialog inherits Dialog {
     
             VerticalLayout {
                 SubTitle { text: @tr("Minecraft Version"); }
-                game-combo-box := ComboBox { model: ["All", "Release", "Snapshot"]; }
-                game-list := StandardListView { preferred-height: 100%; }
+                game-combo-box := ComboBox {
+                    model: ["All", "Release", "Snapshot"];
+                    selected(mod) => { root.game-combo-box-changed(mod); }
+                }
+                game-table := StandardTableView {
+                    preferred-height: 100%;
+                    columns: [
+                        { title: @tr("Version") },
+                        { title: @tr("Type") }
+                    ];
+                }
             }
     
             VerticalLayout {
                 SubTitle { text: @tr("Mod Loader"); }
                 mod-combo-box := ComboBox { model: ["None", "Forge", "Fabric"]; }
-                mod-list := StandardListView {
+                mod-table := StandardTableView {
                     preferred-height: 100%;
                     min-height: root.height / 3;
+                    columns: [
+                        { title: @tr("Version") },
+                        { title: @tr("Type") }
+                    ];
                 }
                 optifine-switch := Switch { text: @tr("Install OptiFine"); }
-                optifine-list := StandardListView {
+                optifine-table := StandardTableView {
                     height: optifine-switch.checked ? root.height / 3 : 0px;
                     visible: optifine-switch.checked;
+                    columns: [
+                        { title: @tr("Version") },
+                        { title: @tr("Type") }
+                    ];
                 }
             }
     

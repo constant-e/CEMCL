@@ -44,3 +44,13 @@ pub struct Game {
     // xmx参数
     pub xmx: std::cell::RefCell<String>,
 }
+
+/// 在下载游戏时使用的游戏信息
+pub struct GameUrl {
+    /// 游戏类型
+    pub game_type: String,
+    /// 本体下载链接
+    pub url: String,
+    /// 游戏版本
+    pub version: String,
+}

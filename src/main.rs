@@ -21,6 +21,8 @@ slint::include_modules!();
 
 /// 启动器配置
 struct Config {
+    /// assets下载源
+    pub assets_source: RefCell<String>,
     /// 启动后关闭启动器
     pub close_after_launch: RefCell<bool>,
     /// Fabric下载源
@@ -29,12 +31,14 @@ struct Config {
     pub forge_source: RefCell<String>,
     /// .minecraft路径
     pub game_path: RefCell<String>,
-    /// MC下载源
+    /// MC本体下载源
     pub game_source: RefCell<String>,
     /// 默认游戏窗口高度
     pub height: RefCell<String>,
     /// java可执行文件路径
     pub java_path: RefCell<String>,
+    /// libraries下载源
+    pub libraries_source: RefCell<String>,
     /// OptiFine下载源
     pub optifine_source: RefCell<String>,
     /// 默认游戏窗口宽度
@@ -50,6 +54,7 @@ fn load_config() -> Option<Config> {
     if exists(&"config.json".into()) {
         let json: Value = serde_json::from_str(&fs::read_to_string("config.json").ok()?.as_str()).ok()?;
         let config = Config {
+            assets_source: RefCell::from(String::from(json["assets_source"].as_str()?)),
             close_after_launch: RefCell::from(json["close_after_launch"].as_bool()?),
             fabric_source: RefCell::from(String::from(json["fabric_source"].as_str()?)),
             forge_source: RefCell::from(String::from(json["forge_source"].as_str()?)),
@@ -57,6 +62,7 @@ fn load_config() -> Option<Config> {
             game_source: RefCell::from(String::from(json["game_source"].as_str()?)),
             height: RefCell::from(String::from(json["height"].as_str()?)),
             java_path: RefCell::from(String::from(json["java_path"].as_str()?)),
+            libraries_source: RefCell::from(String::from(json["libraries_source"].as_str()?)),
             optifine_source: RefCell::from(String::from(json["optifine_source"].as_str()?)),
             width: RefCell::from(String::from(json["width"].as_str()?)),
             xms: RefCell::from(String::from(json["xms"].as_str()?)),
@@ -66,6 +72,7 @@ fn load_config() -> Option<Config> {
         Some(config)
     } else {
         let config = Config {
+            assets_source: RefCell::from(String::from("http://resources.download.minecraft.net")),
             close_after_launch: RefCell::from(false),
             fabric_source: RefCell::from(String::from("https://maven.fabricmc.net")),
             forge_source: RefCell::from(String::from("https://maven.minecraftforge.net")),
@@ -73,6 +80,7 @@ fn load_config() -> Option<Config> {
             game_source: RefCell::from(String::from("https://piston-meta.mojang.com")),
             height: RefCell::from(String::from("600")),
             java_path: RefCell::from(String::from("java")),
+            libraries_source: RefCell::from(String::from("https://libraries.minecraft.net")),
             optifine_source: RefCell::from(String::from("https://optifine.net")),
             width: RefCell::from(String::from("800")),
             xms: RefCell::from(String::from("1G")),
@@ -88,6 +96,7 @@ fn load_config() -> Option<Config> {
 fn save_config(config: &Config) -> Option<()> {
     let json = json!(
         {
+            "assets_source": *config.assets_source.borrow(),
             "close_after_launch": *config.close_after_launch.borrow(),
             "fabric_source": *config.fabric_source.borrow(),
             "forge_source": *config.forge_source.borrow(),
@@ -95,6 +104,7 @@ fn save_config(config: &Config) -> Option<()> {
             "game_source": *config.game_source.borrow(),
             "height": *config.height.borrow(),
             "java_path": *config.java_path.borrow(),
+            "libraries_source": *config.libraries_source.borrow(),
             "optifine_source": *config.optifine_source.borrow(),
             "width": *config.width.borrow(),
             "xms": *config.xms.borrow(),

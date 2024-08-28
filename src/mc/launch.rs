@@ -133,7 +133,7 @@ fn get_classpaths(n: &Value, game_path: &String) -> Option<Vec<String>> {
     Some(result)
 }
 
-// 获取启动总命令
+/// 获取启动总命令
 pub fn get_launch_command(account: &Account, game: &Game, game_path: &String) -> Option<Vec<String>> {
     // 使用自定义参数
     // if !game.args.is_empty() {
