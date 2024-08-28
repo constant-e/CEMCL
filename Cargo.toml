@@ -1,6 +1,6 @@
 [package]
 name = "cemcl"
-version = "0.1.0"
+version = "0.1.1"
 authors = ["constant-e <fmn_tzx@outlook.com>"]
 edition = "2021"
 license = "Apache 2.0"
