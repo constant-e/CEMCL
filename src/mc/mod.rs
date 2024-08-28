@@ -2,6 +2,8 @@
 
 /// 游戏账号相关
 pub mod account;
+/// 下载相关
+pub mod download;
 /// 游戏配置相关
 pub mod game;
 /// 启动参数相关
