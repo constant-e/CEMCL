@@ -245,7 +245,7 @@ fn main() -> Result<(), slint::PlatformError> {
             if let Some(config) = config_handle.upgrade() {
                 let acc_index = ui.get_acc_index() as usize;
                 let game_index = ui.get_game_index() as usize;
-                if acc_index > acc_list.borrow().len() || game_index > game_list.borrow().len() {
+                if acc_index >= acc_list.borrow().len() || game_index >= game_list.borrow().len() {
                     err_dialog("Please select a account and a game first.");
                     return;
                 }
