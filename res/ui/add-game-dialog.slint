@@ -6,11 +6,17 @@ export component AddGameDialog inherits Dialog {
     preferred-height: 600px;
     preferred-width: 800px;
 
+    in-out property <int> game-index <=> game-table.current-row;
     in-out property <[[StandardListViewItem]]> game-list <=> game-table.rows;
     in-out property <int> game-type <=> game-combo-box.current-index;
+
+    in-out property <int> mod-index <=> mod-table.current-row;
     in-out property <[[StandardListViewItem]]> mod-list <=> mod-table.rows;
     in-out property <int> mod-type <=> mod-combo-box.current-index;
+
+    in-out property <int> optifine-index <=> optifine-table.current-row;
     in-out property <[[StandardListViewItem]]> optifine-list <=> optifine-table.rows;
+
     in-out property <string> args <=> args-input.text;
     in-out property <string> config-height <=> height-input.text;
     in-out property <string> config-width <=> width-input.text;

@@ -15,7 +15,7 @@ use serde_json::{json, Value};
 use slint::{ModelRc, VecModel, StandardListViewItem};
 use dialogs::err_dialog;
 use file_tools::exists;
-use mc::{Account, account, Game, game, launch};
+use mc::{account, game, launch, Account, Game};
 
 slint::include_modules!();
 
@@ -147,6 +147,7 @@ fn main() -> Result<(), slint::PlatformError> {
     let acc_list: Rc<RefCell<Vec<Account>>>;
     let config: Rc<Config>;
     let game_list: Rc<RefCell<Vec<Game>>>;
+    let download_game_list = Rc::new(RefCell::new(Vec::new())); // do not drop after open dialog
 
     if let Some(temp_config) = load_config() {
         config = Rc::new(temp_config);
@@ -189,11 +190,14 @@ fn main() -> Result<(), slint::PlatformError> {
     });
 
     ui.on_click_add_game_btn({
+        let config_handle = Rc::downgrade(&config);
+        let download_list_handle = Rc::downgrade(&download_game_list);
         let game_list_handle = Rc::downgrade(&game_list);
         let ui_handle = ui.as_weak();
         move || {
-            if let (Some(game_list), Some(ui)) = (game_list_handle.upgrade(), ui_handle.upgrade()) {
-                game::add_dialog(&game_list, &ui);
+            if let (Some(config), Some(download_list), Some(game_list), Some(ui)) =
+                (config_handle.upgrade(), download_list_handle.upgrade(), game_list_handle.upgrade(), ui_handle.upgrade()) {
+                game::add_dialog(&download_list, &game_list, &ui, &config);
             } else {
                 error!("Failed to get game_list.");
             }

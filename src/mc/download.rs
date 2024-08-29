@@ -27,11 +27,11 @@ pub fn download_game(config: &Rc<Config>, version: &str) -> Option<()> {
 }
 
 /// 初始化版本（创建json文件）
-pub async fn init_game(path: &str, version: &str, url: &str) -> Option<()> {
-    let dir = String::from(path) + "/" + version;
+pub fn init_game(path: &str, version: &str, url: &str) -> Option<()> {
+    let dir = String::from(path) + "/versions/" + version;
     fs::create_dir(&dir).ok()?;
 
-    let text = reqwest::get(url).await.ok()?.text().await.ok()?;
+    let text = reqwest::blocking::get(url).ok()?.text().ok()?;
     fs::write(dir + "/" + version + ".json", text).ok()?;
 
     Some(())

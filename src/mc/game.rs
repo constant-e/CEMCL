@@ -1,21 +1,17 @@
-use log::warn;
+use log::{error, warn};
 use std::cell::RefCell;
 use std::fs;
 use std::rc::Rc;
 use serde_json::{json, Value};
 use slint::{ComponentHandle, ModelRc, StandardListViewItem, VecModel};
-use crate::mc::download::list_game;
 use crate::{AddGameDialog, AppWindow, Config, EditGameDialog, ui_game_list};
 use crate::dialogs::ask_dialog;
 use crate::file_tools::{exists, list_dir};
 use super::{download, Game, GameUrl};
 
-fn ui_game_url_list(game_url_list: &Vec<GameUrl>, require_type: &str) -> ModelRc<ModelRc<StandardListViewItem>> {
+fn ui_game_url_list(game_url_list: &Vec<GameUrl>) -> ModelRc<ModelRc<StandardListViewItem>> {
     let mut ui_game_url_list: Vec<ModelRc<StandardListViewItem>> = Vec::new();
     for game in game_url_list {
-        if !game.game_type.contains(require_type) {
-            continue;
-        }
         let game_type = StandardListViewItem::from(game.game_type.as_str());
         let version = StandardListViewItem::from(game.version.as_str());
         let model: Rc<VecModel<StandardListViewItem>> = Rc::new(VecModel::from(vec![version.into(), game_type.into()]));
@@ -25,24 +21,74 @@ fn ui_game_url_list(game_url_list: &Vec<GameUrl>, require_type: &str) -> ModelRc
     ModelRc::from(Rc::new(VecModel::from(ui_game_url_list)))
 }
 
-pub fn add_dialog(game_list: &Rc<RefCell<Vec<Game>>>, app: &AppWindow) {
+pub fn add_dialog(download_game_list: &Rc<RefCell<Vec<GameUrl>>>, game_list: &Rc<RefCell<Vec<Game>>>, app: &AppWindow, config: &Rc<Config>) {
     let ui = AddGameDialog::new().unwrap();
-    let game_url_list: Vec<GameUrl>;
 
-    if let Some(result) = list_game() {
-        game_url_list = result;
+    let game_url_list = if let Some(result) = download::list_game() {
+        result
     } else {
-        game_url_list = Vec::new();
-    }
-    
-    ui.set_game_list(ui_game_url_list(&game_url_list, ""));
+        Vec::new()
+    };
+
+    // 筛选版本类型后的列表
+    *download_game_list.borrow_mut() = game_url_list.clone();
+ 
+    ui.set_game_list(ui_game_url_list(&game_url_list));
+
+    ui.on_game_combo_box_changed({
+        let ui_handle = ui.as_weak();
+        let real_list_handle = Rc::downgrade(&download_game_list);
+        move |game_type| {
+            if let (Some(ui), Some(real_list)) = (ui_handle.upgrade(), real_list_handle.upgrade()) {
+                let require = if game_type.contains("R") {
+                    "release"
+                } else if game_type.contains("S") {
+                    "snapshot"
+                } else {
+                    ""
+                };
+
+                real_list.borrow_mut().clear();
+                for game in &game_url_list {
+                    if !game.game_type.contains(require) {
+                        continue;
+                    }
+                    real_list.borrow_mut().push(game.clone());
+                }
+                ui.set_game_list(ui_game_url_list(real_list.borrow().as_ref()));
+            } else {
+                error!("Failed to update game list.");
+            }
+        }
+    });
 
     ui.on_ok_clicked({
+        let app_handle = app.as_weak();
+        let config_handle = Rc::downgrade(config);
+        let game_list_handle = Rc::downgrade(game_list);
         let ui_handle = ui.as_weak();
+        let real_list_handle = Rc::downgrade(download_game_list);
         move || {
-            let ui = ui_handle.unwrap();
-            // TODO: Save changes
-            ui.hide().unwrap();
+            if let (Some(app), Some(config), Some(game_list), Some(real_list), Some(ui)) =
+                (app_handle.upgrade(), config_handle.upgrade(), game_list_handle.upgrade(), real_list_handle.upgrade(), ui_handle.upgrade())
+            {
+                let index = ui.get_game_index() as usize;
+                if index >= real_list.borrow().len() {
+                    error!("{index} is out of range (max: {})", real_list.borrow().len());
+                    return;
+                }
+                let game = real_list.borrow()[index].clone();
+                download::init_game(config.game_path.borrow().as_ref(), &game.version, &game.url);
+                if let Some(list) = load(&config) {
+                    *game_list.borrow_mut() = list;
+                    app.set_game_list(ui_game_list(game_list.borrow().as_ref()));
+                } else {
+                    error!("Failed to add game.");
+                }
+                ui.hide().unwrap();
+            } else {
+                error!("Failed to add game.");
+            }
         }
     });
 

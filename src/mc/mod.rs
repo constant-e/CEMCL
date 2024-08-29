@@ -46,6 +46,7 @@ pub struct Game {
 }
 
 /// 在下载游戏时使用的游戏信息
+#[derive(Clone)]
 pub struct GameUrl {
     /// 游戏类型
     pub game_type: String,
