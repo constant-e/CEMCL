@@ -1,11 +1,10 @@
 //! mc::launch 获取MC的启动参数
 
 use log::{warn, error};
-use std::env::consts as env;
 use std::fs;
 use serde_json::Value;
 use crate::file_tools::exists;
-use super::{Account, Game};
+use super::{check_rules, download, Account, Game};
 
 /// 从json对象单次获取参数
 fn add_arg(n: &Value) -> Option<Vec<String>> {
@@ -35,39 +34,6 @@ fn add_arg(n: &Value) -> Option<Vec<String>> {
     }
 
     Some(result)
-}
-
-// 检查参数是否可以添加
-fn check_rules(n: &Value) -> bool {
-    // 获取操作系统名称
-    let os = if env::OS == "macOS" { "osx" } else { env::OS };
-
-    if let Some(array) = n.as_array() {
-        for r in array {
-            if !r["features"].is_null() {
-                // 暂时不支持
-                return false;
-            }
-            if r["action"] == "allow" {
-                if r["os"]["arch"] != env::ARCH {
-                    return false;
-                }
-                if r["os"]["name"] != os {
-                    return false;
-                }
-            } else if r["action"] == "disallow" {
-                if r["os"]["arch"] == env::ARCH {
-                    return false;
-                }
-                if r["os"]["name"] == os {
-                    return false;
-                }
-            }
-        }
-    } else {
-        warn!("Failed to get rules");
-    }
-    true
 }
 
 // 获取MC和JVM参数
@@ -142,7 +108,6 @@ pub fn get_launch_command(account: &Account, game: &Game, game_path: &String) ->
     let mut result: Vec<String> = Vec::new();
     let dir = game_path.clone() + "/versions/" + game.version.borrow().as_str();  // 游戏目录
     
-    // TODO: 或可与启动时的load_game_list合并
     // 读取json
     let cfg_path = dir.clone() + "/" + game.version.borrow().as_str() + ".json";
     if let Ok(config) = serde_json::from_str::<Value>(fs::read_to_string(&cfg_path).ok()?.as_str()) {

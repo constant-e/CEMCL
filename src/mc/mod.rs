@@ -1,5 +1,9 @@
 //! mc MC相关
 
+use log::warn;
+use serde_json::Value;
+use std::env::consts as env;
+
 /// 游戏账号相关
 pub mod account;
 /// 下载相关
@@ -54,4 +58,37 @@ pub struct GameUrl {
     pub url: String,
     /// 游戏版本
     pub version: String,
+}
+
+// 检查参数是否可以添加
+fn check_rules(n: &Value) -> bool {
+    // 获取操作系统名称
+    let os = if env::OS == "macOS" { "osx" } else { env::OS };
+
+    if let Some(array) = n.as_array() {
+        for r in array {
+            if !r["features"].is_null() {
+                // 暂时不支持
+                return false;
+            }
+            if r["action"] == "allow" {
+                if r["os"]["arch"] != env::ARCH {
+                    return false;
+                }
+                if r["os"]["name"] != os {
+                    return false;
+                }
+            } else if r["action"] == "disallow" {
+                if r["os"]["arch"] == env::ARCH {
+                    return false;
+                }
+                if r["os"]["name"] == os {
+                    return false;
+                }
+            }
+        }
+    } else {
+        warn!("Failed to get rules");
+    }
+    true
 }
