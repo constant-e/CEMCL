@@ -1,7 +1,7 @@
 //! mc::launch 获取MC的启动参数
 
-use log::{warn, error};
-use std::fs;
+use log::error;
+use std::{env::consts as env, fs};
 use serde_json::Value;
 use crate::file_tools::exists;
 use super::{check_rules, download, Account, Game};
@@ -226,6 +226,7 @@ pub fn get_launch_command(account: &Account, game: &Game, game_path: &String) ->
         // 版本隔离
         let game_dir = if *game.separated.borrow() { &dir } else { game_path };
 
+        let os = if env::OS == "macOS" { "osx" } else { env::OS };
         // 替换模板
         for item in result.iter_mut() {
             
@@ -233,9 +234,9 @@ pub fn get_launch_command(account: &Account, game: &Game, game_path: &String) ->
             *item = item
                 .replace("${assets_index_name}", &asset_index)
                 .replace("${assets_root}", &(game_path.clone() + "/assets"))
-                .replace("${auth_access_token}", &account.token.borrow().clone())
-                .replace("${auth_player_name}", &account.user_name.borrow().clone())
-                .replace("${auth_uuid}", &account.uuid.borrow().clone())
+                .replace("${auth_access_token}", &account.token.borrow().as_ref())
+                .replace("${auth_player_name}", &account.user_name.borrow().as_ref())
+                .replace("${auth_uuid}", &account.uuid.borrow().as_ref())
                 // .replace("${authlib_injector_param}", "") // 暂不支持
                 .replace("${classpath}", &cp)
                 .replace("${classpath_separator}", ":")
@@ -243,11 +244,33 @@ pub fn get_launch_command(account: &Account, game: &Game, game_path: &String) ->
                 .replace("${launcher_name}", "\"CE Minecraft Launcher\"")
                 .replace("${launcher_version}", env!("CARGO_PKG_VERSION"))
                 .replace("${library_directory}", &(game_path.clone() + "/libraries"))
-                .replace("${natives_directory}", &(dir.clone() + "/natives"))
-                .replace("${user_type}", &account.account_type.borrow().clone())
-                .replace("${version_name}", &game.version.borrow().clone())
-                .replace("${version_type}", &game.game_type.borrow().clone());
+                .replace("${natives_directory}", &(dir.clone() + "/natives-" + os + "-" + env::ARCH))
+                .replace("${user_type}", &account.account_type.borrow().as_ref())
+                .replace("${version_name}", &game.version.borrow().as_ref())
+                .replace("${version_type}", &game.game_type.borrow().as_ref());
         }
+
+        // 处理依赖
+        let jar_path = dir.clone() + "/" + game.version.borrow().as_ref() + ".jar";
+        if !exists(&jar_path) {
+            // 本体
+            download::download(config["downloads"]["client"]["url"].as_str()?, &jar_path, 3)?;
+        }
+
+        // TODO: support using mirrors
+        
+        // assets
+        let index_dir = game_path.clone() + "/assets/indexes/";
+        let index_path = index_dir.clone() + &asset_index + ".json";
+        if !exists(&index_path) {
+            if !exists(&index_dir) { fs::create_dir_all(&index_dir).ok()?; }
+            download::download(config["assetIndex"]["url"].as_str()?, &index_path, 3)?;
+        }
+        download::download_assets(game_path, &asset_index, "https://resources.download.minecraft.net")?;
+        
+        // libraries
+        download::download_libraries(&config["libraries"], game_path, &dir, "https://libraries.minecraft.net")?;
+
         return Some(result)
     } else {
         error!("Failed to load {cfg_path}.");

@@ -1,6 +1,16 @@
 use std::fs;
 use std::path::Path;
 
+pub fn list_all(path: &String) -> Option<Vec<String>> {
+    let mut result: Vec<String> = Vec::new();
+    for entry in fs::read_dir(&Path::new(path)).ok()? {
+        let entry = entry.ok()?;
+        let path = entry.path();
+        result.push(path.file_name()?.to_str()?.into());
+    }
+    Some(result)
+}
+
 pub fn list_dir(path: &String) -> Option<Vec<String>> {
     let mut result: Vec<String> = Vec::new();
     for entry in fs::read_dir(&Path::new(path)).ok()? {

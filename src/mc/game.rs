@@ -78,7 +78,12 @@ pub fn add_dialog(download_game_list: &Rc<RefCell<Vec<GameUrl>>>, game_list: &Rc
                     return;
                 }
                 let game = real_list.borrow()[index].clone();
-                download::init_game(config.game_path.borrow().as_ref(), &game.version, &game.url);
+                let dir = config.game_path.borrow().to_string() + "/versions/" + &game.version;
+                if fs::create_dir(&dir).is_err() {
+                    error!("Failed to create {dir}.");
+                    return;
+                };
+                download::download(&game.url, &(dir + "/" + &game.version + ".json"), 3);
                 if let Some(list) = load(&config) {
                     *game_list.borrow_mut() = list;
                     app.set_game_list(ui_game_list(game_list.borrow().as_ref()));
