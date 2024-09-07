@@ -1,6 +1,6 @@
 //! mc MC相关
 
-use log::{info, warn};
+use log::{debug, warn};
 use serde_json::Value;
 use std::env::consts as env;
 
@@ -74,20 +74,20 @@ fn check_rules(n: &Value) -> bool {
             if r["os"].is_null() { continue; } // 无意义rule
             if r["action"] == "allow" {
                 if r["os"]["arch"].is_string() && r["os"]["arch"] != env::ARCH {
-                    info!("ALLOW: {} not match {}", r["os"]["arch"], env::ARCH);
+                    debug!("ALLOW: {} not match {}", r["os"]["arch"], env::ARCH);
                     return false;
                 }
                 if r["os"]["name"].is_string() && r["os"]["name"] != os {
-                    info!("ALLOW: {} not match {}", r["os"]["name"], os);
+                    debug!("ALLOW: {} not match {}", r["os"]["name"], os);
                     return false;
                 }
             } else if r["action"] == "disallow" {
                 if r["os"]["arch"].is_string() && r["os"]["arch"] == env::ARCH {
-                    info!("DISALLOW: {} match {}", r["os"]["arch"], env::ARCH);
+                    debug!("DISALLOW: {} match {}", r["os"]["arch"], env::ARCH);
                     return false;
                 }
                 if r["os"]["name"].is_string() && r["os"]["name"] == os {
-                    info!("DISALLOW: {} match {}", r["os"]["name"], os);
+                    debug!("DISALLOW: {} match {}", r["os"]["name"], os);
                     return false;
                 }
             }
