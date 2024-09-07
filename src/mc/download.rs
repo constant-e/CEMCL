@@ -1,13 +1,13 @@
 //! mc::download 下载文件
 
 use std::fs;
-use std::sync::mpsc;
 use std::thread;
 use log::info;
 use serde_json::Value;
 
 use crate::file_tools::list_all;
 use crate::file_tools::exists;
+use crate::file_tools::list_file;
 use super::{GameUrl, check_rules, env};
 
 /// 下载
@@ -29,8 +29,7 @@ pub fn download_assets(path: &str, id: &str, mirror: &str) -> Option<()> {
     let assets_dir = path.to_string() + "/assets";
     let index_path = assets_dir.clone() + "/indexes/" + &id + ".json";
     let json = serde_json::from_str::<Value>(&fs::read_to_string(&index_path).ok()?).ok()?;
-    let (tx, rx) = mpsc::channel();
-    let mut c = 0; // thread counts
+    let mut handles = Vec::new();
     for (_, node) in json["objects"].as_object()? {
         let hash = node["hash"].as_str()?;
         let dl_path = hash[0..2].to_string() + "/" + hash;
@@ -40,24 +39,15 @@ pub fn download_assets(path: &str, id: &str, mirror: &str) -> Option<()> {
             let dir = obj_path.clone() + "/" + &hash[0..2];
             if !exists(&dir) { fs::create_dir_all(&dir).ok()?; }
             let url = mirror.to_string() + "/" + &dl_path;
-            let tx = tx.clone();
-            thread::spawn(move || {
-                if download(&url, &local_path, 3).is_some() {
-                    tx.send("ok").unwrap();
-                } else {
-                    tx.send("err").unwrap();
-                }
+            let handle = thread::spawn(move || {
+                download(&url, &local_path, 3).unwrap();
             });
-            c += 1;
+            handles.push(handle);
         }
     }
     
-    if c == 0 { return Some(()); }
-
-    for received in rx {
-        if received == "err" { return None; }
-        c -= 1;
-        if c == 0 { break; }
+    for handle in handles {
+        handle.join().unwrap();
     }
 
     Some(())
@@ -68,33 +58,17 @@ fn download_lib(node: &Value, path: &str, game_dir: &str, mirror: &str, id: usiz
 
     if node["rules"].is_array() {
         if !check_rules(&node["rules"]) {
-            println!("{}", node["name"].as_str().unwrap());
             return Some(());
-        }
-    }
-    
-    if node["downloads"]["artifact"].is_object() {
-        let local_path = lib_dir.clone() + "/" + node["downloads"]["artifact"]["path"].as_str()?;
-        if !exists(&local_path) {
-            let vec: Vec<&str> = local_path.split("/").collect();
-            let mut dir = String::new();
-            for (index, item) in vec.iter().enumerate() {
-                if index == vec.len() - 1 { break; }
-                dir.push_str(item);
-                if index != vec.len() - 2 { dir.push('/'); }
-            }
-            if !exists(&dir) { fs::create_dir_all(&dir).ok()?; }
-            let url = node["downloads"]["artifact"]["url"].as_str()?.replace("https://libraries.minecraft.net", mirror);
-            download(&url, &local_path, 3)?;
         }
     }
 
     let os = if env::OS == "macOS" { "osx" } else { env::OS };
-    // Add natives
+    // Add natives for old versions
     if node["natives"][os].is_string() {
-        let key = node["natives"][os].as_str()?;
+        let arch = if env::ARCH.contains("64") { "64" } else { "32" };
+        let key = node["natives"][os].as_str()?.replace("${arch}", arch);
         if node["downloads"]["classifiers"].is_object() {
-            let local_path = lib_dir.clone() + "/" + node["downloads"]["classifiers"][key]["path"].as_str()?;
+            let local_path = lib_dir.clone() + "/" + node["downloads"]["classifiers"][&key]["path"].as_str()?;
             let vec: Vec<&str> = local_path.split("/").collect();
             let mut dir = String::new();
             for (index, item) in vec.iter().enumerate() {
@@ -104,7 +78,7 @@ fn download_lib(node: &Value, path: &str, game_dir: &str, mirror: &str, id: usiz
             }
             if !exists(&local_path) {
                 if !exists(&dir) { fs::create_dir_all(&dir).ok()?; }
-                let url = node["downloads"]["classifiers"][key]["url"].as_str()?.replace("https://libraries.minecraft.net", mirror);
+                let url = node["downloads"]["classifiers"][&key]["url"].as_str()?.replace("https://libraries.minecraft.net", mirror);
                 download(&url, &local_path, 3)?;
             }
 
@@ -136,33 +110,69 @@ fn download_lib(node: &Value, path: &str, game_dir: &str, mirror: &str, id: usiz
                 fs::remove_dir_all("temp".to_string() + &id.to_string()).ok()?;
             }
         }
+        return Some(());
     }
+    
+    if node["downloads"]["artifact"].is_object() {
+        let local_path = lib_dir.clone() + "/" + node["downloads"]["artifact"]["path"].as_str()?;
+        if !exists(&local_path) {
+            let vec: Vec<&str> = local_path.split("/").collect();
+            let mut dir = String::new();
+            for (index, item) in vec.iter().enumerate() {
+                if index == vec.len() - 1 { break; }
+                dir.push_str(item);
+                if index != vec.len() - 2 { dir.push('/'); }
+            }
+            if !exists(&dir) { fs::create_dir_all(&dir).ok()?; }
+            let url = node["downloads"]["artifact"]["url"].as_str()?.replace("https://libraries.minecraft.net", mirror);
+            download(&url, &local_path, 3)?;
+        }
+        // Add natives for new version
+        let name: Vec<&str> = node["name"].as_str()?.split(":").collect();
+        let name = name.last()?;
+        if name.contains("natives") {
+            let natives_dir = game_dir.to_string() + "/natives-" + os + "-" + env::ARCH;
+            if exists(&("temp".to_string() + &id.to_string())) {
+                fs::remove_dir_all("temp".to_string() + &id.to_string()).ok()?;
+            }
+            if !exists(&natives_dir) { fs::create_dir(&natives_dir).ok()?; }
+            fs::create_dir("temp".to_string() + &id.to_string()).ok()?; // 临时文件夹
+            let mut zip = zip::ZipArchive::new(fs::File::open(local_path).ok()?).ok()?;
+            zip.extract("temp".to_string() + &id.to_string()).ok()?;
+            let files = list_file(&("temp".to_string() + &id.to_string()))?;
+            for name in files {
+                let format: Vec<&str> = name.split(".").collect();
+                let format = *format.last()?;
+                if !(format == "dll" || format == "dylib" || format == "so") { // windows || macOS || linux
+                    continue;
+                }
+                let split: Vec<&str> = name.split("/").collect();
+                let file_name = split.last()?;
+                let target_path = natives_dir.clone() + "/" + &file_name;
+                if !exists(&target_path) { fs::copy(name, &target_path).ok()?; }
+            }
+            fs::remove_dir_all("temp".to_string() + &id.to_string()).ok()?;
+        }
+    }
+    
     Some(())
 }
 
 /// 下载libraries node: mc json["libraries"]
 pub fn download_libraries(node: &Value, path: &str, game_dir: &str, mirror: &str) -> Option<()> {
-    let (tx, rx) = mpsc::channel();
-    let mut c = 0; // thread counts
+    let mut handles = Vec::new();
+    let mut c = 0;
     for item in node.as_array()? {
-        let tx = tx.clone();
         let (i, p, g, m, id) = (item.clone(), path.to_string(), game_dir.to_string(), mirror.to_string(), c.clone());
-        thread::spawn(move || {
-            if download_lib(&i, &p, &g, &m, id).is_some() {
-                tx.send("ok").unwrap();
-            } else {
-                tx.send("err").unwrap();
-            }
+        let handle = thread::spawn(move || {
+            download_lib(&i, &p, &g, &m, id).unwrap();
         });
+        handles.push(handle);
         c += 1;
     }
     
-    if c == 0 { return Some(()); } // should be unused
-
-    for received in rx {
-        if received == "err" { return None; }
-        c -= 1;
-        if c == 0 { break; }
+    for handle in handles {
+        handle.join().unwrap();
     }
 
     Some(())
