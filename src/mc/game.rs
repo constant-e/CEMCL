@@ -79,7 +79,7 @@ pub fn add_dialog(download_game_list: &Rc<RefCell<Vec<GameUrl>>>, game_list: &Rc
                 }
                 let game = real_list.borrow()[index].clone();
                 let dir = config.game_path.borrow().to_string() + "/versions/" + &game.version;
-                if fs::create_dir(&dir).is_err() {
+                if fs::create_dir_all(&dir).is_err() {
                     error!("Failed to create {dir}.");
                     return;
                 };
