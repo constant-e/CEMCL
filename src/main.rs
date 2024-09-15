@@ -267,14 +267,14 @@ fn main() -> Result<(), slint::PlatformError> {
                     return;
                 }
                 if let Some(cmd) = launch::get_launch_command(&acc_list.borrow()[acc_index], &game_list.borrow()[game_index], &config.game_path.borrow()) {
-                    let mut str = String::new();
+                    let mut str = game_list.borrow()[game_index].java_path.borrow().clone() + " ";
                     for i in &cmd {
                         str.push_str(i);
                         str.push_str(" ");
                     }
                     debug!("{str}");
                     
-                    let java_path = config.java_path.borrow().clone();
+                    let java_path = game_list.borrow()[game_index].java_path.borrow().clone();
                     let (s, r) = sync::mpsc::channel();
 
                     thread::spawn(move || {

@@ -240,6 +240,7 @@ pub fn get_launch_command(account: &Account, game: &Game, game_path: &String) ->
                 // .replace("${authlib_injector_param}", "") // 暂不支持
                 .replace("${classpath}", &cp)
                 .replace("${classpath_separator}", ":")
+                .replace("${game_assets}", &(game_path.clone() + "/assets")) // support old versions
                 .replace("${game_directory}", &game_dir)
                 .replace("${launcher_name}", "\"CE Minecraft Launcher\"")
                 .replace("${launcher_version}", env!("CARGO_PKG_VERSION"))
