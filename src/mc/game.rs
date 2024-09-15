@@ -138,8 +138,8 @@ pub fn edit_dialog(game_list: &Rc<RefCell<Vec<Game>>>, index: usize, game_path: 
             *game.width.borrow_mut() = ui.get_config_width().into();
             *game.xms.borrow_mut() = ui.get_xms().into();
             *game.xmx.borrow_mut() = ui.get_xmx().into();
-            let path = game_path.clone() + "/versions/" + game.version.borrow().as_ref();
-            save(&path, game);
+            let path = game_path.clone() + "/versions/" + game.version.borrow().as_ref() + "/config.json";
+            save(&path, game).unwrap();
             app.set_game_list(ui_game_list(game_list.borrow().as_ref()));
             ui.hide().unwrap();
         }
@@ -218,7 +218,7 @@ pub fn load(config: &Config) -> Option<Vec<Game>> {
         }
         
         // 若config.json存在，覆盖原版json
-        let cfg_path = path.clone() + "/" + "config.json";
+        let cfg_path = path.clone() + "/config.json";
         if exists(&cfg_path) {
             if let Ok(json) = serde_json::from_str::<Value>(&fs::read_to_string(&cfg_path).ok()?.as_str()) {
                 game.args = RefCell::from(String::from(json["args"].as_str()?));
