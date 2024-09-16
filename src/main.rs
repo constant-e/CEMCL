@@ -141,6 +141,8 @@ pub fn ui_game_list(game_list: &Vec<Game>) -> ModelRc<ModelRc<StandardListViewIt
 
 fn main() -> Result<(), slint::PlatformError> {
     env_logger::init();
+    let rt = tokio::runtime::Runtime::new().unwrap();
+    let _tokio = rt.enter();
     let ui = AppWindow::new()?;
 
     // load config
@@ -197,7 +199,9 @@ fn main() -> Result<(), slint::PlatformError> {
         move || {
             if let (Some(config), Some(download_list), Some(game_list), Some(ui)) =
                 (config_handle.upgrade(), download_list_handle.upgrade(), game_list_handle.upgrade(), ui_handle.upgrade()) {
-                game::add_dialog(&download_list, &game_list, &ui, &config);
+                slint::spawn_local(async move {
+                    game::add_dialog(&download_list, &game_list, &ui, &config).await;
+                }).unwrap();
             } else {
                 error!("Failed to get game_list.");
             }
@@ -266,45 +270,52 @@ fn main() -> Result<(), slint::PlatformError> {
                     err_dialog("Please select a account and a game first.");
                     return;
                 }
-                if let Some(cmd) = launch::get_launch_command(&acc_list.borrow()[acc_index], &game_list.borrow()[game_index], &config.game_path.borrow()) {
-                    let mut str = game_list.borrow()[game_index].java_path.borrow().clone() + " ";
-                    for i in &cmd {
-                        str.push_str(i);
-                        str.push_str(" ");
-                    }
-                    debug!("{str}");
-                    
-                    let java_path = game_list.borrow()[game_index].java_path.borrow().clone();
-                    let (s, r) = sync::mpsc::channel();
 
-                    thread::spawn(move || {
-                        if let Ok(_child) = Command::new(java_path).args(cmd).spawn() {
-                            s.send(Some(())).unwrap();
-                        } else {
-                            s.send(None).unwrap();
-                            error!("Failed to run command.");
-                        }
-                    });
-
-                    if r.recv().unwrap().is_some() {
-                        if *config.close_after_launch.borrow() {
-                            ui.hide().unwrap();
-                        }
-                    } else {
-                        let dialog = ErrorDialog::new().unwrap();
-                        dialog.set_msg("Failed to run command.".into());
-                        dialog.on_ok_clicked({
-                            let dialog_handle = dialog.as_weak();
-                            move || {
-                                let dialog = dialog_handle.unwrap();
-                                dialog.hide().unwrap();
+                slint::spawn_local({
+                    let acc_list = acc_list.clone();
+                    let game_list = game_list.clone();
+                    async move {
+                        if let Some(cmd) = launch::get_launch_command(&acc_list.borrow()[acc_index], &game_list.borrow()[game_index], &config.game_path.borrow()).await {
+                            let mut str = game_list.borrow()[game_index].java_path.borrow().clone() + " ";
+                            for i in &cmd {
+                                str.push_str(i);
+                                str.push_str(" ");
                             }
-                        });
-                        dialog.show().unwrap();
+                            debug!("{str}");
+                            
+                            let java_path = game_list.borrow()[game_index].java_path.borrow().clone();
+                            let (s, r) = sync::mpsc::channel();
+        
+                            thread::spawn(move || {
+                                if let Ok(_child) = Command::new(java_path).args(cmd).spawn() {
+                                    s.send(Some(())).unwrap();
+                                } else {
+                                    s.send(None).unwrap();
+                                    error!("Failed to run command.");
+                                }
+                            });
+        
+                            if r.recv().unwrap().is_some() {
+                                if *config.close_after_launch.borrow() {
+                                    ui.hide().unwrap();
+                                }
+                            } else {
+                                let dialog = ErrorDialog::new().unwrap();
+                                dialog.set_msg("Failed to run command.".into());
+                                dialog.on_ok_clicked({
+                                    let dialog_handle = dialog.as_weak();
+                                    move || {
+                                        let dialog = dialog_handle.unwrap();
+                                        dialog.hide().unwrap();
+                                    }
+                                });
+                                dialog.show().unwrap();
+                            }
+                        } else {
+                            error!("Failed to get launch command.");
+                        }
                     }
-                } else {
-                    error!("Failed to get launch command.")
-                }
+                }).unwrap();
             }
         }
     });

@@ -21,10 +21,10 @@ fn ui_game_url_list(game_url_list: &Vec<GameUrl>) -> ModelRc<ModelRc<StandardLis
     ModelRc::from(Rc::new(VecModel::from(ui_game_url_list)))
 }
 
-pub fn add_dialog(download_game_list: &Rc<RefCell<Vec<GameUrl>>>, game_list: &Rc<RefCell<Vec<Game>>>, app: &AppWindow, config: &Rc<Config>) {
+pub async fn add_dialog(download_game_list: &Rc<RefCell<Vec<GameUrl>>>, game_list: &Rc<RefCell<Vec<Game>>>, app: &AppWindow, config: &Rc<Config>) {
     let ui = AddGameDialog::new().unwrap();
 
-    let game_url_list = if let Some(result) = download::list_game() {
+    let game_url_list = if let Some(result) = download::list_game().await {
         result
     } else {
         Vec::new()
@@ -83,14 +83,18 @@ pub fn add_dialog(download_game_list: &Rc<RefCell<Vec<GameUrl>>>, game_list: &Rc
                     error!("Failed to create {dir}.");
                     return;
                 };
-                download::download(&game.url, &(dir + "/" + &game.version + ".json"), 3);
-                if let Some(list) = load(&config) {
-                    *game_list.borrow_mut() = list;
-                    app.set_game_list(ui_game_list(game_list.borrow().as_ref()));
-                } else {
-                    error!("Failed to add game.");
-                }
-                ui.hide().unwrap();
+                slint::spawn_local({
+                    async move {
+                        download::download(game.url.clone(), dir + "/" + &game.version + ".json", 3).await;
+                        if let Some(list) = load(&config) {
+                            *game_list.borrow_mut() = list;
+                            app.set_game_list(ui_game_list(game_list.borrow().as_ref()));
+                        } else {
+                            error!("Failed to add game.");
+                        }
+                        ui.hide().unwrap();
+                    }
+                }).unwrap();
             } else {
                 error!("Failed to add game.");
             }

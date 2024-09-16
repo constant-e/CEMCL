@@ -1,5 +1,6 @@
 //! mc::launch 获取MC的启动参数
 
+use futures::join;
 use log::error;
 use std::{env::consts as env, fs};
 use serde_json::Value;
@@ -96,7 +97,7 @@ fn get_classpaths(n: &Value, game_path: &String) -> Option<Vec<String>> {
 }
 
 /// 获取启动总命令
-pub fn get_launch_command(account: &Account, game: &Game, game_path: &String) -> Option<Vec<String>> {
+pub async fn get_launch_command(account: &Account, game: &Game, game_path: &String) -> Option<Vec<String>> {
     // 使用自定义参数
     // if !game.args.is_empty() {
     //     return game.args.clone();
@@ -249,25 +250,30 @@ pub fn get_launch_command(account: &Account, game: &Game, game_path: &String) ->
         }
 
         // 处理依赖
-        let jar_path = dir.clone() + "/" + game.version.borrow().as_ref() + ".jar";
-        if !exists(&jar_path) {
-            // 本体
-            download::download(config["downloads"]["client"]["url"].as_str()?, &jar_path, 3)?;
+        // json first
+        let index_dir = game_path.clone() + "/assets/indexes/";
+        let index_path = index_dir.clone() + &asset_index + ".json";
+        if !exists(&index_path) {
+            if !exists(&index_dir) { fs::create_dir_all(&index_dir).ok()?; }
+            download::download(config["assetIndex"]["url"].as_str()?.to_string(), index_path, 3).await;
         }
 
         // TODO: support using mirrors
         
         // assets
-        let index_dir = game_path.clone() + "/assets/indexes/";
-        let index_path = index_dir.clone() + &asset_index + ".json";
-        if !exists(&index_path) {
-            if !exists(&index_dir) { fs::create_dir_all(&index_dir).ok()?; }
-            download::download(config["assetIndex"]["url"].as_str()?, &index_path, 3)?;
-        }
-        download::download_assets(game_path, &asset_index, "https://resources.download.minecraft.net")?;
+        let ass_future = download::download_assets(game_path, &asset_index, "https://resources.download.minecraft.net");
         
         // libraries
-        download::download_libraries(&config["libraries"], game_path, &dir, "https://libraries.minecraft.net")?;
+        let lib_future = download::download_libraries(&config["libraries"], game_path, &dir, "https://libraries.minecraft.net");
+
+        let jar_path = dir.clone() + "/" + game.version.borrow().as_ref() + ".jar";
+        if !exists(&jar_path) {
+            // 本体
+            let future = download::download(config["downloads"]["client"]["url"].as_str()?.to_string(), jar_path, 3);
+            join!(future, ass_future, lib_future);
+        } else {
+            join!(ass_future, lib_future);
+        }
 
         return Some(result)
     } else {

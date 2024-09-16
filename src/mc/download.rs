@@ -1,9 +1,9 @@
 //! mc::download 下载文件
 
 use std::fs;
-use std::thread;
 use log::info;
 use serde_json::Value;
+use futures::future::join_all;
 
 use crate::file_tools::list_all;
 use crate::file_tools::exists;
@@ -11,25 +11,25 @@ use crate::file_tools::list_file;
 use super::{GameUrl, check_rules, env};
 
 /// 下载
-pub fn download(url: &str, path: &str, max: usize) -> Option<()> {
-    let mut response = reqwest::blocking::get(url);
+pub async fn download(url: String, path: String, max: usize) -> Option<()> {
+    let mut response = reqwest::get(&url).await;
     let mut c = 0; // retry times
     while response.is_err() {
         if c == max { return None; } // retry times: 3 TODO: support change this value
-        response = reqwest::blocking::get(url);
+        response = reqwest::get(&url).await;
         c += 1;
     }
-    fs::write(path, response.unwrap().bytes().ok()?).ok()?;
+    fs::write(path, response.unwrap().bytes().await.ok()?).ok()?;
     info!("Downloaded {url}");
     Some(())
 }
 
 /// 下载assets
-pub fn download_assets(path: &str, id: &str, mirror: &str) -> Option<()> {
+pub async fn download_assets(path: &str, id: &str, mirror: &str) -> Option<()> {
     let assets_dir = path.to_string() + "/assets";
     let index_path = assets_dir.clone() + "/indexes/" + &id + ".json";
     let json = serde_json::from_str::<Value>(&fs::read_to_string(&index_path).ok()?).ok()?;
-    let mut handles = Vec::new();
+    let mut futures = Vec::new();
     for (_, node) in json["objects"].as_object()? {
         let hash = node["hash"].as_str()?;
         let dl_path = hash[0..2].to_string() + "/" + hash;
@@ -39,21 +39,17 @@ pub fn download_assets(path: &str, id: &str, mirror: &str) -> Option<()> {
             let dir = obj_path.clone() + "/" + &hash[0..2];
             if !exists(&dir) { fs::create_dir_all(&dir).ok()?; }
             let url = mirror.to_string() + "/" + &dl_path;
-            let handle = thread::spawn(move || {
-                download(&url, &local_path, 3).unwrap();
-            });
-            handles.push(handle);
+            let future = download(url.clone(), local_path.clone(), 3);
+            futures.push(future);
         }
     }
     
-    for handle in handles {
-        handle.join().unwrap();
-    }
+    join_all(futures).await;
 
     Some(())
 }
 
-fn download_lib(node: &Value, path: &str, game_dir: &str, mirror: &str, id: usize) -> Option<()> {
+async fn download_lib(node: Value, path: String, game_dir: String, mirror: String, id: usize) -> Option<()> {
     let lib_dir = path.to_string() + "/libraries";
 
     if node["rules"].is_array() {
@@ -78,8 +74,8 @@ fn download_lib(node: &Value, path: &str, game_dir: &str, mirror: &str, id: usiz
             }
             if !exists(&local_path) {
                 if !exists(&dir) { fs::create_dir_all(&dir).ok()?; }
-                let url = node["downloads"]["classifiers"][&key]["url"].as_str()?.replace("https://libraries.minecraft.net", mirror);
-                download(&url, &local_path, 3)?;
+                let url = node["downloads"]["classifiers"][&key]["url"].as_str()?.replace("https://libraries.minecraft.net", &mirror);
+                download(url.clone(), local_path.clone(), 3).await;
             }
 
             // Extract to game dir
@@ -91,7 +87,7 @@ fn download_lib(node: &Value, path: &str, game_dir: &str, mirror: &str, id: usiz
                 }
                 if !exists(&natives_dir) { fs::create_dir(&natives_dir).ok()?; }
                 fs::create_dir("temp".to_string() + &id.to_string()).ok()?; // 临时文件夹
-                let mut zip = zip::ZipArchive::new(fs::File::open(local_path).ok()?).ok()?;
+                let mut zip = zip::ZipArchive::new(fs::File::open(&local_path).ok()?).ok()?;
                 zip.extract("temp".to_string() + &id.to_string()).ok()?;
                 let dir = list_all(&("temp".to_string() + &id.to_string()))?;
                 for name in dir {
@@ -124,8 +120,8 @@ fn download_lib(node: &Value, path: &str, game_dir: &str, mirror: &str, id: usiz
                 if index != vec.len() - 2 { dir.push('/'); }
             }
             if !exists(&dir) { fs::create_dir_all(&dir).ok()?; }
-            let url = node["downloads"]["artifact"]["url"].as_str()?.replace("https://libraries.minecraft.net", mirror);
-            download(&url, &local_path, 3)?;
+            let url = node["downloads"]["artifact"]["url"].as_str()?.replace("https://libraries.minecraft.net", &mirror);
+            download(url.clone(), local_path.clone(), 3).await;
         }
         // Add natives for new version
         let name: Vec<&str> = node["name"].as_str()?.split(":").collect();
@@ -137,7 +133,7 @@ fn download_lib(node: &Value, path: &str, game_dir: &str, mirror: &str, id: usiz
             }
             if !exists(&natives_dir) { fs::create_dir(&natives_dir).ok()?; }
             fs::create_dir("temp".to_string() + &id.to_string()).ok()?; // 临时文件夹
-            let mut zip = zip::ZipArchive::new(fs::File::open(local_path).ok()?).ok()?;
+            let mut zip = zip::ZipArchive::new(fs::File::open(&local_path).ok()?).ok()?;
             zip.extract("temp".to_string() + &id.to_string()).ok()?;
             let files = list_file(&("temp".to_string() + &id.to_string()))?;
             for name in files {
@@ -159,31 +155,51 @@ fn download_lib(node: &Value, path: &str, game_dir: &str, mirror: &str, id: usiz
 }
 
 /// 下载libraries node: mc json["libraries"]
-pub fn download_libraries(node: &Value, path: &str, game_dir: &str, mirror: &str) -> Option<()> {
-    let mut handles = Vec::new();
+pub async fn download_libraries(node: &Value, path: &str, game_dir: &str, mirror: &str) -> Option<()> {
+    let mut futures = Vec::new();
     let mut c = 0;
     for item in node.as_array()? {
         let (i, p, g, m, id) = (item.clone(), path.to_string(), game_dir.to_string(), mirror.to_string(), c.clone());
-        let handle = thread::spawn(move || {
-            download_lib(&i, &p, &g, &m, id).unwrap();
-        });
-        handles.push(handle);
+        let future = download_lib(i, p, g, m, id);
+        futures.push(future);
         c += 1;
     }
     
-    for handle in handles {
-        handle.join().unwrap();
-    }
+    join_all(futures).await;
 
     Some(())
 }
 
+// /// 获取下载列表
+// pub fn list_game() -> Option<Vec<GameUrl>> {
+//     let mut game_list = Vec::new();
+
+//     // 下载列表
+//     let text = reqwest::blocking::get("http://launchermeta.mojang.com/mc/game/version_manifest_v2.json").ok()?.text().ok()?;
+//     // // 储存json，与官启保持一致
+//     // fs::write(String::from(path) + "/version_manifest_v2.json", &text).ok()?;
+
+//     // 开始解析
+//     let json = serde_json::from_str::<Value>(&text).ok()?;
+
+//     for version in json["versions"].as_array()? {
+//         let game = GameUrl {
+//             game_type: version["type"].as_str()?.to_string(),
+//             url: version["url"].as_str()?.to_string(),
+//             version: version["id"].as_str()?.to_string(),
+//         };
+//         game_list.push(game);
+//     }
+
+//     Some(game_list)
+// }
+
 /// 获取下载列表
-pub fn list_game() -> Option<Vec<GameUrl>> {
+pub async fn list_game() -> Option<Vec<GameUrl>> {
     let mut game_list = Vec::new();
 
     // 下载列表
-    let text = reqwest::blocking::get("http://launchermeta.mojang.com/mc/game/version_manifest_v2.json").ok()?.text().ok()?;
+    let text = reqwest::get("http://launchermeta.mojang.com/mc/game/version_manifest_v2.json").await.ok()?.text().await.ok()?;
     // // 储存json，与官启保持一致
     // fs::write(String::from(path) + "/version_manifest_v2.json", &text).ok()?;
 
