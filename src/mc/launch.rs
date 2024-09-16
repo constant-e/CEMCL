@@ -72,26 +72,22 @@ fn get_args(n: &Value) -> Option<(Vec<String>, Vec<String>)> {
 fn get_classpaths(n: &Value, game_path: &String) -> Option<Vec<String>> {
     let mut result: Vec<String> = Vec::new();
     for item in n.as_array()? {
-        let mut temp: String = game_path.clone() + "/libraries/";
-
         if !item["rules"].is_null() &&
-            check_rules(&item["rules"]) {
+            !check_rules(&item["rules"]) {
             continue;
         }
 
-        let name = String::from(item["name"].as_str()?);
-        let name_split: Vec<&str> = name.split(":").collect();
-        temp.push_str((
-            name_split[0].replace(".", "/") + "/" +
-            name_split[1] + "/" +
-            name_split[2] + "/" +
-            name_split[1] + "-" + name_split[2]
-        ).as_str());
-        if name_split.len() == 4 {
-            // 添加后缀
-            temp.push_str(("-".to_string() + name_split[3]).as_str());
+        let mut temp = game_path.clone() + "/libraries/";
+
+        if let Some(p) = item["downloads"]["artifact"]["path"].as_str() {
+            temp += p;
+        } else {
+            // classifers for old versions
+            let os = if env::OS == "macOS" { "osx" } else { env::OS };
+            let arch = if env::ARCH.contains("64") { "64" } else { "32" };
+            let key = item["natives"][os].as_str()?.replace("${arch}", arch);
+            temp += item["downloads"]["classifiers"][&key]["path"].as_str()?;
         }
-        temp.push_str(".jar");
 
         result.push(temp);
     }
@@ -246,6 +242,7 @@ pub fn get_launch_command(account: &Account, game: &Game, game_path: &String) ->
                 .replace("${launcher_version}", env!("CARGO_PKG_VERSION"))
                 .replace("${library_directory}", &(game_path.clone() + "/libraries"))
                 .replace("${natives_directory}", &(dir.clone() + "/natives-" + os + "-" + env::ARCH))
+                .replace("${user_properties}", "{}")
                 .replace("${user_type}", &account.account_type.borrow().as_ref())
                 .replace("${version_name}", &game.version.borrow().as_ref())
                 .replace("${version_type}", &game.game_type.borrow().as_ref());
