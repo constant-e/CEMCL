@@ -5,7 +5,6 @@ use log::info;
 use serde_json::Value;
 use futures::future::join_all;
 
-use crate::file_tools::list_all;
 use crate::file_tools::exists;
 use crate::file_tools::list_file;
 use super::{GameUrl, check_rules, env};
@@ -77,36 +76,56 @@ async fn download_lib(node: Value, path: String, game_dir: String, mirror: Strin
                 let url = node["downloads"]["classifiers"][&key]["url"].as_str()?.replace("https://libraries.minecraft.net", &mirror);
                 download(url.clone(), local_path.clone(), 3).await;
             }
-
-            // Extract to game dir
-            if node["extract"].is_object() {
-                let excludes = if node["extract"]["exclude"].is_array() { node["extract"]["exclude"].as_array()? } else { &Vec::new() };
-                let natives_dir = game_dir.to_string() + "/natives-" + os + "-" + env::ARCH;
-                if exists(&("temp".to_string() + &id.to_string())) {
-                    fs::remove_dir_all("temp".to_string() + &id.to_string()).ok()?;
-                }
-                if !exists(&natives_dir) { fs::create_dir(&natives_dir).ok()?; }
-                fs::create_dir("temp".to_string() + &id.to_string()).ok()?; // 临时文件夹
-                let mut zip = zip::ZipArchive::new(fs::File::open(&local_path).ok()?).ok()?;
-                zip.extract("temp".to_string() + &id.to_string()).ok()?;
-                let dir = list_all(&("temp".to_string() + &id.to_string()))?;
-                for name in dir {
-                    let mut allow = true;
-                    for n in excludes {
-                        let e = n.as_str()?;
-                        if e.replace("/", "") == name {
-                            allow = false;
-                            break;
-                        }
-                    }
-                    if !allow { continue; }
-                    let target_path = natives_dir.clone() + "/" + &name;
-                    if !exists(&target_path) { fs::copy("temp".to_string() + &id.to_string() + "/" + &name, &target_path).ok()?; }
-                }
+            // Extract to game dir in old versions
+            // if node["extract"].is_object() {
+            //     let excludes = if node["extract"]["exclude"].is_array() { node["extract"]["exclude"].as_array()? } else { &Vec::new() };
+            //     let natives_dir = game_dir.to_string() + "/natives-" + os + "-" + env::ARCH;
+            //     if exists(&("temp".to_string() + &id.to_string())) {
+            //         fs::remove_dir_all("temp".to_string() + &id.to_string()).ok()?;
+            //     }
+            //     if !exists(&natives_dir) { fs::create_dir(&natives_dir).ok()?; }
+            //     fs::create_dir("temp".to_string() + &id.to_string()).ok()?; // 临时文件夹
+            //     let mut zip = zip::ZipArchive::new(fs::File::open(&local_path).ok()?).ok()?;
+            //     zip.extract("temp".to_string() + &id.to_string()).ok()?;
+            //     let dir = list_all(&("temp".to_string() + &id.to_string()))?;
+            //     for name in dir {
+            //         let mut allow = true;
+            //         for n in excludes {
+            //             let e = n.as_str()?;
+            //             if e.replace("/", "") == name {
+            //                 allow = false;
+            //                 break;
+            //             }
+            //         }
+            //         if !allow { continue; }
+            //         let target_path = natives_dir.clone() + "/" + &name;
+            //         if !exists(&target_path) { fs::copy("temp".to_string() + &id.to_string() + "/" + &name, &target_path).ok()?; }
+            //     }
+            //     fs::remove_dir_all("temp".to_string() + &id.to_string()).ok()?;
+            // }
+            // Add natives
+            let natives_dir = game_dir.to_string() + "/natives-" + os + "-" + env::ARCH;
+            if exists(&("temp".to_string() + &id.to_string())) {
                 fs::remove_dir_all("temp".to_string() + &id.to_string()).ok()?;
             }
+            if !exists(&natives_dir) { fs::create_dir(&natives_dir).ok()?; }
+            fs::create_dir("temp".to_string() + &id.to_string()).ok()?; // 临时文件夹
+            let mut zip = zip::ZipArchive::new(fs::File::open(&local_path).ok()?).ok()?;
+            zip.extract("temp".to_string() + &id.to_string()).ok()?;
+            let files = list_file(&("temp".to_string() + &id.to_string()))?;
+            for name in files {
+                let format: Vec<&str> = name.split(".").collect();
+                let format = *format.last()?;
+                if !(format == "dll" || format == "dylib" || format == "so") { // windows || macOS || linux
+                    continue;
+                }
+                let split: Vec<&str> = name.split("/").collect();
+                let file_name = split.last()?;
+                let target_path = natives_dir.clone() + "/" + &file_name;
+                if !exists(&target_path) { fs::copy(name, &target_path).ok()?; }
+            }
+            fs::remove_dir_all("temp".to_string() + &id.to_string()).ok()?;
         }
-        return Some(());
     }
     
     if node["downloads"]["artifact"].is_object() {
@@ -123,7 +142,7 @@ async fn download_lib(node: Value, path: String, game_dir: String, mirror: Strin
             let url = node["downloads"]["artifact"]["url"].as_str()?.replace("https://libraries.minecraft.net", &mirror);
             download(url.clone(), local_path.clone(), 3).await;
         }
-        // Add natives for new version
+        // Add natives
         let name: Vec<&str> = node["name"].as_str()?.split(":").collect();
         let name = name.last()?;
         if name.contains("natives") {
