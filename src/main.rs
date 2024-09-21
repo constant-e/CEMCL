@@ -5,6 +5,7 @@ mod file_tools;
 mod mc;
 mod settings;
 
+use futures::executor::block_on;
 use log::{debug, error};
 use std::cell::RefCell;
 use std::{fs, sync};
@@ -141,8 +142,6 @@ pub fn ui_game_list(game_list: &Vec<Game>) -> ModelRc<ModelRc<StandardListViewIt
 
 fn main() -> Result<(), slint::PlatformError> {
     env_logger::init();
-    let rt = tokio::runtime::Runtime::new().unwrap();
-    let _tokio = rt.enter();
     let ui = AppWindow::new()?;
 
     // load config
@@ -271,21 +270,24 @@ fn main() -> Result<(), slint::PlatformError> {
                     return;
                 }
 
-                slint::spawn_local({
-                    let acc_list = acc_list.clone();
-                    let game_list = game_list.clone();
-                    async move {
-                        if let Some(cmd) = launch::get_launch_command(&acc_list.borrow()[acc_index], &game_list.borrow()[game_index], &config.game_path.borrow()).await {
-                            let mut str = game_list.borrow()[game_index].java_path.borrow().clone() + " ";
+                let acc_list = acc_list.borrow().clone();
+                let close_after_launch = config.close_after_launch.borrow().clone();
+                let game_list = game_list.borrow().clone();
+                let game_path = config.game_path.borrow().clone();
+                let ui_handle = ui.as_weak();
+                thread::spawn(move || {
+                    block_on(async move {
+                        ui_handle.upgrade_in_event_loop(|ui| { ui.invoke_show_popup(); }).unwrap();
+                        if let Some(cmd) = launch::get_launch_command(&acc_list[acc_index], &game_list[game_index], &game_path).await {
+                            let mut str = game_list[game_index].java_path.borrow().clone() + " ";
                             for i in &cmd {
                                 str.push_str(i);
                                 str.push_str(" ");
                             }
                             debug!("{str}");
-                            
-                            let java_path = game_list.borrow()[game_index].java_path.borrow().clone();
+                            let java_path = game_list[game_index].java_path.borrow().clone();
                             let (s, r) = sync::mpsc::channel();
-        
+                        
                             thread::spawn(move || {
                                 if let Ok(_child) = Command::new(java_path).args(cmd).spawn() {
                                     s.send(Some(())).unwrap();
@@ -294,10 +296,10 @@ fn main() -> Result<(), slint::PlatformError> {
                                     error!("Failed to run command.");
                                 }
                             });
-        
+                        
                             if r.recv().unwrap().is_some() {
-                                if *config.close_after_launch.borrow() {
-                                    ui.hide().unwrap();
+                                if close_after_launch {
+                                    ui_handle.upgrade_in_event_loop(|ui| { ui.hide().unwrap(); }).unwrap();
                                 }
                             } else {
                                 let dialog = ErrorDialog::new().unwrap();
@@ -311,11 +313,13 @@ fn main() -> Result<(), slint::PlatformError> {
                                 });
                                 dialog.show().unwrap();
                             }
+                            ui_handle.upgrade_in_event_loop(|ui| { ui.invoke_close_popup(); }).unwrap();
                         } else {
                             error!("Failed to get launch command.");
+                            ui_handle.upgrade_in_event_loop(|ui| { ui.invoke_close_popup(); }).unwrap();
                         }
-                    }
-                }).unwrap();
+                    });
+                });
             }
         }
     });

@@ -14,6 +14,7 @@ pub mod game;
 pub mod launch;
 
 // 游戏账号
+#[derive(Clone)]
 pub struct Account {
     // 登录类型，直接填入
     pub account_type: std::cell::RefCell<String>,
@@ -26,6 +27,7 @@ pub struct Account {
 }
 
 // 游戏配置
+#[derive(Clone)]
 pub struct Game {
     // 自定义参数，留空则使用默认
     pub args: std::cell::RefCell<String>,

@@ -76,33 +76,7 @@ async fn download_lib(node: Value, path: String, game_dir: String, mirror: Strin
                 let url = node["downloads"]["classifiers"][&key]["url"].as_str()?.replace("https://libraries.minecraft.net", &mirror);
                 download(url.clone(), local_path.clone(), 3).await;
             }
-            // Extract to game dir in old versions
-            // if node["extract"].is_object() {
-            //     let excludes = if node["extract"]["exclude"].is_array() { node["extract"]["exclude"].as_array()? } else { &Vec::new() };
-            //     let natives_dir = game_dir.to_string() + "/natives-" + os + "-" + env::ARCH;
-            //     if exists(&("temp".to_string() + &id.to_string())) {
-            //         fs::remove_dir_all("temp".to_string() + &id.to_string()).ok()?;
-            //     }
-            //     if !exists(&natives_dir) { fs::create_dir(&natives_dir).ok()?; }
-            //     fs::create_dir("temp".to_string() + &id.to_string()).ok()?; // 临时文件夹
-            //     let mut zip = zip::ZipArchive::new(fs::File::open(&local_path).ok()?).ok()?;
-            //     zip.extract("temp".to_string() + &id.to_string()).ok()?;
-            //     let dir = list_all(&("temp".to_string() + &id.to_string()))?;
-            //     for name in dir {
-            //         let mut allow = true;
-            //         for n in excludes {
-            //             let e = n.as_str()?;
-            //             if e.replace("/", "") == name {
-            //                 allow = false;
-            //                 break;
-            //             }
-            //         }
-            //         if !allow { continue; }
-            //         let target_path = natives_dir.clone() + "/" + &name;
-            //         if !exists(&target_path) { fs::copy("temp".to_string() + &id.to_string() + "/" + &name, &target_path).ok()?; }
-            //     }
-            //     fs::remove_dir_all("temp".to_string() + &id.to_string()).ok()?;
-            // }
+
             // Add natives
             let natives_dir = game_dir.to_string() + "/natives-" + os + "-" + env::ARCH;
             if exists(&("temp".to_string() + &id.to_string())) {

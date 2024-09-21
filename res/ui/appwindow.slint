@@ -25,6 +25,23 @@ export component AppWindow inherits Window {
     callback click-edit-game-btn();
     callback click-settings-btn();
     callback click-start-btn();
+    
+    public function close-popup() { popup.close(); }
+    public function show-popup() { popup.show(); }
+
+    popup := PopupWindow {
+        close-on-click: false;
+        height: root.height;
+        width: root.width;
+        Rectangle {
+            background: root.background.darker(1);
+            height: 300px;
+            width: 400px;
+            x: (root.width - self.width) / 2;
+            y: (root.height - self.height) / 2;
+            Title { text: @tr("Launching"); }
+        }
+    }
 
     VerticalLayout {
         padding: 8px;
@@ -100,7 +117,7 @@ export component AppWindow inherits Window {
 
             Button {
                 text: @tr("Start");
-                clicked => { root.click-start-btn() }
+                clicked => { root.click-start-btn(); }
             }
         }
     }
