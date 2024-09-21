@@ -102,8 +102,6 @@ pub async fn get_launch_command(account: &Account, game: &Game, game_path: &Stri
     // if !game.args.is_empty() {
     //     return game.args.clone();
     // }
-    let rt = tokio::runtime::Runtime::new().unwrap();
-    let _tokio = rt.enter();
     let mut result: Vec<String> = Vec::new();
     let dir = game_path.clone() + "/versions/" + game.version.borrow().as_str();  // 游戏目录
     

@@ -142,6 +142,8 @@ pub fn ui_game_list(game_list: &Vec<Game>) -> ModelRc<ModelRc<StandardListViewIt
 
 fn main() -> Result<(), slint::PlatformError> {
     env_logger::init();
+    let rt = tokio::runtime::Runtime::new().unwrap();
+    let _tokio = rt.enter();
     let ui = AppWindow::new()?;
 
     // load config
@@ -276,6 +278,8 @@ fn main() -> Result<(), slint::PlatformError> {
                 let game_path = config.game_path.borrow().clone();
                 let ui_handle = ui.as_weak();
                 thread::spawn(move || {
+                    let rt = tokio::runtime::Runtime::new().unwrap();
+                    let _tokio = rt.enter();
                     block_on(async move {
                         ui_handle.upgrade_in_event_loop(|ui| { ui.invoke_show_popup(); }).unwrap();
                         if let Some(cmd) = launch::get_launch_command(&acc_list[acc_index], &game_list[game_index], &game_path).await {
@@ -302,16 +306,18 @@ fn main() -> Result<(), slint::PlatformError> {
                                     ui_handle.upgrade_in_event_loop(|ui| { ui.hide().unwrap(); }).unwrap();
                                 }
                             } else {
-                                let dialog = ErrorDialog::new().unwrap();
-                                dialog.set_msg("Failed to run command.".into());
-                                dialog.on_ok_clicked({
-                                    let dialog_handle = dialog.as_weak();
-                                    move || {
-                                        let dialog = dialog_handle.unwrap();
-                                        dialog.hide().unwrap();
-                                    }
-                                });
-                                dialog.show().unwrap();
+                                slint::invoke_from_event_loop(|| {
+                                    let dialog = ErrorDialog::new().unwrap();
+                                    dialog.set_msg("Failed to run command.".into());
+                                    dialog.on_ok_clicked({
+                                        let dialog_handle = dialog.as_weak();
+                                        move || {
+                                            let dialog = dialog_handle.unwrap();
+                                            dialog.hide().unwrap();
+                                        }
+                                    });
+                                    dialog.show().unwrap();
+                                }).unwrap();
                             }
                             ui_handle.upgrade_in_event_loop(|ui| { ui.invoke_close_popup(); }).unwrap();
                         } else {
