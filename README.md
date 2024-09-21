@@ -17,8 +17,8 @@ constant-e's Minecraft: Java Edition Launcher
 2. （已完成）在各个版本内部储存自定义设置
 3. （已完成）完善配置系统
 4. （已完成）支持版本隔离
-5. 支持安装新版本等
-6. 下载依赖
+5. （部分完成）支持下载原版Minecraft
+6. 支持下载Mod版Minecraft
 7. 正版登录
 8. 多语言支持
 9. 其他（完善log和报错，UI改进等）

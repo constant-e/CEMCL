@@ -17,8 +17,8 @@ A Minecraft: Java Edition launcher using Rust and Slint.
 2. (Completed) Store configuration files for each version in its directory
 3. (Completed) Support configurations editing
 4. (Completed) Support separated versions
-5. Support installing new versions
-6. Support downloading dependencies
+5. (Partially) Support installing Minecraft
+6. Support installing modified Minecraft
 7. Support online login
 8. Multi-language support
 9. Others (More log, UI improvements, etc.)
