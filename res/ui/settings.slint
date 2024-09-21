@@ -6,16 +6,24 @@ export component Settings inherits Dialog {
     preferred-width: 800px;
     title: @tr("Settings");
 
+    // About
     in-out property <string> authors;
     in-out property <string> version;
 
+    // Launcher Settings
+    // General
     in-out property <bool> close-after-launch <=> close-after-launch-box.checked;
-    in-out property <string> java-path <=> java-path-input.text;
     in-out property <string> game-path <=> game-path-input.text;
+    // Download Sources
+    in-out property <string> assets-source <=> assets-source-input.text;
+    in-out property <string> libraries-source <=> libraries-source-input.text;
     in-out property <string> game-source <=> game-source-input.text;
     in-out property <string> fabric-source <=> fabric-source-input.text;
     in-out property <string> forge-source <=> forge-source-input.text;
     in-out property <string> optifine-source <=> optifine-source-input.text;
+
+    // Default Minecraft Settings
+    in-out property <string> java-path <=> java-path-input.text;
     in-out property <string> config-height <=> height-input.text;
     in-out property <string> config-width <=> width-input.text;
     in-out property <string> xms <=> xms-input.text;
@@ -37,82 +45,92 @@ export component Settings inherits Dialog {
                             col: 0;
                             row: 0;
                         }
-
-                        Text {
-                            text: @tr("Java Path: ");
-                            col: 0;
-                            row: 1;
-                        }
-                        java-path-input := TextInput {
-                            col: 1;
-                            row: 1;
-                        }
                         
                         Text {
                             text: @tr("Minecraft Path: ");
                             col: 0;
-                            row: 2;
+                            row: 1;
                         }
                         game-path-input := TextInput {
                             col: 1;
-                            row: 2;
+                            row: 1;
                         }
 
                         close-after-launch-box := Switch {
                             text: @tr("Close after Launching Game");
                             col: 0;
-                            row: 3;
+                            row: 2;
                         }
                         
                         SectionTitle {
                             text: @tr("Download Sources");
                             col: 0;
+                            row: 3;
+                        }
+
+                        Text {
+                            text: @tr("Assets Source: ");
+                            col: 0;
                             row: 4;
+                        }
+                        assets-source-input := TextInput {
+                            col: 1;
+                            row: 4;
+                        }
+
+                        Text {
+                            text: @tr("Libraries Source: ");
+                            col: 0;
+                            row: 5;
+                        }
+                        libraries-source-input := TextInput {
+                            col: 1;
+                            row: 5;
                         }
 
                         Text {
                             text: @tr("Minecraft Source: ");
                             col: 0;
-                            row: 5;
+                            row: 6;
                         }
                         game-source-input := TextInput {
                             col: 1;
-                            row: 5;
+                            row: 6;
                         }
                         
                         Text {
                             text: @tr("Fabric Source: ");
                             col: 0;
-                            row: 6;
+                            row: 7;
                         }
                         fabric-source-input := TextInput {
                             col: 1;
-                            row: 6;
+                            row: 7;
                         }
                         
                         Text {
                             text: @tr("Forge Source: ");
                             col: 0;
-                            row: 7;
+                            row: 8;
                         }
                         forge-source-input := TextInput {
                             col: 1;
-                            row: 7;
+                            row: 8;
                         }
                         
                         Text {
                             text: @tr("OptiFine Source: ");
                             col: 0;
-                            row: 8;
+                            row: 9;
                         }
                         optifine-source-input := TextInput {
                             col: 1;
-                            row: 8;
+                            row: 9;
                         }
 
                         Rectangle {
                             preferred-height: 100%; 
-                            row: 9;
+                            row: 10;
                         }
                     }
                 }
@@ -126,48 +144,58 @@ export component Settings inherits Dialog {
                         padding: 8px;
 
                         Text {
-                            text: @tr("Window Height: ");
+                            text: @tr("Java Path: ");
                             col: 0;
                             row: 0;
                         }
-                        height-input := TextInput {
+                        java-path-input := TextInput {
                             col: 1;
                             row: 0;
+                        }
+
+                        Text {
+                            text: @tr("Window Height: ");
+                            col: 0;
+                            row: 1;
+                        }
+                        height-input := TextInput {
+                            col: 1;
+                            row: 1;
                         }
                     
                         Text {
                             text: @tr("Window Width: ");
                             col: 0;
-                            row: 1;
+                            row: 2;
                         }
                         width-input := TextInput {
                             col: 1;
-                            row: 1;
+                            row: 2;
                         }
                     
                         Text {
                             text: @tr("Minimum Memory: ");
                             col: 0;
-                            row: 2;
+                            row: 3;
                         }
                         xms-input := TextInput {
                             col: 1;
-                            row: 2;
+                            row: 3;
                         }
                     
                         Text {
                             text: @tr("Maximum Memory: ");
                             col: 0;
-                            row: 3;
+                            row: 4;
                         }
                         xmx-input := TextInput {
                             col: 1;
-                            row: 3;
+                            row: 4;
                         }
     
                         Rectangle {
                             preferred-height: 100%;
-                            row: 4;
+                            row: 5;
                         }
                     }
                 }
@@ -179,16 +207,26 @@ export component Settings inherits Dialog {
                 VerticalLayout {
                     padding: 8px;
 
-                    Text {
-                        text: "CE Minecraft Launcher";
-                        horizontal-alignment: center;
-                        font-size: 28px;
-                        font-weight: 700;
-                        padding: 8px;
-                    }
+                    HorizontalLayout {
+                        alignment: center;
 
+                        Image {
+                            height: 44px;
+                            width: 44px;
+                            source: @image-url("../pic/icon.png");
+                        }
+
+                        Text {
+                            text: "CE Minecraft Launcher";
+                            font-size: 28px;
+                            font-weight: 700;
+                            padding: 8px;
+                            vertical-alignment: center;
+                        }
+                    }
+                    
                     Text { text: @tr("Version: ") + root.version; }
-                    Text { text: @tr("Github Repository: ") + "github.com/constant-e/CEMCL"; }
+                    Text { text: @tr("Github Repository: ") + "https://github.com/constant-e/CEMCL"; }
                     Text { text: @tr("Developers: ") + root.authors; }
                     Text { text: @tr("License: ") + "Apache License 2.0"; }
                     Text { text: @tr("Credits: ") + "slint-ui/slint"; }

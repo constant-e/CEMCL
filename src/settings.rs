@@ -1,3 +1,4 @@
+//! settings 设置
 use log::error;
 use std::{cell::RefCell, rc::Rc};
 use slint::ComponentHandle;
@@ -8,6 +9,7 @@ pub fn init(config: &Rc<Config>, game_list: &Rc<RefCell<Vec<Game>>>, app: &AppWi
     let ui = Settings::new().ok()?;
 
     // init
+    ui.set_assets_source(config.assets_source.borrow().clone().into());
     ui.set_authors(env!("CARGO_PKG_AUTHORS").into());
     ui.set_close_after_launch(config.close_after_launch.borrow().clone());
     ui.set_config_height(config.height.borrow().clone().into());
@@ -17,6 +19,7 @@ pub fn init(config: &Rc<Config>, game_list: &Rc<RefCell<Vec<Game>>>, app: &AppWi
     ui.set_game_path(config.game_path.borrow().clone().into());
     ui.set_game_source(config.game_source.borrow().clone().into());
     ui.set_java_path(config.java_path.borrow().clone().into());
+    ui.set_libraries_source(config.libraries_source.borrow().clone().into());
     ui.set_optifine_source(config.optifine_source.borrow().clone().into());
     ui.set_version(env!("CARGO_PKG_VERSION").into());
     ui.set_xms(config.xms.borrow().clone().into());
@@ -31,6 +34,7 @@ pub fn init(config: &Rc<Config>, game_list: &Rc<RefCell<Vec<Game>>>, app: &AppWi
             if let (Some(app), Some(ui), Some(config), Some(game_list)) =
                 (app_handle.upgrade(), ui_handle.upgrade(), config_handle.upgrade(), game_list_handle.upgrade())
             {
+                *config.assets_source.borrow_mut() = ui.get_assets_source().into();
                 *config.close_after_launch.borrow_mut() = ui.get_close_after_launch();
                 *config.fabric_source.borrow_mut() = ui.get_fabric_source().into();
                 *config.forge_source.borrow_mut() = ui.get_forge_source().into();
@@ -38,6 +42,7 @@ pub fn init(config: &Rc<Config>, game_list: &Rc<RefCell<Vec<Game>>>, app: &AppWi
                 *config.game_source.borrow_mut() = ui.get_game_source().into();
                 *config.height.borrow_mut() = ui.get_config_height().into();
                 *config.java_path.borrow_mut() = ui.get_java_path().into();
+                *config.libraries_source.borrow_mut() = ui.get_libraries_source().into();
                 *config.optifine_source.borrow_mut() = ui.get_optifine_source().into();
                 *config.width.borrow_mut() = ui.get_config_width().into();
                 *config.xms.borrow_mut() = ui.get_xms().into();
