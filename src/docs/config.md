@@ -37,16 +37,18 @@
 样例：
 ```json
 {
+    "assets_source": "http://resources.download.minecraft.net",
     "close_after_launch": false,
     "fabric_source": "https://maven.fabricmc.net",
     "forge_source": "https://maven.minecraftforge.net",
     "game_path": ".minecraft",
+    "game_source": "https://piston-meta.mojang.com",
     "height": "600",
     "java_path": "java",
-    "game_source": "https://piston-meta.mojang.com",
+    "libraries_source": "https://libraries.minecraft.net",
     "optifine_source": "https://optifine.net",
     "width": "800",
-    "xms": "1G", 
+    "xms": "1G",
     "xmx": "2G"
 }
 ```
