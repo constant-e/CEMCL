@@ -202,7 +202,12 @@ pub fn load(config: &Config) -> Option<Vec<Game>> {
         let path = dir.clone() + "/" + version.as_str();
         
         // 先加载原版json
-        if let Ok(json) = serde_json::from_str::<Value>(&fs::read_to_string(&(path.clone() + "/" + &version.as_str() + ".json")).ok()?.as_str()) {
+        let json_path = path.clone() + "/" + &version.as_str() + ".json";
+        if !exists(&json_path) {
+            warn!("{json_path} not exists.");
+            continue;
+        }
+        if let Ok(json) = serde_json::from_str::<Value>(&fs::read_to_string(&json_path).ok()?.as_str()) {
             game = Game {
                 args: RefCell::from(String::from("")),
                 description: RefCell::from(String::from("")),
