@@ -16,7 +16,7 @@ jobs:
 
     strategy:
       matrix:
-        os: [windows-latest, macos-latest, ubuntu-latest]
+        os: [windows-2022, macos-12, ubuntu-22.04]
     
     # For macOS
     env:
