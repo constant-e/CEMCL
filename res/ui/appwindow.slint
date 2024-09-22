@@ -45,6 +45,7 @@ export component AppWindow inherits Window {
 
     VerticalLayout {
         padding: 8px;
+        spacing: 4px;
 
         Title { text: "CE Minecraft Launcher"; }
 
@@ -53,6 +54,7 @@ export component AppWindow inherits Window {
 
             VerticalLayout{
                 horizontal-stretch: 0.25;
+                spacing: 4px;
 
                 SubTitle { text: @tr("Account"); }
 
@@ -64,6 +66,8 @@ export component AppWindow inherits Window {
                 }
 
                 HorizontalLayout {
+                    spacing: 4px;
+
                     Rectangle { preferred-width: 100%; }
 
                     Button {
@@ -80,6 +84,7 @@ export component AppWindow inherits Window {
 
             VerticalLayout {
                 horizontal-stretch: 0.75;
+                spacing: 4px;
 
                 SubTitle { text: @tr("Minecraft Version"); }
 
@@ -92,6 +97,8 @@ export component AppWindow inherits Window {
                 }
 
                 HorizontalLayout {
+                    spacing: 4px;
+
                     Rectangle { preferred-width: 100%; }
 
                     Button {
@@ -108,6 +115,8 @@ export component AppWindow inherits Window {
         }
 
         HorizontalLayout {
+            spacing: 4px;
+
             Button {
                 text: @tr("Settings");
                 clicked => { root.click-settings-btn() }
