@@ -16,11 +16,11 @@ jobs:
 
     strategy:
       matrix:
-        os: [windows-2022, macos-12, ubuntu-22.04]
+        os: [windows-latest, macos-latest, ubuntu-latest]
     
     # For macOS
     env:
-      DYLD_FRAMEWORK_PATH: /Users/runner/work/slint/Qt/5.15.2/clang_64/lib
+      DYLD_FRAMEWORK_PATH: /Users/runner/work/CEMCL/Qt/5.15.2/clang_64/lib
     
     steps:
     - name: Checkout
