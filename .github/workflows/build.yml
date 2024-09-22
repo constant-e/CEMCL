@@ -17,12 +17,18 @@ jobs:
     strategy:
       matrix:
         os: [windows-latest, macos-latest, ubuntu-latest]
-
+    
+    # For macOS
+    env:
+      DYLD_FRAMEWORK_PATH: /Users/runner/work/slint/Qt/5.15.2/clang_64/lib
+    
     steps:
     - name: Checkout
       uses: actions/checkout@v4
     - name: Install Qt
       uses: jurplel/install-qt-action@v4
+      with:
+        version: "5.15.2"
     - name: Build debug
       run: cargo build --verbose
     - name: Build release
