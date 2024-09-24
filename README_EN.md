@@ -4,10 +4,37 @@ constant-e's Minecraft: Java Edition Launcher
 Language: [简体中文](README.md) | English
 
 ## Warning
-Most of the functions are still under development.
+Some of the functions are still under development.
 
 ## Introduction
 A Minecraft: Java Edition launcher using Rust and Slint.
+
+## Downloads
+There are two kinds of version, Release and CI.
+
+### Release
+Release versions are stable versions, which is recommended for most of the users.
+1. Go to [Github](https://github.com/constant-e/CEMCL/releases)
+2. Go to [website](https://constant-e.github.io/CEMCL/en/download.html)
+
+### CI
+CI (Continuous Integration) versions are automatically built by GitHub Actions after committing. They are updated more frequently and sometimes unstable.
+
+Go to [GitHub Actions](https://github.com/constant-e/CEMCL/actions) to download CI versions.
+
+## Build
+1. Install Rust
+2. Clone this repository
+   ```sh
+   git clone https://github.com/constant-e/CEMCL.git
+   ```
+3. Build
+   ```sh
+   # Build Debug
+   cargo build
+   # Build Release
+   cargo build --release
+   ```
 
 ## Documents
 [Documents](https://constant-e.github.io/CEMCL/en/docs)
