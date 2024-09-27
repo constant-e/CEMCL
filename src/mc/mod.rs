@@ -62,6 +62,14 @@ pub struct GameUrl {
     pub version: String,
 }
 
+pub struct Mirrors {
+    pub assets_source: String,
+    pub fabric_source: String,
+    pub forge_source: String,
+    pub game_source: String,
+    pub libraries_source: String,
+}
+
 // 检查参数是否可以添加
 fn check_rules(n: &Value) -> bool {
     // 获取操作系统名称

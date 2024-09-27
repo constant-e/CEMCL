@@ -5,7 +5,7 @@ use log::error;
 use std::{env::consts as env, fs};
 use serde_json::Value;
 use crate::file_tools::exists;
-use super::{check_rules, download, Account, Game};
+use super::{check_rules, download, Account, Game, Mirrors};
 
 /// 从json对象单次获取参数
 fn add_arg(n: &Value) -> Option<Vec<String>> {
@@ -97,7 +97,7 @@ fn get_classpaths(n: &Value, game_path: &String) -> Option<Vec<String>> {
 }
 
 /// 获取启动总命令
-pub async fn get_launch_command(account: &Account, game: &Game, game_path: &String) -> Option<Vec<String>> {
+pub async fn get_launch_command(account: &Account, game: &Game, game_path: &String, mirrors: &Mirrors) -> Option<Vec<String>> {
     // 使用自定义参数
     // if !game.args.is_empty() {
     //     return game.args.clone();
@@ -259,17 +259,19 @@ pub async fn get_launch_command(account: &Account, game: &Game, game_path: &Stri
         }
 
         // TODO: support using mirrors
-        
+
         // assets
-        let ass_future = download::download_assets(game_path, &asset_index, "https://resources.download.minecraft.net");
+        let ass_future = download::download_assets(&game_path, &asset_index, &mirrors.assets_source);
         
         // libraries
-        let lib_future = download::download_libraries(&config["libraries"], game_path, &dir, "https://libraries.minecraft.net");
+        let lib_future = download::download_libraries(&config["libraries"], &game_path, &dir, &mirrors.libraries_source);
 
         let jar_path = dir.clone() + "/" + game.version.borrow().as_ref() + ".jar";
         if !exists(&jar_path) {
             // 本体
-            let future = download::download(config["downloads"]["client"]["url"].as_str()?.to_string(), jar_path, 3);
+            let url = config["downloads"]["client"]["url"].as_str()?.to_string()
+                .replace("https://piston-meta.mojang.com", &mirrors.game_source);
+            let future = download::download(url, jar_path, 3);
             join!(future, ass_future, lib_future);
         } else {
             join!(ass_future, lib_future);

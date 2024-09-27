@@ -16,7 +16,7 @@ use serde_json::{json, Value};
 use slint::{ModelRc, VecModel, StandardListViewItem};
 use dialogs::err_dialog;
 use file_tools::exists;
-use mc::{account, game, launch, Account, Game};
+use mc::{account, game, launch, Account, Game, Mirrors};
 
 slint::include_modules!();
 
@@ -70,7 +70,7 @@ fn load_config() -> Option<Config> {
         Some(config)
     } else {
         let config = Config {
-            assets_source: RefCell::from(String::from("http://resources.download.minecraft.net")),
+            assets_source: RefCell::from(String::from("https://resources.download.minecraft.net")),
             close_after_launch: RefCell::from(false),
             fabric_source: RefCell::from(String::from("https://maven.fabricmc.net")),
             forge_source: RefCell::from(String::from("https://maven.minecraftforge.net")),
@@ -271,13 +271,20 @@ fn main() -> Result<(), slint::PlatformError> {
                 let close_after_launch = config.close_after_launch.borrow().clone();
                 let game_list = game_list.borrow().clone();
                 let game_path = config.game_path.borrow().clone();
+                let mirrors = Mirrors {
+                    assets_source: config.assets_source.borrow().clone(),
+                    fabric_source: config.fabric_source.borrow().clone(),
+                    forge_source: config.forge_source.borrow().clone(),
+                    game_source: config.game_source.borrow().clone(),
+                    libraries_source: config.libraries_source.borrow().clone(),
+                };
                 let ui_handle = ui.as_weak();
                 thread::spawn(move || {
                     let rt = tokio::runtime::Runtime::new().unwrap();
                     let _tokio = rt.enter();
                     block_on(async move {
                         ui_handle.upgrade_in_event_loop(|ui| { ui.invoke_show_popup(); }).unwrap();
-                        if let Some(cmd) = launch::get_launch_command(&acc_list[acc_index], &game_list[game_index], &game_path).await {
+                        if let Some(cmd) = launch::get_launch_command(&acc_list[acc_index], &game_list[game_index], &game_path, &mirrors).await {
                             let mut str = game_list[game_index].java_path.borrow().clone() + " ";
                             for i in &cmd {
                                 str.push_str(i);

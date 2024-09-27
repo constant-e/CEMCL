@@ -38,7 +38,7 @@ pub async fn download_assets(path: &str, id: &str, mirror: &str) -> Option<()> {
             let dir = obj_path.clone() + "/" + &hash[0..2];
             if !exists(&dir) { fs::create_dir_all(&dir).ok()?; }
             let url = mirror.to_string() + "/" + &dl_path;
-            let future = download(url.clone(), local_path.clone(), 3);
+            let future = tokio::spawn(download(url.clone(), local_path.clone(), 3));
             futures.push(future);
         }
     }
@@ -153,7 +153,7 @@ pub async fn download_libraries(node: &Value, path: &str, game_dir: &str, mirror
     let mut c = 0;
     for item in node.as_array()? {
         let (i, p, g, m, id) = (item.clone(), path.to_string(), game_dir.to_string(), mirror.to_string(), c.clone());
-        let future = download_lib(i, p, g, m, id);
+        let future = tokio::spawn(download_lib(i, p, g, m, id));
         futures.push(future);
         c += 1;
     }
@@ -162,30 +162,6 @@ pub async fn download_libraries(node: &Value, path: &str, game_dir: &str, mirror
 
     Some(())
 }
-
-// /// 获取下载列表
-// pub fn list_game() -> Option<Vec<GameUrl>> {
-//     let mut game_list = Vec::new();
-
-//     // 下载列表
-//     let text = reqwest::blocking::get("http://launchermeta.mojang.com/mc/game/version_manifest_v2.json").ok()?.text().ok()?;
-//     // // 储存json，与官启保持一致
-//     // fs::write(String::from(path) + "/version_manifest_v2.json", &text).ok()?;
-
-//     // 开始解析
-//     let json = serde_json::from_str::<Value>(&text).ok()?;
-
-//     for version in json["versions"].as_array()? {
-//         let game = GameUrl {
-//             game_type: version["type"].as_str()?.to_string(),
-//             url: version["url"].as_str()?.to_string(),
-//             version: version["id"].as_str()?.to_string(),
-//         };
-//         game_list.push(game);
-//     }
-
-//     Some(game_list)
-// }
 
 /// 获取下载列表
 pub async fn list_game() -> Option<Vec<GameUrl>> {
