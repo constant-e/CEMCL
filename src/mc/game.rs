@@ -32,7 +32,16 @@ pub async fn add_dialog(download_game_list: &Rc<RefCell<Vec<GameUrl>>>, game_lis
 
     // 筛选版本类型后的列表
     *download_game_list.borrow_mut() = game_url_list.clone();
- 
+    
+    ui.set_args(slint::SharedString::new());
+    ui.set_config_height(config.height.borrow().clone().into());
+    ui.set_config_width(config.width.borrow().clone().into());
+    ui.set_description(slint::SharedString::new());
+    ui.set_java_path(config.java_path.borrow().clone().into());
+    ui.set_separated(false);
+    ui.set_xms(config.xms.borrow().clone().into());
+    ui.set_xmx(config.xmx.borrow().clone().into());
+
     ui.set_game_list(ui_game_url_list(&game_url_list));
 
     ui.on_game_combo_box_changed({
@@ -40,9 +49,9 @@ pub async fn add_dialog(download_game_list: &Rc<RefCell<Vec<GameUrl>>>, game_lis
         let real_list_handle = Rc::downgrade(&download_game_list);
         move |game_type| {
             if let (Some(ui), Some(real_list)) = (ui_handle.upgrade(), real_list_handle.upgrade()) {
-                let require = if game_type.contains("R") {
+                let require = if game_type.starts_with("R") {
                     "release"
-                } else if game_type.contains("S") {
+                } else if game_type.starts_with("S") {
                     "snapshot"
                 } else {
                     ""
@@ -77,15 +86,28 @@ pub async fn add_dialog(download_game_list: &Rc<RefCell<Vec<GameUrl>>>, game_lis
                     error!("{index} is out of range (max: {})", real_list.borrow().len());
                     return;
                 }
-                let game = real_list.borrow()[index].clone();
-                let dir = config.game_path.borrow().to_string() + "/versions/" + &game.version;
+                let game_url = real_list.borrow()[index].clone();
+                let dir = config.game_path.borrow().to_string() + "/versions/" + &game_url.version;
                 if fs::create_dir_all(&dir).is_err() {
                     error!("Failed to create {dir}.");
                     return;
                 };
                 slint::spawn_local({
                     async move {
-                        download::download(game.url.clone(), dir + "/" + &game.version + ".json", 3).await;
+                        download::download(game_url.url.clone(), dir.clone() + "/" + &game_url.version + ".json", 3).await;
+                        let game = Game {
+                            args: RefCell::from(ui.get_args().to_string()),
+                            description: RefCell::from(ui.get_description().to_string()),
+                            height: RefCell::from(ui.get_config_height().to_string()),
+                            java_path: RefCell::from(ui.get_java_path().to_string()),
+                            separated: RefCell::from(ui.get_separated()),
+                            game_type: RefCell::from(ui.get_game_type().to_string()),
+                            version: RefCell::from(game_url.version),
+                            width: RefCell::from(ui.get_config_width().to_string()),
+                            xms: RefCell::from(ui.get_xms().to_string()),
+                            xmx: RefCell::from(ui.get_xmx().to_string()),
+                        };
+                        save(&(dir + "/config.json"), &game).unwrap();
                         if let Some(list) = load(&config) {
                             *game_list.borrow_mut() = list;
                             app.set_game_list(ui_game_list(game_list.borrow().as_ref()));
