@@ -46,7 +46,6 @@ Example:
     "height": "600",
     "java_path": "java",
     "libraries_source": "https://libraries.minecraft.net",
-    "optifine_source": "https://optifine.net",
     "width": "800",
     "xms": "1G",
     "xmx": "2G"
