@@ -40,8 +40,6 @@ struct Config {
     pub java_path: RefCell<String>,
     /// libraries下载源
     pub libraries_source: RefCell<String>,
-    /// OptiFine下载源
-    pub optifine_source: RefCell<String>,
     /// 默认游戏窗口宽度
     pub width: RefCell<String>,
     /// 默认JVM最小内存
@@ -64,7 +62,6 @@ fn load_config() -> Option<Config> {
             height: RefCell::from(String::from(json["height"].as_str()?)),
             java_path: RefCell::from(String::from(json["java_path"].as_str()?)),
             libraries_source: RefCell::from(String::from(json["libraries_source"].as_str()?)),
-            optifine_source: RefCell::from(String::from(json["optifine_source"].as_str()?)),
             width: RefCell::from(String::from(json["width"].as_str()?)),
             xms: RefCell::from(String::from(json["xms"].as_str()?)),
             xmx: RefCell::from(String::from(json["xmx"].as_str()?)),
@@ -82,7 +79,6 @@ fn load_config() -> Option<Config> {
             height: RefCell::from(String::from("600")),
             java_path: RefCell::from(String::from("java")),
             libraries_source: RefCell::from(String::from("https://libraries.minecraft.net")),
-            optifine_source: RefCell::from(String::from("https://optifine.net")),
             width: RefCell::from(String::from("800")),
             xms: RefCell::from(String::from("1G")),
             xmx: RefCell::from(String::from("2G")),
@@ -106,7 +102,6 @@ fn save_config(config: &Config) -> Option<()> {
             "height": *config.height.borrow(),
             "java_path": *config.java_path.borrow(),
             "libraries_source": *config.libraries_source.borrow(),
-            "optifine_source": *config.optifine_source.borrow(),
             "width": *config.width.borrow(),
             "xms": *config.xms.borrow(),
             "xmx": *config.xmx.borrow(),

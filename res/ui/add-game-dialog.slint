@@ -14,9 +14,6 @@ export component AddGameDialog inherits Dialog {
     in-out property <[[StandardListViewItem]]> mod-list <=> mod-table.rows;
     in-out property <int> mod-type <=> mod-combo-box.current-index;
 
-    in-out property <int> optifine-index <=> optifine-table.current-row;
-    in-out property <[[StandardListViewItem]]> optifine-list <=> optifine-table.rows;
-
     in-out property <string> args <=> args-input.text;
     in-out property <string> config-height <=> height-input.text;
     in-out property <string> config-width <=> width-input.text;
@@ -53,16 +50,6 @@ export component AddGameDialog inherits Dialog {
                 mod-combo-box := ComboBox { model: ["None", "Forge", "Fabric"]; }
                 mod-table := StandardTableView {
                     preferred-height: 100%;
-                    min-height: root.height / 3;
-                    columns: [
-                        { title: @tr("Version") },
-                        { title: @tr("Type") }
-                    ];
-                }
-                optifine-switch := Switch { text: @tr("Install OptiFine"); }
-                optifine-table := StandardTableView {
-                    height: optifine-switch.checked ? root.height / 3 : 0px;
-                    visible: optifine-switch.checked;
                     columns: [
                         { title: @tr("Version") },
                         { title: @tr("Type") }

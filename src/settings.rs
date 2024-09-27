@@ -20,7 +20,6 @@ pub fn init(config: &Rc<Config>, game_list: &Rc<RefCell<Vec<Game>>>, app: &AppWi
     ui.set_game_source(config.game_source.borrow().clone().into());
     ui.set_java_path(config.java_path.borrow().clone().into());
     ui.set_libraries_source(config.libraries_source.borrow().clone().into());
-    ui.set_optifine_source(config.optifine_source.borrow().clone().into());
     ui.set_version(env!("CARGO_PKG_VERSION").into());
     ui.set_xms(config.xms.borrow().clone().into());
     ui.set_xmx(config.xmx.borrow().clone().into());
@@ -43,7 +42,6 @@ pub fn init(config: &Rc<Config>, game_list: &Rc<RefCell<Vec<Game>>>, app: &AppWi
                 *config.height.borrow_mut() = ui.get_config_height().into();
                 *config.java_path.borrow_mut() = ui.get_java_path().into();
                 *config.libraries_source.borrow_mut() = ui.get_libraries_source().into();
-                *config.optifine_source.borrow_mut() = ui.get_optifine_source().into();
                 *config.width.borrow_mut() = ui.get_config_width().into();
                 *config.xms.borrow_mut() = ui.get_xms().into();
                 *config.xmx.borrow_mut() = ui.get_xmx().into();

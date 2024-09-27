@@ -20,7 +20,6 @@ export component Settings inherits Dialog {
     in-out property <string> game-source <=> game-source-input.text;
     in-out property <string> fabric-source <=> fabric-source-input.text;
     in-out property <string> forge-source <=> forge-source-input.text;
-    in-out property <string> optifine-source <=> optifine-source-input.text;
 
     // Default Minecraft Settings
     in-out property <string> java-path <=> java-path-input.text;
@@ -117,20 +116,10 @@ export component Settings inherits Dialog {
                             col: 1;
                             row: 8;
                         }
-                        
-                        Text {
-                            text: @tr("OptiFine Source: ");
-                            col: 0;
-                            row: 9;
-                        }
-                        optifine-source-input := TextInput {
-                            col: 1;
-                            row: 9;
-                        }
 
                         Rectangle {
                             preferred-height: 100%; 
-                            row: 10;
+                            row: 9;
                         }
                     }
                 }
