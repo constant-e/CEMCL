@@ -1,35 +1,42 @@
 # 下载
 
 ## Release
-### v0.1.1
-**注意**：这是一个预览版。仅实现了离线功能，并且未经过充分测试。
+### v0.2.0
+**注意**：这是一个预览版，未经过充分测试。
+
+由于使用Qt做为后端，需要先安装Qt5。
 
 更新日志：
-1. 修复 默认配置不全
-2. 修复 不保存设置
-3. 修复 判断数组下标是否越界的逻辑
-4. 修复 更改设置时不重新加载游戏列表
-
-**注意**：这是最后一个0.1.x版本。我正在开发下载相关的功能，这可能引入一些不向下兼容的改变（如config.json的修改）。并且在这些功能完成前，我不会发布新版本（也就不会发布新的修复bug版本）。v0.1.x不应被正式使用。
+1. 新增 支持下载原版MC，并支持使用镜像
+2. 新增 在启动时显示一个弹出窗口
+3. 新增 添加图标
+4. 新增 强制使用Qt作为后端
+5. 修复 .minecraft不存在时的错误
+6. 修复 某些版本的natives解压异常
+7. 修复 Windows系统下-cp参数异常
+8. 修复 不保存自定义游戏配置
+9. 修复 旧版本的assets参数
+10. UI改进
+11. 移除 内置OptiFine下载
 
 下载链接：
-[Linux](https://github.com/constant-e/CEMCL/releases/download/v0.1.1/cemcl-0.1.1-linux) |
-[macOS](https://github.com/constant-e/CEMCL/releases/download/v0.1.1/cemcl-0.1.1-macos) |
-[Windows](https://github.com/constant-e/CEMCL/releases/download/v0.1.1/cemcl-0.1.1-windows.exe)
+[Linux](https://github.com/constant-e/CEMCL/releases/download/v0.2.0/cemcl-0.2.0-linux-x86_64) |
+[macOS](https://github.com/constant-e/CEMCL/releases/download/v0.2.0/cemcl-0.2.0-macos-x86_64) |
+[Windows](https://github.com/constant-e/CEMCL/releases/download/v0.2.0/cemcl-0.2.0-windows-x86_64.exe)
 
 ## GitHub CI
 请前往[GitHub Actions](https://github.com/constant-e/CEMCL/actions)获取。
 
-## 自行构建
-1. 安装Rust（与Cargo）。
-2. 克隆仓库:
+## 构建
+1. 安装Rust
+2. 克隆此仓库
    ```sh
-   git clone https://github.com/constant-e/CEMCL.git && cd CEMCL
+   git clone https://github.com/constant-e/CEMCL.git
    ```
-3. 构建:
+3. 构建
    ```sh
-   # Build debug:
+   # 构建Debug版
    cargo build
-   # Build release:
+   # 构建Release版
    cargo build --release
    ```
