@@ -7,6 +7,7 @@ mod settings;
 
 use log::{debug, error};
 use std::cell::RefCell;
+use std::env::set_var;
 use std::{fs, sync};
 use std::process::Command;
 use std::rc::Rc;
@@ -135,6 +136,7 @@ pub fn ui_game_list(game_list: &Vec<Game>) -> ModelRc<ModelRc<StandardListViewIt
 }
 
 fn main() -> Result<(), slint::PlatformError> {
+    set_var("RUST_LOG", "cemcl");
     env_logger::init();
     let ui = AppWindow::new()?;
 

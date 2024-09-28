@@ -186,12 +186,13 @@ pub async fn get_launch_command(account: &Account, game: &Game, game_path: &Stri
         classpaths.push(dir.clone() + "/" + game.version.borrow().as_str() + ".jar"); // 游戏本身
         
         // classpaths列表去重，获得最终字符串
+        let sep = if env::OS == "windows" { ";" } else { ":" };
         let mut i = 0;
         let mut cp = String::new();
         let l = classpaths.len();
         while i < l {
             if !classpaths[i+1..l].contains(&classpaths[i]) {
-                cp.push_str((classpaths[i].clone() + ":").as_str());
+                cp.push_str((classpaths[i].clone() + sep).as_str());
             }
             i += 1;
         }
