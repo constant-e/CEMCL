@@ -5,7 +5,6 @@ mod file_tools;
 mod mc;
 mod settings;
 
-use futures::executor::block_on;
 use log::{debug, error};
 use std::cell::RefCell;
 use std::{fs, sync};
@@ -137,8 +136,6 @@ pub fn ui_game_list(game_list: &Vec<Game>) -> ModelRc<ModelRc<StandardListViewIt
 
 fn main() -> Result<(), slint::PlatformError> {
     env_logger::init();
-    let rt = tokio::runtime::Runtime::new().unwrap();
-    let _tokio = rt.enter();
     let ui = AppWindow::new()?;
 
     // load config
@@ -282,7 +279,7 @@ fn main() -> Result<(), slint::PlatformError> {
                 thread::spawn(move || {
                     let rt = tokio::runtime::Runtime::new().unwrap();
                     let _tokio = rt.enter();
-                    block_on(async move {
+                    rt.block_on(async move {
                         ui_handle.upgrade_in_event_loop(|ui| { ui.invoke_show_popup(); }).unwrap();
                         if let Some(cmd) = launch::get_launch_command(&acc_list[acc_index], &game_list[game_index], &game_path, &mirrors).await {
                             let mut str = game_list[game_index].java_path.borrow().clone() + " ";

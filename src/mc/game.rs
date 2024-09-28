@@ -23,8 +23,10 @@ fn ui_game_url_list(game_url_list: &Vec<GameUrl>) -> ModelRc<ModelRc<StandardLis
 
 pub async fn add_dialog(download_game_list: &Rc<RefCell<Vec<GameUrl>>>, game_list: &Rc<RefCell<Vec<Game>>>, app: &AppWindow, config: &Rc<Config>) {
     let ui = AddGameDialog::new().unwrap();
+    let rt = tokio::runtime::Runtime::new().unwrap();
+    let _tokio = rt.enter();
 
-    let game_url_list = if let Some(result) = download::list_game().await {
+    let game_url_list = if let Ok(Some(result)) = rt.spawn(download::list_game()).await {
         result
     } else {
         Vec::new()
@@ -94,7 +96,9 @@ pub async fn add_dialog(download_game_list: &Rc<RefCell<Vec<GameUrl>>>, game_lis
                 };
                 slint::spawn_local({
                     async move {
-                        download::download(game_url.url.clone(), dir.clone() + "/" + &game_url.version + ".json", 3).await;
+                        let rt = tokio::runtime::Runtime::new().unwrap();
+                        let _tokio = rt.enter();
+                        rt.spawn(download::download(game_url.url.clone(), dir.clone() + "/" + &game_url.version + ".json", 3)).await.unwrap();
                         let game = Game {
                             args: RefCell::from(ui.get_args().to_string()),
                             description: RefCell::from(ui.get_description().to_string()),
