@@ -123,8 +123,8 @@ impl App {
 
     /// Delete a game, also delete the game directory and call self.refresh_ui_game_list()
     pub fn del_game(&mut self, index: usize) -> Option<()> {
-        self.game_list.remove(index);
         let path = self.config.game_path.clone() + "/versions/" + &self.game_list[index].version;
+        self.game_list.remove(index);
         fs::remove_dir_all(path).ok()?;
         self.refresh_ui_game_list()?;
         return Some(());
