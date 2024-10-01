@@ -23,7 +23,7 @@ CI (Continuous Integration) versions are automatically built by GitHub Actions a
 Go to [GitHub Actions](https://github.com/constant-e/CEMCL/actions) to download CI versions.
 
 ## Build
-1. Install Rust
+1. Install Rust and Qt
 2. Clone this repository
    ```sh
    git clone https://github.com/constant-e/CEMCL.git
@@ -51,7 +51,15 @@ Go to [GitHub Actions](https://github.com/constant-e/CEMCL/actions) to download 
 9. Others (More log, UI improvements, etc.)
 
 ## Credits
-[slint-ui/slint](https://github.com/slint-ui/slint)
+1. [env_logger](https://crates.io/crates/env_logger): logs
+2. [futures](https://crates.io/crates/futures): async
+3. [log](https://crates.io/crates/log): logs
+4. [reqwest](https://crates.io/crates/reqwest): downloading
+5. [serde_json](https://crates.io/crates/serde_json): JSON parsing
+6. [slint](https://crates.io/crates/slint): GUI framework
+7. [tokio](https://crates.io/crates/tokio): async
+8. [uuid](https://crates.io/crates/uuid): UUID generating
+9. [zip](https://crates.io/crates/zip): decompressing
 
 ## License
 Apache License 2.0

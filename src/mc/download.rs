@@ -1,13 +1,24 @@
-//! mc::download 下载文件
+//! 下载文件
 
-use std::fs;
+use std::fs::{self, exists};
+use std::env::consts as env;
 use log::info;
 use serde_json::Value;
 use futures::future::join_all;
 
-use crate::file_tools::exists;
 use crate::file_tools::list_file;
-use super::{GameUrl, check_rules, env};
+use super::check_rules;
+
+/// 在下载游戏时使用的游戏信息
+#[derive(Clone)]
+pub struct GameUrl {
+    /// 游戏类型
+    pub game_type: String,
+    /// 本体下载链接
+    pub url: String,
+    /// 游戏版本
+    pub version: String,
+}
 
 /// 下载
 pub async fn download(url: String, path: String, max: usize) -> Option<()> {
@@ -34,9 +45,9 @@ pub async fn download_assets(path: &str, id: &str, mirror: &str) -> Option<()> {
         let dl_path = hash[0..2].to_string() + "/" + hash;
         let obj_path = assets_dir.clone() + "/objects";
         let local_path = obj_path.clone() + "/" + &dl_path;
-        if !exists(&local_path) {
+        if !exists(&local_path).ok()? {
             let dir = obj_path.clone() + "/" + &hash[0..2];
-            if !exists(&dir) { fs::create_dir_all(&dir).ok()?; }
+            if !exists(&dir).ok()? { fs::create_dir_all(&dir).ok()?; }
             let url = mirror.to_string() + "/" + &dl_path;
             let future = tokio::spawn(download(url.clone(), local_path.clone(), 3));
             futures.push(future);
@@ -71,18 +82,18 @@ async fn download_lib(node: Value, path: String, game_dir: String, mirror: Strin
                 dir.push_str(item);
                 if index != vec.len() - 2 { dir.push('/'); }
             }
-            if !exists(&local_path) {
-                if !exists(&dir) { fs::create_dir_all(&dir).ok()?; }
+            if !exists(&local_path).ok()? {
+                if !exists(&dir).ok()? { fs::create_dir_all(&dir).ok()?; }
                 let url = node["downloads"]["classifiers"][&key]["url"].as_str()?.replace("https://libraries.minecraft.net", &mirror);
                 download(url.clone(), local_path.clone(), 3).await;
             }
 
             // Add natives
             let natives_dir = game_dir.to_string() + "/natives-" + os + "-" + env::ARCH;
-            if exists(&("temp".to_string() + &id.to_string())) {
+            if exists(&("temp".to_string() + &id.to_string())).ok()? {
                 fs::remove_dir_all("temp".to_string() + &id.to_string()).ok()?;
             }
-            if !exists(&natives_dir) { fs::create_dir(&natives_dir).ok()?; }
+            if !exists(&natives_dir).ok()? { fs::create_dir(&natives_dir).ok()?; }
             fs::create_dir("temp".to_string() + &id.to_string()).ok()?; // 临时文件夹
             let mut zip = zip::ZipArchive::new(fs::File::open(&local_path).ok()?).ok()?;
             zip.extract("temp".to_string() + &id.to_string()).ok()?;
@@ -96,7 +107,7 @@ async fn download_lib(node: Value, path: String, game_dir: String, mirror: Strin
                 let split: Vec<&str> = name.split("/").collect();
                 let file_name = split.last()?;
                 let target_path = natives_dir.clone() + "/" + &file_name;
-                if !exists(&target_path) { fs::copy(name, &target_path).ok()?; }
+                if !exists(&target_path).ok()? { fs::copy(name, &target_path).ok()?; }
             }
             fs::remove_dir_all("temp".to_string() + &id.to_string()).ok()?;
         }
@@ -104,7 +115,7 @@ async fn download_lib(node: Value, path: String, game_dir: String, mirror: Strin
     
     if node["downloads"]["artifact"].is_object() {
         let local_path = lib_dir.clone() + "/" + node["downloads"]["artifact"]["path"].as_str()?;
-        if !exists(&local_path) {
+        if !exists(&local_path).ok()? {
             let vec: Vec<&str> = local_path.split("/").collect();
             let mut dir = String::new();
             for (index, item) in vec.iter().enumerate() {
@@ -112,7 +123,7 @@ async fn download_lib(node: Value, path: String, game_dir: String, mirror: Strin
                 dir.push_str(item);
                 if index != vec.len() - 2 { dir.push('/'); }
             }
-            if !exists(&dir) { fs::create_dir_all(&dir).ok()?; }
+            if !exists(&dir).ok()? { fs::create_dir_all(&dir).ok()?; }
             let url = node["downloads"]["artifact"]["url"].as_str()?.replace("https://libraries.minecraft.net", &mirror);
             download(url.clone(), local_path.clone(), 3).await;
         }
@@ -121,10 +132,10 @@ async fn download_lib(node: Value, path: String, game_dir: String, mirror: Strin
         let name = name.last()?;
         if name.contains("natives") {
             let natives_dir = game_dir.to_string() + "/natives-" + os + "-" + env::ARCH;
-            if exists(&("temp".to_string() + &id.to_string())) {
+            if exists(&("temp".to_string() + &id.to_string())).ok()? {
                 fs::remove_dir_all("temp".to_string() + &id.to_string()).ok()?;
             }
-            if !exists(&natives_dir) { fs::create_dir(&natives_dir).ok()?; }
+            if !exists(&natives_dir).ok()? { fs::create_dir(&natives_dir).ok()?; }
             fs::create_dir("temp".to_string() + &id.to_string()).ok()?; // 临时文件夹
             let mut zip = zip::ZipArchive::new(fs::File::open(&local_path).ok()?).ok()?;
             zip.extract("temp".to_string() + &id.to_string()).ok()?;
@@ -138,7 +149,7 @@ async fn download_lib(node: Value, path: String, game_dir: String, mirror: Strin
                 let split: Vec<&str> = name.split("/").collect();
                 let file_name = split.last()?;
                 let target_path = natives_dir.clone() + "/" + &file_name;
-                if !exists(&target_path) { fs::copy(name, &target_path).ok()?; }
+                if !exists(&target_path).ok()? { fs::copy(name, &target_path).ok()?; }
             }
             fs::remove_dir_all("temp".to_string() + &id.to_string()).ok()?;
         }

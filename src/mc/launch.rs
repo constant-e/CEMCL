@@ -1,11 +1,15 @@
+//! 启动相关
+
 //! mc::launch 获取MC的启动参数
 
 use futures::join;
 use log::error;
-use std::{env::consts as env, fs};
+use std::env::consts as env;
+use std::fs::{self, exists};
 use serde_json::Value;
-use crate::file_tools::exists;
-use super::{check_rules, download, Account, Game, Mirrors};
+use crate::app::Config;
+
+use super::{check_rules, download, Account, Game};
 
 /// 从json对象单次获取参数
 fn add_arg(n: &Value) -> Option<Vec<String>> {
@@ -97,17 +101,15 @@ fn get_classpaths(n: &Value, game_path: &String) -> Option<Vec<String>> {
 }
 
 /// 获取启动总命令
-pub async fn get_launch_command(account: &Account, game: &Game, game_path: &String, mirrors: &Mirrors) -> Option<Vec<String>> {
-    // 使用自定义参数
-    // if !game.args.is_empty() {
-    //     return game.args.clone();
-    // }
+pub async fn get_launch_command(account: &Account, game: &Game, config: &Config) -> Option<Vec<String>> {
+    // TODO: 支持使用自定义参数
     let mut result: Vec<String> = Vec::new();
-    let dir = game_path.clone() + "/versions/" + game.version.borrow().as_str();  // 游戏目录
+    let game_path = &config.game_path;
+    let dir = game_path.clone() + "/versions/" + game.version.as_str();  // 游戏目录
     
     // 读取json
-    let cfg_path = dir.clone() + "/" + game.version.borrow().as_str() + ".json";
-    if let Ok(config) = serde_json::from_str::<Value>(fs::read_to_string(&cfg_path).ok()?.as_str()) {
+    let cfg_path = dir.clone() + "/" + game.version.as_str() + ".json";
+    if let Ok(json) = serde_json::from_str::<Value>(fs::read_to_string(&cfg_path).ok()?.as_str()) {
         // assetIndex
         let asset_index: String;
         // forge需要提前写入的参数
@@ -115,12 +117,12 @@ pub async fn get_launch_command(account: &Account, game: &Game, game_path: &Stri
         let mut game_args:Vec<String> = Vec::new();
         let mut jvm_args:Vec<String> = Vec::new();
         // 判断inheritsFrom（forge需要）
-        if config["inheritsFrom"].is_null() {
+        if json["inheritsFrom"].is_null() {
             // 无forge
-            if let Some((temp_game_args, temp_jvm_args)) = get_args(&config) {
+            if let Some((temp_game_args, temp_jvm_args)) = get_args(&json) {
                 game_args = temp_game_args;
                 jvm_args = temp_jvm_args;
-                if let Some(index) = config["assetIndex"]["id"].as_str() {
+                if let Some(index) = json["assetIndex"]["id"].as_str() {
                     asset_index = index.into();
                 } else {
                     error!("Failed to get assetIndex.");
@@ -132,9 +134,9 @@ pub async fn get_launch_command(account: &Account, game: &Game, game_path: &Stri
             }
         } else {
             // 有forge
-            if let Some(parent_version) = config["inheritsFrom"].as_str() {
+            if let Some(parent_version) = json["inheritsFrom"].as_str() {
                 let parent_path = game_path.clone() + "/versions/" + &parent_version;
-                if exists(&parent_path) {
+                if exists(&parent_path).ok()? {
                     if let Ok(parent) = serde_json::from_str::<Value>(&fs::read_to_string(&parent_path).ok()?.as_str()) {
                         if let Some(index) = parent["assetIndex"]["id"].as_str() {
                             asset_index = index.into();
@@ -146,7 +148,7 @@ pub async fn get_launch_command(account: &Account, game: &Game, game_path: &Stri
                         if let (
                             Some((mut parent_game_args, mut parent_jvm_args)),
                             Some((mut self_game_args, mut self_jvm_args))
-                        ) = (get_args(&parent), get_args(&config)) {
+                        ) = (get_args(&parent), get_args(&json)) {
                             game_args.append(&mut parent_game_args);
                             game_args.append(&mut self_game_args);
                             jvm_args.append(&mut parent_jvm_args);
@@ -177,13 +179,13 @@ pub async fn get_launch_command(account: &Account, game: &Game, game_path: &Stri
         }
 
         // classpaths列表
-        if let Some(mut vector) = get_classpaths(&config["libraries"], game_path) {
+        if let Some(mut vector) = get_classpaths(&json["libraries"], game_path) {
             classpaths.append(&mut vector);
         } else {
             error!("Failed to load classpaths.");
             return None;
         }
-        classpaths.push(dir.clone() + "/" + game.version.borrow().as_str() + ".jar"); // 游戏本身
+        classpaths.push(dir.clone() + "/" + game.version.as_str() + ".jar"); // 游戏本身
         
         // classpaths列表去重，获得最终字符串
         let sep = if env::OS == "windows" { ";" } else { ":" };
@@ -200,20 +202,20 @@ pub async fn get_launch_command(account: &Account, game: &Game, game_path: &Stri
         // 设置额外参数 TODO: 更多自定义
         jvm_args.append(&mut vec![
             /*"${authlib_injector_param}".into(), */
-            "-Xms".to_string() + game.xms.borrow().as_str(),
-            "-Xmx".to_string() + game.xmx.borrow().as_str(),
+            "-Xms".to_string() + game.xms.as_str(),
+            "-Xmx".to_string() + game.xmx.as_str(),
         ]);
         game_args.append(&mut vec![
             "--height".into(),
-            game.height.borrow().clone(),
+            game.height.clone(),
             "--width".into(),
-            game.width.borrow().clone()
+            game.width.clone()
         ]);
 
         // 参数添加至result
         result.append(&mut jvm_args);
         // 主类
-        if let Some(main_class) = config["mainClass"].as_str() {
+        if let Some(main_class) = json["mainClass"].as_str() {
             result.push(main_class.to_string());
         } else {
             error!("Failed to get mainClass.");
@@ -222,7 +224,7 @@ pub async fn get_launch_command(account: &Account, game: &Game, game_path: &Stri
         result.append(&mut game_args);
 
         // 版本隔离
-        let game_dir = if *game.separated.borrow() { &dir } else { game_path };
+        let game_dir = if game.separated { &dir } else { game_path };
 
         let os = if env::OS == "macOS" { "osx" } else { env::OS };
         // 替换模板
@@ -232,9 +234,9 @@ pub async fn get_launch_command(account: &Account, game: &Game, game_path: &Stri
             *item = item
                 .replace("${assets_index_name}", &asset_index)
                 .replace("${assets_root}", &(game_path.clone() + "/assets"))
-                .replace("${auth_access_token}", &account.token.borrow().as_ref())
-                .replace("${auth_player_name}", &account.user_name.borrow().as_ref())
-                .replace("${auth_uuid}", &account.uuid.borrow().as_ref())
+                .replace("${auth_access_token}", &account.access_token)
+                .replace("${auth_player_name}", &account.user_name)
+                .replace("${auth_uuid}", &account.uuid)
                 // .replace("${authlib_injector_param}", "") // 暂不支持
                 .replace("${classpath}", &cp)
                 .replace("${classpath_separator}", ":")
@@ -245,33 +247,31 @@ pub async fn get_launch_command(account: &Account, game: &Game, game_path: &Stri
                 .replace("${library_directory}", &(game_path.clone() + "/libraries"))
                 .replace("${natives_directory}", &(dir.clone() + "/natives-" + os + "-" + env::ARCH))
                 .replace("${user_properties}", "{}")
-                .replace("${user_type}", &account.account_type.borrow().as_ref())
-                .replace("${version_name}", &game.version.borrow().as_ref())
-                .replace("${version_type}", &game.game_type.borrow().as_ref());
+                .replace("${user_type}", &account.account_type)
+                .replace("${version_name}", &game.version)
+                .replace("${version_type}", &game.game_type);
         }
 
         // 处理依赖
         // json first
         let index_dir = game_path.clone() + "/assets/indexes/";
         let index_path = index_dir.clone() + &asset_index + ".json";
-        if !exists(&index_path) {
-            if !exists(&index_dir) { fs::create_dir_all(&index_dir).ok()?; }
-            download::download(config["assetIndex"]["url"].as_str()?.to_string(), index_path, 3).await;
+        if !exists(&index_path).ok()? {
+            if !exists(&index_dir).ok()? { fs::create_dir_all(&index_dir).ok()?; }
+            download::download(json["assetIndex"]["url"].as_str()?.to_string(), index_path, 3).await;
         }
 
-        // TODO: support using mirrors
-
         // assets
-        let ass_future = download::download_assets(&game_path, &asset_index, &mirrors.assets_source);
+        let ass_future = download::download_assets(&game_path, &asset_index, &config.assets_source);
         
         // libraries
-        let lib_future = download::download_libraries(&config["libraries"], &game_path, &dir, &mirrors.libraries_source);
+        let lib_future = download::download_libraries(&json["libraries"], &game_path, &dir, &config.libraries_source);
 
-        let jar_path = dir.clone() + "/" + game.version.borrow().as_ref() + ".jar";
-        if !exists(&jar_path) {
+        let jar_path = dir.clone() + "/" + game.version.as_ref() + ".jar";
+        if !exists(&jar_path).ok()? {
             // 本体
-            let url = config["downloads"]["client"]["url"].as_str()?.to_string()
-                .replace("https://piston-meta.mojang.com", &mirrors.game_source);
+            let url = json["downloads"]["client"]["url"].as_str()?.to_string()
+                .replace("https://piston-meta.mojang.com", &config.game_source);
             let future = download::download(url, jar_path, 3);
             join!(future, ass_future, lib_future);
         } else {

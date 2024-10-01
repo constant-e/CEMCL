@@ -1,4 +1,5 @@
 use std::fs;
+use std::io::ErrorKind;
 use std::path::Path;
 
 pub fn list_all(path: &String) -> Option<Vec<String>> {
@@ -11,17 +12,17 @@ pub fn list_all(path: &String) -> Option<Vec<String>> {
     Some(result)
 }
 
-pub fn list_dir(path: &String) -> Option<Vec<String>> {
+pub fn list_dir(path: &String) -> std::io::Result<Vec<String>> {
     let mut result: Vec<String> = Vec::new();
-    for entry in fs::read_dir(&Path::new(path)).ok()? {
-        let entry = entry.ok()?;
+    for entry in fs::read_dir(&Path::new(path))? {
+        let entry = entry?;
         let path = entry.path();
         if !path.is_dir() {
             continue;
         }
-        result.push(path.file_name()?.to_str()?.into());
+        result.push(path.file_name().ok_or(ErrorKind::InvalidData)?.to_str().ok_or(ErrorKind::InvalidData)?.into());
     }
-    Some(result)
+    Ok(result)
 }
 
 pub fn list_file(path: &String) -> Option<Vec<String>> {
@@ -37,9 +38,4 @@ pub fn list_file(path: &String) -> Option<Vec<String>> {
         }
     }
     Some(result)
-}
-
-pub fn exists(path: &String) -> bool {
-    let file = Path::new(&path);
-    file.exists()
 }

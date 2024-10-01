@@ -10,7 +10,7 @@ export component EditAccDialog inherits Dialog {
     in-out property <string> token <=> token-input.text;
     in-out property <string> uuid <=> uuid-input.text;
 
-    callback click-del-btn();
+    callback del-clicked();
 
     GridLayout {
         Text {
@@ -62,7 +62,7 @@ export component EditAccDialog inherits Dialog {
     Button {
         text: "Delete this Account";
         dialog-button-role: action;
-        clicked => { root.click-del-btn() }
+        clicked => { root.del-clicked() }
     }
     StandardButton { kind: cancel; }
     StandardButton { kind: ok; }

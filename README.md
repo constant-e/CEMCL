@@ -23,7 +23,7 @@ CI（持续集成）版是在GitHub中提交commit后，由GitHub Actions自动�
 前往[GitHub Actions](https://github.com/constant-e/CEMCL/actions)下载CI版。
 
 ## 构建
-1. 安装Rust
+1. 安装Rust和Qt
 2. 克隆此仓库
    ```sh
    git clone https://github.com/constant-e/CEMCL.git
@@ -51,7 +51,15 @@ CI（持续集成）版是在GitHub中提交commit后，由GitHub Actions自动�
 9. 其他（完善log和报错，UI改进等）
 
 ## 鸣谢
-[slint-ui/slint](https://github.com/slint-ui/slint)
+1. [env_logger](https://crates.io/crates/env_logger)：输出日志
+2. [futures](https://crates.io/crates/futures)：异步
+3. [log](https://crates.io/crates/log)：输出日志
+4. [reqwest](https://crates.io/crates/reqwest)：下载
+5. [serde_json](https://crates.io/crates/serde_json)：JSON解析
+6. [slint](https://crates.io/crates/slint)：GUI框架
+7. [tokio](https://crates.io/crates/tokio)：异步
+8. [uuid](https://crates.io/crates/uuid)：UUID生成
+9. [zip](https://crates.io/crates/zip)：解压缩
 
 ## 许可证
 Apache License 2.0
