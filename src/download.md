@@ -28,7 +28,7 @@
 请前往[GitHub Actions](https://github.com/constant-e/CEMCL/actions)获取。
 
 ## 构建
-1. 安装Rust
+1. 安装Rust和Qt
 2. 克隆此仓库
    ```sh
    git clone https://github.com/constant-e/CEMCL.git

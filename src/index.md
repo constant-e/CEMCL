@@ -13,8 +13,8 @@ hero:
       link: /docs
 
 features:
-  - title: 完全开源、免费
-    details: 在GitHub上开源，完全免费。
+  - title: 开源 免费
+    details: 在GitHub上开源，免费。
   - title: 跨平台
     details: 可以在Windows、macOS、Linux等多平台运行。
   - title: 高效

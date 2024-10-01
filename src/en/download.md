@@ -28,7 +28,7 @@ Download Links:
 Get it in [GitHub Actions](https://github.com/constant-e/CEMCL/actions).
 
 ## Build
-1. Install Rust
+1. Install Rust and Qt
 2. Clone this repository
    ```sh
    git clone https://github.com/constant-e/CEMCL.git
