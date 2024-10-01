@@ -23,7 +23,7 @@ impl Account {
     /// 从refresh_token刷新access_token（包含判定是否为微软登录）
     pub fn refresh(&mut self) {
         if self.account_type != "msa" { return; }
-
+        // TODO: support online login
     }
 }
 

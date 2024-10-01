@@ -1,4 +1,5 @@
-//! settings 设置
+//! 设置
+
 use log::error;
 use std::{cell::RefCell, rc};
 use slint::ComponentHandle;
@@ -67,5 +68,5 @@ pub fn init(app_weak: rc::Weak<RefCell<App>>) -> Option<()> {
         }
     });
 
-    ui.show().ok()
+    return ui.show().ok();
 }

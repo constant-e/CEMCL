@@ -14,8 +14,10 @@ use super::check_rules;
 pub struct GameUrl {
     /// 游戏类型
     pub game_type: String,
+
     /// 本体下载链接
     pub url: String,
+    
     /// 游戏版本
     pub version: String,
 }
@@ -31,7 +33,7 @@ pub async fn download(url: String, path: String, max: usize) -> Option<()> {
     }
     fs::write(path, response.unwrap().bytes().await.ok()?).ok()?;
     info!("Downloaded {url}");
-    Some(())
+    return Some(());
 }
 
 /// 下载assets
@@ -56,9 +58,10 @@ pub async fn download_assets(path: &str, id: &str, mirror: &str) -> Option<()> {
     
     join_all(futures).await;
 
-    Some(())
+    return Some(());
 }
 
+/// 下载单个library
 async fn download_lib(node: Value, path: String, game_dir: String, mirror: String, id: usize) -> Option<()> {
     let lib_dir = path.to_string() + "/libraries";
 
@@ -97,7 +100,7 @@ async fn download_lib(node: Value, path: String, game_dir: String, mirror: Strin
             fs::create_dir("temp".to_string() + &id.to_string()).ok()?; // 临时文件夹
             let mut zip = zip::ZipArchive::new(fs::File::open(&local_path).ok()?).ok()?;
             zip.extract("temp".to_string() + &id.to_string()).ok()?;
-            let files = list_file(&("temp".to_string() + &id.to_string()))?;
+            let files = list_file(&("temp".to_string() + &id.to_string())).ok()?;
             for name in files {
                 let format: Vec<&str> = name.split(".").collect();
                 let format = *format.last()?;
@@ -139,7 +142,7 @@ async fn download_lib(node: Value, path: String, game_dir: String, mirror: Strin
             fs::create_dir("temp".to_string() + &id.to_string()).ok()?; // 临时文件夹
             let mut zip = zip::ZipArchive::new(fs::File::open(&local_path).ok()?).ok()?;
             zip.extract("temp".to_string() + &id.to_string()).ok()?;
-            let files = list_file(&("temp".to_string() + &id.to_string()))?;
+            let files = list_file(&("temp".to_string() + &id.to_string())).ok()?;
             for name in files {
                 let format: Vec<&str> = name.split(".").collect();
                 let format = *format.last()?;
@@ -155,10 +158,10 @@ async fn download_lib(node: Value, path: String, game_dir: String, mirror: Strin
         }
     }
     
-    Some(())
+    return Some(());
 }
 
-/// 下载libraries node: mc json["libraries"]
+/// 下载libraries，node: mc json["libraries"]
 pub async fn download_libraries(node: &Value, path: &str, game_dir: &str, mirror: &str) -> Option<()> {
     let mut futures = Vec::new();
     let mut c = 0;
@@ -171,7 +174,7 @@ pub async fn download_libraries(node: &Value, path: &str, game_dir: &str, mirror
     
     join_all(futures).await;
 
-    Some(())
+    return Some(());
 }
 
 /// 获取下载列表
@@ -195,5 +198,5 @@ pub async fn list_game() -> Option<Vec<GameUrl>> {
         game_list.push(game);
     }
 
-    Some(game_list)
+    return Some(game_list);
 }

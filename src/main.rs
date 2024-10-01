@@ -20,6 +20,7 @@ fn main() -> Result<(), slint::PlatformError> {
     ).init();
 
     let ui = AppWindow::new()?;
+    ui.show()?; // dialogs in app should show later than appwindow
     let app = Rc::new(RefCell::new(App::new(ui.as_weak()).unwrap()));
     let app_weak = Rc::downgrade(&app);
 
@@ -58,5 +59,7 @@ fn main() -> Result<(), slint::PlatformError> {
             error!("Failed to upgrade weak pointer.");
         }
     });
-    ui.run()
+
+    slint::run_event_loop()?;
+    return ui.hide();
 }

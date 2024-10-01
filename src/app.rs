@@ -10,7 +10,7 @@ use log::{debug, error, warn};
 use serde_json::json;
 use slint::{ComponentHandle, ModelRc, StandardListViewItem, VecModel};
 
-use crate::dialogs::msg_box::err_dialog;
+use crate::dialogs::msg_box::{err_dialog, warn_dialog};
 use crate::file_tools::list_dir;
 use crate::mc::download::GameUrl;
 use crate::AppWindow;
@@ -84,11 +84,25 @@ pub struct App {
 }
 
 impl App {
+    /// Create a new app with the weak pointer of ui provided
     pub fn new(ui_weak: slint::Weak<AppWindow>) -> Result<App, std::io::Error> {
         let mut app = App::default();
-        app.load_acc_list()?;
-        app.load_config()?;
-        app.load_game_list()?;
+
+        if let Err(e) = app.load_acc_list() {
+            warn!("Failed to load account list. Reason: {e}.");
+            warn_dialog(&format!("Failed to load account list. Reason: {e}."));
+        }
+
+        if let Err(e) = app.load_config() {
+            warn!("Failed to load config. Reason: {e}.");
+            warn_dialog(&format!("Failed to load config. Reason: {e}."));
+        }
+
+        if let Err(e) = app.load_game_list() {
+            warn!("Failed to load game list. Reason: {e}.");
+            warn_dialog(&format!("Failed to load game list. Reason: {e}."));
+        }
+        
         app.ui_weak = ui_weak;
         app.refresh_ui_acc_list();
         app.refresh_ui_game_list();
@@ -147,16 +161,19 @@ impl App {
         return Some(());
     }
 
+    /// Get the current index of account list in ui
     pub fn get_acc_index(&self) -> Option<isize> {
         let ui = self.ui_weak.upgrade()?;
         return Some(ui.get_acc_index() as isize);
     }
 
+    /// Get the current index of game list in ui
     pub fn get_game_index(&self) -> Option<isize> {
         let ui = self.ui_weak.upgrade()?;
         return Some(ui.get_game_index() as isize);
     }
 
+    /// Launch the game
     pub fn launch(&self) -> Option<()> {
         if let Some(ui) = self.ui_weak.upgrade() {
             let acc_index = ui.get_acc_index() as usize;
@@ -219,6 +236,7 @@ impl App {
         return Some(());
     }
 
+    /// Load the account list from account.json (won't refresh ui)
     pub fn load_acc_list(&mut self) -> Result<(), std::io::Error> {
         self.acc_list.clear();
 
@@ -247,6 +265,7 @@ impl App {
         return Ok(());
     }
 
+    /// Load the configs from config.json (won't refresh ui)
     fn load_config(&mut self) -> Result<(), std::io::Error> {
         if exists(&"config.json")? {
             let json: serde_json::Value = serde_json::from_str(&fs::read_to_string("config.json")?.as_str())?;
@@ -270,6 +289,7 @@ impl App {
         return Ok(());
     }
 
+    /// Load the game list (won't refresh ui)
     pub fn load_game_list(&mut self) -> Result<(), std::io::Error> {
         self.game_list.clear();
 
@@ -332,7 +352,8 @@ impl App {
         };
         return Ok(());
     }
-    
+
+    /// Save the account list to account.json
     pub fn save_acc_list(&self) -> Result<(), std::io::Error> {
         let mut json = serde_json::json!([]);
         for account in &self.acc_list {
@@ -355,6 +376,7 @@ impl App {
         return Ok(());
     }
 
+    /// Save the configs to config.json
     pub fn save_config(&self) -> Result<(), std::io::Error> {
         let json = json!(
             {
@@ -375,6 +397,7 @@ impl App {
         return fs::write("config.json", json.to_string());
     }
 
+    /// Refresh account list in ui
     pub fn refresh_ui_acc_list(&self) -> Option<()> {
         let ui = self.ui_weak.upgrade()?;
         let mut ui_acc_list: Vec<ModelRc<StandardListViewItem>> = Vec::new();
@@ -389,6 +412,7 @@ impl App {
         return Some(());
     }
 
+    /// Refresh game list in ui
     pub fn refresh_ui_game_list(&self) -> Option<()> {
         let ui = self.ui_weak.upgrade()?;
         let mut ui_game_list: Vec<ModelRc<StandardListViewItem>> = Vec::new();

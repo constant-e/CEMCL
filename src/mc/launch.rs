@@ -38,10 +38,10 @@ fn add_arg(n: &Value) -> Option<Vec<String>> {
         }
     }
 
-    Some(result)
+    return Some(result);
 }
 
-// 获取MC和JVM参数
+/// 获取MC和JVM参数
 fn get_args(n: &Value) -> Option<(Vec<String>, Vec<String>)> {
     let mut game_args:Vec<String> = Vec::new();
     let mut jvm_args:Vec<String> = vec![
@@ -70,10 +70,10 @@ fn get_args(n: &Value) -> Option<(Vec<String>, Vec<String>)> {
         ]);
     }
 
-    Some((game_args, jvm_args))
+    return Some((game_args, jvm_args));
 }
 
-// 获取-cp参数 
+/// 获取-cp参数 
 fn get_classpaths(n: &Value, game_path: &String) -> Option<Vec<String>> {
     let mut result: Vec<String> = Vec::new();
     for item in n.as_array()? {
@@ -97,7 +97,7 @@ fn get_classpaths(n: &Value, game_path: &String) -> Option<Vec<String>> {
         result.push(temp);
     }
 
-    Some(result)
+    return Some(result);
 }
 
 /// 获取启动总命令

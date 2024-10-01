@@ -3,7 +3,7 @@
 use std::env::consts as env;
 use log::{debug, warn};
 
-// 检查参数是否可以添加
+/// 检查参数是否可以添加
 pub fn check_rules(n: &serde_json::Value) -> bool {
     // 获取操作系统名称
     let os = if env::OS == "macOS" { "osx" } else { env::OS };
@@ -38,5 +38,5 @@ pub fn check_rules(n: &serde_json::Value) -> bool {
     } else {
         warn!("Failed to get rules");
     }
-    true
+    return true;
 }
