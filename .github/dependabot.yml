@@ -5,4 +5,7 @@ updates:
     schedule:
       interval: "daily"
       time: "21:00"
-    target-branch: "main"
+    groups:
+      cargo:
+        patterns:
+          - "*"
