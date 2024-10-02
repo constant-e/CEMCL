@@ -1,0 +1,399 @@
+
+msgid ""
+msgstr ""
+"Project-Id-Version: PACKAGE VERSION\n"
+"POT-Creation-Date: 2024-10-02 04:53+0000\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Language: \n"
+"Plural-Forms: nplurals=1; plural=0;\n"
+
+#: dialogs.slint:14
+msgctxt "WarnDialog"
+msgid "Warn"
+msgstr ""
+
+#: dialogs.slint:23
+msgctxt "ErrorDialog"
+msgid "Error"
+msgstr ""
+
+#: settings.slint:7 settings.slint:32
+msgctxt "Settings"
+msgid "Settings"
+msgstr ""
+
+#: settings.slint:36
+msgctxt "Settings"
+msgid "Launcher Settings"
+msgstr ""
+
+#: settings.slint:43
+msgctxt "Settings"
+msgid "General"
+msgstr ""
+
+#: settings.slint:49
+msgctxt "Settings"
+msgid "Minecraft Path: "
+msgstr ""
+
+#: settings.slint:59
+msgctxt "Settings"
+msgid "Close after Launching Game"
+msgstr ""
+
+#: settings.slint:65
+msgctxt "Settings"
+msgid "Download Sources"
+msgstr ""
+
+#: settings.slint:71
+msgctxt "Settings"
+msgid "Assets Source: "
+msgstr ""
+
+#: settings.slint:81
+msgctxt "Settings"
+msgid "Libraries Source: "
+msgstr ""
+
+#: settings.slint:91
+msgctxt "Settings"
+msgid "Minecraft Source: "
+msgstr ""
+
+#: settings.slint:101
+msgctxt "Settings"
+msgid "Fabric Source: "
+msgstr ""
+
+#: settings.slint:111
+msgctxt "Settings"
+msgid "Forge Source: "
+msgstr ""
+
+#: settings.slint:129
+msgctxt "Settings"
+msgid "Default Minecraft Settings"
+msgstr ""
+
+#: settings.slint:136
+msgctxt "Settings"
+msgid "Java Path: "
+msgstr ""
+
+#: settings.slint:146
+msgctxt "Settings"
+msgid "Window Height: "
+msgstr ""
+
+#: settings.slint:156
+msgctxt "Settings"
+msgid "Window Width: "
+msgstr ""
+
+#: settings.slint:166
+msgctxt "Settings"
+msgid "Minimum Memory: "
+msgstr ""
+
+#: settings.slint:176
+msgctxt "Settings"
+msgid "Maximum Memory: "
+msgstr ""
+
+#: settings.slint:194
+msgctxt "Settings"
+msgid "About"
+msgstr ""
+
+#: settings.slint:217
+msgctxt "Settings"
+msgid "Version: "
+msgstr ""
+
+#: settings.slint:218
+msgctxt "Settings"
+msgid "Github Repository: "
+msgstr ""
+
+#: settings.slint:219
+msgctxt "Settings"
+msgid "Developers: "
+msgstr ""
+
+#: settings.slint:220
+msgctxt "Settings"
+msgid "License: "
+msgstr ""
+
+#: settings.slint:222
+msgctxt "Settings"
+msgid "Credits:\n"
+msgstr ""
+
+#: add-acc-dialog.slint:4
+msgctxt "AddAccDialog"
+msgid "Add a Account"
+msgstr ""
+
+#: add-acc-dialog.slint:20
+msgctxt "AddAccDialog"
+msgid "Online Account"
+msgstr ""
+
+#: add-acc-dialog.slint:26
+msgctxt "AddAccDialog"
+msgid "Account: "
+msgstr ""
+
+#: add-acc-dialog.slint:36
+msgctxt "AddAccDialog"
+msgid "Password: "
+msgstr ""
+
+#: add-acc-dialog.slint:53
+msgctxt "AddAccDialog"
+msgid "Offline Account"
+msgstr ""
+
+#: add-acc-dialog.slint:59
+msgctxt "AddAccDialog"
+msgid "Name: "
+msgstr ""
+
+#: add-acc-dialog.slint:69 add-acc-dialog.slint:122
+msgctxt "AddAccDialog"
+msgid "UUID: "
+msgstr ""
+
+#: add-acc-dialog.slint:86
+msgctxt "AddAccDialog"
+msgid "Other Account"
+msgstr ""
+
+#: add-acc-dialog.slint:92
+msgctxt "AddAccDialog"
+msgid "Account Type: "
+msgstr ""
+
+#: add-acc-dialog.slint:102
+msgctxt "AddAccDialog"
+msgid "Token: "
+msgstr ""
+
+#: add-acc-dialog.slint:112
+msgctxt "AddAccDialog"
+msgid "User Name: "
+msgstr ""
+
+#: add-game-dialog.slint:5 add-game-dialog.slint:29
+msgctxt "AddGameDialog"
+msgid "Add a Game"
+msgstr ""
+
+#: add-game-dialog.slint:34
+msgctxt "AddGameDialog"
+msgid "Minecraft Version"
+msgstr ""
+
+#: add-game-dialog.slint:42 add-game-dialog.slint:54
+msgctxt "AddGameDialog"
+msgid "Version"
+msgstr ""
+
+#: add-game-dialog.slint:43 add-game-dialog.slint:55
+msgctxt "AddGameDialog"
+msgid "Type"
+msgstr ""
+
+#: add-game-dialog.slint:49
+msgctxt "AddGameDialog"
+msgid "Mod Loader"
+msgstr ""
+
+#: add-game-dialog.slint:61
+msgctxt "AddGameDialog"
+msgid "Customize"
+msgstr ""
+
+#: add-game-dialog.slint:64
+msgctxt "AddGameDialog"
+msgid "Description: "
+msgstr ""
+
+#: add-game-dialog.slint:74
+msgctxt "AddGameDialog"
+msgid "Java Path: "
+msgstr ""
+
+#: add-game-dialog.slint:84
+msgctxt "AddGameDialog"
+msgid "Window Height: "
+msgstr ""
+
+#: add-game-dialog.slint:94
+msgctxt "AddGameDialog"
+msgid "Window Width: "
+msgstr ""
+
+#: add-game-dialog.slint:104
+msgctxt "AddGameDialog"
+msgid "Minimum Memory: "
+msgstr ""
+
+#: add-game-dialog.slint:114
+msgctxt "AddGameDialog"
+msgid "Maximum Memory: "
+msgstr ""
+
+#: add-game-dialog.slint:124
+msgctxt "AddGameDialog"
+msgid "Launch Arguments: "
+msgstr ""
+
+#: add-game-dialog.slint:134
+msgctxt "AddGameDialog"
+msgid "Enable Separated Version"
+msgstr ""
+
+#: appwindow.slint:42
+msgctxt "AppWindow"
+msgid "Launching"
+msgstr ""
+
+#: appwindow.slint:59
+msgctxt "AppWindow"
+msgid "Account"
+msgstr ""
+
+#: appwindow.slint:63
+msgctxt "AppWindow"
+msgid "Name"
+msgstr ""
+
+#: appwindow.slint:64 appwindow.slint:94
+msgctxt "AppWindow"
+msgid "Type"
+msgstr ""
+
+#: appwindow.slint:74 appwindow.slint:105
+msgctxt "AppWindow"
+msgid "Add"
+msgstr ""
+
+#: appwindow.slint:79 appwindow.slint:110
+msgctxt "AppWindow"
+msgid "Edit"
+msgstr ""
+
+#: appwindow.slint:89
+msgctxt "AppWindow"
+msgid "Minecraft Version"
+msgstr ""
+
+#: appwindow.slint:93
+msgctxt "AppWindow"
+msgid "Version"
+msgstr ""
+
+#: appwindow.slint:95
+msgctxt "AppWindow"
+msgid "Description"
+msgstr ""
+
+#: appwindow.slint:121
+msgctxt "AppWindow"
+msgid "Settings"
+msgstr ""
+
+#: appwindow.slint:128
+msgctxt "AppWindow"
+msgid "Start"
+msgstr ""
+
+#: edit-acc-dialog.slint:4
+msgctxt "EditAccDialog"
+msgid "Edit a Account"
+msgstr ""
+
+#: edit-acc-dialog.slint:17
+msgctxt "EditAccDialog"
+msgid "Account Type: "
+msgstr ""
+
+#: edit-acc-dialog.slint:27
+msgctxt "EditAccDialog"
+msgid "Token: "
+msgstr ""
+
+#: edit-acc-dialog.slint:37
+msgctxt "EditAccDialog"
+msgid "User Name: "
+msgstr ""
+
+#: edit-acc-dialog.slint:47
+msgctxt "EditAccDialog"
+msgid "UUID: "
+msgstr ""
+
+#: edit-acc-dialog.slint:63
+msgctxt "EditAccDialog"
+msgid "Delete"
+msgstr ""
+
+#: edit-game-dialog.slint:4
+msgctxt "EditGameDialog"
+msgid "Edit a Game"
+msgstr ""
+
+#: edit-game-dialog.slint:21
+msgctxt "EditGameDialog"
+msgid "Description: "
+msgstr ""
+
+#: edit-game-dialog.slint:31
+msgctxt "EditGameDialog"
+msgid "Java Path: "
+msgstr ""
+
+#: edit-game-dialog.slint:41
+msgctxt "EditGameDialog"
+msgid "Window Height: "
+msgstr ""
+
+#: edit-game-dialog.slint:51
+msgctxt "EditGameDialog"
+msgid "Window Width: "
+msgstr ""
+
+#: edit-game-dialog.slint:61
+msgctxt "EditGameDialog"
+msgid "Minimum Memory: "
+msgstr ""
+
+#: edit-game-dialog.slint:71
+msgctxt "EditGameDialog"
+msgid "Maximum Memory: "
+msgstr ""
+
+#: edit-game-dialog.slint:81
+msgctxt "EditGameDialog"
+msgid "Launch Arguments: "
+msgstr ""
+
+#: edit-game-dialog.slint:91
+msgctxt "EditGameDialog"
+msgid "Enable Separated Version"
+msgstr ""
+
+#: edit-game-dialog.slint:102
+msgctxt "EditGameDialog"
+msgid "Delete"
+msgstr ""
+

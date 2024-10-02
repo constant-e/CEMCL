@@ -19,6 +19,8 @@ fn main() -> Result<(), slint::PlatformError> {
         if cfg!(debug_assertions) { log::LevelFilter::Debug } else { log::LevelFilter::Info }
     ).init();
 
+    slint::init_translations!("locale/");
+
     let ui = AppWindow::new()?;
     ui.show()?; // dialogs in app should show later than appwindow
     let app = Rc::new(RefCell::new(App::new(ui.as_weak()).unwrap()));

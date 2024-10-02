@@ -35,19 +35,32 @@ CI（持续集成）版是在GitHub中提交commit后，由GitHub Actions自动�
    # 构建Release版
    cargo build --release
    ```
+4. 生成语言文件（对于非Windows系统）
+   ```sh
+   # 对于Debug版
+   ./update_translations.sh
+   # 对于Release版
+   ./update_translations.sh --release
+   # 或使用--all同时为Debug和Release生成
+   ```
 
 ## 文档
 [文档](https://constant-e.github.io/CEMCL/docs)
+
+## 翻译
+运行`update_tranlations.sh`以更新po文件并生成mo文件。翻译后需要再次运行以生成新的mo文件。
+
+**注意**：由于Slint的原因，翻译暂不支持Windows。
 
 ## 路线图
 1. （已完成）启动Minecraft
 2. （已完成）在各个版本内部储存自定义设置
 3. （已完成）完善配置系统
 4. （已完成）支持版本隔离
-5. （部分完成）支持下载原版Minecraft
-6. 支持下载Mod版Minecraft
-7. 正版登录
-8. 多语言支持
+5. （部分完成）多语言支持
+6. （部分完成）支持下载原版Minecraft
+7. 支持下载Mod版Minecraft
+8. 正版登录
 9. 其他（完善log和报错，UI改进等）
 
 ## 鸣谢
