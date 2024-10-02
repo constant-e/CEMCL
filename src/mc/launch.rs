@@ -254,7 +254,7 @@ pub fn get_launch_command(account: &Account, game: &Game, config: &Config) -> Op
 
         // 处理依赖
 
-        let rt = tokio::runtime::Runtime::new().unwrap();
+        let rt = tokio::runtime::Builder::new_multi_thread().enable_all().build().unwrap();
         let _tokio = rt.enter();
 
         // json first
@@ -284,13 +284,6 @@ pub fn get_launch_command(account: &Account, game: &Game, config: &Config) -> Op
             futures.push(future);
         }
         
-        let max: usize = 10; // TODO: support change this value
-        let len = futures.len();
-        let mut index: usize = len;
-        while index >= max {
-            index -= max;
-            rt.block_on(join_all(futures.split_off(index)));
-        }
         rt.block_on(join_all(futures));
 
         return Some(result)
