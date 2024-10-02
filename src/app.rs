@@ -129,6 +129,10 @@ impl App {
 
     /// Delete an account, also call self.save_acc_list() and self.refresh_ui_acc_list()
     pub fn del_account(&mut self, index: usize) -> Option<()> {
+        // if index >= self.acc_list.len() {
+        //     error!("Index out of bounds: the len is {} but the index is {index}.", self.acc_list.len());
+        //     return None;
+        // }
         self.acc_list.remove(index);
         self.save_acc_list().ok()?;
         self.refresh_ui_acc_list()?;
@@ -137,6 +141,10 @@ impl App {
 
     /// Delete a game, also delete the game directory and call self.refresh_ui_game_list()
     pub fn del_game(&mut self, index: usize) -> Option<()> {
+        // if index >= self.game_list.len() {
+        //     error!("Index out of bounds: the len is {} but the index is {index}.", self.game_list.len());
+        //     return None;
+        // }
         let path = self.config.game_path.clone() + "/versions/" + &self.game_list[index].version;
         self.game_list.remove(index);
         fs::remove_dir_all(path).ok()?;
@@ -179,9 +187,9 @@ impl App {
             let acc_index = ui.get_acc_index() as usize;
             let game_index = ui.get_game_index() as usize;
             if acc_index >= self.acc_list.len() || game_index >= self.game_list.len() {
-                error!("({acc_index}, {game_index}) is out of range (max: ({}, {})).", self.acc_list.len(), self.game_list.len());
-                err_dialog("Please select a account and a game first.");
-                return Some(());
+                error!("Index out of bounds: the len is ({}, {}) but the index is ({acc_index}, {game_index}).", self.acc_list.len(), self.game_list.len());
+                err_dialog("Please select an account and a Minecraft version first.");
+                return None;
             }
 
             let acc_list = self.acc_list.clone();

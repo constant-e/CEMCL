@@ -39,12 +39,12 @@ fn main() -> Result<(), slint::PlatformError> {
 
     let app_weak_clone = app_weak.clone();
     ui.on_click_edit_acc_btn(move || {
-        edit_acc_dialog(app_weak_clone.clone()).unwrap();
+        edit_acc_dialog(app_weak_clone.clone());
     });
 
     let app_weak_clone = app_weak.clone();
     ui.on_click_edit_game_btn(move || {
-        edit_game_dialog(app_weak_clone.clone()).unwrap();
+        edit_game_dialog(app_weak_clone.clone());
     });
 
     let app_weak_clone = app_weak.clone();

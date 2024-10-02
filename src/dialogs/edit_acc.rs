@@ -4,7 +4,7 @@ use std::{cell::RefCell, rc};
 
 use log::error;
 use slint::ComponentHandle;
-use crate::{app::App, mc::Account, EditAccDialog};
+use crate::{app::App, dialogs::msg_box::err_dialog, mc::Account, EditAccDialog};
 
 pub fn edit_acc_dialog(app_weak: rc::Weak<RefCell<App>>) -> Result<(), slint::PlatformError> {
     let ui = EditAccDialog::new()?;
@@ -12,6 +12,11 @@ pub fn edit_acc_dialog(app_weak: rc::Weak<RefCell<App>>) -> Result<(), slint::Pl
 
     let index = if let Some(app) = app_weak.upgrade() {
         let index = app.borrow().get_acc_index().unwrap() as usize;
+        if index >= app.borrow().acc_list.len() {
+            error!("Index out of bounds: the len is {} but the index is {index}.", app.borrow().acc_list.len());
+            err_dialog("Please select an account first.");
+            return Err(slint::PlatformError::Other(String::from(format!("Index out of bounds: the len is {} but the index is {index}.", app.borrow().acc_list.len()))));
+        }
         let account = &app.borrow().acc_list[index];
         ui.set_acc_type(slint::SharedString::from(&account.account_type));
         ui.set_name(slint::SharedString::from(&account.user_name));

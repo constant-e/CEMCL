@@ -60,7 +60,7 @@ export component EditAccDialog inherits Dialog {
     }
 
     Button {
-        text: "Delete this Account";
+        text: @tr("Delete");
         dialog-button-role: action;
         clicked => { root.del-clicked() }
     }

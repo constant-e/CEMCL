@@ -4,7 +4,7 @@ use std::{cell::RefCell, rc};
 use log::error;
 use slint::ComponentHandle;
 
-use crate::{app::App, EditGameDialog};
+use crate::{app::App, dialogs::msg_box::err_dialog, EditGameDialog};
 
 use super::msg_box::ask_dialog;
 
@@ -14,6 +14,11 @@ pub fn edit_game_dialog(app_weak: rc::Weak<RefCell<App>>) -> Result<(), slint::P
 
     let index = if let Some(app) = app_weak.upgrade() {
         let index = app.borrow().get_game_index().unwrap() as usize;
+        if index >= app.borrow().game_list.len() {
+            error!("Index out of bounds: the len is {} but the index is {index}.", app.borrow().game_list.len());
+            err_dialog("Please select a Minecraft version first.");
+            return Err(slint::PlatformError::Other(String::from(format!("Index out of bounds: the len is {} but the index is {index}.", app.borrow().game_list.len()))));
+        }
         let game = &app.borrow().game_list[index];
         ui.set_config_height(game.height.clone().into());
         ui.set_config_width(game.width.clone().into());
