@@ -13,24 +13,23 @@ pub fn edit_game_dialog(app_weak: rc::Weak<RefCell<App>>) -> Result<(), slint::P
     let ui_weak = ui.as_weak();
 
     let index = if let Some(app) = app_weak.upgrade() {
-        let index = app.borrow().get_game_index().unwrap() as usize;
-        if index >= app.borrow().game_list.len() {
-            error!("Index out of bounds: the len is {} but the index is {index}.", app.borrow().game_list.len());
+        if let Some(index) = app.borrow().get_game_index() {
+            let game = &app.borrow().game_list[index];
+            ui.set_config_height(game.height.clone().into());
+            ui.set_config_width(game.width.clone().into());
+            ui.set_description(game.description.clone().into());
+            ui.set_java_path(game.java_path.clone().into());
+            ui.set_separated(game.separated.clone());
+            ui.set_xms(game.xms.clone().into());
+            ui.set_xmx(game.xmx.clone().into());
+            index
+        } else {
             err_dialog("Please select a Minecraft version first.");
-            return Err(slint::PlatformError::Other(String::from(format!("Index out of bounds: the len is {} but the index is {index}.", app.borrow().game_list.len()))));
+            return Err(slint::PlatformError::Other(String::from("Failed to get the index of game_list")));
         }
-        let game = &app.borrow().game_list[index];
-        ui.set_config_height(game.height.clone().into());
-        ui.set_config_width(game.width.clone().into());
-        ui.set_description(game.description.clone().into());
-        ui.set_java_path(game.java_path.clone().into());
-        ui.set_separated(game.separated.clone());
-        ui.set_xms(game.xms.clone().into());
-        ui.set_xmx(game.xmx.clone().into());
-        index
     } else {
         error!("Failed to upgrade a weak pointer.");
-        return Err(slint::PlatformError::Other(String::from("Failed to upgrade a weak pointer.")));
+        return Err(slint::PlatformError::Other(String::from("Failed to upgrade a weak pointer")));
     };
     
     let app_weak_clone = app_weak.clone();

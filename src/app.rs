@@ -169,16 +169,26 @@ impl App {
         return Some(());
     }
 
-    /// Get the current index of account list in ui
-    pub fn get_acc_index(&self) -> Option<isize> {
+    /// Get the current index of account list in ui, return None when index is out of range
+    pub fn get_acc_index(&self) -> Option<usize> {
         let ui = self.ui_weak.upgrade()?;
-        return Some(ui.get_acc_index() as isize);
+        let index = ui.get_acc_index() as usize;
+        if index >= self.acc_list.len() {
+            warn!("Index out of bounds: the len is {} but the index is {index}.", self.acc_list.len());
+            return None;
+        }
+        return Some(index);
     }
 
-    /// Get the current index of game list in ui
-    pub fn get_game_index(&self) -> Option<isize> {
+    /// Get the current index of game list in ui, return None when index is out of range
+    pub fn get_game_index(&self) -> Option<usize> {
         let ui = self.ui_weak.upgrade()?;
-        return Some(ui.get_game_index() as isize);
+        let index = ui.get_game_index() as usize;
+        if index >= self.game_list.len() {
+            warn!("Index out of bounds: the len is {} but the index is {index}.", self.game_list.len());
+            return None;
+        }
+        return Some(index);
     }
 
     /// Launch the game
@@ -187,7 +197,7 @@ impl App {
             let acc_index = ui.get_acc_index() as usize;
             let game_index = ui.get_game_index() as usize;
             if acc_index >= self.acc_list.len() || game_index >= self.game_list.len() {
-                error!("Index out of bounds: the len is ({}, {}) but the index is ({acc_index}, {game_index}).", self.acc_list.len(), self.game_list.len());
+                warn!("Index out of bounds: the len is ({}, {}) but the index is ({acc_index}, {game_index}).", self.acc_list.len(), self.game_list.len());
                 err_dialog("Please select an account and a Minecraft version first.");
                 return None;
             }

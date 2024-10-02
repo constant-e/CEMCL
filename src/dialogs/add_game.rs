@@ -54,11 +54,11 @@ pub async fn add_game_dialog(app_weak: rc::Weak<RefCell<App>>) -> Result<(), sli
     
     let app_weak_clone = app_weak.clone();
     let ui_weak_clone = ui_weak.clone();
-    ui.on_game_combo_box_changed(move |game_type| {
+    ui.on_game_combo_box_changed(move |_| {
         if let (Some(app), Some(ui)) = (app_weak_clone.upgrade(), ui_weak_clone.upgrade()) {
-            let require = if game_type.starts_with("R") {
+            let require = if ui.get_game_type() == 1 {
                 "release"
-            } else if game_type.starts_with("S") {
+            } else if ui.get_game_type() == 2 {
                 "snapshot"
             } else {
                 ""

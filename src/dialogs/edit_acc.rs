@@ -11,21 +11,20 @@ pub fn edit_acc_dialog(app_weak: rc::Weak<RefCell<App>>) -> Result<(), slint::Pl
     let ui_weak = ui.as_weak();
 
     let index = if let Some(app) = app_weak.upgrade() {
-        let index = app.borrow().get_acc_index().unwrap() as usize;
-        if index >= app.borrow().acc_list.len() {
-            error!("Index out of bounds: the len is {} but the index is {index}.", app.borrow().acc_list.len());
+        if let Some(index) = app.borrow().get_acc_index() {
+            let account = &app.borrow().acc_list[index];
+            ui.set_acc_type(slint::SharedString::from(&account.account_type));
+            ui.set_name(slint::SharedString::from(&account.user_name));
+            ui.set_token(slint::SharedString::from(&account.refresh_token));
+            ui.set_uuid(slint::SharedString::from(&account.uuid));
+            index
+        } else {
             err_dialog("Please select an account first.");
-            return Err(slint::PlatformError::Other(String::from(format!("Index out of bounds: the len is {} but the index is {index}.", app.borrow().acc_list.len()))));
+            return Err(slint::PlatformError::Other(String::from("Failed to get the index of acc_list")));
         }
-        let account = &app.borrow().acc_list[index];
-        ui.set_acc_type(slint::SharedString::from(&account.account_type));
-        ui.set_name(slint::SharedString::from(&account.user_name));
-        ui.set_token(slint::SharedString::from(&account.refresh_token));
-        ui.set_uuid(slint::SharedString::from(&account.uuid));
-        index
     } else {
         error!("Failed to upgrade a weak pointer.");
-        return Err(slint::PlatformError::Other(String::from("Failed to upgrade a weak pointer.")));
+        return Err(slint::PlatformError::Other(String::from("Failed to upgrade a weak pointer")));
     };
 
     let app_weak_clone = app_weak.clone();
