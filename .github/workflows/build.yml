@@ -57,13 +57,10 @@ jobs:
       with:
         name: artifact-${{ matrix.os }}
         path: |
-          target/*/generic
           target/*/iconengines
           target/*/imageformats
-          target/*/networkinformation
           target/*/platforms
           target/*/styles
-          target/*/tls
           target/*/translations
           target/*/cemcl
           target/*/cemcl.exe
