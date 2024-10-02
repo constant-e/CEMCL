@@ -1,7 +1,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
-"POT-Creation-Date: 2024-10-02 08:39+0000\n"
+"POT-Creation-Date: 2024-10-02 10:48+0000\n"
 "PO-Revision-Date: 2024-10-02 11:53+0800\n"
 "Last-Translator:  <fmn_tzx@outlook.com>\n"
 "Language-Team: Chinese (simplified) <i18n-zh@googlegroups.com>\n"
@@ -279,7 +279,7 @@ msgstr "用户名"
 #: appwindow.slint:65 appwindow.slint:95
 msgctxt "AppWindow"
 msgid "Type"
-msgstr "账号类型"
+msgstr "类型"
 
 #: appwindow.slint:75 appwindow.slint:106
 msgctxt "AppWindow"
