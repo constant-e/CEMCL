@@ -2,7 +2,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
-"POT-Creation-Date: 2024-10-02 04:53+0000\n"
+"POT-Creation-Date: 2024-10-02 08:39+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -262,57 +262,57 @@ msgctxt "AddGameDialog"
 msgid "Enable Separated Version"
 msgstr ""
 
-#: appwindow.slint:42
+#: appwindow.slint:43
 msgctxt "AppWindow"
 msgid "Launching"
 msgstr ""
 
-#: appwindow.slint:59
+#: appwindow.slint:60
 msgctxt "AppWindow"
 msgid "Account"
 msgstr ""
 
-#: appwindow.slint:63
+#: appwindow.slint:64
 msgctxt "AppWindow"
 msgid "Name"
 msgstr ""
 
-#: appwindow.slint:64 appwindow.slint:94
+#: appwindow.slint:65 appwindow.slint:95
 msgctxt "AppWindow"
 msgid "Type"
 msgstr ""
 
-#: appwindow.slint:74 appwindow.slint:105
+#: appwindow.slint:75 appwindow.slint:106
 msgctxt "AppWindow"
 msgid "Add"
 msgstr ""
 
-#: appwindow.slint:79 appwindow.slint:110
+#: appwindow.slint:80 appwindow.slint:111
 msgctxt "AppWindow"
 msgid "Edit"
 msgstr ""
 
-#: appwindow.slint:89
+#: appwindow.slint:90
 msgctxt "AppWindow"
 msgid "Minecraft Version"
 msgstr ""
 
-#: appwindow.slint:93
+#: appwindow.slint:94
 msgctxt "AppWindow"
 msgid "Version"
 msgstr ""
 
-#: appwindow.slint:95
+#: appwindow.slint:96
 msgctxt "AppWindow"
 msgid "Description"
 msgstr ""
 
-#: appwindow.slint:121
+#: appwindow.slint:122
 msgctxt "AppWindow"
 msgid "Settings"
 msgstr ""
 
-#: appwindow.slint:128
+#: appwindow.slint:129
 msgctxt "AppWindow"
 msgid "Start"
 msgstr ""
@@ -395,5 +395,45 @@ msgstr ""
 #: edit-game-dialog.slint:102
 msgctxt "EditGameDialog"
 msgid "Delete"
+msgstr ""
+
+#: messages.slint:2
+msgctxt "Messages"
+msgid "Please select an account first."
+msgstr ""
+
+#: messages.slint:3
+msgctxt "Messages"
+msgid "Please select an account and a game first."
+msgstr ""
+
+#: messages.slint:4
+msgctxt "Messages"
+msgid "All the files under this game's dir will be deleted. Continue?"
+msgstr ""
+
+#: messages.slint:5
+msgctxt "Messages"
+msgid "Please select a game first."
+msgstr ""
+
+#: messages.slint:6
+msgctxt "Messages"
+msgid "Failed to load account list. Reason: "
+msgstr ""
+
+#: messages.slint:7
+msgctxt "Messages"
+msgid "Failed to load config. Reason: "
+msgstr ""
+
+#: messages.slint:8
+msgctxt "Messages"
+msgid "Failed to load game list. Reason: "
+msgstr ""
+
+#: messages.slint:9
+msgctxt "Messages"
+msgid "Warning"
 msgstr ""
 

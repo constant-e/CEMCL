@@ -13,7 +13,7 @@ use slint::{ComponentHandle, ModelRc, StandardListViewItem, VecModel};
 use crate::dialogs::msg_box::{err_dialog, warn_dialog};
 use crate::file_tools::list_dir;
 use crate::mc::download::GameUrl;
-use crate::AppWindow;
+use crate::{AppWindow, Messages};
 use crate::mc::{launch, Account, Game};
 
 /// 启动器配置
@@ -90,17 +90,23 @@ impl App {
 
         if let Err(e) = app.load_acc_list() {
             warn!("Failed to load account list. Reason: {e}.");
-            warn_dialog(&format!("Failed to load account list. Reason: {e}."));
+            let msg = ui_weak.upgrade().ok_or(ErrorKind::Other)?
+                .global::<Messages>().get_load_acc_failed().to_string() + &format!("{e}");
+            warn_dialog(&msg);
         }
 
         if let Err(e) = app.load_config() {
             warn!("Failed to load config. Reason: {e}.");
-            warn_dialog(&format!("Failed to load config. Reason: {e}."));
+            let msg = ui_weak.upgrade().ok_or(ErrorKind::Other)?
+                .global::<Messages>().get_load_config_failed().to_string() + &format!("{e}");
+            warn_dialog(&msg);
         }
 
         if let Err(e) = app.load_game_list() {
             warn!("Failed to load game list. Reason: {e}.");
-            warn_dialog(&format!("Failed to load game list. Reason: {e}."));
+            let msg = ui_weak.upgrade().ok_or(ErrorKind::Other)?
+                .global::<Messages>().get_load_game_failed().to_string() + &format!("{e}");
+            warn_dialog(&msg);
         }
         
         app.ui_weak = ui_weak;
@@ -198,7 +204,7 @@ impl App {
             let game_index = ui.get_game_index() as usize;
             if acc_index >= self.acc_list.len() || game_index >= self.game_list.len() {
                 warn!("Index out of bounds: the len is ({}, {}) but the index is ({acc_index}, {game_index}).", self.acc_list.len(), self.game_list.len());
-                err_dialog("Please select an account and a Minecraft version first.");
+                err_dialog(&ui.global::<Messages>().get_acc_or_game_not_selected());
                 return None;
             }
 

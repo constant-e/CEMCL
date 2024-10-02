@@ -4,7 +4,7 @@ use std::{cell::RefCell, rc};
 
 use log::error;
 use slint::ComponentHandle;
-use crate::{app::App, dialogs::msg_box::err_dialog, mc::Account, EditAccDialog};
+use crate::{app::App, dialogs::msg_box::err_dialog, mc::Account, EditAccDialog, Messages};
 
 pub fn edit_acc_dialog(app_weak: rc::Weak<RefCell<App>>) -> Result<(), slint::PlatformError> {
     let ui = EditAccDialog::new()?;
@@ -19,7 +19,9 @@ pub fn edit_acc_dialog(app_weak: rc::Weak<RefCell<App>>) -> Result<(), slint::Pl
             ui.set_uuid(slint::SharedString::from(&account.uuid));
             index
         } else {
-            err_dialog("Please select an account first.");
+            err_dialog(&app.borrow().ui_weak.upgrade()
+                .ok_or(slint::PlatformError::Other(String::from("Failed to upgrade a weak pointer")))?
+                .global::<Messages>().get_acc_not_selected());
             return Err(slint::PlatformError::Other(String::from("Failed to get the index of acc_list")));
         }
     } else {

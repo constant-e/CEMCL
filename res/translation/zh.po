@@ -1,7 +1,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
-"POT-Creation-Date: 2024-10-02 04:53+0000\n"
+"POT-Creation-Date: 2024-10-02 08:39+0000\n"
 "PO-Revision-Date: 2024-10-02 11:53+0800\n"
 "Last-Translator:  <fmn_tzx@outlook.com>\n"
 "Language-Team: Chinese (simplified) <i18n-zh@googlegroups.com>\n"
@@ -261,57 +261,57 @@ msgctxt "AddGameDialog"
 msgid "Enable Separated Version"
 msgstr "启用版本隔离"
 
-#: appwindow.slint:42
+#: appwindow.slint:43
 msgctxt "AppWindow"
 msgid "Launching"
 msgstr "启动中"
 
-#: appwindow.slint:59
+#: appwindow.slint:60
 msgctxt "AppWindow"
 msgid "Account"
 msgstr "账号"
 
-#: appwindow.slint:63
+#: appwindow.slint:64
 msgctxt "AppWindow"
 msgid "Name"
 msgstr "用户名"
 
-#: appwindow.slint:64 appwindow.slint:94
+#: appwindow.slint:65 appwindow.slint:95
 msgctxt "AppWindow"
 msgid "Type"
 msgstr "账号类型"
 
-#: appwindow.slint:74 appwindow.slint:105
+#: appwindow.slint:75 appwindow.slint:106
 msgctxt "AppWindow"
 msgid "Add"
 msgstr "添加"
 
-#: appwindow.slint:79 appwindow.slint:110
+#: appwindow.slint:80 appwindow.slint:111
 msgctxt "AppWindow"
 msgid "Edit"
 msgstr "编辑"
 
-#: appwindow.slint:89
+#: appwindow.slint:90
 msgctxt "AppWindow"
 msgid "Minecraft Version"
 msgstr "Minecraft版本"
 
-#: appwindow.slint:93
+#: appwindow.slint:94
 msgctxt "AppWindow"
 msgid "Version"
 msgstr "版本"
 
-#: appwindow.slint:95
+#: appwindow.slint:96
 msgctxt "AppWindow"
 msgid "Description"
 msgstr "备注"
 
-#: appwindow.slint:121
+#: appwindow.slint:122
 msgctxt "AppWindow"
 msgid "Settings"
 msgstr "设置"
 
-#: appwindow.slint:128
+#: appwindow.slint:129
 msgctxt "AppWindow"
 msgid "Start"
 msgstr "启动"
@@ -395,3 +395,43 @@ msgstr "启用版本隔离"
 msgctxt "EditGameDialog"
 msgid "Delete"
 msgstr "删除"
+
+#: messages.slint:2
+msgctxt "Messages"
+msgid "Please select an account first."
+msgstr "请先选择一个账号。"
+
+#: messages.slint:3
+msgctxt "Messages"
+msgid "Please select an account and a game first."
+msgstr "请先选择一个账号和一个游戏。"
+
+#: messages.slint:4
+msgctxt "Messages"
+msgid "All the files under this game's dir will be deleted. Continue?"
+msgstr "游戏文件夹下的所有内容将被删除。是否继续？"
+
+#: messages.slint:5
+msgctxt "Messages"
+msgid "Please select a game first."
+msgstr "请先选择一个游戏。"
+
+#: messages.slint:6
+msgctxt "Messages"
+msgid "Failed to load account list. Reason: "
+msgstr "加载账号列表失败。原因："
+
+#: messages.slint:7
+msgctxt "Messages"
+msgid "Failed to load config. Reason: "
+msgstr "加载配置失败。原因："
+
+#: messages.slint:8
+msgctxt "Messages"
+msgid "Failed to load game list. Reason: "
+msgstr "加载游戏列表失败。原因："
+
+#: messages.slint:9
+msgctxt "Messages"
+msgid "Warning"
+msgstr "警告"

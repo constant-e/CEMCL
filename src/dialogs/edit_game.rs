@@ -4,7 +4,7 @@ use std::{cell::RefCell, rc};
 use log::error;
 use slint::ComponentHandle;
 
-use crate::{app::App, dialogs::msg_box::err_dialog, EditGameDialog};
+use crate::{app::App, dialogs::msg_box::err_dialog, EditGameDialog, Messages};
 
 use super::msg_box::ask_dialog;
 
@@ -24,7 +24,9 @@ pub fn edit_game_dialog(app_weak: rc::Weak<RefCell<App>>) -> Result<(), slint::P
             ui.set_xmx(game.xmx.clone().into());
             index
         } else {
-            err_dialog("Please select a Minecraft version first.");
+            err_dialog(&app.borrow().ui_weak.upgrade()
+                .ok_or(slint::PlatformError::Other(String::from("Failed to upgrade a weak pointer")))?
+                .global::<Messages>().get_game_not_selected());
             return Err(slint::PlatformError::Other(String::from("Failed to get the index of game_list")));
         }
     } else {
@@ -63,10 +65,18 @@ pub fn edit_game_dialog(app_weak: rc::Weak<RefCell<App>>) -> Result<(), slint::P
 
     ui.on_click_del_btn(move || {
         if let (Some(app), Some(ui)) = (app_weak.upgrade(), ui_weak.upgrade()) {
-            ask_dialog("Warning", "All the files under this game's dir will be deleted. Continue?", move || {
+            let (title, msg) = if let Some(app_ui) = app.borrow().ui_weak.upgrade() {
+                (app_ui.global::<Messages>().get_warn(), app_ui.global::<Messages>().get_del_game_confirm())
+            } else {
+                error!("Failed to upgrade a weak pointer.");
+                return;
+            };
+            ask_dialog(&title, &msg, move || {
                 app.borrow_mut().del_game(index);
                 ui.hide().unwrap();
             });
+        } else {
+            error!("Failed to upgrade a weak pointer.");
         }
     });
 
