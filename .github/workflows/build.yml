@@ -29,6 +29,15 @@ jobs:
       uses: jurplel/install-qt-action@v4
       with:
         version: "5.15.2"
+    - name: Install gettext
+      if: matrix.os == 'macos-13'
+      run: brew install gettext
+    - name: Install gettext
+      if: matrix.os == 'ubuntu-latest'
+      run: sudo apt install gettext
+    - name: Install slint-tr-extractor
+      if: matrix.os != 'windows-latest'
+      run: cargo install slint-tr-extractor && export PATH=~/.cargo/bin:$PATH
     - name: Build debug
       run: cargo build --verbose
     - name: Build release
@@ -45,4 +54,3 @@ jobs:
           target/*/cemcl
           target/*/cemcl.exe
           target/*/locale
-
