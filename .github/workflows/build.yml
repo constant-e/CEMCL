@@ -46,6 +46,12 @@ jobs:
     - name: Generate language file
       if: matrix.os != 'windows-latest'
       run: ./update_translations.sh --all
+    # Windows only
+    - name: Add dll files
+      if: matrix.os == 'windows-latest'
+      run: |
+        windeployqt target/debug/cemcl.exe
+        windeployqt target/release/cemcl.exe
     - name: Upload artifact
       uses: actions/upload-artifact@v4.3.6
       with:
@@ -53,4 +59,5 @@ jobs:
         path: |
           target/*/cemcl
           target/*/cemcl.exe
+          target/*/*.dll
           target/*/locale
