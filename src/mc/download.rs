@@ -4,7 +4,6 @@ use std::fs::{self, exists};
 use std::env::consts as env;
 use log::info;
 use serde_json::Value;
-use futures::future::join_all;
 
 use crate::file_tools::list_file;
 use super::check_rules;
@@ -24,6 +23,7 @@ pub struct GameUrl {
 
 /// 下载
 pub async fn download(url: String, path: String, max: usize) -> Option<()> {
+    info!("Start downloading {url}");
     let mut response = reqwest::get(&url).await;
     let mut c = 0; // retry times
     while response.is_err() {
@@ -31,13 +31,13 @@ pub async fn download(url: String, path: String, max: usize) -> Option<()> {
         response = reqwest::get(&url).await;
         c += 1;
     }
-    fs::write(path, response.unwrap().bytes().await.ok()?).ok()?;
-    info!("Downloaded {url}");
+    tokio::fs::write(path, response.unwrap().bytes().await.ok()?).await.ok()?;
+    info!("Finish downloading {url}");
     return Some(());
 }
 
 /// 下载assets
-pub async fn download_assets(path: &str, id: &str, mirror: &str) -> Option<()> {
+pub fn download_assets(path: &str, id: &str, mirror: &str) -> Option<Vec<tokio::task::JoinHandle<Option<()>>>> {
     let assets_dir = path.to_string() + "/assets";
     let index_path = assets_dir.clone() + "/indexes/" + &id + ".json";
     let json = serde_json::from_str::<Value>(&fs::read_to_string(&index_path).ok()?).ok()?;
@@ -55,10 +55,8 @@ pub async fn download_assets(path: &str, id: &str, mirror: &str) -> Option<()> {
             futures.push(future);
         }
     }
-    
-    join_all(futures).await;
 
-    return Some(());
+    return Some(futures);
 }
 
 /// 下载单个library
@@ -88,16 +86,16 @@ async fn download_lib(node: Value, path: String, game_dir: String, mirror: Strin
             if !exists(&local_path).ok()? {
                 if !exists(&dir).ok()? { fs::create_dir_all(&dir).ok()?; }
                 let url = node["downloads"]["classifiers"][&key]["url"].as_str()?.replace("https://libraries.minecraft.net", &mirror);
-                download(url.clone(), local_path.clone(), 3).await;
+                download(url.clone(), local_path.clone(), 3).await?;
             }
 
             // Add natives
             let natives_dir = game_dir.to_string() + "/natives-" + os + "-" + env::ARCH;
             if exists(&("temp".to_string() + &id.to_string())).ok()? {
-                fs::remove_dir_all("temp".to_string() + &id.to_string()).ok()?;
+                tokio::fs::remove_dir_all("temp".to_string() + &id.to_string()).await.ok()?;
             }
-            if !exists(&natives_dir).ok()? { fs::create_dir(&natives_dir).ok()?; }
-            fs::create_dir("temp".to_string() + &id.to_string()).ok()?; // 临时文件夹
+            if !exists(&natives_dir).ok()? { tokio::fs::create_dir(&natives_dir).await.ok()?; }
+            tokio::fs::create_dir("temp".to_string() + &id.to_string()).await.ok()?; // 临时文件夹
             let mut zip = zip::ZipArchive::new(fs::File::open(&local_path).ok()?).ok()?;
             zip.extract("temp".to_string() + &id.to_string()).ok()?;
             let files = list_file(&("temp".to_string() + &id.to_string())).ok()?;
@@ -110,9 +108,9 @@ async fn download_lib(node: Value, path: String, game_dir: String, mirror: Strin
                 let split: Vec<&str> = name.split("/").collect();
                 let file_name = split.last()?;
                 let target_path = natives_dir.clone() + "/" + &file_name;
-                if !exists(&target_path).ok()? { fs::copy(name, &target_path).ok()?; }
+                if !exists(&target_path).ok()? { tokio::fs::copy(name, &target_path).await.ok()?; }
             }
-            fs::remove_dir_all("temp".to_string() + &id.to_string()).ok()?;
+            tokio::fs::remove_dir_all("temp".to_string() + &id.to_string()).await.ok()?;
         }
     }
     
@@ -126,9 +124,9 @@ async fn download_lib(node: Value, path: String, game_dir: String, mirror: Strin
                 dir.push_str(item);
                 if index != vec.len() - 2 { dir.push('/'); }
             }
-            if !exists(&dir).ok()? { fs::create_dir_all(&dir).ok()?; }
+            if !exists(&dir).ok()? { tokio::fs::create_dir_all(&dir).await.ok()?; }
             let url = node["downloads"]["artifact"]["url"].as_str()?.replace("https://libraries.minecraft.net", &mirror);
-            download(url.clone(), local_path.clone(), 3).await;
+            download(url.clone(), local_path.clone(), 3).await?;
         }
         // Add natives
         let name: Vec<&str> = node["name"].as_str()?.split(":").collect();
@@ -136,10 +134,10 @@ async fn download_lib(node: Value, path: String, game_dir: String, mirror: Strin
         if name.contains("natives") {
             let natives_dir = game_dir.to_string() + "/natives-" + os + "-" + env::ARCH;
             if exists(&("temp".to_string() + &id.to_string())).ok()? {
-                fs::remove_dir_all("temp".to_string() + &id.to_string()).ok()?;
+                tokio::fs::remove_dir_all("temp".to_string() + &id.to_string()).await.ok()?;
             }
             if !exists(&natives_dir).ok()? { fs::create_dir(&natives_dir).ok()?; }
-            fs::create_dir("temp".to_string() + &id.to_string()).ok()?; // 临时文件夹
+            tokio::fs::create_dir("temp".to_string() + &id.to_string()).await.ok()?; // 临时文件夹
             let mut zip = zip::ZipArchive::new(fs::File::open(&local_path).ok()?).ok()?;
             zip.extract("temp".to_string() + &id.to_string()).ok()?;
             let files = list_file(&("temp".to_string() + &id.to_string())).ok()?;
@@ -152,9 +150,9 @@ async fn download_lib(node: Value, path: String, game_dir: String, mirror: Strin
                 let split: Vec<&str> = name.split("/").collect();
                 let file_name = split.last()?;
                 let target_path = natives_dir.clone() + "/" + &file_name;
-                if !exists(&target_path).ok()? { fs::copy(name, &target_path).ok()?; }
+                if !exists(&target_path).ok()? { tokio::fs::copy(name, &target_path).await.ok()?; }
             }
-            fs::remove_dir_all("temp".to_string() + &id.to_string()).ok()?;
+            tokio::fs::remove_dir_all("temp".to_string() + &id.to_string()).await.ok()?;
         }
     }
     
@@ -162,7 +160,7 @@ async fn download_lib(node: Value, path: String, game_dir: String, mirror: Strin
 }
 
 /// 下载libraries，node: mc json["libraries"]
-pub async fn download_libraries(node: &Value, path: &str, game_dir: &str, mirror: &str) -> Option<()> {
+pub fn download_libraries(node: &Value, path: &str, game_dir: &str, mirror: &str) -> Option<Vec<tokio::task::JoinHandle<Option<()>>>> {
     let mut futures = Vec::new();
     let mut c = 0;
     for item in node.as_array()? {
@@ -171,10 +169,8 @@ pub async fn download_libraries(node: &Value, path: &str, game_dir: &str, mirror
         futures.push(future);
         c += 1;
     }
-    
-    join_all(futures).await;
 
-    return Some(());
+    return Some(futures);
 }
 
 /// 获取下载列表

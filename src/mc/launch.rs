@@ -2,7 +2,7 @@
 
 //! mc::launch 获取MC的启动参数
 
-use futures::join;
+use futures::future::join_all;
 use log::error;
 use std::env::consts as env;
 use std::fs::{self, exists};
@@ -101,7 +101,7 @@ fn get_classpaths(n: &Value, game_path: &String) -> Option<Vec<String>> {
 }
 
 /// 获取启动总命令
-pub async fn get_launch_command(account: &Account, game: &Game, config: &Config) -> Option<Vec<String>> {
+pub fn get_launch_command(account: &Account, game: &Game, config: &Config) -> Option<Vec<String>> {
     // TODO: 支持使用自定义参数
     let mut result: Vec<String> = Vec::new();
     let game_path = &config.game_path;
@@ -253,30 +253,45 @@ pub async fn get_launch_command(account: &Account, game: &Game, config: &Config)
         }
 
         // 处理依赖
+
+        let rt = tokio::runtime::Runtime::new().unwrap();
+        let _tokio = rt.enter();
+
         // json first
         let index_dir = game_path.clone() + "/assets/indexes/";
         let index_path = index_dir.clone() + &asset_index + ".json";
         if !exists(&index_path).ok()? {
             if !exists(&index_dir).ok()? { fs::create_dir_all(&index_dir).ok()?; }
-            download::download(json["assetIndex"]["url"].as_str()?.to_string(), index_path, 3).await;
+            rt.block_on(download::download(json["assetIndex"]["url"].as_str()?.to_string(), index_path, 3));
         }
 
+        let mut futures = Vec::new();
+
         // assets
-        let ass_future = download::download_assets(&game_path, &asset_index, &config.assets_source);
-        
+        let mut ass_futures = download::download_assets(&game_path, &asset_index, &config.assets_source)?;
+        futures.append(&mut ass_futures);
+
         // libraries
-        let lib_future = download::download_libraries(&json["libraries"], &game_path, &dir, &config.libraries_source);
+        let mut lib_futures = download::download_libraries(&json["libraries"], &game_path, &dir, &config.libraries_source)?;
+        futures.append(&mut lib_futures);
 
         let jar_path = dir.clone() + "/" + game.version.as_ref() + ".jar";
         if !exists(&jar_path).ok()? {
             // 本体
             let url = json["downloads"]["client"]["url"].as_str()?.to_string()
                 .replace("https://piston-meta.mojang.com", &config.game_source);
-            let future = download::download(url, jar_path, 3);
-            join!(future, ass_future, lib_future);
-        } else {
-            join!(ass_future, lib_future);
+            let future = tokio::spawn(download::download(url, jar_path, 3));
+            futures.push(future);
         }
+        
+        let max: usize = 10; // TODO: support change this value
+        let len = futures.len();
+        let mut index: usize = len;
+        while index >= max {
+            index -= max;
+            rt.block_on(join_all(futures.split_off(index)));
+        }
+        rt.block_on(join_all(futures));
 
         return Some(result)
     } else {

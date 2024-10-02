@@ -213,47 +213,44 @@ impl App {
             let game_list = self.game_list.clone();
             let ui_weak = ui.as_weak();
             thread::spawn(move || {
-                let rt = tokio::runtime::Runtime::new().unwrap();
-                let _tokio = rt.enter();
-                rt.block_on(async move {
-                    ui_weak.upgrade_in_event_loop(|ui| { ui.invoke_show_popup(); }).unwrap();
-                    if let Some(cmd) = launch::get_launch_command(&acc_list[acc_index], &game_list[game_index], &config).await {
-                        if cfg!(debug_assertions) {
-                            let mut str = game_list[game_index].java_path.clone() + " ";
-                            for i in &cmd {
-                                str.push_str(i);
-                                str.push_str(" ");
-                            }
-                            debug!("{str}");
+                ui_weak.upgrade_in_event_loop(|ui| { ui.invoke_show_popup(); }).unwrap();
+                if let Some(cmd) = launch::get_launch_command(&acc_list[acc_index], &game_list[game_index], &config) {
+                    if cfg!(debug_assertions) {
+                        let mut str = game_list[game_index].java_path.clone() + " ";
+                        for i in &cmd {
+                            str.push_str(i);
+                            str.push_str(" ");
                         }
-                        
-                        let java_path = game_list[game_index].java_path.clone();
-                        let (s, r) = sync::mpsc::channel();
-
-                        thread::spawn(move || {
-                            if let Ok(_child) = Command::new(java_path).args(cmd).spawn() {
-                                s.send(Some(())).unwrap();
-                            } else {
-                                s.send(None).unwrap();
-                                error!("Failed to run command.");
-                            }
-                        });
-
-                        if r.recv().unwrap().is_some() {
-                            if config.close_after_launch {
-                                ui_weak.upgrade_in_event_loop(|ui| { ui.hide().unwrap(); }).unwrap();
-                            }
-                        } else {
-                            slint::invoke_from_event_loop(|| {
-                                err_dialog("Failed to run command.");
-                            }).unwrap();
-                        }
-                        ui_weak.upgrade_in_event_loop(|ui| { ui.invoke_close_popup(); }).unwrap();
-                    } else {
-                        error!("Failed to get launch command.");
-                        ui_weak.upgrade_in_event_loop(|ui| { ui.invoke_close_popup(); }).unwrap();
+                        debug!("{str}");
                     }
-                });
+                    
+                    let java_path = game_list[game_index].java_path.clone();
+                    let (s, r) = sync::mpsc::channel();
+
+                    thread::spawn(move || {
+                        if let Ok(_child) = Command::new(java_path).args(cmd).spawn() {
+                            s.send(Some(())).unwrap();
+                        } else {
+                            s.send(None).unwrap();
+                            error!("Failed to run command.");
+                        }
+                    });
+
+                    if r.recv().unwrap().is_some() {
+                        if config.close_after_launch {
+                            ui_weak.upgrade_in_event_loop(|ui| { ui.hide().unwrap(); }).unwrap();
+                        }
+                    } else {
+                        slint::invoke_from_event_loop(|| {
+                            err_dialog("Failed to run command.");
+                        }).unwrap();
+                    }
+
+                    ui_weak.upgrade_in_event_loop(|ui| { ui.invoke_close_popup(); }).unwrap();
+                } else {
+                    error!("Failed to get launch command.");
+                    ui_weak.upgrade_in_event_loop(|ui| { ui.invoke_close_popup(); }).unwrap();
+                }
             });
         }
 
