@@ -39,6 +39,7 @@ Example:
 {
     "assets_source": "http://resources.download.minecraft.net",
     "close_after_launch": false,
+    "concurrency": 10,
     "fabric_source": "https://maven.fabricmc.net",
     "forge_source": "https://maven.minecraftforge.net",
     "game_path": ".minecraft",
@@ -54,14 +55,15 @@ Example:
 
 Explanations:
 1. `close_after_launch`: Whether to close CEMCL after launching MC. Type: `bool`.
-2. `..._source`: Download source for the software. Type: `string`.
-3. `game_path`: The path of `.minecraft`. Type: `string`.
-4. `height`: Default game window height. Type: `string`.
-5. `java_path`: The path of `java`. Type: `string`.
-6. `width`: Default game window width. Type: `string`.
-7. `xms`: Minimum memory for jvm. Type: `string`.  
+2. `concurrency`: The concurrency of the downloader. Type: `int`.
+3. `..._source`: Download source for the software. Type: `string`.
+4. `game_path`: The path of `.minecraft`. Type: `string`.
+5. `height`: Default game window height. Type: `string`.
+6. `java_path`: The path of `java`. Type: `string`.
+7. `width`: Default game window width. Type: `string`.
+8. `xms`: Minimum memory for jvm. Type: `string`.  
 **It will be a part of launch arguments. Format: `1024M`, `2G`, etc.**
-8. `xmx`: Maximum memory for jvm. Type: `string`.  
+1. `xmx`: Maximum memory for jvm. Type: `string`.  
 **It will be a part of launch arguments. Format: `1024M`, `2G`, etc.**
 
 ## config.json (In the game's folder)
@@ -72,10 +74,11 @@ Type: `object`
 Example:
 ```json
 {
-    "args": "",
     "description": "",
+    "game_args": [],
     "height": "600",
     "java_path": "java",
+    "jvm_args": [],
     "separated": false,
     "width": "800",
     "xms": "1G",
@@ -83,7 +86,7 @@ Example:
 }
 ```
 Explanations:
-1. `args`: Customized launcher arguments. If not blank, it will be the launch arguments, and **CEMCL won't add other arguments**.Type: `string`.
+1. `game_args` and `jvm_args`: Customized launch arguments. Type: `[string]`.
 2. `description`: Description. Type: `string`.
 3. `separated`: Whether to separate different versions. Type: `bool`.
 4. Others are the same as *config.json (In the launcher's folder)*.

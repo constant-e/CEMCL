@@ -39,6 +39,7 @@
 {
     "assets_source": "http://resources.download.minecraft.net",
     "close_after_launch": false,
+    "concurrency": 10,
     "fabric_source": "https://maven.fabricmc.net",
     "forge_source": "https://maven.minecraftforge.net",
     "game_path": ".minecraft",
@@ -54,14 +55,15 @@
 
 说明：
 1. `close_after_launch`：游戏启动后是否关闭启动器。数据类型：`bool`。
-2. `..._source`：相应软件的下载源。数据类型：`string`。
-3. `game_path`：`.minecraft`文件夹的位置。数据类型：`string`。
-4. `height`：默认游戏窗口高度。数据类型：`string`。
-5. `java_path`：`java`的路径。数据类型：`string`。
-6. `width`：默认游戏窗口宽度。数据类型：`string`。
-7. `xms`：为jvm分配的最小内存。数据类型：`string`。  
+2. `concurrency`：下载时的最大并发数量。数据类型：`int`。
+3. `..._source`：相应软件的下载源。数据类型：`string`。
+4. `game_path`：`.minecraft`文件夹的位置。数据类型：`string`。
+5. `height`：默认游戏窗口高度。数据类型：`string`。
+6. `java_path`：`java`的路径。数据类型：`string`。
+7. `width`：默认游戏窗口宽度。数据类型：`string`。
+8. `xms`：为jvm分配的最小内存。数据类型：`string`。  
 **将直接填入启动参数，格式如：`1024M`、`2G`等。**
-8. `xmx`：为jvm分配的最大内存。数据类型：`string`。  
+1. `xmx`：为jvm分配的最大内存。数据类型：`string`。  
 **将直接填入启动参数，格式如：`1024M`、`2G`等。**
 
 ## config.json（位于游戏目录下）
@@ -72,10 +74,11 @@
 样例：
 ```json
 {
-    "args": "",
     "description": "",
+    "game_args": [],
     "height": "600",
     "java_path": "java",
+    "jvm_args": [],
     "separated": false,
     "width": "800",
     "xms": "1G",
@@ -83,7 +86,7 @@
 }
 ```
 说明：
-1. `args`：自定义启动参数。若此项非空，将直接填入启动参数，并且**不会再添加其他参数**。数据类型：`string`。
+1. `game_args`和`jvm_args`：自定义启动参数。数据类型：`[string]`。
 2. `description`：备注。数据类型：`string`。
 3. `separated`：是否启用版本隔离。数据类型：`bool`。
 4. 其余同*config.json（位于启动器目录下）*。
