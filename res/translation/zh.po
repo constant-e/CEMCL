@@ -1,7 +1,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
-"POT-Creation-Date: 2024-10-02 10:48+0000\n"
+"POT-Creation-Date: 2024-10-03 01:49+0000\n"
 "PO-Revision-Date: 2024-10-02 11:53+0800\n"
 "Last-Translator:  <fmn_tzx@outlook.com>\n"
 "Language-Team: Chinese (simplified) <i18n-zh@googlegroups.com>\n"
@@ -21,117 +21,122 @@ msgctxt "ErrorDialog"
 msgid "Error"
 msgstr "错误"
 
-#: settings.slint:7 settings.slint:32
+#: settings.slint:7 settings.slint:33
 msgctxt "Settings"
 msgid "Settings"
 msgstr "设置"
 
-#: settings.slint:36
+#: settings.slint:37
 msgctxt "Settings"
 msgid "Launcher Settings"
 msgstr "启动器设置"
 
-#: settings.slint:43
+#: settings.slint:44
 msgctxt "Settings"
 msgid "General"
 msgstr "通用"
 
-#: settings.slint:49
+#: settings.slint:50
 msgctxt "Settings"
 msgid "Minecraft Path: "
 msgstr "Minecraft路径："
 
-#: settings.slint:59
+#: settings.slint:60
 msgctxt "Settings"
 msgid "Close after Launching Game"
 msgstr "启动后关闭启动器"
 
-#: settings.slint:65
+#: settings.slint:66
 msgctxt "Settings"
-msgid "Download Sources"
-msgstr "下载源"
+msgid "Downloading Settings"
+msgstr "下载设置"
 
-#: settings.slint:71
+#: settings.slint:72
+msgctxt "Settings"
+msgid "Concurrency: "
+msgstr "并发数："
+
+#: settings.slint:82
 msgctxt "Settings"
 msgid "Assets Source: "
 msgstr "assets下载源："
 
-#: settings.slint:81
+#: settings.slint:92
 msgctxt "Settings"
 msgid "Libraries Source: "
 msgstr "libraries下载源："
 
-#: settings.slint:91
+#: settings.slint:102
 msgctxt "Settings"
 msgid "Minecraft Source: "
 msgstr "Minecraft下载源："
 
-#: settings.slint:101
+#: settings.slint:112
 msgctxt "Settings"
 msgid "Fabric Source: "
 msgstr "Fabric下载源："
 
-#: settings.slint:111
+#: settings.slint:122
 msgctxt "Settings"
 msgid "Forge Source: "
 msgstr "Forge下载源："
 
-#: settings.slint:129
+#: settings.slint:140
 msgctxt "Settings"
 msgid "Default Minecraft Settings"
 msgstr "默认游戏设置"
 
-#: settings.slint:136
+#: settings.slint:147
 msgctxt "Settings"
 msgid "Java Path: "
 msgstr "Java路径："
 
-#: settings.slint:146
+#: settings.slint:157
 msgctxt "Settings"
 msgid "Window Height: "
 msgstr "窗口高度："
 
-#: settings.slint:156
+#: settings.slint:167
 msgctxt "Settings"
 msgid "Window Width: "
 msgstr "窗口宽度："
 
-#: settings.slint:166
+#: settings.slint:177
 msgctxt "Settings"
 msgid "Minimum Memory: "
 msgstr "最小分配内存："
 
-#: settings.slint:176
+#: settings.slint:187
 msgctxt "Settings"
 msgid "Maximum Memory: "
 msgstr "最大分配内存："
 
-#: settings.slint:194
+#: settings.slint:205
 msgctxt "Settings"
 msgid "About"
 msgstr "关于"
 
-#: settings.slint:217
+#: settings.slint:228
 msgctxt "Settings"
 msgid "Version: "
 msgstr "版本："
 
-#: settings.slint:218
+#: settings.slint:229
 msgctxt "Settings"
 msgid "Github Repository: "
 msgstr "GitHub仓库："
 
-#: settings.slint:219
+#: settings.slint:230
 msgctxt "Settings"
 msgid "Developers: "
 msgstr "开发者："
 
-#: settings.slint:220
+#: settings.slint:231
 msgctxt "Settings"
 msgid "License: "
 msgstr "许可证："
 
-#: settings.slint:222
+#: settings.slint:233
 msgctxt "Settings"
 msgid "Credits:\n"
 msgstr "鸣谢：\n"

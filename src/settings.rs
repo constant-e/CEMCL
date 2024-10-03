@@ -15,6 +15,7 @@ pub fn init(app_weak: rc::Weak<RefCell<App>>) -> Option<()> {
     ui.set_assets_source(app.borrow().config.assets_source.clone().into());
     ui.set_authors(env!("CARGO_PKG_AUTHORS").into());
     ui.set_close_after_launch(app.borrow().config.close_after_launch.clone());
+    ui.set_concurrency(app.borrow().config.concurrency as i32);
     ui.set_config_height(app.borrow().config.height.clone().into());
     ui.set_config_width(app.borrow().config.width.clone().into());
     ui.set_fabric_source(app.borrow().config.fabric_source.clone().into());
@@ -36,6 +37,8 @@ pub fn init(app_weak: rc::Weak<RefCell<App>>) -> Option<()> {
 
             app.borrow_mut().config.assets_source = ui.get_assets_source().into();
             app.borrow_mut().config.close_after_launch = ui.get_close_after_launch();
+            // In slint, it is between 0 and 100, so don't need to check.
+            app.borrow_mut().config.concurrency = ui.get_concurrency() as usize;
             app.borrow_mut().config.fabric_source = ui.get_fabric_source().into();
             app.borrow_mut().config.forge_source = ui.get_forge_source().into();
             app.borrow_mut().config.game_path = new_game_path.clone();

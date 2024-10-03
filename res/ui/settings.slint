@@ -1,4 +1,4 @@
-import { TabWidget, ScrollView, StandardButton, Switch } from "std-widgets.slint";
+import { TabWidget, ScrollView, StandardButton, Switch, SpinBox } from "std-widgets.slint";
 import { Title, SectionTitle } from "components/components.slint";
 
 export component Settings inherits Dialog {
@@ -14,7 +14,8 @@ export component Settings inherits Dialog {
     // General
     in-out property <bool> close-after-launch <=> close-after-launch-box.checked;
     in-out property <string> game-path <=> game-path-input.text;
-    // Download Sources
+    // Downloading Settings
+    in-out property <int> concurrency <=> concurrency-input.value;
     in-out property <string> assets-source <=> assets-source-input.text;
     in-out property <string> libraries-source <=> libraries-source-input.text;
     in-out property <string> game-source <=> game-source-input.text;
@@ -62,64 +63,74 @@ export component Settings inherits Dialog {
                         }
                         
                         SectionTitle {
-                            text: @tr("Download Sources");
+                            text: @tr("Downloading Settings");
                             col: 0;
                             row: 3;
                         }
 
                         Text {
-                            text: @tr("Assets Source: ");
+                            text: @tr("Concurrency: ");
                             col: 0;
                             row: 4;
                         }
-                        assets-source-input := TextInput {
+                        concurrency-input := SpinBox {
                             col: 1;
                             row: 4;
+                        }
+
+                        Text {
+                            text: @tr("Assets Source: ");
+                            col: 0;
+                            row: 5;
+                        }
+                        assets-source-input := TextInput {
+                            col: 1;
+                            row: 5;
                         }
 
                         Text {
                             text: @tr("Libraries Source: ");
                             col: 0;
-                            row: 5;
+                            row: 6;
                         }
                         libraries-source-input := TextInput {
                             col: 1;
-                            row: 5;
+                            row: 6;
                         }
 
                         Text {
                             text: @tr("Minecraft Source: ");
                             col: 0;
-                            row: 6;
+                            row: 7;
                         }
                         game-source-input := TextInput {
                             col: 1;
-                            row: 6;
+                            row: 7;
                         }
                         
                         Text {
                             text: @tr("Fabric Source: ");
                             col: 0;
-                            row: 7;
+                            row: 8;
                         }
                         fabric-source-input := TextInput {
                             col: 1;
-                            row: 7;
+                            row: 8;
                         }
                         
                         Text {
                             text: @tr("Forge Source: ");
                             col: 0;
-                            row: 8;
+                            row: 9;
                         }
                         forge-source-input := TextInput {
                             col: 1;
-                            row: 8;
+                            row: 9;
                         }
 
                         Rectangle {
                             preferred-height: 100%; 
-                            row: 9;
+                            row: 10;
                         }
                     }
                 }

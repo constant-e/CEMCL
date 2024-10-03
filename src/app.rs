@@ -25,6 +25,9 @@ pub struct Config {
     /// 启动后关闭启动器
     pub close_after_launch: bool,
 
+    /// 下载时的最大并发数量
+    pub concurrency: usize,
+
     /// Fabric下载源
     pub fabric_source: String,
 
@@ -61,6 +64,7 @@ impl Default for Config {
         Config {
             assets_source: String::from("https://resources.download.minecraft.net"),
             close_after_launch: false,
+            concurrency: 10,
             fabric_source: String::from("https://maven.fabricmc.net"),
             forge_source: String::from("https://maven.minecraftforge.net"),
             game_path: String::from(".minecraft"),
@@ -293,6 +297,7 @@ impl App {
             
             self.config.assets_source = String::from(json["assets_source"].as_str().ok_or(ErrorKind::InvalidData)?);
             self.config.close_after_launch = json["close_after_launch"].as_bool().ok_or(ErrorKind::InvalidData)?;
+            self.config.concurrency = json["concurrency"].as_u64().ok_or(ErrorKind::InvalidData)? as usize;
             self.config.fabric_source = String::from(json["fabric_source"].as_str().ok_or(ErrorKind::InvalidData)?);
             self.config.forge_source = String::from(json["forge_source"].as_str().ok_or(ErrorKind::InvalidData)?);
             self.config.game_path = String::from(json["game_path"].as_str().ok_or(ErrorKind::InvalidData)?);
@@ -403,6 +408,7 @@ impl App {
             {
                 "assets_source": self.config.assets_source,
                 "close_after_launch": self.config.close_after_launch,
+                "concurrency": self.config.concurrency,
                 "fabric_source": self.config.fabric_source,
                 "forge_source": self.config.forge_source,
                 "game_path": self.config.game_path,

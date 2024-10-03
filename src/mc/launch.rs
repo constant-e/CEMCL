@@ -4,8 +4,11 @@
 
 use futures::future::join_all;
 use log::error;
+use tokio::sync::Semaphore;
 use std::env::consts as env;
 use std::fs::{self, exists};
+use std::sync::Arc;
+use std::time::Duration;
 use serde_json::Value;
 use crate::app::Config;
 
@@ -253,8 +256,7 @@ pub fn get_launch_command(account: &Account, game: &Game, config: &Config) -> Op
         }
 
         // 处理依赖
-
-        let rt = tokio::runtime::Builder::new_multi_thread().enable_all().build().unwrap();
+        let rt = tokio::runtime::Runtime::new().unwrap();
         let _tokio = rt.enter();
 
         // json first
@@ -266,13 +268,14 @@ pub fn get_launch_command(account: &Account, game: &Game, config: &Config) -> Op
         }
 
         let mut futures = Vec::new();
+        let semaphore = Arc::new(Semaphore::new(config.concurrency));
 
         // assets
-        let mut ass_futures = download::download_assets(&game_path, &asset_index, &config.assets_source)?;
+        let mut ass_futures = download::download_assets(&game_path, &asset_index, &config.assets_source, &semaphore)?;
         futures.append(&mut ass_futures);
 
         // libraries
-        let mut lib_futures = download::download_libraries(&json["libraries"], &game_path, &dir, &config.libraries_source)?;
+        let mut lib_futures = download::download_libraries(&json["libraries"], &game_path, &dir, &config.libraries_source, &semaphore)?;
         futures.append(&mut lib_futures);
 
         let jar_path = dir.clone() + "/" + game.version.as_ref() + ".jar";
@@ -280,7 +283,10 @@ pub fn get_launch_command(account: &Account, game: &Game, config: &Config) -> Op
             // 本体
             let url = json["downloads"]["client"]["url"].as_str()?.to_string()
                 .replace("https://piston-meta.mojang.com", &config.game_source);
-            let future = tokio::spawn(download::download(url, jar_path, 3));
+            let future = tokio::spawn(async move {
+                let _permit = semaphore.acquire().await.unwrap();
+                download::download(url, jar_path, 3).await;
+            });
             futures.push(future);
         }
         

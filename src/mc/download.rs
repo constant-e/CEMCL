@@ -2,8 +2,10 @@
 
 use std::fs::{self, exists};
 use std::env::consts as env;
+use std::sync::Arc;
 use log::info;
 use serde_json::Value;
+use tokio::sync::Semaphore;
 
 use crate::file_tools::list_file;
 use super::check_rules;
@@ -37,7 +39,7 @@ pub async fn download(url: String, path: String, max: usize) -> Option<()> {
 }
 
 /// 下载assets
-pub fn download_assets(path: &str, id: &str, mirror: &str) -> Option<Vec<tokio::task::JoinHandle<Option<()>>>> {
+pub fn download_assets(path: &str, id: &str, mirror: &str, semaphore: &Arc<Semaphore>) -> Option<Vec<tokio::task::JoinHandle<()>>> {
     let assets_dir = path.to_string() + "/assets";
     let index_path = assets_dir.clone() + "/indexes/" + &id + ".json";
     let json = serde_json::from_str::<Value>(&fs::read_to_string(&index_path).ok()?).ok()?;
@@ -51,7 +53,11 @@ pub fn download_assets(path: &str, id: &str, mirror: &str) -> Option<Vec<tokio::
             let dir = obj_path.clone() + "/" + &hash[0..2];
             if !exists(&dir).ok()? { fs::create_dir_all(&dir).ok()?; }
             let url = mirror.to_string() + "/" + &dl_path;
-            let future = tokio::spawn(download(url.clone(), local_path.clone(), 3));
+            let semaphore = semaphore.clone();
+            let future = tokio::spawn(async move {
+                let _permit = semaphore.acquire().await.unwrap();
+                download(url.clone(), local_path.clone(), 3).await;
+            });
             futures.push(future);
         }
     }
@@ -160,12 +166,16 @@ async fn download_lib(node: Value, path: String, game_dir: String, mirror: Strin
 }
 
 /// 下载libraries，node: mc json["libraries"]
-pub fn download_libraries(node: &Value, path: &str, game_dir: &str, mirror: &str) -> Option<Vec<tokio::task::JoinHandle<Option<()>>>> {
+pub fn download_libraries(node: &Value, path: &str, game_dir: &str, mirror: &str, semaphore: &Arc<Semaphore>) -> Option<Vec<tokio::task::JoinHandle<()>>> {
     let mut futures = Vec::new();
     let mut c = 0;
     for item in node.as_array()? {
         let (i, p, g, m, id) = (item.clone(), path.to_string(), game_dir.to_string(), mirror.to_string(), c.clone());
-        let future = tokio::spawn(download_lib(i, p, g, m, id));
+        let semaphore = semaphore.clone();
+        let future = tokio::spawn(async move {
+            let _permit = semaphore.acquire().await.unwrap();
+            download_lib(i, p, g, m, id).await;
+        });
         futures.push(future);
         c += 1;
     }

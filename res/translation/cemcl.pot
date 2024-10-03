@@ -2,7 +2,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
-"POT-Creation-Date: 2024-10-02 10:48+0000\n"
+"POT-Creation-Date: 2024-10-03 01:49+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -22,117 +22,122 @@ msgctxt "ErrorDialog"
 msgid "Error"
 msgstr ""
 
-#: settings.slint:7 settings.slint:32
+#: settings.slint:7 settings.slint:33
 msgctxt "Settings"
 msgid "Settings"
 msgstr ""
 
-#: settings.slint:36
+#: settings.slint:37
 msgctxt "Settings"
 msgid "Launcher Settings"
 msgstr ""
 
-#: settings.slint:43
+#: settings.slint:44
 msgctxt "Settings"
 msgid "General"
 msgstr ""
 
-#: settings.slint:49
+#: settings.slint:50
 msgctxt "Settings"
 msgid "Minecraft Path: "
 msgstr ""
 
-#: settings.slint:59
+#: settings.slint:60
 msgctxt "Settings"
 msgid "Close after Launching Game"
 msgstr ""
 
-#: settings.slint:65
+#: settings.slint:66
 msgctxt "Settings"
-msgid "Download Sources"
+msgid "Downloading Settings"
 msgstr ""
 
-#: settings.slint:71
+#: settings.slint:72
+msgctxt "Settings"
+msgid "Concurrency: "
+msgstr ""
+
+#: settings.slint:82
 msgctxt "Settings"
 msgid "Assets Source: "
 msgstr ""
 
-#: settings.slint:81
+#: settings.slint:92
 msgctxt "Settings"
 msgid "Libraries Source: "
 msgstr ""
 
-#: settings.slint:91
+#: settings.slint:102
 msgctxt "Settings"
 msgid "Minecraft Source: "
 msgstr ""
 
-#: settings.slint:101
+#: settings.slint:112
 msgctxt "Settings"
 msgid "Fabric Source: "
 msgstr ""
 
-#: settings.slint:111
+#: settings.slint:122
 msgctxt "Settings"
 msgid "Forge Source: "
 msgstr ""
 
-#: settings.slint:129
+#: settings.slint:140
 msgctxt "Settings"
 msgid "Default Minecraft Settings"
 msgstr ""
 
-#: settings.slint:136
+#: settings.slint:147
 msgctxt "Settings"
 msgid "Java Path: "
 msgstr ""
 
-#: settings.slint:146
+#: settings.slint:157
 msgctxt "Settings"
 msgid "Window Height: "
 msgstr ""
 
-#: settings.slint:156
+#: settings.slint:167
 msgctxt "Settings"
 msgid "Window Width: "
 msgstr ""
 
-#: settings.slint:166
+#: settings.slint:177
 msgctxt "Settings"
 msgid "Minimum Memory: "
 msgstr ""
 
-#: settings.slint:176
+#: settings.slint:187
 msgctxt "Settings"
 msgid "Maximum Memory: "
 msgstr ""
 
-#: settings.slint:194
+#: settings.slint:205
 msgctxt "Settings"
 msgid "About"
 msgstr ""
 
-#: settings.slint:217
+#: settings.slint:228
 msgctxt "Settings"
 msgid "Version: "
 msgstr ""
 
-#: settings.slint:218
+#: settings.slint:229
 msgctxt "Settings"
 msgid "Github Repository: "
 msgstr ""
 
-#: settings.slint:219
+#: settings.slint:230
 msgctxt "Settings"
 msgid "Developers: "
 msgstr ""
 
-#: settings.slint:220
+#: settings.slint:231
 msgctxt "Settings"
 msgid "License: "
 msgstr ""
 
-#: settings.slint:222
+#: settings.slint:233
 msgctxt "Settings"
 msgid "Credits:\n"
 msgstr ""
