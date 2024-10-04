@@ -117,15 +117,15 @@ impl App {
         app.refresh_ui_acc_list();
         app.refresh_ui_game_list();
 
-        return Ok(app);
+        Ok(app)
     }
 
-    /// Add a account to self.acc_list, also call self.save_acc_list() and self.refresh_ui_acc_list()
+    /// Add an account to self.acc_list, also call self.save_acc_list() and self.refresh_ui_acc_list()
     pub fn add_account(&mut self, account: &Account) -> Option<()> {
         self.acc_list.push(account.clone());
         self.save_acc_list().ok()?;
         self.refresh_ui_acc_list()?;
-        return Some(());
+        Some(())
     }
 
     /// Add a game to self.game_list, also call game.save() and self.refresh_ui_game_list()
@@ -134,7 +134,7 @@ impl App {
         let path = self.config.game_path.clone() + "/versions/" + &game.version + "/config.json";
         game.save(&path).ok()?;
         self.refresh_ui_game_list()?;
-        return Some(());
+        Some(())
     }
 
     /// Delete an account, also call self.save_acc_list() and self.refresh_ui_acc_list()
@@ -146,7 +146,7 @@ impl App {
         self.acc_list.remove(index);
         self.save_acc_list().ok()?;
         self.refresh_ui_acc_list()?;
-        return Some(());
+        Some(())
     }
 
     /// Delete a game, also delete the game directory and call self.refresh_ui_game_list()
@@ -159,7 +159,7 @@ impl App {
         self.game_list.remove(index);
         fs::remove_dir_all(path).ok()?;
         self.refresh_ui_game_list()?;
-        return Some(());
+        Some(())
     }
 
     /// Edit an account, also call self.save_acc_list() and self.refresh_ui_acc_list()
@@ -167,16 +167,16 @@ impl App {
         self.acc_list[index] = account;
         self.save_acc_list().ok()?;
         self.refresh_ui_acc_list()?;
-        return Some(());
+        Some(())
     }
 
-    /// Edit a game, also call game.save and self.refresh_ui_game_list()
+    /// Edit a game, also call Game::save and self.refresh_ui_game_list()
     pub fn edit_game(&mut self, index: usize, game: Game) -> Option<()> {
         let path = self.config.game_path.clone() + "/versions/" + &game.version + "/config.json";
         game.save(&path).ok()?;
         self.game_list[index] = game;
         self.refresh_ui_game_list()?;
-        return Some(());
+        Some(())
     }
 
     /// Get the current index of account list in ui, return None when index is out of range
@@ -187,7 +187,7 @@ impl App {
             warn!("Index out of bounds: the len is {} but the index is {index}.", self.acc_list.len());
             return None;
         }
-        return Some(index);
+        Some(index)
     }
 
     /// Get the current index of game list in ui, return None when index is out of range
@@ -198,7 +198,7 @@ impl App {
             warn!("Index out of bounds: the len is {} but the index is {index}.", self.game_list.len());
             return None;
         }
-        return Some(index);
+        Some(index)
     }
 
     /// Launch the game
@@ -258,7 +258,7 @@ impl App {
             });
         }
 
-        return Some(());
+        Some(())
     }
 
     /// Load the account list from account.json (won't refresh ui)
@@ -287,7 +287,7 @@ impl App {
             self.acc_list = vec![Account::default()];
             self.save_acc_list()?;
         }
-        return Ok(());
+        Ok(())
     }
 
     /// Load the configs from config.json (won't refresh ui)
@@ -312,7 +312,7 @@ impl App {
             self.save_config()?;
         }
 
-        return Ok(());
+        Ok(())
     }
 
     /// Load the game list (won't refresh ui)
@@ -376,12 +376,12 @@ impl App {
             }
             self.game_list.push(game);
         };
-        return Ok(());
+        Ok(())
     }
 
     /// Save the account list to account.json
     pub fn save_acc_list(&self) -> Result<(), std::io::Error> {
-        let mut json = serde_json::json!([]);
+        let mut json = json!([]);
         for account in &self.acc_list {
             let node = serde_json::json!(
                 {
@@ -399,7 +399,7 @@ impl App {
             }
         }
         fs::write("account.json", json.to_string())?;
-        return Ok(());
+        Ok(())
     }
 
     /// Save the configs to config.json
@@ -421,7 +421,7 @@ impl App {
                 "xmx": self.config.xmx,
             }
         );
-        return fs::write("config.json", json.to_string());
+        fs::write("config.json", json.to_string())
     }
 
     /// Refresh account list in ui
@@ -436,7 +436,7 @@ impl App {
             ui_acc_list.push(row);
         }
         ui.set_acc_list(ModelRc::from(Rc::from(VecModel::from(ui_acc_list))));
-        return Some(());
+        Some(())
     }
 
     /// Refresh game list in ui
@@ -452,7 +452,7 @@ impl App {
             ui_game_list.push(row);
         }
         ui.set_game_list(ModelRc::from(Rc::from(VecModel::from(ui_game_list))));
-        return Some(());
+        Some(())
     }
 }
 

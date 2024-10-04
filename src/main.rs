@@ -73,5 +73,5 @@ fn main() -> Result<(), slint::PlatformError> {
     });
 
     slint::run_event_loop()?;
-    return ui.hide();
+    ui.hide()
 }

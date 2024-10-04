@@ -68,5 +68,5 @@ pub fn edit_acc_dialog(app_weak: rc::Weak<RefCell<App>>) -> Result<(), slint::Pl
         }
     });
 
-    return ui.show();
+    ui.show()
 }

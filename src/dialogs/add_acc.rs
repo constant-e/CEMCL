@@ -47,5 +47,5 @@ pub fn add_acc_dialog(app_weak: rc::Weak<RefCell<App>>) -> Result<(), slint::Pla
         ui.hide().unwrap();
     });
 
-    return ui.show();
+    ui.show()
 }

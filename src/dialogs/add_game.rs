@@ -21,7 +21,7 @@ fn ui_game_url_list(game_url_list: &Vec<GameUrl>) -> ModelRc<ModelRc<StandardLis
         let row: ModelRc<StandardListViewItem> = ModelRc::from(model);
         ui_game_url_list.push(row);
     }
-    return ModelRc::from(rc::Rc::new(VecModel::from(ui_game_url_list)));
+    ModelRc::from(rc::Rc::new(VecModel::from(ui_game_url_list)))
 }
 
 pub async fn add_game_dialog(app_weak: rc::Weak<RefCell<App>>) -> Result<(), slint::PlatformError> {
@@ -126,5 +126,5 @@ pub async fn add_game_dialog(app_weak: rc::Weak<RefCell<App>>) -> Result<(), sli
         }
     });
 
-    return ui.show();
+    ui.show()
 }

@@ -80,5 +80,5 @@ pub fn edit_game_dialog(app_weak: rc::Weak<RefCell<App>>) -> Result<(), slint::P
         }
     });
 
-    return ui.show();
+    ui.show()
 }

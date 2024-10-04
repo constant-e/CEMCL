@@ -38,5 +38,5 @@ pub fn check_rules(n: &serde_json::Value) -> bool {
     } else {
         warn!("Failed to get rules");
     }
-    return true;
+    true
 }

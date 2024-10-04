@@ -8,7 +8,6 @@ use tokio::sync::Semaphore;
 use std::env::consts as env;
 use std::fs::{self, exists};
 use std::sync::Arc;
-use std::time::Duration;
 use serde_json::Value;
 use crate::app::Config;
 
@@ -41,7 +40,7 @@ fn add_arg(n: &Value) -> Option<Vec<String>> {
         }
     }
 
-    return Some(result);
+    Some(result)
 }
 
 /// 获取MC和JVM参数
@@ -73,7 +72,7 @@ fn get_args(n: &Value) -> Option<(Vec<String>, Vec<String>)> {
         ]);
     }
 
-    return Some((game_args, jvm_args));
+    Some((game_args, jvm_args))
 }
 
 /// 获取-cp参数 
@@ -100,7 +99,7 @@ fn get_classpaths(n: &Value, game_path: &String) -> Option<Vec<String>> {
         result.push(temp);
     }
 
-    return Some(result);
+    Some(result)
 }
 
 /// 获取启动总命令
@@ -117,8 +116,8 @@ pub fn get_launch_command(account: &Account, game: &Game, config: &Config) -> Op
         let asset_index: String;
         // forge需要提前写入的参数
         let mut classpaths: Vec<String> = Vec::new();
-        let mut game_args:Vec<String> = Vec::new();
-        let mut jvm_args:Vec<String> = Vec::new();
+        let mut game_args: Vec<String> = Vec::new();
+        let mut jvm_args: Vec<String> = Vec::new();
         // 判断inheritsFrom（forge需要）
         if json["inheritsFrom"].is_null() {
             // 无forge
@@ -189,14 +188,14 @@ pub fn get_launch_command(account: &Account, game: &Game, config: &Config) -> Op
             return None;
         }
         classpaths.push(dir.clone() + "/" + game.version.as_str() + ".jar"); // 游戏本身
-        
+
         // classpaths列表去重，获得最终字符串
         let sep = if env::OS == "windows" { ";" } else { ":" };
         let mut i = 0;
         let mut cp = String::new();
         let l = classpaths.len();
         while i < l {
-            if !classpaths[i+1..l].contains(&classpaths[i]) {
+            if !classpaths[i + 1..l].contains(&classpaths[i]) {
                 cp.push_str((classpaths[i].clone() + sep).as_str());
             }
             i += 1;
@@ -232,7 +231,7 @@ pub fn get_launch_command(account: &Account, game: &Game, config: &Config) -> Op
         let os = if env::OS == "macOS" { "osx" } else { env::OS };
         // 替换模板
         for item in result.iter_mut() {
-            
+
             // TODO: 优化替换
             *item = item
                 .replace("${assets_index_name}", &asset_index)
@@ -285,16 +284,16 @@ pub fn get_launch_command(account: &Account, game: &Game, config: &Config) -> Op
                 .replace("https://piston-meta.mojang.com", &config.game_source);
             let future = tokio::spawn(async move {
                 let _permit = semaphore.acquire().await.unwrap();
-                download::download(url, jar_path, 3).await;
+                download::download(url, jar_path, 3).await
             });
             futures.push(future);
         }
-        
+
         rt.block_on(join_all(futures));
 
-        return Some(result)
+        Some(result)
     } else {
         error!("Failed to load {cfg_path}.");
-        return None;
+        None
     }
 }

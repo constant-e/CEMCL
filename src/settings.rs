@@ -71,5 +71,5 @@ pub fn init(app_weak: rc::Weak<RefCell<App>>) -> Option<()> {
         }
     });
 
-    return ui.show().ok();
+    ui.show().ok()
 }
