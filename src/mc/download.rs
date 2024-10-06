@@ -22,6 +22,13 @@ pub struct GameUrl {
     pub version: String,
 }
 
+/// Forge信息
+pub struct Forge {
+    pub version: String,
+    pub branch: String,
+    pub modified: String,
+}
+
 /// 下载
 pub async fn download(url: String, path: String, max: usize) -> Option<()> {
     info!("Start downloading {url}");
@@ -154,6 +161,35 @@ async fn extract_lib(natives_dir: &String, local_path: &String, id: &String) -> 
         if !exists(&target_path).ok()? { tokio::fs::copy(name, &target_path).await.ok()?; }
     }
     tokio::fs::remove_dir_all("temp".to_string() + &id.to_string()).await.ok()
+}
+
+/// 获取Forge列表 官方没有json，使用BMCLAPI2
+pub async fn list_forge(mcversion: &String) -> Option<Vec<Forge>> {
+    let mut forge_list = Vec::new();
+
+    let url = String::from("https://bmclapi2.bangbang93.com/forge/minecraft/") + mcversion;
+    let text = reqwest::get(url).await.ok()?.text().await.ok()?;
+    let json = serde_json::from_str::<Value>(&text).ok()?;
+
+    for version in json.as_array()? {
+        let branch = if let Some(branch) = version["branch"].as_str() {
+            branch.to_string()
+        } else {
+            String::new()
+        };
+        
+        let modified = version["modified"].as_str()?.split('T').collect::<Vec<&str>>()[0].to_string();
+
+        let forge = Forge {
+            version: version["version"].as_str()?.to_string(),
+            branch: branch,
+            modified: modified,
+        };
+
+        forge_list.push(forge);
+    }
+
+    Some(forge_list)
 }
 
 /// 获取下载列表

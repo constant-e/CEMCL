@@ -1,7 +1,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
-"POT-Creation-Date: 2024-10-03 01:49+0000\n"
+"POT-Creation-Date: 2024-10-06 10:05+0000\n"
 "PO-Revision-Date: 2024-10-02 11:53+0800\n"
 "Last-Translator:  <fmn_tzx@outlook.com>\n"
 "Language-Team: Chinese (simplified) <i18n-zh@googlegroups.com>\n"
@@ -196,72 +196,77 @@ msgctxt "AddAccDialog"
 msgid "User Name: "
 msgstr "用户名："
 
-#: add-game-dialog.slint:5 add-game-dialog.slint:29
+#: add-game-dialog.slint:5 add-game-dialog.slint:31
 msgctxt "AddGameDialog"
 msgid "Add a Game"
 msgstr "添加游戏"
 
-#: add-game-dialog.slint:34
+#: add-game-dialog.slint:36
 msgctxt "AddGameDialog"
 msgid "Minecraft Version"
 msgstr "Minecraft版本"
 
-#: add-game-dialog.slint:42 add-game-dialog.slint:54
+#: add-game-dialog.slint:44 add-game-dialog.slint:60
 msgctxt "AddGameDialog"
 msgid "Version"
 msgstr "版本"
 
-#: add-game-dialog.slint:43 add-game-dialog.slint:55
+#: add-game-dialog.slint:45
 msgctxt "AddGameDialog"
 msgid "Type"
 msgstr "类型"
 
-#: add-game-dialog.slint:49
+#: add-game-dialog.slint:52
 msgctxt "AddGameDialog"
 msgid "Mod Loader"
 msgstr "Mod加载器"
 
 #: add-game-dialog.slint:61
 msgctxt "AddGameDialog"
+msgid "Modified"
+msgstr "修改时间"
+
+#: add-game-dialog.slint:67
+msgctxt "AddGameDialog"
 msgid "Customize"
 msgstr "自定义"
 
-#: add-game-dialog.slint:64
+#: add-game-dialog.slint:70
 msgctxt "AddGameDialog"
 msgid "Description: "
 msgstr "备注："
 
-#: add-game-dialog.slint:74
+#: add-game-dialog.slint:80
 msgctxt "AddGameDialog"
 msgid "Java Path: "
 msgstr "Java路径："
 
-#: add-game-dialog.slint:84
+#: add-game-dialog.slint:90
 msgctxt "AddGameDialog"
 msgid "Window Height: "
 msgstr "窗口高度："
 
-#: add-game-dialog.slint:94
+#: add-game-dialog.slint:100
 msgctxt "AddGameDialog"
 msgid "Window Width: "
 msgstr "窗口宽度："
 
-#: add-game-dialog.slint:104
+#: add-game-dialog.slint:110
 msgctxt "AddGameDialog"
 msgid "Minimum Memory: "
 msgstr "最小分配内存："
 
-#: add-game-dialog.slint:114
+#: add-game-dialog.slint:120
 msgctxt "AddGameDialog"
 msgid "Maximum Memory: "
 msgstr "最大分配内存："
 
-#: add-game-dialog.slint:124
+#: add-game-dialog.slint:130
 msgctxt "AddGameDialog"
 msgid "Launch Arguments: "
 msgstr "启动参数："
 
-#: add-game-dialog.slint:134
+#: add-game-dialog.slint:140
 msgctxt "AddGameDialog"
 msgid "Enable Separated Version"
 msgstr "启用版本隔离"

@@ -12,7 +12,7 @@ use slint::{ComponentHandle, ModelRc, StandardListViewItem, VecModel};
 
 use crate::dialogs::msg_box::{err_dialog, warn_dialog};
 use crate::file_tools::list_dir;
-use crate::mc::download::GameUrl;
+use crate::mc::download::{Forge, GameUrl};
 use crate::{AppWindow, Messages};
 use crate::mc::{launch, Account, Game};
 
@@ -82,6 +82,7 @@ impl Default for Config {
 pub struct App {
     pub acc_list: Vec<Account>,
     pub config: Config,
+    pub download_forge_list: Vec<Forge>,
     pub download_game_list: Vec<GameUrl>,
     pub game_list: Vec<Game>,
     pub ui_weak: slint::Weak<AppWindow>,
@@ -461,6 +462,7 @@ impl Default for App {
         App {
             acc_list: Vec::new(),
             config: Config::default(),
+            download_forge_list: Vec::new(),
             download_game_list: Vec::new(),
             game_list: Vec::new(),
             ui_weak: slint::Weak::default(),

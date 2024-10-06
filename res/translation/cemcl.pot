@@ -2,7 +2,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
-"POT-Creation-Date: 2024-10-03 01:49+0000\n"
+"POT-Creation-Date: 2024-10-06 10:05+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -197,72 +197,77 @@ msgctxt "AddAccDialog"
 msgid "User Name: "
 msgstr ""
 
-#: add-game-dialog.slint:5 add-game-dialog.slint:29
+#: add-game-dialog.slint:5 add-game-dialog.slint:31
 msgctxt "AddGameDialog"
 msgid "Add a Game"
 msgstr ""
 
-#: add-game-dialog.slint:34
+#: add-game-dialog.slint:36
 msgctxt "AddGameDialog"
 msgid "Minecraft Version"
 msgstr ""
 
-#: add-game-dialog.slint:42 add-game-dialog.slint:54
+#: add-game-dialog.slint:44 add-game-dialog.slint:60
 msgctxt "AddGameDialog"
 msgid "Version"
 msgstr ""
 
-#: add-game-dialog.slint:43 add-game-dialog.slint:55
+#: add-game-dialog.slint:45
 msgctxt "AddGameDialog"
 msgid "Type"
 msgstr ""
 
-#: add-game-dialog.slint:49
+#: add-game-dialog.slint:52
 msgctxt "AddGameDialog"
 msgid "Mod Loader"
 msgstr ""
 
 #: add-game-dialog.slint:61
 msgctxt "AddGameDialog"
+msgid "Modified"
+msgstr ""
+
+#: add-game-dialog.slint:67
+msgctxt "AddGameDialog"
 msgid "Customize"
 msgstr ""
 
-#: add-game-dialog.slint:64
+#: add-game-dialog.slint:70
 msgctxt "AddGameDialog"
 msgid "Description: "
 msgstr ""
 
-#: add-game-dialog.slint:74
+#: add-game-dialog.slint:80
 msgctxt "AddGameDialog"
 msgid "Java Path: "
 msgstr ""
 
-#: add-game-dialog.slint:84
+#: add-game-dialog.slint:90
 msgctxt "AddGameDialog"
 msgid "Window Height: "
 msgstr ""
 
-#: add-game-dialog.slint:94
+#: add-game-dialog.slint:100
 msgctxt "AddGameDialog"
 msgid "Window Width: "
 msgstr ""
 
-#: add-game-dialog.slint:104
+#: add-game-dialog.slint:110
 msgctxt "AddGameDialog"
 msgid "Minimum Memory: "
 msgstr ""
 
-#: add-game-dialog.slint:114
+#: add-game-dialog.slint:120
 msgctxt "AddGameDialog"
 msgid "Maximum Memory: "
 msgstr ""
 
-#: add-game-dialog.slint:124
+#: add-game-dialog.slint:130
 msgctxt "AddGameDialog"
 msgid "Launch Arguments: "
 msgstr ""
 
-#: add-game-dialog.slint:134
+#: add-game-dialog.slint:140
 msgctxt "AddGameDialog"
 msgid "Enable Separated Version"
 msgstr ""

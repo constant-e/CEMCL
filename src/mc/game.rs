@@ -10,7 +10,7 @@ pub struct Game {
     /// 备注
     pub description: String,
     
-    /// MC自定义参数（追加）
+    /// MC自定义参数
     pub game_args: Vec<String>,
 
     /// 游戏类型，直接填入启动参数
@@ -22,7 +22,7 @@ pub struct Game {
     /// java可执行文件路径
     pub java_path: String,
     
-    /// JVM自定义参数（覆盖）
+    /// JVM自定义参数
     pub jvm_args: Vec<String>,
     
     /// 版本隔离

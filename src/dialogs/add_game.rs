@@ -3,15 +3,28 @@
 use std::fs;
 use std::{cell::RefCell, rc};
 
-use log::error;
+use log::{error, warn};
 use slint::{ComponentHandle, ModelRc, StandardListViewItem, VecModel};
 
 use crate::app::App;
-use crate::mc::download::{self, GameUrl};
+use crate::mc::download::{self, list_forge, Forge, GameUrl};
 use crate::mc::Game;
 use crate::AddGameDialog;
 
-/// 获取ui用的download_game_url
+/// 获取ui用的download_forge_list
+fn ui_forge_list(forge_list: &Vec<Forge>) -> ModelRc<ModelRc<StandardListViewItem>> {
+    let mut ui_forge_list: Vec<ModelRc<StandardListViewItem>> = Vec::new();
+    for forge in forge_list {
+        let version = StandardListViewItem::from(forge.version.as_str());
+        let modified = StandardListViewItem::from(forge.modified.as_str());
+        let model: rc::Rc<VecModel<StandardListViewItem>> = rc::Rc::new(VecModel::from(vec![version.into(), modified.into()]));
+        let row: ModelRc<StandardListViewItem> = ModelRc::from(model);
+        ui_forge_list.push(row);
+    }
+    ModelRc::from(rc::Rc::new(VecModel::from(ui_forge_list)))
+}
+
+/// 获取ui用的download_game_list
 fn ui_game_url_list(game_url_list: &Vec<GameUrl>) -> ModelRc<ModelRc<StandardListViewItem>> {
     let mut ui_game_url_list: Vec<ModelRc<StandardListViewItem>> = Vec::new();
     for game in game_url_list {
@@ -22,6 +35,33 @@ fn ui_game_url_list(game_url_list: &Vec<GameUrl>) -> ModelRc<ModelRc<StandardLis
         ui_game_url_list.push(row);
     }
     ModelRc::from(rc::Rc::new(VecModel::from(ui_game_url_list)))
+}
+
+async fn load_mod(app_weak: rc::Weak<RefCell<App>>, ui_weak: slint::Weak<AddGameDialog>, index: usize) {
+    let rt = tokio::runtime::Runtime::new().unwrap();
+    let _tokio = rt.enter();
+
+    if let (Some(app), Some(ui)) = (app_weak.upgrade(), ui_weak.upgrade()) {
+        let game_index = ui.get_game_index() as usize;
+        if game_index >= app.borrow().download_game_list.len() {
+            warn!("Minecraft not selected.");
+            return;
+        }
+        if index == 1 {
+            // forge
+            let version = app.borrow().download_game_list[game_index].version.clone();  // 防止app.borrow_mut()和app.borrow()同时存在
+            app.borrow_mut().download_forge_list = list_forge(&version).await.unwrap();
+            ui.set_mod_list(ui_forge_list(&app.borrow().download_forge_list));
+        } else if index == 2 {
+            // fabric
+            
+        } else {
+            app.borrow_mut().download_forge_list.clear();
+            ui.set_mod_list(ModelRc::default());
+        }
+    } else {
+        error!("Failed to upgrade a weak pointer.");
+    }
 }
 
 pub async fn add_game_dialog(app_weak: rc::Weak<RefCell<App>>) -> Result<(), slint::PlatformError> {
@@ -54,14 +94,13 @@ pub async fn add_game_dialog(app_weak: rc::Weak<RefCell<App>>) -> Result<(), sli
     
     let app_weak_clone = app_weak.clone();
     let ui_weak_clone = ui_weak.clone();
-    ui.on_game_combo_box_changed(move |_| {
+    ui.on_game_combo_box_changed(move |index| {
         if let (Some(app), Some(ui)) = (app_weak_clone.upgrade(), ui_weak_clone.upgrade()) {
-            let require = if ui.get_game_type() == 1 {
-                "release"
-            } else if ui.get_game_type() == 2 {
-                "snapshot"
-            } else {
-                ""
+            let require = match index {
+                0 => "",
+                1 => "release",
+                2 => "snapshot",
+                _ => "",
             };
             app.borrow_mut().download_game_list.clear();
             for game in &game_url_list {
@@ -74,6 +113,27 @@ pub async fn add_game_dialog(app_weak: rc::Weak<RefCell<App>>) -> Result<(), sli
         } else {
             error!("Failed to upgrade a weak pointer.");
         }
+    });
+
+    let app_weak_clone = app_weak.clone();
+    let ui_weak_clone = ui_weak.clone();
+    ui.on_game_list_changed(move |_| {
+        if let Some(ui) = ui_weak_clone.upgrade() {
+            let index = ui.get_mod_type();
+            let app_weak_clone = app_weak_clone.clone();
+            let ui_weak_clone = ui_weak_clone.clone();
+            slint::spawn_local(load_mod(app_weak_clone, ui_weak_clone, index as usize)).unwrap();
+        } else {
+            error!("Failed to upgrade a weak pointer.");
+        }
+    });
+
+    let app_weak_clone = app_weak.clone();
+    let ui_weak_clone = ui_weak.clone();
+    ui.on_mod_combo_box_changed(move |index| {
+        let app_weak_clone = app_weak_clone.clone();
+        let ui_weak_clone = ui_weak_clone.clone();
+        slint::spawn_local(load_mod(app_weak_clone, ui_weak_clone, index as usize)).unwrap();
     });
 
     let ui_weak_clone = ui_weak.clone();
