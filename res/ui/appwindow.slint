@@ -1,4 +1,4 @@
-import { Button, StandardTableView } from "std-widgets.slint";
+import { Button, StandardTableView, VerticalBox, HorizontalBox } from "std-widgets.slint";
 import { Title, SubTitle } from "components/components.slint";
 export { Messages } from "messages.slint";
 
@@ -44,18 +44,17 @@ export component AppWindow inherits Window {
         }
     }
 
-    VerticalLayout {
+    VerticalBox {
         padding: 8px;
-        spacing: 4px;
 
         Title { text: "CE Minecraft Launcher"; }
 
-        HorizontalLayout {
-            spacing: 4px;
+        HorizontalBox {
+            padding: 0px;
 
-            VerticalLayout{
-                horizontal-stretch: 0.25;
-                spacing: 4px;
+            VerticalBox {
+                horizontal-stretch: 1/4;
+                padding: 0px;
 
                 SubTitle { text: @tr("Account"); }
 
@@ -66,8 +65,8 @@ export component AppWindow inherits Window {
                     ];
                 }
 
-                HorizontalLayout {
-                    spacing: 4px;
+                HorizontalBox {
+                    padding: 0px;
 
                     Rectangle { preferred-width: 100%; }
 
@@ -83,9 +82,9 @@ export component AppWindow inherits Window {
                 }
             }
 
-            VerticalLayout {
-                horizontal-stretch: 0.75;
-                spacing: 4px;
+            VerticalBox {
+                horizontal-stretch: 3/4;
+                padding: 0px;
 
                 SubTitle { text: @tr("Minecraft Version"); }
 
@@ -97,8 +96,8 @@ export component AppWindow inherits Window {
                     ];
                 }
 
-                HorizontalLayout {
-                    spacing: 4px;
+                HorizontalBox {
+                    padding: 0px;
 
                     Rectangle { preferred-width: 100%; }
 
@@ -115,8 +114,8 @@ export component AppWindow inherits Window {
             }
         }
 
-        HorizontalLayout {
-            spacing: 4px;
+        HorizontalBox {
+            padding: 0px;
 
             Button {
                 text: @tr("Settings");

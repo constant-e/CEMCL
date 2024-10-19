@@ -1,4 +1,4 @@
-import { StandardButton, TabWidget } from "std-widgets.slint";
+import { StandardButton, TabWidget, LineEdit, GridBox } from "std-widgets.slint";
 
 export component AddAccDialog inherits Dialog {
     title: @tr("Add a Account");
@@ -19,15 +19,13 @@ export component AddAccDialog inherits Dialog {
         Tab {
             title: @tr("Online Account");
 
-            GridLayout {
-                padding: 8px;
-
+            GridBox {
                 Text {
                     text: @tr("Account: ");
                     col: 0;
                     row: 0;
                 }
-                online-acc-input := TextInput {
+                online-acc-input := LineEdit {
                     col: 1;
                     row: 0;
                 }
@@ -37,7 +35,7 @@ export component AddAccDialog inherits Dialog {
                     col: 0;
                     row: 1;
                 }
-                online-pwd-input := TextInput {
+                online-pwd-input := LineEdit {
                     col: 1;
                     row: 1;
                 }
@@ -52,15 +50,13 @@ export component AddAccDialog inherits Dialog {
         Tab {
             title: @tr("Offline Account");
 
-            GridLayout {
-                padding: 8px;
-
+            GridBox {
                 Text {
                     text: @tr("Name: ");
                     col: 0;
                     row: 0;
                 }
-                offline-name-input := TextInput {
+                offline-name-input := LineEdit {
                     col: 1;
                     row: 0;
                 }
@@ -70,7 +66,7 @@ export component AddAccDialog inherits Dialog {
                     col: 0;
                     row: 1;
                 }
-                offline-uuid-input := TextInput {
+                offline-uuid-input := LineEdit {
                     col: 1;
                     row: 1;
                 }
@@ -85,15 +81,13 @@ export component AddAccDialog inherits Dialog {
         Tab {
             title: @tr("Other Account");
 
-            GridLayout {
-                padding: 8px;
-                
+            GridBox {
                 Text {
                     text: @tr("Account Type: ");
                     col: 0;
                     row: 0;
                 }
-                other-acc-type-input := TextInput {
+                other-acc-type-input := LineEdit {
                     col: 1;
                     row: 0;
                 }
@@ -103,7 +97,7 @@ export component AddAccDialog inherits Dialog {
                     col: 0;
                     row: 1;
                 }
-                other-token-input := TextInput {
+                other-token-input := LineEdit {
                     col: 1;
                     row: 1;
                 }
@@ -113,7 +107,7 @@ export component AddAccDialog inherits Dialog {
                     col: 0;
                     row: 2;
                 }
-                other-name-input := TextInput {
+                other-name-input := LineEdit {
                     col: 1;
                     row: 2;
                 }
@@ -123,7 +117,7 @@ export component AddAccDialog inherits Dialog {
                     col: 0;
                     row: 3;
                 }
-                other-uuid-input := TextInput {
+                other-uuid-input := LineEdit {
                     col: 1;
                     row: 3;
                 }

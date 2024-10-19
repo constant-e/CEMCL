@@ -1,4 +1,4 @@
-import { TabWidget, ScrollView, StandardButton, Switch, SpinBox } from "std-widgets.slint";
+import { TabWidget, ScrollView, StandardButton, Switch, SpinBox, LineEdit, GroupBox, VerticalBox, GridBox, HorizontalBox } from "std-widgets.slint";
 import { Title, SectionTitle } from "components/components.slint";
 
 export component Settings inherits Dialog {
@@ -29,7 +29,9 @@ export component Settings inherits Dialog {
     in-out property <string> xms <=> xms-input.text;
     in-out property <string> xmx <=> xmx-input.text;
 
-    VerticalLayout {
+    VerticalBox {
+        padding: 0px;
+
         Title { text: @tr("Settings"); }
         
         TabWidget {
@@ -37,101 +39,100 @@ export component Settings inherits Dialog {
                 title: @tr("Launcher Settings");
 
                 ScrollView {
-                    GridLayout {
-                        padding: 8px;
+                    VerticalBox {
+                        GroupBox {
+                            title: @tr("General");
+    
+                            GridBox {
+                                padding: 0px;
 
-                        SectionTitle { 
-                            text: @tr("General");
-                            col: 0;
-                            row: 0;
+                                Text {
+                                    text: @tr("Minecraft Path: ");
+                                    col: 0;
+                                    row: 0;
+                                }
+                                game-path-input := LineEdit {
+                                    col: 1;
+                                    row: 0;
+                                }
+        
+                                close-after-launch-box := Switch {
+                                    text: @tr("Close after Launching Game");
+                                    col: 0;
+                                    row: 1;
+                                }
+                            }
                         }
-                        
-                        Text {
-                            text: @tr("Minecraft Path: ");
-                            col: 0;
-                            row: 1;
-                        }
-                        game-path-input := TextInput {
-                            col: 1;
-                            row: 1;
+    
+                        GroupBox {
+                            title: @tr("Downloading Settings");
+    
+                            GridBox {
+                                padding: 0px;
+
+                                Text {
+                                    text: @tr("Concurrency: ");
+                                    col: 0;
+                                    row: 0;
+                                }
+                                concurrency-input := SpinBox {
+                                    col: 1;
+                                    row: 0;
+                                }
+        
+                                Text {
+                                    text: @tr("Assets Source: ");
+                                    col: 0;
+                                    row: 1;
+                                }
+                                assets-source-input := LineEdit {
+                                    col: 1;
+                                    row: 1;
+                                }
+        
+                                Text {
+                                    text: @tr("Libraries Source: ");
+                                    col: 0;
+                                    row: 2;
+                                }
+                                libraries-source-input := LineEdit {
+                                    col: 1;
+                                    row: 2;
+                                }
+        
+                                Text {
+                                    text: @tr("Minecraft Source: ");
+                                    col: 0;
+                                    row: 3;
+                                }
+                                game-source-input := LineEdit {
+                                    col: 1;
+                                    row: 3;
+                                }
+                                
+                                Text {
+                                    text: @tr("Fabric Source: ");
+                                    col: 0;
+                                    row: 4;
+                                }
+                                fabric-source-input := LineEdit {
+                                    col: 1;
+                                    row: 4;
+                                }
+                                
+                                Text {
+                                    text: @tr("Forge Source: ");
+                                    col: 0;
+                                    row: 5;
+                                }
+                                forge-source-input := LineEdit {
+                                    col: 1;
+                                    row: 5;
+                                }
+                            }
                         }
 
-                        close-after-launch-box := Switch {
-                            text: @tr("Close after Launching Game");
-                            col: 0;
-                            row: 2;
-                        }
-                        
-                        SectionTitle {
-                            text: @tr("Downloading Settings");
-                            col: 0;
-                            row: 3;
-                        }
-
-                        Text {
-                            text: @tr("Concurrency: ");
-                            col: 0;
-                            row: 4;
-                        }
-                        concurrency-input := SpinBox {
-                            col: 1;
-                            row: 4;
-                        }
-
-                        Text {
-                            text: @tr("Assets Source: ");
-                            col: 0;
-                            row: 5;
-                        }
-                        assets-source-input := TextInput {
-                            col: 1;
-                            row: 5;
-                        }
-
-                        Text {
-                            text: @tr("Libraries Source: ");
-                            col: 0;
-                            row: 6;
-                        }
-                        libraries-source-input := TextInput {
-                            col: 1;
-                            row: 6;
-                        }
-
-                        Text {
-                            text: @tr("Minecraft Source: ");
-                            col: 0;
-                            row: 7;
-                        }
-                        game-source-input := TextInput {
-                            col: 1;
-                            row: 7;
-                        }
-                        
-                        Text {
-                            text: @tr("Fabric Source: ");
-                            col: 0;
-                            row: 8;
-                        }
-                        fabric-source-input := TextInput {
-                            col: 1;
-                            row: 8;
-                        }
-                        
-                        Text {
-                            text: @tr("Forge Source: ");
-                            col: 0;
-                            row: 9;
-                        }
-                        forge-source-input := TextInput {
-                            col: 1;
-                            row: 9;
-                        }
-
-                        Rectangle {
-                            preferred-height: 100%; 
-                            row: 10;
-                        }
+                        Rectangle { preferred-height: 100%; }
                     }
                 }
             }
@@ -140,15 +141,13 @@ export component Settings inherits Dialog {
                 title: @tr("Default Minecraft Settings");
 
                 ScrollView {
-                    GridLayout {
-                        padding: 8px;
-
+                    GridBox {
                         Text {
                             text: @tr("Java Path: ");
                             col: 0;
                             row: 0;
                         }
-                        java-path-input := TextInput {
+                        java-path-input := LineEdit {
                             col: 1;
                             row: 0;
                         }
@@ -158,7 +157,7 @@ export component Settings inherits Dialog {
                             col: 0;
                             row: 1;
                         }
-                        height-input := TextInput {
+                        height-input := LineEdit {
                             col: 1;
                             row: 1;
                         }
@@ -168,7 +167,7 @@ export component Settings inherits Dialog {
                             col: 0;
                             row: 2;
                         }
-                        width-input := TextInput {
+                        width-input := LineEdit {
                             col: 1;
                             row: 2;
                         }
@@ -178,7 +177,7 @@ export component Settings inherits Dialog {
                             col: 0;
                             row: 3;
                         }
-                        xms-input := TextInput {
+                        xms-input := LineEdit {
                             col: 1;
                             row: 3;
                         }
@@ -188,7 +187,7 @@ export component Settings inherits Dialog {
                             col: 0;
                             row: 4;
                         }
-                        xmx-input := TextInput {
+                        xmx-input := LineEdit {
                             col: 1;
                             row: 4;
                         }
@@ -204,11 +203,10 @@ export component Settings inherits Dialog {
             Tab {
                 title: @tr("About");
 
-                VerticalLayout {
-                    padding: 8px;
-
-                    HorizontalLayout {
+                VerticalBox {
+                    HorizontalBox {
                         alignment: center;
+                        padding: 0px;
 
                         Image {
                             height: 44px;

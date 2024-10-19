@@ -1,5 +1,5 @@
 import { Title, SubTitle } from "components/components.slint";
-import { ComboBox, StandardButton, StandardTableView, Switch } from "std-widgets.slint";
+import { ComboBox, StandardButton, StandardTableView, Switch, LineEdit, VerticalBox, HorizontalBox, GridBox } from "std-widgets.slint";
 
 export component AddGameDialog inherits Dialog {
     title: @tr("Add a Game");
@@ -27,12 +27,17 @@ export component AddGameDialog inherits Dialog {
     callback game-list-changed(int);
     callback mod-combo-box-changed(int);
 
-    VerticalLayout {
+    VerticalBox {
+        padding: 0px;
+
         Title { text: @tr("Add a Game"); }
-        HorizontalLayout {
-            spacing: 4px;
-    
-            VerticalLayout {
+        HorizontalBox {
+            padding: 0px;
+
+            VerticalBox {
+                padding: 0px;
+                horizontal-stretch: 1/3;
+
                 SubTitle { text: @tr("Minecraft Version"); }
                 game-combo-box := ComboBox {
                     model: [@tr("All"), @tr("Release"), @tr("Snapshot")];
@@ -48,7 +53,10 @@ export component AddGameDialog inherits Dialog {
                 }
             }
     
-            VerticalLayout {
+            VerticalBox {
+                padding: 0px;
+                horizontal-stretch: 1/3;
+
                 SubTitle { text: @tr("Mod Loader"); }
                 mod-combo-box := ComboBox {
                     model: [@tr("None"), "Forge", "Fabric"];
@@ -63,15 +71,19 @@ export component AddGameDialog inherits Dialog {
                 }
             }
     
-            VerticalLayout {
+            VerticalBox {
+                padding: 0px;
+
                 SubTitle { text: @tr("Customize"); }
-                GridLayout {
+                GridBox {
+                    padding: 0px;
+
                     Text {
                         text: @tr("Description: ");
                         col: 0;
                         row: 0;
                     }
-                    description-input := TextInput {
+                    description-input := LineEdit {
                         col: 1;
                         row: 0;
                     }
@@ -81,7 +93,7 @@ export component AddGameDialog inherits Dialog {
                         col: 0;
                         row: 1;
                     }
-                    java-path-input := TextInput {
+                    java-path-input := LineEdit {
                         col: 1;
                         row: 1;
                     }
@@ -91,7 +103,7 @@ export component AddGameDialog inherits Dialog {
                         col: 0;
                         row: 2;
                     }
-                    height-input := TextInput {
+                    height-input := LineEdit {
                         col: 1;
                         row: 2;
                     }
@@ -101,7 +113,7 @@ export component AddGameDialog inherits Dialog {
                         col: 0;
                         row: 3;
                     }
-                    width-input := TextInput {
+                    width-input := LineEdit {
                         col: 1;
                         row: 3;
                     }
@@ -111,7 +123,7 @@ export component AddGameDialog inherits Dialog {
                         col: 0;
                         row: 4;
                     }
-                    xms-input := TextInput {
+                    xms-input := LineEdit {
                         col: 1;
                         row: 4;
                     }
@@ -121,7 +133,7 @@ export component AddGameDialog inherits Dialog {
                         col: 0;
                         row: 5;
                     }
-                    xmx-input := TextInput {
+                    xmx-input := LineEdit {
                         col: 1;
                         row: 5;
                     }
@@ -131,7 +143,7 @@ export component AddGameDialog inherits Dialog {
                         col: 0;
                         row: 6;
                     }
-                    args-input := TextInput {
+                    args-input := LineEdit {
                         col: 1;
                         row: 6;
                     }

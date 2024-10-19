@@ -1,4 +1,4 @@
-import { StandardButton, Button } from "std-widgets.slint";
+import { StandardButton, Button, LineEdit, GridBox } from "std-widgets.slint";
 
 export component EditAccDialog inherits Dialog {
     title: @tr("Edit a Account");
@@ -12,13 +12,15 @@ export component EditAccDialog inherits Dialog {
 
     callback del-clicked();
 
-    GridLayout {
+    GridBox {
+        padding: 0px;
+
         Text {
             text: @tr("Account Type: ");
             col: 0;
             row: 0;
         }
-        acc-type-input := TextInput {
+        acc-type-input := LineEdit {
             col: 1;
             row: 0;
         }
@@ -28,7 +30,7 @@ export component EditAccDialog inherits Dialog {
             col: 0;
             row: 1;
         }
-        token-input := TextInput {
+        token-input := LineEdit {
             col: 1;
             row: 1;
         }
@@ -38,7 +40,7 @@ export component EditAccDialog inherits Dialog {
             col: 0;
             row: 2;
         }
-        name-input := TextInput {
+        name-input := LineEdit {
             col: 1;
             row: 2;
         }
@@ -48,7 +50,7 @@ export component EditAccDialog inherits Dialog {
             col: 0;
             row: 3;
         }
-        uuid-input := TextInput {
+        uuid-input := LineEdit {
             col: 1;
             row: 3;
         }
