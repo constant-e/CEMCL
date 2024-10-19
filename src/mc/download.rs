@@ -178,7 +178,7 @@ pub async fn list_forge(mcversion: &String) -> Option<Vec<Forge>> {
             String::new()
         };
         
-        let modified = version["modified"].as_str()?.split('T').collect::<Vec<&str>>()[0].to_string();
+        let modified = version["modified"].as_str()?.to_string();
 
         let forge = Forge {
             version: version["version"].as_str()?.to_string(),
@@ -188,6 +188,8 @@ pub async fn list_forge(mcversion: &String) -> Option<Vec<Forge>> {
 
         forge_list.push(forge);
     }
+
+    forge_list.sort_by(|a, b| b.modified.cmp(&a.modified));
 
     Some(forge_list)
 }

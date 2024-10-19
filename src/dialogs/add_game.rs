@@ -16,7 +16,7 @@ fn ui_forge_list(forge_list: &Vec<Forge>) -> ModelRc<ModelRc<StandardListViewIte
     let mut ui_forge_list: Vec<ModelRc<StandardListViewItem>> = Vec::new();
     for forge in forge_list {
         let version = StandardListViewItem::from(forge.version.as_str());
-        let modified = StandardListViewItem::from(forge.modified.as_str());
+        let modified = StandardListViewItem::from(forge.modified.split('T').collect::<Vec<&str>>()[0]);
         let model: rc::Rc<VecModel<StandardListViewItem>> = rc::Rc::new(VecModel::from(vec![version.into(), modified.into()]));
         let row: ModelRc<StandardListViewItem> = ModelRc::from(model);
         ui_forge_list.push(row);
