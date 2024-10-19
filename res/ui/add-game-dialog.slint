@@ -35,7 +35,7 @@ export component AddGameDialog inherits Dialog {
             VerticalLayout {
                 SubTitle { text: @tr("Minecraft Version"); }
                 game-combo-box := ComboBox {
-                    model: ["All", "Release", "Snapshot"];
+                    model: [@tr("All"), @tr("Release"), @tr("Snapshot")];
                     selected => { root.game-combo-box-changed(self.current-index); }
                 }
                 game-table := StandardTableView {
@@ -51,7 +51,7 @@ export component AddGameDialog inherits Dialog {
             VerticalLayout {
                 SubTitle { text: @tr("Mod Loader"); }
                 mod-combo-box := ComboBox {
-                    model: ["None", "Forge", "Fabric"];
+                    model: [@tr("None"), "Forge", "Fabric"];
                     selected => { root.mod-combo-box-changed(self.current-index); }
                 }
                 mod-table := StandardTableView {

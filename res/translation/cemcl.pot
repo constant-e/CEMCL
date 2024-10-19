@@ -2,7 +2,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
-"POT-Creation-Date: 2024-10-06 10:05+0000\n"
+"POT-Creation-Date: 2024-10-19 13:05+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -207,6 +207,21 @@ msgctxt "AddGameDialog"
 msgid "Minecraft Version"
 msgstr ""
 
+#: add-game-dialog.slint:38
+msgctxt "AddGameDialog"
+msgid "All"
+msgstr ""
+
+#: add-game-dialog.slint:38
+msgctxt "AddGameDialog"
+msgid "Release"
+msgstr ""
+
+#: add-game-dialog.slint:38
+msgctxt "AddGameDialog"
+msgid "Snapshot"
+msgstr ""
+
 #: add-game-dialog.slint:44 add-game-dialog.slint:60
 msgctxt "AddGameDialog"
 msgid "Version"
@@ -220,6 +235,11 @@ msgstr ""
 #: add-game-dialog.slint:52
 msgctxt "AddGameDialog"
 msgid "Mod Loader"
+msgstr ""
+
+#: add-game-dialog.slint:54
+msgctxt "AddGameDialog"
+msgid "None"
 msgstr ""
 
 #: add-game-dialog.slint:61

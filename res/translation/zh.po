@@ -1,7 +1,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
-"POT-Creation-Date: 2024-10-06 10:05+0000\n"
+"POT-Creation-Date: 2024-10-19 13:05+0000\n"
 "PO-Revision-Date: 2024-10-02 11:53+0800\n"
 "Last-Translator:  <fmn_tzx@outlook.com>\n"
 "Language-Team: Chinese (simplified) <i18n-zh@googlegroups.com>\n"
@@ -206,6 +206,21 @@ msgctxt "AddGameDialog"
 msgid "Minecraft Version"
 msgstr "Minecraft版本"
 
+#: add-game-dialog.slint:38
+msgctxt "AddGameDialog"
+msgid "All"
+msgstr "全部"
+
+#: add-game-dialog.slint:38
+msgctxt "AddGameDialog"
+msgid "Release"
+msgstr "正式版"
+
+#: add-game-dialog.slint:38
+msgctxt "AddGameDialog"
+msgid "Snapshot"
+msgstr "快照版"
+
 #: add-game-dialog.slint:44 add-game-dialog.slint:60
 msgctxt "AddGameDialog"
 msgid "Version"
@@ -220,6 +235,11 @@ msgstr "类型"
 msgctxt "AddGameDialog"
 msgid "Mod Loader"
 msgstr "Mod加载器"
+
+#: add-game-dialog.slint:54
+msgctxt "AddGameDialog"
+msgid "None"
+msgstr "无"
 
 #: add-game-dialog.slint:61
 msgctxt "AddGameDialog"
