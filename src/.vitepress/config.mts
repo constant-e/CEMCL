@@ -55,5 +55,9 @@ export default defineConfig({
         },
       ]
     },
+
+    socialLinks: [
+      { icon: 'github', link: 'https://github.com/constant-e/CEMCL' }
+    ]
   }
 })
