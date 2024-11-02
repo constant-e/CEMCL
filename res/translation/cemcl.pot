@@ -2,7 +2,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
-"POT-Creation-Date: 2024-10-19 14:20+0000\n"
+"POT-Creation-Date: 2024-11-02 07:23+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -147,52 +147,47 @@ msgctxt "AddAccDialog"
 msgid "Add a Account"
 msgstr ""
 
-#: add-acc-dialog.slint:20
+#: add-acc-dialog.slint:19
 msgctxt "AddAccDialog"
 msgid "Online Account"
 msgstr ""
 
-#: add-acc-dialog.slint:24
+#: add-acc-dialog.slint:23
 msgctxt "AddAccDialog"
-msgid "Account: "
+msgid "Please wait ..."
 msgstr ""
 
-#: add-acc-dialog.slint:34
-msgctxt "AddAccDialog"
-msgid "Password: "
-msgstr ""
-
-#: add-acc-dialog.slint:51
+#: add-acc-dialog.slint:30
 msgctxt "AddAccDialog"
 msgid "Offline Account"
 msgstr ""
 
-#: add-acc-dialog.slint:55
+#: add-acc-dialog.slint:34
 msgctxt "AddAccDialog"
 msgid "Name: "
 msgstr ""
 
-#: add-acc-dialog.slint:65 add-acc-dialog.slint:116
+#: add-acc-dialog.slint:44 add-acc-dialog.slint:95
 msgctxt "AddAccDialog"
 msgid "UUID: "
 msgstr ""
 
-#: add-acc-dialog.slint:82
+#: add-acc-dialog.slint:61
 msgctxt "AddAccDialog"
 msgid "Other Account"
 msgstr ""
 
-#: add-acc-dialog.slint:86
+#: add-acc-dialog.slint:65
 msgctxt "AddAccDialog"
 msgid "Account Type: "
 msgstr ""
 
-#: add-acc-dialog.slint:96
+#: add-acc-dialog.slint:75
 msgctxt "AddAccDialog"
 msgid "Token: "
 msgstr ""
 
-#: add-acc-dialog.slint:106
+#: add-acc-dialog.slint:85
 msgctxt "AddAccDialog"
 msgid "User Name: "
 msgstr ""
@@ -434,35 +429,47 @@ msgstr ""
 
 #: messages.slint:3
 msgctxt "Messages"
-msgid "Please select an account and a game first."
+msgid "Failed to load OAuth login."
 msgstr ""
 
 #: messages.slint:4
 msgctxt "Messages"
-msgid "All the files under this game's dir will be deleted. Continue?"
+msgid ""
+"Your user code has been copied to clipboard. Press OK after you finish "
+"logining in."
 msgstr ""
 
 #: messages.slint:5
 msgctxt "Messages"
-msgid "Please select a game first."
+msgid "Please select an account and a game first."
 msgstr ""
 
 #: messages.slint:6
 msgctxt "Messages"
-msgid "Failed to load account list. Reason: "
+msgid "All the files under this game's dir will be deleted. Continue?"
 msgstr ""
 
 #: messages.slint:7
 msgctxt "Messages"
-msgid "Failed to load config. Reason: "
+msgid "Please select a game first."
 msgstr ""
 
 #: messages.slint:8
 msgctxt "Messages"
-msgid "Failed to load game list. Reason: "
+msgid "Failed to load account list. Reason: "
 msgstr ""
 
 #: messages.slint:9
+msgctxt "Messages"
+msgid "Failed to load config. Reason: "
+msgstr ""
+
+#: messages.slint:10
+msgctxt "Messages"
+msgid "Failed to load game list. Reason: "
+msgstr ""
+
+#: messages.slint:11
 msgctxt "Messages"
 msgid "Warning"
 msgstr ""

@@ -1,4 +1,4 @@
-import { StandardButton, TabWidget, LineEdit, GridBox } from "std-widgets.slint";
+import { StandardButton, TabWidget, LineEdit, GridBox, VerticalBox, TextEdit } from "std-widgets.slint";
 
 export component AddAccDialog inherits Dialog {
     title: @tr("Add a Account");
@@ -6,8 +6,7 @@ export component AddAccDialog inherits Dialog {
     preferred-width: 400px;
 
     in-out property <int> account-type-index <=> tab-widget.current-index;
-    in-out property <string> online-acc <=> online-acc-input.text;
-    in-out property <string> online-pwd <=> online-pwd-input.text;
+    in-out property <string> online-msg <=> online-text.text;
     in-out property <string> offline-name <=> offline-name-input.text;
     in-out property <string> offline-uuid <=> offline-uuid-input.text;
     in-out property <string> other-acc-type <=> other-acc-type-input.text;
@@ -19,30 +18,10 @@ export component AddAccDialog inherits Dialog {
         Tab {
             title: @tr("Online Account");
 
-            GridBox {
-                Text {
-                    text: @tr("Account: ");
-                    col: 0;
-                    row: 0;
-                }
-                online-acc-input := LineEdit {
-                    col: 1;
-                    row: 0;
-                }
-            
-                Text {
-                    text: @tr("Password: ");
-                    col: 0;
-                    row: 1;
-                }
-                online-pwd-input := LineEdit {
-                    col: 1;
-                    row: 1;
-                }
-
-                Rectangle {
-                    preferred-height: 100%;
-                    row: 2;
+            VerticalBox {
+                online-text := TextEdit {
+                    text: @tr("Please wait ...");
+                    read-only: true;
                 }
             }
         }

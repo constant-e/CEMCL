@@ -82,6 +82,7 @@ impl Default for Config {
 pub struct App {
     pub acc_list: Vec<Account>,
     pub config: Config,
+    pub device_code: String,
     pub download_forge_list: Vec<Forge>,
     pub download_game_list: Vec<GameUrl>,
     pub game_list: Vec<Game>,
@@ -203,7 +204,7 @@ impl App {
     }
 
     /// Launch the game
-    pub fn launch(&self) -> Option<()> {
+    pub fn launch(&mut self) -> Option<()> {
         if let Some(ui) = self.ui_weak.upgrade() {
             let acc_index = ui.get_acc_index() as usize;
             let game_index = ui.get_game_index() as usize;
@@ -212,6 +213,11 @@ impl App {
                 err_dialog(&ui.global::<Messages>().get_acc_or_game_not_selected());
                 return None;
             }
+
+            // refresh access_token
+            let rt = tokio::runtime::Runtime::new().unwrap();
+            let _tokio = rt.enter();
+            rt.block_on(self.acc_list[acc_index].refresh());
 
             let acc_list = self.acc_list.clone();
             let config = self.config.clone();
@@ -270,14 +276,13 @@ impl App {
             let json = serde_json::from_str::<serde_json::Value>(&fs::read_to_string("account.json")?)?;
             if let Some(array) = json.as_array() {
                 for item in array {
-                    let mut account = Account {
+                    let account = Account {
                         access_token: String::new(),
                         account_type: String::from(item["account_type"].as_str().ok_or(ErrorKind::InvalidData)?),
                         refresh_token: String::from(item["token"].as_str().ok_or(ErrorKind::InvalidData)?),
                         uuid: String::from(item["uuid"].as_str().ok_or(ErrorKind::InvalidData)?),
                         user_name: String::from(item["user_name"].as_str().ok_or(ErrorKind::InvalidData)?),
                     };
-                    account.refresh();
                     self.acc_list.push(account);
                 }
             } else {
@@ -462,6 +467,7 @@ impl Default for App {
         App {
             acc_list: Vec::new(),
             config: Config::default(),
+            device_code: String::new(),
             download_forge_list: Vec::new(),
             download_game_list: Vec::new(),
             game_list: Vec::new(),

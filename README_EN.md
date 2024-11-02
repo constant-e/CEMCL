@@ -59,20 +59,21 @@ Run `update_tranlations.sh` to update the .po files and generate .mo files. Afte
 4. (Completed) Support separated versions
 5. (Partially) Multi-language support
 6. (Partially) Support installing Minecraft
-7. Support installing modified Minecraft
-8. Support online login
+7. (Completed, Applying for permission) Support online login
+8. (Developing)Support installing modified Minecraft
 9. Others (More log, UI improvements, etc.)
 
 ## Credits
-1. [env_logger](https://crates.io/crates/env_logger): logs
-2. [futures](https://crates.io/crates/futures): async
-3. [log](https://crates.io/crates/log): logs
-4. [reqwest](https://crates.io/crates/reqwest): downloading
-5. [serde_json](https://crates.io/crates/serde_json): JSON parsing
-6. [slint](https://crates.io/crates/slint): GUI framework
-7. [tokio](https://crates.io/crates/tokio): async
-8. [uuid](https://crates.io/crates/uuid): UUID generating
-9. [zip](https://crates.io/crates/zip): decompressing
+1. [clipboard](https://crates.io/crates/clipboard): clipboard
+2. [env_logger](https://crates.io/crates/env_logger): logs
+3. [futures](https://crates.io/crates/futures): async
+4. [log](https://crates.io/crates/log): logs
+5. [reqwest](https://crates.io/crates/reqwest): downloading
+6. [serde_json](https://crates.io/crates/serde_json): JSON parsing
+7. [slint](https://crates.io/crates/slint): GUI framework
+8. [tokio](https://crates.io/crates/tokio): async
+9. [uuid](https://crates.io/crates/uuid): UUID generating
+10. [zip](https://crates.io/crates/zip): decompressing
 
 ## License
 Apache License 2.0

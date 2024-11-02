@@ -138,8 +138,7 @@ pub async fn add_game_dialog(app_weak: rc::Weak<RefCell<App>>) -> Result<(), sli
 
     let ui_weak_clone = ui_weak.clone();
     ui.on_ok_clicked(move || {
-        if let (Some(app), Some(ui)) = (app_weak.upgrade(), ui_weak_clone.upgrade())
-        {
+        if let (Some(app), Some(ui)) = (app_weak.upgrade(), ui_weak_clone.upgrade()) {
             let index = ui.get_game_index() as usize;
             let len = app.borrow().download_game_list.len();
             if index >= len {

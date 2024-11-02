@@ -1,7 +1,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
-"POT-Creation-Date: 2024-10-19 14:20+0000\n"
+"POT-Creation-Date: 2024-11-02 07:23+0000\n"
 "PO-Revision-Date: 2024-10-02 11:53+0800\n"
 "Last-Translator:  <fmn_tzx@outlook.com>\n"
 "Language-Team: Chinese (simplified) <i18n-zh@googlegroups.com>\n"
@@ -146,52 +146,47 @@ msgctxt "AddAccDialog"
 msgid "Add a Account"
 msgstr "添加账号"
 
-#: add-acc-dialog.slint:20
+#: add-acc-dialog.slint:19
 msgctxt "AddAccDialog"
 msgid "Online Account"
 msgstr "在线账号"
 
-#: add-acc-dialog.slint:24
+#: add-acc-dialog.slint:23
 msgctxt "AddAccDialog"
-msgid "Account: "
-msgstr "账号："
+msgid "Please wait ..."
+msgstr ""
 
-#: add-acc-dialog.slint:34
-msgctxt "AddAccDialog"
-msgid "Password: "
-msgstr "密码："
-
-#: add-acc-dialog.slint:51
+#: add-acc-dialog.slint:30
 msgctxt "AddAccDialog"
 msgid "Offline Account"
 msgstr "离线账号"
 
-#: add-acc-dialog.slint:55
+#: add-acc-dialog.slint:34
 msgctxt "AddAccDialog"
 msgid "Name: "
 msgstr "用户名："
 
-#: add-acc-dialog.slint:65 add-acc-dialog.slint:116
+#: add-acc-dialog.slint:44 add-acc-dialog.slint:95
 msgctxt "AddAccDialog"
 msgid "UUID: "
 msgstr "UUID："
 
-#: add-acc-dialog.slint:82
+#: add-acc-dialog.slint:61
 msgctxt "AddAccDialog"
 msgid "Other Account"
 msgstr "其他账号"
 
-#: add-acc-dialog.slint:86
+#: add-acc-dialog.slint:65
 msgctxt "AddAccDialog"
 msgid "Account Type: "
 msgstr "账号类型"
 
-#: add-acc-dialog.slint:96
+#: add-acc-dialog.slint:75
 msgctxt "AddAccDialog"
 msgid "Token: "
 msgstr "Token："
 
-#: add-acc-dialog.slint:106
+#: add-acc-dialog.slint:85
 msgctxt "AddAccDialog"
 msgid "User Name: "
 msgstr "用户名："
@@ -433,35 +428,47 @@ msgstr "请先选择一个账号。"
 
 #: messages.slint:3
 msgctxt "Messages"
+msgid "Failed to load OAuth login."
+msgstr "加载OAuth登录失败"
+
+#: messages.slint:4
+msgctxt "Messages"
+msgid ""
+"Your user code has been copied to clipboard. Press OK after you finish "
+"logining in."
+msgstr "您的代码已复制至剪切板。登录完成后，请点按OK按钮。"
+
+#: messages.slint:5
+msgctxt "Messages"
 msgid "Please select an account and a game first."
 msgstr "请先选择一个账号和一个游戏。"
 
-#: messages.slint:4
+#: messages.slint:6
 msgctxt "Messages"
 msgid "All the files under this game's dir will be deleted. Continue?"
 msgstr "游戏文件夹下的所有内容将被删除。是否继续？"
 
-#: messages.slint:5
+#: messages.slint:7
 msgctxt "Messages"
 msgid "Please select a game first."
 msgstr "请先选择一个游戏。"
 
-#: messages.slint:6
+#: messages.slint:8
 msgctxt "Messages"
 msgid "Failed to load account list. Reason: "
 msgstr "加载账号列表失败。原因："
 
-#: messages.slint:7
+#: messages.slint:9
 msgctxt "Messages"
 msgid "Failed to load config. Reason: "
 msgstr "加载配置失败。原因："
 
-#: messages.slint:8
+#: messages.slint:10
 msgctxt "Messages"
 msgid "Failed to load game list. Reason: "
 msgstr "加载游戏列表失败。原因："
 
-#: messages.slint:9
+#: messages.slint:11
 msgctxt "Messages"
 msgid "Warning"
 msgstr "警告"

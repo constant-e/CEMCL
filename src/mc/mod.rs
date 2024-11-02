@@ -1,6 +1,6 @@
 //! Minecraft相关
 
-mod account;
+pub mod account;
 pub mod download;
 mod game;
 pub mod launch;

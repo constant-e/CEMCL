@@ -28,8 +28,13 @@ fn main() -> Result<(), slint::PlatformError> {
 
     let app_weak_clone = app_weak.clone();
     ui.on_click_add_acc_btn(move || {
-        if let Err(e) = add_acc_dialog(app_weak_clone.clone()) {
-            error!("Failed to start add_acc. Reason: {e}.");
+        let app_weak_clone = app_weak_clone.clone();
+        if let Err(e) = slint::spawn_local(async move {
+            if let Err(e) = add_acc_dialog(app_weak_clone).await {
+                error!("Failed to start add_acc. Reason: {e}.");
+            }
+        }) {
+            error!("Failed to call spawn_local. Reason: {e}.");
         }
     });
 
