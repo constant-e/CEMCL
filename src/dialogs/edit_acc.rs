@@ -40,7 +40,10 @@ pub fn edit_acc_dialog(app_weak: rc::Weak<RefCell<App>>) -> Result<(), slint::Pl
                 user_name: ui.get_name().into(),
                 uuid: ui.get_uuid().into(),
             };
-            account.refresh();
+
+            let rt = tokio::runtime::Runtime::new().unwrap();
+            let _tokio = rt.enter();
+            rt.block_on(account.refresh());
 
             app.borrow_mut().edit_account(index, account);
             

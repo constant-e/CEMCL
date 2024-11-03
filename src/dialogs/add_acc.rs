@@ -64,6 +64,7 @@ pub async fn add_acc_dialog(app_weak: rc::Weak<RefCell<App>>) -> Result<(), slin
                     account = acc;
                 } else {
                     error!("Failed to login.");
+                    return;
                 }
             } else if index == 1 {
                 // Offline Account
