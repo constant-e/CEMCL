@@ -24,10 +24,10 @@ Example:
 ```
 Explanations:
 1. `account_type`: Account type. It will be a part of launch arguments. Type: `string`.
-2. `token`: Token. It will be a part of launch arguments. Type: `string`.
+2. `token`: Refresh token. Type: `string`.
 3. `uuid`: UUID. Type: `string`.  
 **NOTICE for offline users: UUID must match the format, or MC won't be launched. Do not change UUID, or your character may not be recognized by MC.**
-4. `user_name`: User name. It will be a part of launch arguments. Type: `string`.
+1. `user_name`: User name. It will be a part of launch arguments. Type: `string`.
 
 ## config.json (In the launcher's folder)
 Configuration file for CEMCL.

@@ -24,10 +24,10 @@
 ```
 说明：
 1. `account_type`：登录方式，将直接填入启动参数。数据类型：`string`。
-2. `token`：用户的token，将直接填入启动参数。数据类型：`string`。
+2. `token`：用户的refresh token。数据类型：`string`。
 3. `uuid`：用户的uuid。数据类型：`string`。  
 **离线用户注意：uuid必须符合格式，否则无法启动；uuid不要更改，否则可能无法识别您的角色数据。**
-4. `user_name`：用户名，将直接填入启动参数。数据类型：`string`。
+1. `user_name`：用户名，将直接填入启动参数。数据类型：`string`。
 
 ## config.json（位于启动器目录下）
 启动器配置文件。
