@@ -1,28 +1,29 @@
 # Download
 
 ## Release
-### v0.2.0
+### v0.2.1
 **Warning**: This is an alpha release which haven't been fully tested.
 
-This version uses qt as the backend. So you should install Qt5 first.
+#### Change Log
+[New]
+1. support online login
+2. partially support multi-language
+3. support limiting the concurrency of downloading
+4. show a warning dialog if init failed
+5. support load forge list (without downloading)
 
-Change Log:
-1. support downloading Minecraft (without mod loaders) and mirrors are supported too
-2. show a popup window when launching Minecraft
-3. add an icon
-4. force to use qt as the backend
-5. fix failures when .minecraft not exists
-6. fix natives extracting for some versions
-7. fix -cp args for windows
-8. fix not saving game configs
-9. fix assets for old versions
-10. ui improvements
-11. remove built-in optifine downloading support
+[Fix]
+1. fix wrong index when deleting game
+2. fix index out of range
 
-Download Links:
-[Linux](https://github.com/constant-e/CEMCL/releases/download/v0.2.0/cemcl-0.2.0-linux-x86_64) |
-[macOS](https://github.com/constant-e/CEMCL/releases/download/v0.2.0/cemcl-0.2.0-macos-x86_64) |
-[Windows](https://github.com/constant-e/CEMCL/releases/download/v0.2.0/cemcl-0.2.0-windows-x86_64.exe)
+[Other]
+1. prepare dlls for windows
+2. better logs
+
+**Download Links:**
+[Linux](https://github.com/constant-e/CEMCL/releases/download/v0.2.1/cemcl-0.2.1-linux-x86_64.zip) |
+[macOS](https://github.com/constant-e/CEMCL/releases/download/v0.2.1/cemcl-0.2.1-macos-x86_64.zip) |
+[Windows](https://github.com/constant-e/CEMCL/releases/download/v0.2.1/cemcl-0.2.1-windows-x86_64.zip)
 
 ## GitHub CI
 Get it in [GitHub Actions](https://github.com/constant-e/CEMCL/actions).
