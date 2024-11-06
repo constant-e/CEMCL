@@ -2,7 +2,7 @@
 
 ## Release
 ### v0.2.1
-**Warning**: This is an alpha release which haven't been fully tested.
+**Notice:** This is an alpha release which haven't been fully tested.
 
 #### Change Log
 [New]
