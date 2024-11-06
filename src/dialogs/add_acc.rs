@@ -24,7 +24,7 @@ pub async fn add_acc_dialog(app_weak: rc::Weak<RefCell<App>>) -> Result<(), slin
     ui.set_offline_uuid(slint::SharedString::from(&account.uuid));
 
     if let (Some(app), Some(ui)) = (app_weak.upgrade(), ui_weak.upgrade()) {
-        if let Some((message, device_code, user_code)) = init_oauth().await {
+        if let Some((message, device_code, user_code, url)) = init_oauth().await {
             if let Ok(ctx) = ClipboardProvider::new() {
                 let mut ctx: ClipboardContext = ctx;  // type announce is needed
                 if let Err(e) = ctx.set_contents(user_code) {
@@ -32,6 +32,10 @@ pub async fn add_acc_dialog(app_weak: rc::Weak<RefCell<App>>) -> Result<(), slin
                 }
             } else {
                 warn!("Failed to copy user code.");
+            }
+
+            if let Err(e) = webbrowser::open(&url) {
+                warn!("Failed to open web browser. Reason: {e}");
             }
 
             app.borrow_mut().device_code = device_code;

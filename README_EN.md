@@ -58,8 +58,8 @@ Run `update_tranlations.sh` to update the .po files and generate .mo files. Afte
 3. (Completed) Support configurations editing
 4. (Completed) Support separated versions
 5. (Partially) Multi-language support
-6. (Partially) Support installing Minecraft
-7. (Completed, Applying for permission) Support online login
+6. (Completed) Support installing Minecraft
+7. (Completed) Support online login
 8. (Developing)Support installing modified Minecraft
 9. Others (More log, UI improvements, etc.)
 
@@ -73,7 +73,8 @@ Run `update_tranlations.sh` to update the .po files and generate .mo files. Afte
 7. [slint](https://crates.io/crates/slint): GUI framework
 8. [tokio](https://crates.io/crates/tokio): async
 9. [uuid](https://crates.io/crates/uuid): UUID generating
-10. [zip](https://crates.io/crates/zip): decompressing
+10. [webbrowser](https://crates.io/crates/webbrowser): opening web browser
+11. [zip](https://crates.io/crates/zip): decompressing
 
 ## License
 Apache License 2.0

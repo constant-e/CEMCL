@@ -58,8 +58,8 @@ CI（持续集成）版是在GitHub中提交commit后，由GitHub Actions自动�
 3. （已完成）完善配置系统
 4. （已完成）支持版本隔离
 5. （部分完成）多语言支持
-6. （部分完成）支持下载原版Minecraft
-7. （已完成，申请中）正版登录
+6. （已完成）支持下载原版Minecraft
+7. （已完成）正版登录
 8. （正在开发）支持下载Mod版Minecraft
 9. 其他（完善log和报错，UI改进等）
 
@@ -73,7 +73,8 @@ CI（持续集成）版是在GitHub中提交commit后，由GitHub Actions自动�
 7. [slint](https://crates.io/crates/slint)：GUI框架
 8. [tokio](https://crates.io/crates/tokio)：异步
 9. [uuid](https://crates.io/crates/uuid)：UUID生成
-10. [zip](https://crates.io/crates/zip)：解压缩
+10. [webbrowser](https://crates.io/crates/webbrowser)：打开浏览器
+11. [zip](https://crates.io/crates/zip)：解压缩
 
 ## 许可证
 Apache License 2.0

@@ -154,8 +154,8 @@ impl Default for Account {
     }
 }
 
-// request an oauth login, and return (message, device_code, user_code)
-pub async fn init_oauth() -> Option<(String, String, String)> {
+// request an oauth login, and return (message, device_code, user_code, link)
+pub async fn init_oauth() -> Option<(String, String, String, String)> {
     let client_id = "866440ab-2174-4ff6-8624-290608ac9bdb";
     let client = reqwest::Client::new();
     let params = [("client_id", client_id), ("scope", "XboxLive.signin offline_access")];
@@ -169,5 +169,6 @@ pub async fn init_oauth() -> Option<(String, String, String)> {
         String::from(json["message"].as_str()?),
         String::from(json["device_code"].as_str()?),
         String::from(json["user_code"].as_str()?),
+        String::from(json["verification_uri"].as_str()?),
     ))
 }
