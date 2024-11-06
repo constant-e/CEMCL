@@ -3,7 +3,7 @@ constant-e's Minecraft: Java Edition Launcher
 
 Language: [简体中文](README.md) | English
 
-## Warning
+## Notice
 Some of the functions are still under development.
 
 ## Introduction
@@ -14,8 +14,8 @@ There are two kinds of version, Release and CI.
 
 ### Release
 Release versions are stable versions, which is recommended for most of the users.
-1. Go to [Github](https://github.com/constant-e/CEMCL/releases)
-2. Go to [website](https://constant-e.github.io/CEMCL/en/download.html)
+1. Download from [Github](https://github.com/constant-e/CEMCL/releases)
+2. Download from [website](https://constant-e.github.io/CEMCL/en/download.html)
 
 ### CI
 CI (Continuous Integration) versions are automatically built by GitHub Actions after committing. They are updated more frequently and sometimes unstable.
