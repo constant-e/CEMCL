@@ -203,68 +203,56 @@ impl App {
         Some(index)
     }
 
+    // we should get acc index and game index in main thread
     /// Launch the game
-    pub fn launch(&mut self) -> Option<()> {
-        if let Some(ui) = self.ui_weak.upgrade() {
-            let acc_index = ui.get_acc_index() as usize;
-            let game_index = ui.get_game_index() as usize;
-            if acc_index >= self.acc_list.len() || game_index >= self.game_list.len() {
-                warn!("Index out of bounds: the len is ({}, {}) but the index is ({acc_index}, {game_index}).", self.acc_list.len(), self.game_list.len());
-                err_dialog(&ui.global::<Messages>().get_acc_or_game_not_selected());
-                return None;
-            }
-
-            // refresh access_token
-            let rt = tokio::runtime::Runtime::new().unwrap();
-            let _tokio = rt.enter();
-            rt.block_on(self.acc_list[acc_index].refresh());
-
-            let acc_list = self.acc_list.clone();
-            let config = self.config.clone();
-            let game_list = self.game_list.clone();
-            let ui_weak = ui.as_weak();
-            thread::spawn(move || {
-                ui_weak.upgrade_in_event_loop(|ui| { ui.invoke_show_popup(); }).unwrap();
-                if let Some(cmd) = launch::get_launch_command(&acc_list[acc_index], &game_list[game_index], &config) {
-                    if cfg!(debug_assertions) {
-                        let mut str = game_list[game_index].java_path.clone() + " ";
-                        for i in &cmd {
-                            str.push_str(i);
-                            str.push_str(" ");
-                        }
-                        debug!("{str}");
-                    }
-                    
-                    let java_path = game_list[game_index].java_path.clone();
-                    let (s, r) = sync::mpsc::channel();
-
-                    thread::spawn(move || {
-                        if let Ok(_child) = Command::new(java_path).args(cmd).spawn() {
-                            s.send(Some(())).unwrap();
-                        } else {
-                            s.send(None).unwrap();
-                            error!("Failed to run command.");
-                        }
-                    });
-
-                    if r.recv().unwrap().is_some() {
-                        if config.close_after_launch {
-                            ui_weak.upgrade_in_event_loop(|ui| { ui.hide().unwrap(); }).unwrap();
-                        }
-                    } else {
-                        slint::invoke_from_event_loop(|| {
-                            err_dialog("Failed to run command.");
-                        }).unwrap();
-                    }
-
-                    ui_weak.upgrade_in_event_loop(|ui| { ui.invoke_close_popup(); }).unwrap();
-                } else {
-                    error!("Failed to get launch command.");
-                    ui_weak.upgrade_in_event_loop(|ui| { ui.invoke_close_popup(); }).unwrap();
-                }
-            });
+    pub async fn launch(&mut self, acc_index: usize, game_index: usize) -> Option<()> {
+        if acc_index >= self.acc_list.len() || game_index >= self.game_list.len() {
+            warn!("Index out of bounds: the len is ({}, {}) but the index is ({acc_index}, {game_index}).", self.acc_list.len(), self.game_list.len());
+            self.ui_weak.upgrade_in_event_loop(|ui| err_dialog(&ui.global::<Messages>().get_acc_or_game_not_selected())).unwrap();
+            return None;
         }
 
+        self.ui_weak.upgrade_in_event_loop(|ui| ui.invoke_show_popup()).unwrap();
+        
+        // refresh access_token
+        self.acc_list[acc_index].refresh().await?;
+        
+        if let Some(cmd) = launch::get_launch_command(&self.acc_list[acc_index], &self.game_list[game_index], &self.config).await {
+            if cfg!(debug_assertions) {
+                let mut str = self.game_list[game_index].java_path.clone() + " ";
+                for i in &cmd {
+                    str.push_str(i);
+                    str.push_str(" ");
+                }
+                debug!("{str}");
+            }
+            
+            let java_path = self.game_list[game_index].java_path.clone();
+            
+            let (s, r) = sync::mpsc::channel();
+            thread::spawn(move || {
+                if let Ok(_child) = Command::new(java_path).args(cmd).spawn() {
+                    s.send(Some(())).unwrap();
+                } else {
+                    s.send(None).unwrap();
+                    error!("Failed to run command.");
+                }
+            });
+
+            if r.recv().unwrap().is_some() {
+                if self.config.close_after_launch {
+                    self.ui_weak.upgrade_in_event_loop(|ui| ui.hide().unwrap()).unwrap();
+                }
+            } else {
+                slint::invoke_from_event_loop(|| {
+                    err_dialog("Failed to run command.");
+                }).unwrap();
+            }
+        } else {
+            error!("Failed to get launch command.");
+        }
+
+        self.ui_weak.upgrade_in_event_loop(|ui| ui.invoke_close_popup()).unwrap();
         Some(())
     }
 
@@ -272,27 +260,29 @@ impl App {
     pub fn load_acc_list(&mut self) -> Result<(), std::io::Error> {
         self.acc_list.clear();
 
-        if exists("account.json")? {
-            let json = serde_json::from_str::<serde_json::Value>(&fs::read_to_string("account.json")?)?;
-            if let Some(array) = json.as_array() {
-                for item in array {
-                    let account = Account {
-                        access_token: String::new(),
-                        account_type: String::from(item["account_type"].as_str().ok_or(ErrorKind::InvalidData)?),
-                        refresh_token: String::from(item["token"].as_str().ok_or(ErrorKind::InvalidData)?),
-                        uuid: String::from(item["uuid"].as_str().ok_or(ErrorKind::InvalidData)?),
-                        user_name: String::from(item["user_name"].as_str().ok_or(ErrorKind::InvalidData)?),
-                    };
-                    self.acc_list.push(account);
-                }
-            } else {
-                error!("Failed to convert account.json to an array.");
-                return Err(ErrorKind::InvalidData.into());
+        if !exists("account.json")? {
+            self.acc_list = vec![Account::default()];
+            return self.save_acc_list();
+        }
+
+        let json = serde_json::from_str::<serde_json::Value>(&fs::read_to_string("account.json")?)?;
+        if let Some(array) = json.as_array() {
+            for item in array {
+                let account = Account {
+                    access_token: String::new(),
+                    account_type: String::from(item["account_type"].as_str().ok_or(ErrorKind::InvalidData)?),
+                    refresh_token: String::from(item["token"].as_str().ok_or(ErrorKind::InvalidData)?),
+                    uuid: String::from(item["uuid"].as_str().ok_or(ErrorKind::InvalidData)?),
+                    user_name: String::from(item["user_name"].as_str().ok_or(ErrorKind::InvalidData)?),
+                };
+
+                self.acc_list.push(account);
             }
         } else {
-            self.acc_list = vec![Account::default()];
-            self.save_acc_list()?;
+            error!("Failed to convert account.json to an array.");
+            return Err(ErrorKind::InvalidData.into());
         }
+
         Ok(())
     }
 

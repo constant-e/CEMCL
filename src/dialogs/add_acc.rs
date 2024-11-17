@@ -1,7 +1,6 @@
 //! 添加账号
 
-use std::cell::RefCell;
-use std::rc;
+use std::sync::{self, Mutex};
 use clipboard::{ClipboardContext, ClipboardProvider};
 use log::{error, warn};
 use slint::ComponentHandle;
@@ -12,7 +11,7 @@ use crate::mc::account::init_oauth;
 use crate::Messages;
 
 /// 添加账号Dialog
-pub async fn add_acc_dialog(app_weak: rc::Weak<RefCell<App>>) -> Result<(), slint::PlatformError> {
+pub async fn add_acc_dialog(app_weak: sync::Weak<Mutex<App>>) -> Result<(), slint::PlatformError> {
     let rt = tokio::runtime::Runtime::new().unwrap();
     let _tokio = rt.enter();
 
@@ -38,50 +37,64 @@ pub async fn add_acc_dialog(app_weak: rc::Weak<RefCell<App>>) -> Result<(), slin
                 warn!("Failed to open web browser. Reason: {e}");
             }
 
-            app.borrow_mut().device_code = device_code;
-
-            let msg = app.borrow().ui_weak.upgrade()
-                .ok_or(slint::PlatformError::Other(String::from("Failed to upgrade a weak pointer.")))?
-                .global::<Messages>().get_acc_online_msg().to_string();
-            let message = message + "\n" + &msg;
-            ui.set_online_msg(message.into());
+            if let Ok(mut app) = app.lock() {
+                app.device_code = device_code;
+                let msg = app.ui_weak.upgrade()
+                    .ok_or(slint::PlatformError::Other(String::from("Failed to upgrade a weak pointer")))?
+                    .global::<Messages>().get_acc_online_msg().to_string();
+                let message = message + "\n" + &msg;
+                ui.set_online_msg(message.into());
+            } else {
+                error!("Failed to lock a mutex.");
+                return Err(slint::PlatformError::Other(String::from("Failed to lock a mutex")));
+            }
         } else {
-            let msg = app.borrow().ui_weak.upgrade()
-                .ok_or(slint::PlatformError::Other(String::from("Failed to upgrade a weak pointer.")))?
-                .global::<Messages>().get_acc_online_failed().to_string();
-            ui.set_online_msg(msg.into());
+            if let Ok(app) = app.lock() {
+                let msg = app.ui_weak.upgrade()
+                    .ok_or(slint::PlatformError::Other(String::from("Failed to upgrade a weak pointer")))?
+                    .global::<Messages>().get_acc_online_failed().to_string();
+                ui.set_online_msg(msg.into());
+            } else {
+                error!("Failed to lock a mutex.");
+                return Err(slint::PlatformError::Other(String::from("Failed to lock a mutex")));
+            }
         }
     } else {
         error!("Failed to upgrade a weak pointer.");
-        return Err(slint::PlatformError::Other(String::from("Failed to upgrade a weak pointer.")));
+        return Err(slint::PlatformError::Other(String::from("Failed to upgrade a weak pointer")));
     }
     
     let ui_weak_clone = ui_weak.clone();
     ui.on_ok_clicked(move || {
         if let (Some(app), Some(ui)) = (app_weak.upgrade(), ui_weak_clone.upgrade()) {
-            let index = ui.get_account_type_index();
-            if index == 0 {
-                // Online Account
-                let rt = tokio::runtime::Runtime::new().unwrap();
-                let _tokio = rt.enter();
-                if let Some(acc) = rt.block_on(Account::new(&app.borrow().device_code)) {
-                    account = acc;
+            if let Ok(mut app) = app.lock() {
+                let index = ui.get_account_type_index();
+                if index == 0 {
+                    // Online Account
+                    let rt = tokio::runtime::Runtime::new().unwrap();
+                    let _tokio = rt.enter();
+                    if let Some(acc) = rt.block_on(Account::new(&app.device_code)) {
+                        account = acc;
+                    } else {
+                        error!("Failed to login.");
+                        return;
+                    }
+                } else if index == 1 {
+                    // Offline Account
+                    account.user_name = ui.get_offline_name().to_string();
+                    account.uuid = ui.get_offline_uuid().to_string();
                 } else {
-                    error!("Failed to login.");
-                    return;
+                    // Costumized Account
+                    account.account_type = ui.get_other_acc_type().to_string();
+                    account.refresh_token = ui.get_other_token().to_string();
+                    account.uuid = ui.get_other_uuid().to_string();
+                    account.user_name = ui.get_other_name().to_string();
                 }
-            } else if index == 1 {
-                // Offline Account
-                account.user_name = ui.get_offline_name().to_string();
-                account.uuid = ui.get_offline_uuid().to_string();
+                app.add_account(&account);
             } else {
-                // Costumized Account
-                account.account_type = ui.get_other_acc_type().to_string();
-                account.refresh_token = ui.get_other_token().to_string();
-                account.uuid = ui.get_other_uuid().to_string();
-                account.user_name = ui.get_other_name().to_string();
+                error!("Failed to lock a mutex.");
             }
-            app.borrow_mut().add_account(&account);
+
             ui.hide().unwrap();
         } else {
             error!("Failed to upgrade a weak pointer.");

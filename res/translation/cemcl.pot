@@ -2,7 +2,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
-"POT-Creation-Date: 2024-11-02 07:23+0000\n"
+"POT-Creation-Date: 2024-11-17 09:17+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -20,126 +20,6 @@ msgstr ""
 #: dialogs.slint:23
 msgctxt "ErrorDialog"
 msgid "Error"
-msgstr ""
-
-#: settings.slint:7 settings.slint:35
-msgctxt "Settings"
-msgid "Settings"
-msgstr ""
-
-#: settings.slint:39
-msgctxt "Settings"
-msgid "Launcher Settings"
-msgstr ""
-
-#: settings.slint:44
-msgctxt "Settings"
-msgid "General"
-msgstr ""
-
-#: settings.slint:50
-msgctxt "Settings"
-msgid "Minecraft Path: "
-msgstr ""
-
-#: settings.slint:60
-msgctxt "Settings"
-msgid "Close after Launching Game"
-msgstr ""
-
-#: settings.slint:68
-msgctxt "Settings"
-msgid "Downloading Settings"
-msgstr ""
-
-#: settings.slint:74
-msgctxt "Settings"
-msgid "Concurrency: "
-msgstr ""
-
-#: settings.slint:84
-msgctxt "Settings"
-msgid "Assets Source: "
-msgstr ""
-
-#: settings.slint:94
-msgctxt "Settings"
-msgid "Libraries Source: "
-msgstr ""
-
-#: settings.slint:104
-msgctxt "Settings"
-msgid "Minecraft Source: "
-msgstr ""
-
-#: settings.slint:114
-msgctxt "Settings"
-msgid "Fabric Source: "
-msgstr ""
-
-#: settings.slint:124
-msgctxt "Settings"
-msgid "Forge Source: "
-msgstr ""
-
-#: settings.slint:141
-msgctxt "Settings"
-msgid "Default Minecraft Settings"
-msgstr ""
-
-#: settings.slint:146
-msgctxt "Settings"
-msgid "Java Path: "
-msgstr ""
-
-#: settings.slint:156
-msgctxt "Settings"
-msgid "Window Height: "
-msgstr ""
-
-#: settings.slint:166
-msgctxt "Settings"
-msgid "Window Width: "
-msgstr ""
-
-#: settings.slint:176
-msgctxt "Settings"
-msgid "Minimum Memory: "
-msgstr ""
-
-#: settings.slint:186
-msgctxt "Settings"
-msgid "Maximum Memory: "
-msgstr ""
-
-#: settings.slint:204
-msgctxt "Settings"
-msgid "About"
-msgstr ""
-
-#: settings.slint:226
-msgctxt "Settings"
-msgid "Version: "
-msgstr ""
-
-#: settings.slint:227
-msgctxt "Settings"
-msgid "Github Repository: "
-msgstr ""
-
-#: settings.slint:228
-msgctxt "Settings"
-msgid "Developers: "
-msgstr ""
-
-#: settings.slint:229
-msgctxt "Settings"
-msgid "License: "
-msgstr ""
-
-#: settings.slint:231
-msgctxt "Settings"
-msgid "Credits:\n"
 msgstr ""
 
 #: add-acc-dialog.slint:4
@@ -167,27 +47,27 @@ msgctxt "AddAccDialog"
 msgid "Name: "
 msgstr ""
 
-#: add-acc-dialog.slint:44 add-acc-dialog.slint:95
+#: add-acc-dialog.slint:45 add-acc-dialog.slint:100
 msgctxt "AddAccDialog"
 msgid "UUID: "
 msgstr ""
 
-#: add-acc-dialog.slint:61
+#: add-acc-dialog.slint:63
 msgctxt "AddAccDialog"
 msgid "Other Account"
 msgstr ""
 
-#: add-acc-dialog.slint:65
+#: add-acc-dialog.slint:67
 msgctxt "AddAccDialog"
 msgid "Account Type: "
 msgstr ""
 
-#: add-acc-dialog.slint:75
+#: add-acc-dialog.slint:78
 msgctxt "AddAccDialog"
 msgid "Token: "
 msgstr ""
 
-#: add-acc-dialog.slint:85
+#: add-acc-dialog.slint:89
 msgctxt "AddAccDialog"
 msgid "User Name: "
 msgstr ""
@@ -252,37 +132,37 @@ msgctxt "AddGameDialog"
 msgid "Description: "
 msgstr ""
 
-#: add-game-dialog.slint:92
+#: add-game-dialog.slint:93
 msgctxt "AddGameDialog"
 msgid "Java Path: "
 msgstr ""
 
-#: add-game-dialog.slint:102
+#: add-game-dialog.slint:104
 msgctxt "AddGameDialog"
 msgid "Window Height: "
 msgstr ""
 
-#: add-game-dialog.slint:112
+#: add-game-dialog.slint:115
 msgctxt "AddGameDialog"
 msgid "Window Width: "
 msgstr ""
 
-#: add-game-dialog.slint:122
+#: add-game-dialog.slint:126
 msgctxt "AddGameDialog"
 msgid "Minimum Memory: "
 msgstr ""
 
-#: add-game-dialog.slint:132
+#: add-game-dialog.slint:137
 msgctxt "AddGameDialog"
 msgid "Maximum Memory: "
 msgstr ""
 
-#: add-game-dialog.slint:142
+#: add-game-dialog.slint:148
 msgctxt "AddGameDialog"
 msgid "Launch Arguments: "
 msgstr ""
 
-#: add-game-dialog.slint:152
+#: add-game-dialog.slint:159
 msgctxt "AddGameDialog"
 msgid "Enable Separated Version"
 msgstr ""
@@ -342,82 +222,87 @@ msgctxt "AppWindow"
 msgid "Start"
 msgstr ""
 
-#: edit-acc-dialog.slint:4
+#: edit-acc-dialog.slint:5
 msgctxt "EditAccDialog"
-msgid "Edit a Account"
+msgid "Edit an Account"
 msgstr ""
 
-#: edit-acc-dialog.slint:19
+#: edit-acc-dialog.slint:20
+msgctxt "EditAccDialog"
+msgid "Account "
+msgstr ""
+
+#: edit-acc-dialog.slint:26
 msgctxt "EditAccDialog"
 msgid "Account Type: "
 msgstr ""
 
-#: edit-acc-dialog.slint:29
+#: edit-acc-dialog.slint:37
 msgctxt "EditAccDialog"
 msgid "Token: "
 msgstr ""
 
-#: edit-acc-dialog.slint:39
+#: edit-acc-dialog.slint:48
 msgctxt "EditAccDialog"
 msgid "User Name: "
 msgstr ""
 
-#: edit-acc-dialog.slint:49
+#: edit-acc-dialog.slint:59
 msgctxt "EditAccDialog"
 msgid "UUID: "
 msgstr ""
 
-#: edit-acc-dialog.slint:65
+#: edit-acc-dialog.slint:76
 msgctxt "EditAccDialog"
 msgid "Delete"
 msgstr ""
 
-#: edit-game-dialog.slint:4
+#: edit-game-dialog.slint:5
 msgctxt "EditGameDialog"
 msgid "Edit a Game"
 msgstr ""
 
-#: edit-game-dialog.slint:23
+#: edit-game-dialog.slint:31
 msgctxt "EditGameDialog"
 msgid "Description: "
 msgstr ""
 
-#: edit-game-dialog.slint:33
+#: edit-game-dialog.slint:42
 msgctxt "EditGameDialog"
 msgid "Java Path: "
 msgstr ""
 
-#: edit-game-dialog.slint:43
+#: edit-game-dialog.slint:53
 msgctxt "EditGameDialog"
 msgid "Window Height: "
 msgstr ""
 
-#: edit-game-dialog.slint:53
+#: edit-game-dialog.slint:64
 msgctxt "EditGameDialog"
 msgid "Window Width: "
 msgstr ""
 
-#: edit-game-dialog.slint:63
+#: edit-game-dialog.slint:75
 msgctxt "EditGameDialog"
 msgid "Minimum Memory: "
 msgstr ""
 
-#: edit-game-dialog.slint:73
+#: edit-game-dialog.slint:86
 msgctxt "EditGameDialog"
 msgid "Maximum Memory: "
 msgstr ""
 
-#: edit-game-dialog.slint:83
+#: edit-game-dialog.slint:97
 msgctxt "EditGameDialog"
 msgid "Launch Arguments: "
 msgstr ""
 
-#: edit-game-dialog.slint:93
+#: edit-game-dialog.slint:108
 msgctxt "EditGameDialog"
 msgid "Enable Separated Version"
 msgstr ""
 
-#: edit-game-dialog.slint:104
+#: edit-game-dialog.slint:119
 msgctxt "EditGameDialog"
 msgid "Delete"
 msgstr ""
@@ -472,5 +357,125 @@ msgstr ""
 #: messages.slint:11
 msgctxt "Messages"
 msgid "Warning"
+msgstr ""
+
+#: settings.slint:7 settings.slint:35
+msgctxt "Settings"
+msgid "Settings"
+msgstr ""
+
+#: settings.slint:39
+msgctxt "Settings"
+msgid "Launcher Settings"
+msgstr ""
+
+#: settings.slint:44
+msgctxt "Settings"
+msgid "General"
+msgstr ""
+
+#: settings.slint:50
+msgctxt "Settings"
+msgid "Minecraft Path: "
+msgstr ""
+
+#: settings.slint:61
+msgctxt "Settings"
+msgid "Close after Launching Game"
+msgstr ""
+
+#: settings.slint:69
+msgctxt "Settings"
+msgid "Downloading Settings"
+msgstr ""
+
+#: settings.slint:75
+msgctxt "Settings"
+msgid "Concurrency: "
+msgstr ""
+
+#: settings.slint:86
+msgctxt "Settings"
+msgid "Assets Source: "
+msgstr ""
+
+#: settings.slint:97
+msgctxt "Settings"
+msgid "Libraries Source: "
+msgstr ""
+
+#: settings.slint:108
+msgctxt "Settings"
+msgid "Minecraft Source: "
+msgstr ""
+
+#: settings.slint:119
+msgctxt "Settings"
+msgid "Fabric Source: "
+msgstr ""
+
+#: settings.slint:130
+msgctxt "Settings"
+msgid "Forge Source: "
+msgstr ""
+
+#: settings.slint:148
+msgctxt "Settings"
+msgid "Default Minecraft Settings"
+msgstr ""
+
+#: settings.slint:153
+msgctxt "Settings"
+msgid "Java Path: "
+msgstr ""
+
+#: settings.slint:164
+msgctxt "Settings"
+msgid "Window Height: "
+msgstr ""
+
+#: settings.slint:175
+msgctxt "Settings"
+msgid "Window Width: "
+msgstr ""
+
+#: settings.slint:186
+msgctxt "Settings"
+msgid "Minimum Memory: "
+msgstr ""
+
+#: settings.slint:197
+msgctxt "Settings"
+msgid "Maximum Memory: "
+msgstr ""
+
+#: settings.slint:216
+msgctxt "Settings"
+msgid "About"
+msgstr ""
+
+#: settings.slint:238
+msgctxt "Settings"
+msgid "Version: "
+msgstr ""
+
+#: settings.slint:239
+msgctxt "Settings"
+msgid "Github Repository: "
+msgstr ""
+
+#: settings.slint:240
+msgctxt "Settings"
+msgid "Developers: "
+msgstr ""
+
+#: settings.slint:241
+msgctxt "Settings"
+msgid "License: "
+msgstr ""
+
+#: settings.slint:243
+msgctxt "Settings"
+msgid "Credits:\n"
 msgstr ""
 

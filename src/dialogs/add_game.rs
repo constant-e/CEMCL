@@ -1,7 +1,8 @@
 //! 添加新MC版本
 
-use std::fs;
-use std::{cell::RefCell, rc};
+use std::sync::Mutex;
+use std::{fs, sync};
+use std::rc;
 
 use log::{error, warn};
 use slint::{ComponentHandle, ModelRc, StandardListViewItem, VecModel};
@@ -37,40 +38,43 @@ fn ui_game_url_list(game_url_list: &Vec<GameUrl>) -> ModelRc<ModelRc<StandardLis
     ModelRc::from(rc::Rc::new(VecModel::from(ui_game_url_list)))
 }
 
-async fn load_mod(app_weak: rc::Weak<RefCell<App>>, ui_weak: slint::Weak<AddGameDialog>, index: usize) {
+async fn load_mod(app_weak: sync::Weak<Mutex<App>>, ui_weak: slint::Weak<AddGameDialog>, index: usize) {
     let rt = tokio::runtime::Runtime::new().unwrap();
     let _tokio = rt.enter();
 
     if let (Some(app), Some(ui)) = (app_weak.upgrade(), ui_weak.upgrade()) {
-        let game_index = ui.get_game_index() as usize;
-        if game_index >= app.borrow().download_game_list.len() {
-            warn!("Minecraft not selected.");
-            return;
-        }
-        if index == 1 {
-            // forge
-            let version = app.borrow().download_game_list[game_index].version.clone();  // 防止app.borrow_mut()和app.borrow()同时存在
-            app.borrow_mut().download_forge_list = list_forge(&version).await.unwrap();
-            ui.set_mod_list(ui_forge_list(&app.borrow().download_forge_list));
-        } else if index == 2 {
-            // fabric
-            
+        if let Ok(mut app) = app.lock() {
+            let game_index = ui.get_game_index() as usize;
+            if game_index >= app.download_game_list.len() {
+                warn!("Minecraft not selected.");
+                return;
+            }
+            if index == 1 {
+                // forge
+                let version = &app.download_game_list[game_index].version;
+                app.download_forge_list = list_forge(&version).await.unwrap();
+                ui.set_mod_list(ui_forge_list(&app.download_forge_list));
+            } else if index == 2 {
+                // fabric
+
+            } else {
+                app.download_forge_list.clear();
+                ui.set_mod_list(ModelRc::default());
+            }
         } else {
-            app.borrow_mut().download_forge_list.clear();
-            ui.set_mod_list(ModelRc::default());
+            error!("Failed to lock a mutex.");
         }
     } else {
         error!("Failed to upgrade a weak pointer.");
     }
 }
 
-pub async fn add_game_dialog(app_weak: rc::Weak<RefCell<App>>) -> Result<(), slint::PlatformError> {
+pub async fn add_game_dialog(app_weak: sync::Weak<Mutex<App>>) -> Result<(), slint::PlatformError> {
     let rt = tokio::runtime::Runtime::new().unwrap();
     let _tokio = rt.enter();
 
     let ui = AddGameDialog::new()?;
     let ui_weak = ui.as_weak();
-
 
     let game_url_list = if let Ok(Some(result)) = rt.spawn(download::list_game()).await {
         result
@@ -79,37 +83,49 @@ pub async fn add_game_dialog(app_weak: rc::Weak<RefCell<App>>) -> Result<(), sli
     };
 
     if let Some(app) = app_weak.upgrade() {
-        // 筛选版本类型后的列表
-        app.borrow_mut().download_game_list = game_url_list.clone();
-        ui.set_args(slint::SharedString::new());
-        ui.set_config_height(app.borrow().config.height.clone().into());
-        ui.set_config_width(app.borrow().config.width.clone().into());
-        ui.set_description(slint::SharedString::new());
-        ui.set_java_path(app.borrow().config.java_path.clone().into());
-        ui.set_separated(false);
-        ui.set_xms(app.borrow().config.xms.clone().into());
-        ui.set_xmx(app.borrow().config.xmx.clone().into());
-        ui.set_game_list(ui_game_url_list(&game_url_list));
+        if let Ok(mut app) = app.lock() {
+            // 筛选版本类型后的列表
+            app.download_game_list = game_url_list.clone();
+            ui.set_args(slint::SharedString::new());
+            ui.set_config_height(app.config.height.clone().into());
+            ui.set_config_width(app.config.width.clone().into());
+            ui.set_description(slint::SharedString::new());
+            ui.set_java_path(app.config.java_path.clone().into());
+            ui.set_separated(false);
+            ui.set_xms(app.config.xms.clone().into());
+            ui.set_xmx(app.config.xmx.clone().into());
+            ui.set_game_list(ui_game_url_list(&game_url_list));
+        } else {
+            error!("Failed to lock a mutex.");
+            return Err(slint::PlatformError::Other(String::from("Failed to lock a mutex")));
+        }
+    } else {
+        error!("Failed to upgrade a weak pointer.");
+        return Err(slint::PlatformError::Other(String::from("Failed to upgrade a weak pointer")));
     }
     
     let app_weak_clone = app_weak.clone();
     let ui_weak_clone = ui_weak.clone();
     ui.on_game_combo_box_changed(move |index| {
         if let (Some(app), Some(ui)) = (app_weak_clone.upgrade(), ui_weak_clone.upgrade()) {
-            let require = match index {
-                0 => "",
-                1 => "release",
-                2 => "snapshot",
-                _ => "",
-            };
-            app.borrow_mut().download_game_list.clear();
-            for game in &game_url_list {
-                if !game.game_type.contains(require) {
-                    continue;
+            if let Ok(mut app) = app.lock() {
+                let require = match index {
+                    0 => "",
+                    1 => "release",
+                    2 => "snapshot",
+                    _ => "",
+                };
+                app.download_game_list.clear();
+                for game in &game_url_list {
+                    if !game.game_type.contains(require) {
+                        continue;
+                    }
+                    app.download_game_list.push(game.clone());
                 }
-                app.borrow_mut().download_game_list.push(game.clone());
+                ui.set_game_list(ui_game_url_list(&app.download_game_list));
+            } else {
+                error!("Failed to lock a mutex.");
             }
-            ui.set_game_list(ui_game_url_list(&app.borrow().download_game_list));
         } else {
             error!("Failed to upgrade a weak pointer.");
         }
@@ -139,23 +155,24 @@ pub async fn add_game_dialog(app_weak: rc::Weak<RefCell<App>>) -> Result<(), sli
     let ui_weak_clone = ui_weak.clone();
     ui.on_ok_clicked(move || {
         if let (Some(app), Some(ui)) = (app_weak.upgrade(), ui_weak_clone.upgrade()) {
-            let index = ui.get_game_index() as usize;
-            let len = app.borrow().download_game_list.len();
-            if index >= len {
-                error!("{index} is out of range (max: {})", len);
-                return;
-            }
+            if let Ok(mut app) = app.lock() {
+                let index = ui.get_game_index() as usize;
+                let len = app.download_game_list.len();
+                if index >= len {
+                    error!("{index} is out of range (max: {})", len);
+                    return;
+                }
 
-            let game_url = app.borrow().download_game_list[index].clone();
-            let dir = app.borrow().config.game_path.to_string() + "/versions/" + &game_url.version;
-            if fs::create_dir_all(&dir).is_err() {
-                error!("Failed to create {dir}.");
-                return;
-            };
-            slint::spawn_local(async move {
+                let game_url = app.download_game_list[index].clone();
+                let dir = app.config.game_path.to_string() + "/versions/" + &game_url.version;
+                if fs::create_dir_all(&dir).is_err() {
+                    error!("Failed to create {dir}.");
+                    return;
+                };
+                
                 let rt = tokio::runtime::Runtime::new().unwrap();
                 let _tokio = rt.enter();
-                rt.spawn(download::download(game_url.url.clone(), dir.clone() + "/" + &game_url.version + ".json", 3)).await.unwrap();
+                rt.block_on(download::download(game_url.url.clone(), dir.clone() + "/" + &game_url.version + ".json", 3));
                 let game = Game {
                     description: ui.get_description().to_string(),
                     game_args: Vec::new(),
@@ -169,9 +186,12 @@ pub async fn add_game_dialog(app_weak: rc::Weak<RefCell<App>>) -> Result<(), sli
                     xms: ui.get_xms().to_string(),
                     xmx: ui.get_xmx().to_string(),
                 };
-                app.borrow_mut().add_game(&game);
-                ui.hide().unwrap();
-            }).unwrap();
+                app.add_game(&game);
+            } else {
+                error!("Failed to lock a mutex.");
+            }
+            
+            ui.hide().unwrap();
         } else {
             error!("Failed to upgrade a weak pointer.");
         }

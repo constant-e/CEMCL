@@ -1,4 +1,5 @@
 import { StandardButton, Button, Switch, LineEdit, GridBox } from "std-widgets.slint";
+import { SubTitle } from "components/components.slint";
 
 export component EditGameDialog inherits Dialog {
     title: @tr("Edit a Game");
@@ -11,6 +12,7 @@ export component EditGameDialog inherits Dialog {
     in-out property <string> description <=> description-input.text;
     in-out property <string> java-path <=> java-path-input.text;
     in-out property <bool> separated <=> separated-switch.checked;
+    in-out property <string> version;
     in-out property <string> xms <=> xms-input.text;
     in-out property <string> xmx <=> xmx-input.text;
 
@@ -19,91 +21,97 @@ export component EditGameDialog inherits Dialog {
     GridBox {
         padding: 0px;
 
+        SubTitle {
+            text: "Minecraft " + version;
+            col: 0;
+            row: 0;
+        }
+
         Text {
             text: @tr("Description: ");
             vertical-alignment: center;
             col: 0;
-            row: 0;
+            row: 1;
         }
         description-input := LineEdit {
             col: 1;
-            row: 0;
+            row: 1;
         }
     
         Text {
             text: @tr("Java Path: ");
             vertical-alignment: center;
             col: 0;
-            row: 1;
+            row: 2;
         }
         java-path-input := LineEdit {
             col: 1;
-            row: 1;
+            row: 2;
         }
 
         Text {
             text: @tr("Window Height: ");
             vertical-alignment: center;
             col: 0;
-            row: 2;
+            row: 3;
         }
         height-input := LineEdit {
             col: 1;
-            row: 2;
+            row: 3;
         }
 
         Text {
             text: @tr("Window Width: ");
             vertical-alignment: center;
             col: 0;
-            row: 3;
+            row: 4;
         }
         width-input := LineEdit {
             col: 1;
-            row: 3;
+            row: 4;
         }
 
         Text {
             text: @tr("Minimum Memory: ");
             vertical-alignment: center;
             col: 0;
-            row: 4;
+            row: 5;
         }
         xms-input := LineEdit {
             col: 1;
-            row: 4;
+            row: 5;
         }
 
         Text {
             text: @tr("Maximum Memory: ");
             vertical-alignment: center;
             col: 0;
-            row: 5;
+            row: 6;
         }
         xmx-input := LineEdit {
             col: 1;
-            row: 5;
+            row: 6;
         }
 
         Text {
             text: @tr("Launch Arguments: ");
             vertical-alignment: center;
             col: 0;
-            row: 6;
+            row: 7;
         }
         args-input := LineEdit {
             col: 1;
-            row: 6;
+            row: 7;
         }
         
         separated-switch := Switch {
             text: @tr("Enable Separated Version");
-            row: 7;
+            row: 8;
         }
 
         Rectangle {
             preferred-height: 100%;
-            row: 8;
+            row: 9;
         }
     }
 

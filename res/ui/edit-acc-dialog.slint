@@ -1,7 +1,8 @@
 import { StandardButton, Button, LineEdit, GridBox } from "std-widgets.slint";
+import { SubTitle } from "components/components.slint";
 
 export component EditAccDialog inherits Dialog {
-    title: @tr("Edit a Account");
+    title: @tr("Edit an Account");
     preferred-height: 200px;
     preferred-width: 400px;
 
@@ -15,53 +16,59 @@ export component EditAccDialog inherits Dialog {
     GridBox {
         padding: 0px;
 
+        SubTitle {
+            text: @tr("Account ") + name;
+            col: 0;
+            row: 0;
+        }
+
         Text {
             text: @tr("Account Type: ");
             vertical-alignment: center;
             col: 0;
-            row: 0;
+            row: 1;
         }
         acc-type-input := LineEdit {
             col: 1;
-            row: 0;
+            row: 1;
         }
     
         Text {
             text: @tr("Token: ");
             vertical-alignment: center;
             col: 0;
-            row: 1;
+            row: 2;
         }
         token-input := LineEdit {
             col: 1;
-            row: 1;
+            row: 2;
         }
 
         Text {
             text: @tr("User Name: ");
             vertical-alignment: center;
             col: 0;
-            row: 2;
+            row: 3;
         }
         name-input := LineEdit {
             col: 1;
-            row: 2;
+            row: 3;
         }
 
         Text {
             text: @tr("UUID: ");
             vertical-alignment: center;
             col: 0;
-            row: 3;
+            row: 4;
         }
         uuid-input := LineEdit {
             col: 1;
-            row: 3;
+            row: 4;
         }
 
         Rectangle {
             preferred-height: 100%;
-            row: 4;
+            row: 5;
         }
     }
 

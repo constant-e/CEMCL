@@ -9,8 +9,8 @@ mod settings;
 use app::App;
 use dialogs::{add_acc_dialog, add_game_dialog, edit_acc_dialog, edit_game_dialog};
 use log::error;
-use std::cell::RefCell;
-use std::rc::Rc;
+use std::sync::{Arc, Mutex};
+use std::thread;
 
 slint::include_modules!();
 
@@ -23,8 +23,8 @@ fn main() -> Result<(), slint::PlatformError> {
 
     let ui = AppWindow::new()?;
     ui.show()?; // dialogs in app should show later than appwindow
-    let app = Rc::new(RefCell::new(App::new(ui.as_weak()).unwrap()));
-    let app_weak = Rc::downgrade(&app);
+    let app = Arc::new(Mutex::new(App::new(ui.as_weak()).unwrap()));
+    let app_weak = Arc::downgrade(&app);
 
     let app_weak_clone = app_weak.clone();
     ui.on_click_add_acc_btn(move || {
@@ -52,8 +52,13 @@ fn main() -> Result<(), slint::PlatformError> {
 
     let app_weak_clone = app_weak.clone();
     ui.on_click_edit_acc_btn(move || {
-        if let Err(e) = edit_acc_dialog(app_weak_clone.clone()) {
-            error!("Failed to start edit_acc. Reason: {e}.");
+        let app_weak_clone = app_weak_clone.clone();
+        if let Err(e) = slint::spawn_local(async move {
+            if let Err(e) = edit_acc_dialog(app_weak_clone.clone()) {
+                error!("Failed to start edit_acc. Reason: {e}.");
+            }
+        }) {
+            error!("Failed to call spawn_local. Reason: {e}.");
         }
     });
 
@@ -69,9 +74,25 @@ fn main() -> Result<(), slint::PlatformError> {
         settings::init(app_weak_clone.clone());
     });
     
+    let ui_weak = ui.as_weak();
     ui.on_click_start_btn(move || {
-        if let Some(app) = app_weak.upgrade() {
-            app.borrow_mut().launch();
+        if let Some(ui) = ui_weak.upgrade() {
+            let app_weak = app_weak.clone();
+            let acc_index = ui.get_acc_index() as usize;
+            let game_index = ui.get_game_index() as usize;
+            thread::spawn(move || {
+                if let Some(app) = app_weak.upgrade() {
+                    if let Ok(mut app) = app.lock() {
+                        let rt = tokio::runtime::Runtime::new().unwrap();
+                        let _tokio = rt.enter();
+                        rt.block_on(app.launch(acc_index, game_index));
+                    } else {
+                        error!("Failed to lock a mutex.");
+                    }
+                } else {
+                    error!("Failed to upgrade weak pointer.");
+                }
+            });
         } else {
             error!("Failed to upgrade weak pointer.");
         }

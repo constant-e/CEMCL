@@ -102,8 +102,8 @@ fn get_classpaths(n: &Value, game_path: &String) -> Option<Vec<String>> {
     Some(result)
 }
 
-/// 获取启动总命令
-pub fn get_launch_command(account: &Account, game: &Game, config: &Config) -> Option<Vec<String>> {
+/// 获取启动总命令，并下载
+pub async fn get_launch_command(account: &Account, game: &Game, config: &Config) -> Option<Vec<String>> {
     // TODO: 支持使用自定义参数
     let mut result: Vec<String> = Vec::new();
     let game_path = &config.game_path;
@@ -255,15 +255,13 @@ pub fn get_launch_command(account: &Account, game: &Game, config: &Config) -> Op
         }
 
         // 处理依赖
-        let rt = tokio::runtime::Runtime::new().unwrap();
-        let _tokio = rt.enter();
 
         // json first
         let index_dir = game_path.clone() + "/assets/indexes/";
         let index_path = index_dir.clone() + &asset_index + ".json";
         if !exists(&index_path).ok()? {
             if !exists(&index_dir).ok()? { fs::create_dir_all(&index_dir).ok()?; }
-            rt.block_on(download::download(json["assetIndex"]["url"].as_str()?.to_string(), index_path, 3));
+            download::download(json["assetIndex"]["url"].as_str()?.to_string(), index_path, 3).await;
         }
 
         let mut futures = Vec::new();
@@ -288,8 +286,8 @@ pub fn get_launch_command(account: &Account, game: &Game, config: &Config) -> Op
             });
             futures.push(future);
         }
-
-        rt.block_on(join_all(futures));
+        
+        join_all(futures).await;
 
         Some(result)
     } else {
