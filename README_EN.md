@@ -54,14 +54,12 @@ Run `update_tranlations.sh` to update the .po files and generate .mo files. Afte
 
 ## Roadmap
 1. (Completed) Launch Minecraft
-2. (Completed) Store configuration files for each version in its directory
-3. (Completed) Support configurations editing
-4. (Completed) Support separated versions
-5. (Partially) Multi-language support
-6. (Completed) Support installing Minecraft
-7. (Completed) Support online login
-8. (Developing)Support installing modified Minecraft
-9. Others (More log, UI improvements, etc.)
+2. (Completed) Support customized configures
+3. (Partially) Multi-language support
+4. (Completed) Support installing Minecraft
+5. (Completed) Support online login
+6. (Developing) Support installing modified Minecraft
+7. Others (More log, UI improvements, etc.)
 
 ## Credits
 1. [clipboard](https://crates.io/crates/clipboard): clipboard

@@ -4,7 +4,7 @@ constant-e's Minecraft: Java Edition Launcher
 语言：简体中文 | [English](README_EN.md)
 
 ## 注意
-项目开发初期，尚未完成，暂时不完全可用
+项目开发中，部分功能尚未完成。
 
 ## 项目介绍
 使用Rust和Slint开发的Minecraft Java版启动器
@@ -54,14 +54,12 @@ CI（持续集成）版是在GitHub中提交commit后，由GitHub Actions自动�
 
 ## 路线图
 1. （已完成）启动Minecraft
-2. （已完成）在各个版本内部储存自定义设置
-3. （已完成）完善配置系统
-4. （已完成）支持版本隔离
-5. （部分完成）多语言支持
-6. （已完成）支持下载原版Minecraft
-7. （已完成）正版登录
-8. （正在开发）支持下载Mod版Minecraft
-9. 其他（完善log和报错，UI改进等）
+2. （已完成）支持自定义配置
+3. （部分完成）多语言支持
+4. （已完成）支持下载原版Minecraft
+5. （已完成）正版登录
+6. （正在开发）支持下载Mod版Minecraft
+7. 其他（完善log和报错，UI改进等）
 
 ## 鸣谢
 1. [clipboard](https://crates.io/crates/clipboard)：剪切板
