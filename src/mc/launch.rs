@@ -13,6 +13,27 @@ use crate::app::Config;
 
 use super::{check_rules, download, Account, Game};
 
+/// 完整下载游戏使用的信息
+pub struct GameDownload {
+    /// assetIndex
+    pub asset_index: String,
+
+    /// asset index json的下载url
+    pub asset_index_url: String,
+
+    /// 游戏所在路径
+    pub dir: String,
+
+    /// 下载libraries所用json
+    pub libraries_json: serde_json::Value,
+
+    /// 本体url
+    pub mc_url: String,
+
+    /// 版本
+    pub version: String,
+}
+
 /// 从json对象单次获取参数
 fn add_arg(n: &Value) -> Option<Vec<String>> {
     let mut result: Vec<String> = Vec::new();
@@ -102,8 +123,8 @@ fn get_classpaths(n: &Value, game_path: &String) -> Option<Vec<String>> {
     Some(result)
 }
 
-/// 获取启动总命令，并下载
-pub async fn get_launch_command(account: &Account, game: &Game, config: &Config) -> Option<Vec<String>> {
+/// 获取启动总命令
+pub async fn get_launch_command(account: &Account, game: &Game, config: &Config) -> Option<(Vec<String>, GameDownload)> {
     // TODO: 支持使用自定义参数
     let mut result: Vec<String> = Vec::new();
     let game_path = &config.game_path;
@@ -255,43 +276,56 @@ pub async fn get_launch_command(account: &Account, game: &Game, config: &Config)
         }
 
         // 处理依赖
+        let game_download = GameDownload {
+            asset_index: asset_index,
+            asset_index_url: json["assetIndex"]["url"].as_str()?.to_string(),
+            dir: dir,
+            libraries_json: json["libraries"].clone(),
+            mc_url: json["downloads"]["client"]["url"].as_str()?.to_string(),
+            version: game.version.clone(),
+        };
 
-        // json first
-        let index_dir = game_path.clone() + "/assets/indexes/";
-        let index_path = index_dir.clone() + &asset_index + ".json";
-        if !exists(&index_path).ok()? {
-            if !exists(&index_dir).ok()? { fs::create_dir_all(&index_dir).ok()?; }
-            download::download(json["assetIndex"]["url"].as_str()?.to_string(), index_path, 3).await;
-        }
-
-        let mut futures = Vec::new();
-        let semaphore = Arc::new(Semaphore::new(config.concurrency));
-
-        // assets
-        let mut ass_futures = download::download_assets(&game_path, &asset_index, &config.assets_source, &semaphore)?;
-        futures.append(&mut ass_futures);
-
-        // libraries
-        let mut lib_futures = download::download_libraries(&json["libraries"], &game_path, &dir, &config.libraries_source, &semaphore)?;
-        futures.append(&mut lib_futures);
-
-        let jar_path = dir.clone() + "/" + game.version.as_ref() + ".jar";
-        if !exists(&jar_path).ok()? {
-            // 本体
-            let url = json["downloads"]["client"]["url"].as_str()?.to_string()
-                .replace("https://piston-meta.mojang.com", &config.game_source);
-            let future = tokio::spawn(async move {
-                let _permit = semaphore.acquire().await.unwrap();
-                download::download(url, jar_path, 3).await
-            });
-            futures.push(future);
-        }
-        
-        join_all(futures).await;
-
-        Some(result)
+        Some((result, game_download))
     } else {
         error!("Failed to load {cfg_path}.");
         None
     }
+}
+
+pub async fn download_all(config: &Config, game: &GameDownload) -> Option<()> {
+    // 处理依赖
+
+    // json first
+    let index_dir = config.game_path.clone() + "/assets/indexes/";
+    let index_path = index_dir.clone() + &game.asset_index + ".json";
+    if !exists(&index_path).ok()? {
+        if !exists(&index_dir).ok()? { fs::create_dir_all(&index_dir).ok()?; }
+        download::download(game.asset_index_url.clone(), index_path, 3).await;
+    }
+
+    let mut futures = Vec::new();
+    let semaphore = Arc::new(Semaphore::new(config.concurrency));
+
+    // assets
+    let mut ass_futures = download::download_assets(&config.game_path, &game.asset_index, &config.assets_source, &semaphore)?;
+    futures.append(&mut ass_futures);
+
+    // libraries
+    let mut lib_futures = download::download_libraries(&game.libraries_json, &config.game_path, &game.dir, &config.libraries_source, &semaphore)?;
+    futures.append(&mut lib_futures);
+
+    let jar_path = game.dir.clone() + "/" + game.version.as_ref() + ".jar";
+    if !exists(&jar_path).ok()? {
+        // 本体
+        let url = game.mc_url.clone()
+            .replace("https://piston-meta.mojang.com", &config.game_source);
+        let future = tokio::spawn(async move {
+            let _permit = semaphore.acquire().await.unwrap();
+            download::download(url, jar_path, 3).await
+        });
+        futures.push(future);
+    }
+    
+    join_all(futures).await;
+    Some(())
 }

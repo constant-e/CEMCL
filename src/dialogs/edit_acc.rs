@@ -11,7 +11,7 @@ pub fn edit_acc_dialog(app_weak: sync::Weak<Mutex<App>>) -> Result<(), slint::Pl
     let ui_weak = ui.as_weak();
 
     let index = if let Some(app) = app_weak.upgrade() {
-        if let Ok(app) = app.lock() {
+        if let Ok(app) = app.try_lock() {
             if let Some(index) = app.get_acc_index() {
                 let account = &app.acc_list[index];
                 ui.set_acc_type(slint::SharedString::from(&account.account_type));
@@ -38,7 +38,7 @@ pub fn edit_acc_dialog(app_weak: sync::Weak<Mutex<App>>) -> Result<(), slint::Pl
     let ui_weak_clone = ui_weak.clone();
     ui.on_ok_clicked(move || {
         if let (Some(app), Some(ui)) = (app_weak_clone.upgrade(), ui_weak_clone.upgrade()) {
-            if let Ok(mut app) = app.lock() {
+            if let Ok(mut app) = app.try_lock() {
                 let mut account = Account {
                     access_token: String::new(),
                     account_type: ui.get_acc_type().into(),
@@ -73,7 +73,7 @@ pub fn edit_acc_dialog(app_weak: sync::Weak<Mutex<App>>) -> Result<(), slint::Pl
 
     ui.on_del_clicked(move || {
         if let (Some(app), Some(ui)) = (app_weak.upgrade(), ui_weak.upgrade()) {
-            if let Ok(mut app) = app.lock() {
+            if let Ok(mut app) = app.try_lock() {
                 app.del_account(index);
                 ui.hide().unwrap();
             } else {

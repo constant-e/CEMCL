@@ -19,6 +19,7 @@ export component AppWindow inherits Window {
     in-out property <int> game-index <=> game-table.current-row;
     in-out property <[[StandardListViewItem]]> acc-list <=> acc-table.rows;
     in-out property <[[StandardListViewItem]]> game-list <=> game-table.rows;
+    in-out property <string> popup-msg;
 
     callback click-add-acc-btn();
     callback click-add-game-btn();
@@ -29,6 +30,9 @@ export component AppWindow inherits Window {
     
     public function close-popup() { popup.close(); }
     public function show-popup() { popup.show(); }
+    public function popup-set-downloading() { popup-msg = @tr("Downloading"); }
+    public function popup-set-launching() { popup-msg = @tr("Launching"); }
+    public function popup-set-logging-in() { popup-msg = @tr("Logging in"); }
 
     popup := PopupWindow {
         close-on-click: false;
@@ -40,7 +44,7 @@ export component AppWindow inherits Window {
             width: 400px;
             x: (root.width - self.width) / 2;
             y: (root.height - self.height) / 2;
-            Title { text: @tr("Launching"); }
+            Title { text: root.popup-msg; }
         }
     }
 

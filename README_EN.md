@@ -37,10 +37,12 @@ Go to [GitHub Actions](https://github.com/constant-e/CEMCL/actions) to download 
    ```
 4. Generate language file (for non-Windows users)
    ```sh
-   # For Debug
    ./update_translations.sh
+
+   # For Debug
+   ./generate_translations.sh
    # For Release
-   ./update_translations.sh --release
+   ./generate_translations.sh --release
    # Or use --all to generate for both Debug and Release
    ```
 
@@ -48,7 +50,7 @@ Go to [GitHub Actions](https://github.com/constant-e/CEMCL/actions) to download 
 [Documents](https://constant-e.github.io/CEMCL/en/docs)
 
 ## Translating
-Run `update_tranlations.sh` to update the .po files and generate .mo files. After translating you need to run it again to generate new .mo files.
+Run `update_tranlations.sh` to update the .po files and run `generate_tranlations.sh` to generate .mo files.
 
 **Warning**: It doesn't support Windows because of Slint.
 

@@ -43,7 +43,7 @@ async fn load_mod(app_weak: sync::Weak<Mutex<App>>, ui_weak: slint::Weak<AddGame
     let _tokio = rt.enter();
 
     if let (Some(app), Some(ui)) = (app_weak.upgrade(), ui_weak.upgrade()) {
-        if let Ok(mut app) = app.lock() {
+        if let Ok(mut app) = app.try_lock() {
             let game_index = ui.get_game_index() as usize;
             if game_index >= app.download_game_list.len() {
                 warn!("Minecraft not selected.");
@@ -83,7 +83,7 @@ pub async fn add_game_dialog(app_weak: sync::Weak<Mutex<App>>) -> Result<(), sli
     };
 
     if let Some(app) = app_weak.upgrade() {
-        if let Ok(mut app) = app.lock() {
+        if let Ok(mut app) = app.try_lock() {
             // 筛选版本类型后的列表
             app.download_game_list = game_url_list.clone();
             ui.set_args(slint::SharedString::new());
@@ -108,7 +108,7 @@ pub async fn add_game_dialog(app_weak: sync::Weak<Mutex<App>>) -> Result<(), sli
     let ui_weak_clone = ui_weak.clone();
     ui.on_game_combo_box_changed(move |index| {
         if let (Some(app), Some(ui)) = (app_weak_clone.upgrade(), ui_weak_clone.upgrade()) {
-            if let Ok(mut app) = app.lock() {
+            if let Ok(mut app) = app.try_lock() {
                 let require = match index {
                     0 => "",
                     1 => "release",
@@ -155,7 +155,7 @@ pub async fn add_game_dialog(app_weak: sync::Weak<Mutex<App>>) -> Result<(), sli
     let ui_weak_clone = ui_weak.clone();
     ui.on_ok_clicked(move || {
         if let (Some(app), Some(ui)) = (app_weak.upgrade(), ui_weak_clone.upgrade()) {
-            if let Ok(mut app) = app.lock() {
+            if let Ok(mut app) = app.try_lock() {
                 let index = ui.get_game_index() as usize;
                 let len = app.download_game_list.len();
                 if index >= len {

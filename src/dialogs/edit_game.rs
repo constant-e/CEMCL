@@ -13,7 +13,7 @@ pub fn edit_game_dialog(app_weak: sync::Weak<Mutex<App>>) -> Result<(), slint::P
     let ui_weak = ui.as_weak();
 
     let index = if let Some(app) = app_weak.upgrade() {
-        if let Ok(app) = app.lock() {
+        if let Ok(app) = app.try_lock() {
             if let Some(index) = app.get_game_index() {
                 let game = &app.game_list[index];
                 ui.set_config_height(game.height.clone().into());
@@ -44,7 +44,7 @@ pub fn edit_game_dialog(app_weak: sync::Weak<Mutex<App>>) -> Result<(), slint::P
     let ui_weak_clone = ui_weak.clone();
     ui.on_ok_clicked(move || {
         if let (Some(app), Some(ui)) = (app_weak_clone.upgrade(), ui_weak_clone.upgrade()) {
-            if let Ok(mut app) = app.lock() {
+            if let Ok(mut app) = app.try_lock() {
                 let mut game = app.game_list[index].clone();
                 game.description = ui.get_description().into();
                 game.height = ui.get_config_height().into();
@@ -76,7 +76,7 @@ pub fn edit_game_dialog(app_weak: sync::Weak<Mutex<App>>) -> Result<(), slint::P
 
     ui.on_click_del_btn(move || {
         if let (Some(app), Some(ui)) = (app_weak.upgrade(), ui_weak.upgrade()) {
-            if let Ok(app) = app.lock() {
+            if let Ok(app) = app.try_lock() {
                 let (title, msg) = if let Some(app_ui) = app.ui_weak.upgrade() {
                     (app_ui.global::<Messages>().get_warn(), app_ui.global::<Messages>().get_del_game_confirm())
                 } else {
@@ -86,7 +86,7 @@ pub fn edit_game_dialog(app_weak: sync::Weak<Mutex<App>>) -> Result<(), slint::P
                 let app_weak = app_weak.clone();
                 ask_dialog(&title, &msg, move || {
                     if let Some(app) = app_weak.upgrade() {
-                        if let Ok(mut app) = app.lock() {
+                        if let Ok(mut app) = app.try_lock() {
                             app.del_game(index);
                             ui.hide().unwrap();
                         }

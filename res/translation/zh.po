@@ -1,7 +1,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
-"POT-Creation-Date: 2024-11-17 09:17+0000\n"
+"POT-Creation-Date: 2024-11-24 01:51+0000\n"
 "PO-Revision-Date: 2024-10-02 11:53+0800\n"
 "Last-Translator:  <fmn_tzx@outlook.com>\n"
 "Language-Team: Chinese (simplified) <i18n-zh@googlegroups.com>\n"
@@ -34,7 +34,7 @@ msgstr "在线账号"
 #: add-acc-dialog.slint:23
 msgctxt "AddAccDialog"
 msgid "Please wait ..."
-msgstr ""
+msgstr "请稍候 ..."
 
 #: add-acc-dialog.slint:30
 msgctxt "AddAccDialog"
@@ -166,57 +166,67 @@ msgctxt "AddGameDialog"
 msgid "Enable Separated Version"
 msgstr "启用版本隔离"
 
-#: appwindow.slint:43
+#: appwindow.slint:33
+msgctxt "AppWindow"
+msgid "Downloading"
+msgstr "下载中"
+
+#: appwindow.slint:34
 msgctxt "AppWindow"
 msgid "Launching"
 msgstr "启动中"
 
-#: appwindow.slint:59
+#: appwindow.slint:35
+msgctxt "AppWindow"
+msgid "Logging in"
+msgstr "登录中"
+
+#: appwindow.slint:63
 msgctxt "AppWindow"
 msgid "Account"
 msgstr "账号"
 
-#: appwindow.slint:63
+#: appwindow.slint:67
 msgctxt "AppWindow"
 msgid "Name"
 msgstr "用户名"
 
-#: appwindow.slint:64 appwindow.slint:94
+#: appwindow.slint:68 appwindow.slint:98
 msgctxt "AppWindow"
 msgid "Type"
 msgstr "类型"
 
-#: appwindow.slint:74 appwindow.slint:105
+#: appwindow.slint:78 appwindow.slint:109
 msgctxt "AppWindow"
 msgid "Add"
 msgstr "添加"
 
-#: appwindow.slint:79 appwindow.slint:110
+#: appwindow.slint:83 appwindow.slint:114
 msgctxt "AppWindow"
 msgid "Edit"
 msgstr "编辑"
 
-#: appwindow.slint:89
+#: appwindow.slint:93
 msgctxt "AppWindow"
 msgid "Minecraft Version"
 msgstr "Minecraft版本"
 
-#: appwindow.slint:93
+#: appwindow.slint:97
 msgctxt "AppWindow"
 msgid "Version"
 msgstr "版本"
 
-#: appwindow.slint:95
+#: appwindow.slint:99
 msgctxt "AppWindow"
 msgid "Description"
 msgstr "备注"
 
-#: appwindow.slint:121
+#: appwindow.slint:125
 msgctxt "AppWindow"
 msgid "Settings"
 msgstr "设置"
 
-#: appwindow.slint:128
+#: appwindow.slint:132
 msgctxt "AppWindow"
 msgid "Start"
 msgstr "启动"

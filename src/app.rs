@@ -212,12 +212,13 @@ impl App {
             return None;
         }
 
-        self.ui_weak.upgrade_in_event_loop(|ui| ui.invoke_show_popup()).unwrap();
+        self.ui_weak.upgrade_in_event_loop(|ui| ui.invoke_show_popup()).ok()?;
         
         // refresh access_token
+        self.ui_weak.upgrade_in_event_loop(|ui| ui.invoke_popup_set_logging_in()).ok()?;
         self.acc_list[acc_index].refresh().await?;
         
-        if let Some(cmd) = launch::get_launch_command(&self.acc_list[acc_index], &self.game_list[game_index], &self.config).await {
+        if let Some((cmd, game_download)) = launch::get_launch_command(&self.acc_list[acc_index], &self.game_list[game_index], &self.config).await {
             if cfg!(debug_assertions) {
                 let mut str = self.game_list[game_index].java_path.clone() + " ";
                 for i in &cmd {
@@ -226,7 +227,11 @@ impl App {
                 }
                 debug!("{str}");
             }
+
+            self.ui_weak.upgrade_in_event_loop(|ui| ui.invoke_popup_set_downloading()).ok()?;
+            launch::download_all(&self.config, &game_download).await?;
             
+            self.ui_weak.upgrade_in_event_loop(|ui| ui.invoke_popup_set_launching()).ok()?;
             let java_path = self.game_list[game_index].java_path.clone();
             
             let (s, r) = sync::mpsc::channel();
@@ -241,18 +246,18 @@ impl App {
 
             if r.recv().unwrap().is_some() {
                 if self.config.close_after_launch {
-                    self.ui_weak.upgrade_in_event_loop(|ui| ui.hide().unwrap()).unwrap();
+                    self.ui_weak.upgrade_in_event_loop(|ui| ui.hide().unwrap()).ok()?;
                 }
             } else {
                 slint::invoke_from_event_loop(|| {
                     err_dialog("Failed to run command.");
-                }).unwrap();
+                }).ok()?;
             }
         } else {
             error!("Failed to get launch command.");
         }
 
-        self.ui_weak.upgrade_in_event_loop(|ui| ui.invoke_close_popup()).unwrap();
+        self.ui_weak.upgrade_in_event_loop(|ui| ui.invoke_close_popup()).ok()?;
         Some(())
     }
 

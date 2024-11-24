@@ -2,7 +2,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
-"POT-Creation-Date: 2024-11-17 09:17+0000\n"
+"POT-Creation-Date: 2024-11-24 01:51+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -167,57 +167,67 @@ msgctxt "AddGameDialog"
 msgid "Enable Separated Version"
 msgstr ""
 
-#: appwindow.slint:43
+#: appwindow.slint:33
+msgctxt "AppWindow"
+msgid "Downloading"
+msgstr ""
+
+#: appwindow.slint:34
 msgctxt "AppWindow"
 msgid "Launching"
 msgstr ""
 
-#: appwindow.slint:59
+#: appwindow.slint:35
 msgctxt "AppWindow"
-msgid "Account"
+msgid "Logging in"
 msgstr ""
 
 #: appwindow.slint:63
 msgctxt "AppWindow"
+msgid "Account"
+msgstr ""
+
+#: appwindow.slint:67
+msgctxt "AppWindow"
 msgid "Name"
 msgstr ""
 
-#: appwindow.slint:64 appwindow.slint:94
+#: appwindow.slint:68 appwindow.slint:98
 msgctxt "AppWindow"
 msgid "Type"
 msgstr ""
 
-#: appwindow.slint:74 appwindow.slint:105
+#: appwindow.slint:78 appwindow.slint:109
 msgctxt "AppWindow"
 msgid "Add"
 msgstr ""
 
-#: appwindow.slint:79 appwindow.slint:110
+#: appwindow.slint:83 appwindow.slint:114
 msgctxt "AppWindow"
 msgid "Edit"
 msgstr ""
 
-#: appwindow.slint:89
+#: appwindow.slint:93
 msgctxt "AppWindow"
 msgid "Minecraft Version"
 msgstr ""
 
-#: appwindow.slint:93
+#: appwindow.slint:97
 msgctxt "AppWindow"
 msgid "Version"
 msgstr ""
 
-#: appwindow.slint:95
+#: appwindow.slint:99
 msgctxt "AppWindow"
 msgid "Description"
 msgstr ""
 
-#: appwindow.slint:121
+#: appwindow.slint:125
 msgctxt "AppWindow"
 msgid "Settings"
 msgstr ""
 
-#: appwindow.slint:128
+#: appwindow.slint:132
 msgctxt "AppWindow"
 msgid "Start"
 msgstr ""

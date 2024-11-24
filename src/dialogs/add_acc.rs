@@ -37,7 +37,7 @@ pub async fn add_acc_dialog(app_weak: sync::Weak<Mutex<App>>) -> Result<(), slin
                 warn!("Failed to open web browser. Reason: {e}");
             }
 
-            if let Ok(mut app) = app.lock() {
+            if let Ok(mut app) = app.try_lock() {
                 app.device_code = device_code;
                 let msg = app.ui_weak.upgrade()
                     .ok_or(slint::PlatformError::Other(String::from("Failed to upgrade a weak pointer")))?
@@ -49,7 +49,7 @@ pub async fn add_acc_dialog(app_weak: sync::Weak<Mutex<App>>) -> Result<(), slin
                 return Err(slint::PlatformError::Other(String::from("Failed to lock a mutex")));
             }
         } else {
-            if let Ok(app) = app.lock() {
+            if let Ok(app) = app.try_lock() {
                 let msg = app.ui_weak.upgrade()
                     .ok_or(slint::PlatformError::Other(String::from("Failed to upgrade a weak pointer")))?
                     .global::<Messages>().get_acc_online_failed().to_string();
@@ -67,7 +67,7 @@ pub async fn add_acc_dialog(app_weak: sync::Weak<Mutex<App>>) -> Result<(), slin
     let ui_weak_clone = ui_weak.clone();
     ui.on_ok_clicked(move || {
         if let (Some(app), Some(ui)) = (app_weak.upgrade(), ui_weak_clone.upgrade()) {
-            if let Ok(mut app) = app.lock() {
+            if let Ok(mut app) = app.try_lock() {
                 let index = ui.get_account_type_index();
                 if index == 0 {
                     // Online Account

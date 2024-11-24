@@ -8,15 +8,15 @@ license = "Apache 2.0"
 [dependencies]
 clipboard = "0.5.0"
 env_logger = "0.11.5"
-futures = "0.3.30"
+futures = "0.3.31"
 log = "0.4.22"
-reqwest = { version = "0.12.8", features = ["json"] }
-serde_json = "1.0.128"
+reqwest = { version = "0.12.9", features = ["json"] }
+serde_json = "1.0.133"
 slint = { version = "1.8.0", features = ["backend-qt", "gettext"] }
-tokio = { version = "1.40.0", features = ["full"] }
-uuid = { version = "1.10.0", features = ["v4", "fast-rng", "macro-diagnostics"] }
+tokio = { version = "1.41.1", features = ["full"] }
+uuid = { version = "1.11.0", features = ["v4", "fast-rng", "macro-diagnostics"] }
 webbrowser = "1.0.2"
-zip = "2.2.0"
+zip = "2.2.1"
 
 [build-dependencies]
 slint-build = "1.8.0"

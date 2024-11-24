@@ -82,7 +82,7 @@ fn main() -> Result<(), slint::PlatformError> {
             let game_index = ui.get_game_index() as usize;
             thread::spawn(move || {
                 if let Some(app) = app_weak.upgrade() {
-                    if let Ok(mut app) = app.lock() {
+                    if let Ok(mut app) = app.try_lock() {
                         let rt = tokio::runtime::Runtime::new().unwrap();
                         let _tokio = rt.enter();
                         rt.block_on(app.launch(acc_index, game_index));

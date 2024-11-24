@@ -37,10 +37,12 @@ CI（持续集成）版是在GitHub中提交commit后，由GitHub Actions自动�
    ```
 4. 生成语言文件（对于非Windows系统）
    ```sh
-   # 对于Debug版
    ./update_translations.sh
+
+   # 对于Debug版
+   ./generate_translations.sh
    # 对于Release版
-   ./update_translations.sh --release
+   ./generate_translations.sh --release
    # 或使用--all同时为Debug和Release生成
    ```
 
@@ -48,7 +50,7 @@ CI（持续集成）版是在GitHub中提交commit后，由GitHub Actions自动�
 [文档](https://constant-e.github.io/CEMCL/docs)
 
 ## 翻译
-运行`update_tranlations.sh`以更新po文件并生成mo文件。翻译后需要再次运行以生成新的mo文件。
+运行`update_tranlations.sh`以更新po文件，运行`generate_tranlations.sh`以生成mo文件。
 
 **注意**：由于Slint的原因，翻译暂不支持Windows。
 

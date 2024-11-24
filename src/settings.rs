@@ -12,7 +12,7 @@ pub fn init(app_weak: sync::Weak<Mutex<App>>) -> Option<()> {
     let ui_weak = ui.as_weak();
 
     // init
-    if let Ok(app) = app.lock() {
+    if let Ok(app) = app.try_lock() {
         ui.set_assets_source(app.config.assets_source.clone().into());
         ui.set_authors(env!("CARGO_PKG_AUTHORS").into());
         ui.set_close_after_launch(app.config.close_after_launch.clone());
@@ -36,7 +36,7 @@ pub fn init(app_weak: sync::Weak<Mutex<App>>) -> Option<()> {
     let ui_weak_clone = ui_weak.clone();
     ui.on_apply_clicked(move || {
         if let (Some(app), Some(ui)) = (app_weak.upgrade(), ui_weak_clone.upgrade()) {
-            if let Ok(mut app) = app.lock() {
+            if let Ok(mut app) = app.try_lock() {
                 let old_game_path = app.config.game_path.clone();
                 let new_game_path = ui.get_game_path().to_string();
 
