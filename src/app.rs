@@ -216,7 +216,14 @@ impl App {
         
         // refresh access_token
         self.ui_weak.upgrade_in_event_loop(|ui| ui.invoke_popup_set_logging_in()).ok()?;
-        self.acc_list[acc_index].refresh().await?;
+        if self.acc_list[acc_index].refresh().await.is_none() {
+            error!("Failed to login.");
+            self.ui_weak.upgrade_in_event_loop(|ui| {
+                err_dialog(&ui.global::<Messages>().get_login_failed());
+                ui.invoke_close_popup();
+            }).unwrap();
+            return None;
+        }
         
         if let Some((cmd, game_download)) = launch::get_launch_command(&self.acc_list[acc_index], &self.game_list[game_index], &self.config).await {
             if cfg!(debug_assertions) {
@@ -228,10 +235,33 @@ impl App {
                 debug!("{str}");
             }
 
-            self.ui_weak.upgrade_in_event_loop(|ui| ui.invoke_popup_set_downloading()).ok()?;
-            launch::download_all(&self.config, &game_download).await?;
+            if let Err(e) = self.ui_weak.upgrade_in_event_loop(|ui| ui.invoke_popup_set_downloading()) {
+                error!("Failed to upgrade a weak pointer. Reason: {e}.");
+                self.ui_weak.upgrade_in_event_loop(move |ui| {
+                    err_dialog(&format!("{e}"));
+                    ui.invoke_close_popup();
+                }).unwrap();
+                return None;
+            }
+
+            if launch::download_all(&self.config, &game_download).await.is_none() {
+                error!("Failed to download.");
+                self.ui_weak.upgrade_in_event_loop(|ui| {
+                    err_dialog(&ui.global::<Messages>().get_download_failed());
+                    ui.invoke_close_popup();
+                }).unwrap();
+                return None;
+            }
             
-            self.ui_weak.upgrade_in_event_loop(|ui| ui.invoke_popup_set_launching()).ok()?;
+            if let Err(e) = self.ui_weak.upgrade_in_event_loop(|ui| ui.invoke_popup_set_launching()) {
+                error!("Failed to upgrade a weak pointer. Reason: {e}.");
+                self.ui_weak.upgrade_in_event_loop(move |ui| {
+                    err_dialog(&format!("{e}"));
+                    ui.invoke_close_popup();
+                }).unwrap();
+                return None;
+            }
+
             let java_path = self.game_list[game_index].java_path.clone();
             
             let (s, r) = sync::mpsc::channel();
@@ -257,7 +287,7 @@ impl App {
             error!("Failed to get launch command.");
         }
 
-        self.ui_weak.upgrade_in_event_loop(|ui| ui.invoke_close_popup()).ok()?;
+        self.ui_weak.upgrade_in_event_loop(|ui| ui.invoke_close_popup()).unwrap();
         Some(())
     }
 

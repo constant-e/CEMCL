@@ -2,7 +2,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
-"POT-Creation-Date: 2024-11-24 01:51+0000\n"
+"POT-Creation-Date: 2024-11-30 12:16+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -12,12 +12,12 @@ msgstr ""
 "Language: \n"
 "Plural-Forms: nplurals=1; plural=0;\n"
 
-#: dialogs.slint:14
+#: dialogs.slint:19
 msgctxt "WarnDialog"
 msgid "Warn"
 msgstr ""
 
-#: dialogs.slint:23
+#: dialogs.slint:33
 msgctxt "ErrorDialog"
 msgid "Error"
 msgstr ""
@@ -331,7 +331,7 @@ msgstr ""
 msgctxt "Messages"
 msgid ""
 "Your user code has been copied to clipboard. Press OK after you finish "
-"logining in."
+"logging in."
 msgstr ""
 
 #: messages.slint:5
@@ -346,25 +346,35 @@ msgstr ""
 
 #: messages.slint:7
 msgctxt "Messages"
-msgid "Please select a game first."
+msgid "Failed to download."
 msgstr ""
 
 #: messages.slint:8
 msgctxt "Messages"
-msgid "Failed to load account list. Reason: "
+msgid "Please select a game first."
 msgstr ""
 
 #: messages.slint:9
 msgctxt "Messages"
-msgid "Failed to load config. Reason: "
+msgid "Failed to load account list. Reason: "
 msgstr ""
 
 #: messages.slint:10
 msgctxt "Messages"
-msgid "Failed to load game list. Reason: "
+msgid "Failed to load config. Reason: "
 msgstr ""
 
 #: messages.slint:11
+msgctxt "Messages"
+msgid "Failed to load game list. Reason: "
+msgstr ""
+
+#: messages.slint:12
+msgctxt "Messages"
+msgid "Failed to login."
+msgstr ""
+
+#: messages.slint:13
 msgctxt "Messages"
 msgid "Warning"
 msgstr ""

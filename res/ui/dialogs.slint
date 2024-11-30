@@ -4,26 +4,41 @@ export component AskDialog inherits Dialog {
     in-out property <string> msg;
     in-out property <string> title_text;
     title: title_text;
+    min-height: 100px;
+    width: 300px;
 
-    Text { text: msg; }
+    Text {
+        text: msg;
+        vertical-stretch: 1;
+    }
     StandardButton { kind: yes; }
     StandardButton { kind: no; }
 }
 
 export component WarnDialog inherits Dialog {
     title: @tr("Warn");
+    min-height: 100px;
+    width: 300px;
 
     in-out property <string> msg;
 
-    Text { text: msg; }
+    Text {
+        text: msg;
+        vertical-stretch: 1;
+    }
     StandardButton { kind: ok; }
 }
 
 export component ErrorDialog inherits Dialog {
     title: @tr("Error");
+    min-height: 100px;
+    width: 300px;
 
     in-out property <string> msg;
 
-    Text { text: msg; }
+    Text {
+        text: msg;
+        vertical-stretch: 1;
+    }
     StandardButton { kind: ok; }
 }

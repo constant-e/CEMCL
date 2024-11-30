@@ -1,5 +1,6 @@
 //! 账号相关
 
+use std::time::Duration;
 use log::debug;
 use serde_json::{json, Value};
 
@@ -49,7 +50,9 @@ impl Account {
     }
 
     async fn login(&mut self, ms_token: &str) -> Option<()> {
-        let client = reqwest::Client::new();
+        let client = reqwest::ClientBuilder::new()
+            .connect_timeout(Duration::from_secs(5))
+            .build().ok()?;
 
         // Get xbox 
         let xbox_send_json = json!(
@@ -96,7 +99,6 @@ impl Account {
             .send().await.ok()?;
         let mc_json = serde_json::from_str::<Value>(&mc_res.text().await.ok()?).ok()?;
         let access_token = mc_json["access_token"].as_str()?;
-        
         debug!("Finish mc");
 
         // Get MC profile
@@ -105,7 +107,6 @@ impl Account {
             .header("Authorization", header)
             .send().await.ok()?;
         let profile_json = serde_json::from_str::<Value>(&profile_res.text().await.ok()?).ok()?;
-
         debug!("Finish profile");
 
         self.access_token = String::from(access_token);
@@ -120,7 +121,9 @@ impl Account {
     pub async fn refresh(&mut self) -> Option<()> {
         if self.account_type != "msa" { return Some(()); }
         let client_id = "866440ab-2174-4ff6-8624-290608ac9bdb";
-        let client = reqwest::Client::new();
+        let client = reqwest::ClientBuilder::new()
+            .connect_timeout(Duration::from_secs(5))
+            .build().ok()?;
 
         // Get oauth
         let params = [
@@ -157,7 +160,9 @@ impl Default for Account {
 // request an oauth login, and return (message, device_code, user_code, link)
 pub async fn init_oauth() -> Option<(String, String, String, String)> {
     let client_id = "866440ab-2174-4ff6-8624-290608ac9bdb";
-    let client = reqwest::Client::new();
+    let client = reqwest::ClientBuilder::new()
+        .connect_timeout(Duration::from_secs(5))
+        .build().ok()?;
     let params = [("client_id", client_id), ("scope", "XboxLive.signin offline_access")];
     let res = client.post("https://login.microsoftonline.com/consumers/oauth2/v2.0/devicecode")
         .form(&params)
