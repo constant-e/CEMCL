@@ -45,7 +45,9 @@ jobs:
     # Windows is not support yet
     - name: Generate language file
       if: matrix.os != 'windows-latest'
-      run: ./update_translations.sh --all
+      run: |
+        ./update_translations.sh
+        ./generate_translations.sh --all
     # Windows only
     - name: Add dll files
       if: matrix.os == 'windows-latest'
