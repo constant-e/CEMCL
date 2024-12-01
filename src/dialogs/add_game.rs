@@ -86,11 +86,12 @@ pub async fn add_game_dialog(app_weak: sync::Weak<Mutex<App>>) -> Result<(), sli
         if let Ok(mut app) = app.try_lock() {
             // 筛选版本类型后的列表
             app.download_game_list = game_url_list.clone();
-            ui.set_args(slint::SharedString::new());
             ui.set_config_height(app.config.height.clone().into());
             ui.set_config_width(app.config.width.clone().into());
             ui.set_description(slint::SharedString::new());
+            ui.set_game_args(slint::SharedString::new());
             ui.set_java_path(app.config.java_path.clone().into());
+            ui.set_jvm_args(slint::SharedString::new());
             ui.set_separated(false);
             ui.set_xms(app.config.xms.clone().into());
             ui.set_xmx(app.config.xmx.clone().into());
@@ -173,12 +174,31 @@ pub async fn add_game_dialog(app_weak: sync::Weak<Mutex<App>>) -> Result<(), sli
                 let rt = tokio::runtime::Runtime::new().unwrap();
                 let _tokio = rt.enter();
                 rt.block_on(download::download(game_url.url.clone(), dir.clone() + "/" + &game_url.version + ".json", 3));
+
+                let mut game_args = Vec::new();
+                let mut jvm_args = Vec::new();
+
+                let game_args_str = ui.get_game_args();
+                // make sure the vec is empty when nothing entered
+                if !game_args_str.is_empty() {
+                    for arg in game_args_str.split(' ') {
+                        game_args.push(arg.to_string());
+                    }
+                }
+                
+                let jvm_args_str = ui.get_jvm_args();
+                if !jvm_args_str.is_empty() {
+                    for arg in jvm_args_str.split(' ') {
+                        jvm_args.push(arg.to_string());
+                    }
+                }
+
                 let game = Game {
                     description: ui.get_description().to_string(),
-                    game_args: Vec::new(),
+                    game_args: game_args,
                     height: ui.get_config_height().to_string(),
                     java_path: ui.get_java_path().to_string(),
-                    jvm_args: Vec::new(),
+                    jvm_args: jvm_args,
                     separated: ui.get_separated(),
                     game_type: game_url.game_type,
                     version: game_url.version,

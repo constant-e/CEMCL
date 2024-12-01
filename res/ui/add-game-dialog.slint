@@ -14,11 +14,12 @@ export component AddGameDialog inherits Dialog {
     in-out property <[[StandardListViewItem]]> mod-list <=> mod-table.rows;
     in-out property <int> mod-type <=> mod-combo-box.current-index;
 
-    in-out property <string> args <=> args-input.text;
     in-out property <string> config-height <=> height-input.text;
     in-out property <string> config-width <=> width-input.text;
     in-out property <string> description <=> description-input.text;
+    in-out property <string> game-args <=> game-args-input.text;
     in-out property <string> java-path <=> java-path-input.text;
+    in-out property <string> jvm-args <=> jvm-args-input.text;
     in-out property <bool> separated <=> separated-switch.checked;
     in-out property <string> xms <=> xms-input.text;
     in-out property <string> xmx <=> xmx-input.text;
@@ -145,24 +146,35 @@ export component AddGameDialog inherits Dialog {
                     }
             
                     Text {
-                        text: @tr("Launch Arguments: ");
+                        text: @tr("Java Arguments: ");
                         vertical-alignment: center;
                         col: 0;
                         row: 6;
                     }
-                    args-input := LineEdit {
+                    jvm-args-input := LineEdit {
                         col: 1;
                         row: 6;
+                    }
+
+                    Text {
+                        text: @tr("Minecraft Arguments: ");
+                        vertical-alignment: center;
+                        col: 0;
+                        row: 7;
+                    }
+                    game-args-input := LineEdit {
+                        col: 1;
+                        row: 7;
                     }
                     
                     separated-switch := Switch {
                         text: @tr("Enable Separated Version");
-                        row: 7;
+                        row: 8;
                     }
             
                     Rectangle {
                         preferred-height: 100%;
-                        row: 8;
+                        row: 9;
                     }
                 }
             }

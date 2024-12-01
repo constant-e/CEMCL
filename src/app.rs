@@ -392,10 +392,22 @@ impl App {
             let cfg_path = path.clone() + "/config.json";
             if exists(&cfg_path)? {
                 if let Ok(json) = serde_json::from_str::<serde_json::Value>(&fs::read_to_string(&cfg_path)?.as_str()) {
-                    // TODO: add game_args and jvm_args
+                    let mut game_args = Vec::new();
+                    let mut jvm_args = Vec::new();
+
+                    for arg in json["game_args"].as_array().ok_or(ErrorKind::InvalidData)? {
+                        game_args.push(arg.as_str().ok_or(ErrorKind::InvalidData)?.to_string());
+                    }
+
+                    for arg in json["jvm_args"].as_array().ok_or(ErrorKind::InvalidData)? {
+                        jvm_args.push(arg.as_str().ok_or(ErrorKind::InvalidData)?.to_string());
+                    }
+
                     game.description = String::from(json["description"].as_str().ok_or(ErrorKind::InvalidData)?);
+                    game.game_args = game_args;
                     game.height = String::from(json["height"].as_str().ok_or(ErrorKind::InvalidData)?);
                     game.java_path = String::from(json["java_path"].as_str().ok_or(ErrorKind::InvalidData)?);
+                    game.jvm_args = jvm_args;
                     game.separated = json["separated"].as_bool().ok_or(ErrorKind::InvalidData)?;
                     game.width = String::from(json["width"].as_str().ok_or(ErrorKind::InvalidData)?);
                     game.xms = String::from(json["xms"].as_str().ok_or(ErrorKind::InvalidData)?);

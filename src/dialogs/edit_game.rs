@@ -16,10 +16,28 @@ pub fn edit_game_dialog(app_weak: sync::Weak<Mutex<App>>) -> Result<(), slint::P
         if let Ok(app) = app.try_lock() {
             if let Some(index) = app.get_game_index() {
                 let game = &app.game_list[index];
+
+                let mut game_args = String::new();
+                let mut jvm_args = String::new();
+
+                for arg in &game.game_args {
+                    game_args.push_str(arg);
+                    game_args.push(' ');
+                }
+                game_args.pop();
+
+                for arg in &game.jvm_args {
+                    jvm_args.push_str(arg);
+                    jvm_args.push(' ');
+                }
+                jvm_args.pop();
+
                 ui.set_config_height(game.height.clone().into());
                 ui.set_config_width(game.width.clone().into());
                 ui.set_description(game.description.clone().into());
+                ui.set_game_args(game_args.into());
                 ui.set_java_path(game.java_path.clone().into());
+                ui.set_jvm_args(jvm_args.into());
                 ui.set_separated(game.separated.clone());
                 ui.set_version(game.version.clone().into());
                 ui.set_xms(game.xms.clone().into());
@@ -46,9 +64,30 @@ pub fn edit_game_dialog(app_weak: sync::Weak<Mutex<App>>) -> Result<(), slint::P
         if let (Some(app), Some(ui)) = (app_weak_clone.upgrade(), ui_weak_clone.upgrade()) {
             if let Ok(mut app) = app.try_lock() {
                 let mut game = app.game_list[index].clone();
+
+                let mut game_args = Vec::new();
+                let mut jvm_args = Vec::new();
+
+                let game_args_str = ui.get_game_args();
+                // make sure the vec is empty when nothing entered
+                if !game_args_str.is_empty() {
+                    for arg in game_args_str.split(' ') {
+                        game_args.push(arg.to_string());
+                    }
+                }
+                
+                let jvm_args_str = ui.get_jvm_args();
+                if !jvm_args_str.is_empty() {
+                    for arg in jvm_args_str.split(' ') {
+                        jvm_args.push(arg.to_string());
+                    }
+                }
+
                 game.description = ui.get_description().into();
+                game.game_args = game_args;
                 game.height = ui.get_config_height().into();
                 game.java_path = ui.get_java_path().into();
+                game.jvm_args = jvm_args;
                 game.separated = ui.get_separated();
                 game.width = ui.get_config_width().into();
                 game.xms = ui.get_xms().into();

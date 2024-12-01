@@ -46,8 +46,10 @@ impl Game {
         let json = json!(
             {
                 "description": self.description,
+                "game_args": self.game_args,
                 "height": self.height,
                 "java_path": self.java_path,
+                "jvm_args": self.jvm_args,
                 "separated": self.separated,
                 "width": self.width,
                 "xms": self.xms,

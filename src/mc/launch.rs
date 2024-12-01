@@ -125,7 +125,6 @@ fn get_classpaths(n: &Value, game_path: &String) -> Option<Vec<String>> {
 
 /// 获取启动总命令
 pub async fn get_launch_command(account: &Account, game: &Game, config: &Config) -> Option<(Vec<String>, GameDownload)> {
-    // TODO: 支持使用自定义参数
     let mut result: Vec<String> = Vec::new();
     let game_path = &config.game_path;
     let dir = game_path.clone() + "/versions/" + game.version.as_str();  // 游戏目录
@@ -137,14 +136,14 @@ pub async fn get_launch_command(account: &Account, game: &Game, config: &Config)
         let asset_index: String;
         // forge需要提前写入的参数
         let mut classpaths: Vec<String> = Vec::new();
-        let mut game_args: Vec<String> = Vec::new();
-        let mut jvm_args: Vec<String> = Vec::new();
+        let mut game_args: Vec<String> = game.game_args.clone();
+        let mut jvm_args: Vec<String> = game.jvm_args.clone();
         // 判断inheritsFrom（forge需要）
         if json["inheritsFrom"].is_null() {
             // 无forge
-            if let Some((temp_game_args, temp_jvm_args)) = get_args(&json) {
-                game_args = temp_game_args;
-                jvm_args = temp_jvm_args;
+            if let Some((mut temp_game_args, mut temp_jvm_args)) = get_args(&json) {
+                game_args.append(&mut temp_game_args);
+                jvm_args.append(&mut temp_jvm_args);
                 if let Some(index) = json["assetIndex"]["id"].as_str() {
                     asset_index = index.into();
                 } else {
@@ -222,7 +221,7 @@ pub async fn get_launch_command(account: &Account, game: &Game, config: &Config)
             i += 1;
         }
 
-        // 设置额外参数 TODO: 更多自定义
+        // 设置额外参数
         jvm_args.append(&mut vec![
             /*"${authlib_injector_param}".into(), */
             "-Xms".to_string() + game.xms.as_str(),
@@ -252,8 +251,6 @@ pub async fn get_launch_command(account: &Account, game: &Game, config: &Config)
         let os = if env::OS == "macOS" { "osx" } else { env::OS };
         // 替换模板
         for item in result.iter_mut() {
-
-            // TODO: 优化替换
             *item = item
                 .replace("${assets_index_name}", &asset_index)
                 .replace("${assets_root}", &(game_path.clone() + "/assets"))
