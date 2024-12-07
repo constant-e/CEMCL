@@ -18,20 +18,13 @@ jobs:
       matrix:
         os: [windows-latest, macos-13, ubuntu-latest]
     
-    # For macOS
-    env:
-      DYLD_FRAMEWORK_PATH: /Users/runner/work/CEMCL/Qt/5.15.2/clang_64/lib
-    
     steps:
     - name: Checkout
       uses: actions/checkout@v4
     - name: Install Qt
       uses: jurplel/install-qt-action@v4
       with:
-        version: "5.15.2"
-    - name: Install gettext
-      if: matrix.os == 'macos-13'
-      run: brew install gettext
+        version: "6.8"
     - name: Install gettext and libxcb
       if: matrix.os == 'ubuntu-latest'
       run: sudo apt-get install gettext libxcb*
