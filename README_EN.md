@@ -37,8 +37,6 @@ Go to [GitHub Actions](https://github.com/constant-e/CEMCL/actions) to download 
    ```
 4. Generate language file (for non-Windows users)
    ```sh
-   ./update_translations.sh
-
    # For Debug
    ./generate_translations.sh
    # For Release

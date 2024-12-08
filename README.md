@@ -37,8 +37,6 @@ CI（持续集成）版是在GitHub中提交commit后，由GitHub Actions自动�
    ```
 4. 生成语言文件（对于非Windows系统）
    ```sh
-   ./update_translations.sh
-
    # 对于Debug版
    ./generate_translations.sh
    # 对于Release版
