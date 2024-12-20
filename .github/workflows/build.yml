@@ -25,9 +25,9 @@ jobs:
       uses: jurplel/install-qt-action@v4
       with:
         version: '6.8.1'
-    - name: Install libxcb
+    - name: Install gettext and libxcb
       if: matrix.os == 'ubuntu-latest'
-      run: sudo apt-get install libxcb*
+      run: sudo apt-get install gettext libxcb*
     - name: Install slint-tr-extractor
       run: cargo install slint-tr-extractor && export PATH=~/.cargo/bin:$PATH
     - name: Generate language file
