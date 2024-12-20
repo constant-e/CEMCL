@@ -35,7 +35,7 @@ export component AppWindow inherits Window {
     public function popup-set-logging-in() { popup-msg = @tr("Logging in"); }
 
     popup := PopupWindow {
-        close-on-click: false;
+        close-policy: no-auto-close;
         height: root.height;
         width: root.width;
         Rectangle {

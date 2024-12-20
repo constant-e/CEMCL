@@ -25,22 +25,17 @@ jobs:
       uses: jurplel/install-qt-action@v4
       with:
         version: '6.8.1'
-    - name: Install gettext and libxcb
+    - name: Install libxcb
       if: matrix.os == 'ubuntu-latest'
-      run: sudo apt-get install gettext libxcb*
+      run: sudo apt-get install libxcb*
     - name: Install slint-tr-extractor
-      if: matrix.os != 'windows-latest'
       run: cargo install slint-tr-extractor && export PATH=~/.cargo/bin:$PATH
     - name: Build debug
       run: cargo build --verbose
     - name: Build release
       run: cargo build --release --verbose
-    # Windows is not support yet
     - name: Generate language file
-      if: matrix.os != 'windows-latest'
-      run: |
-        ./update_translations.sh
-        ./generate_translations.sh --all
+      run: ./update_translations.sh
     # Windows only
     - name: Add dll files
       if: matrix.os == 'windows-latest'
@@ -56,7 +51,6 @@ jobs:
           target/*/imageformats
           target/*/platforms
           target/*/styles
-          target/*/translations
           target/*/cemcl
           target/*/cemcl.exe
           target/*/*.dll

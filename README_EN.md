@@ -35,27 +35,18 @@ Go to [GitHub Actions](https://github.com/constant-e/CEMCL/actions) to download 
    # Build Release
    cargo build --release
    ```
-4. Generate language file (for non-Windows users)
-   ```sh
-   # For Debug
-   ./generate_translations.sh
-   # For Release
-   ./generate_translations.sh --release
-   # Or use --all to generate for both Debug and Release
-   ```
+
 
 ## Documents
 [Documents](https://constant-e.github.io/CEMCL/en/docs)
 
 ## Translating
-Run `update_tranlations.sh` to update the .po files and run `generate_tranlations.sh` to generate .mo files.
-
-**Warning**: It doesn't support Windows because of Slint.
+Run `update_tranlations.sh` to update the .po files.
 
 ## Roadmap
 1. (Completed) Launch Minecraft
 2. (Completed) Support customized configures
-3. (Partially) Multi-language support
+3. (Completed) Multi-language support
 4. (Completed) Support installing Minecraft
 5. (Completed) Support online login
 6. (Developing) Support installing modified Minecraft
