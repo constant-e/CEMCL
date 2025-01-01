@@ -1,7 +1,8 @@
 //! 添加新MC版本
 
+use std::process::Command;
 use std::sync::Mutex;
-use std::{fs, sync};
+use std::{fs, sync, thread};
 use std::rc;
 
 use log::{error, warn};
@@ -175,6 +176,53 @@ pub async fn add_game_dialog(app_weak: sync::Weak<Mutex<App>>) -> Result<(), sli
                 let rt = tokio::runtime::Runtime::new().unwrap();
                 let _tokio = rt.enter();
                 rt.block_on(download::download(game_url.url.clone(), dir.clone() + "/" + &game_url.version + ".json", 3));
+
+                // mod loader
+                let mod_type = ui.get_mod_type();
+                if mod_type == 1 {
+                    // forge
+                    let forge_index = ui.get_mod_index() as usize;
+                    let forge = &app.download_forge_list[forge_index];
+                    let forge_url = format!(
+                        "{mirror}/maven/net/minecraftforge/forge/{mcversion}-{version}/forge-{mcversion}-{version}-installer.jar",
+                        mirror = app.config.forge_source,
+                        mcversion = game_url.version,
+                        version = forge.version
+                    );
+                    let forge_path = format!("temp/forge-{mcversion}-{version}-installer.jar", mcversion = game_url.version, version = forge.version);
+                    
+                    let java_path = app.config.java_path.clone();
+                    let game_path = app.config.game_path.clone();
+                    thread::spawn(move || {
+                        let rt = tokio::runtime::Runtime::new().unwrap();
+                        let _tokio = rt.enter();
+
+                        if !fs::exists("temp").unwrap() {
+                            if let Err(e) = fs::create_dir("temp") {
+                                error!("Failed to create temp directory. Reason: {e}.");
+                            }
+                        }
+                        rt.block_on(download::download(forge_url, forge_path.clone(), 3));
+
+                        match Command::new(java_path)
+                            .arg("-jar")
+                            .arg(forge_path)
+                            .arg("--installClient")
+                            .arg(game_path)
+                            .spawn() {
+                            Ok(mut child) => {
+                                if let Err(e) = child.wait() {
+                                    error!("Failed to run forge installer. Reason: {e}.");
+                                }
+                            },
+                            Err(e) => error!("Failed to run forge installer. Reason: {e}."),
+                        }
+                        
+                        if let Err(e) = fs::remove_dir_all("temp") {
+                            error!("Failed to remove temp directory. Reason: {e}.");
+                        }
+                    });
+                }
 
                 let mut game_args = Vec::new();
                 let mut jvm_args = Vec::new();

@@ -66,7 +66,7 @@ impl Default for Config {
             close_after_launch: false,
             concurrency: 10,
             fabric_source: String::from("https://maven.fabricmc.net"),
-            forge_source: String::from("https://maven.minecraftforge.net"),
+            forge_source: String::from("https://files.minecraftforge.net"),
             game_path: String::from(".minecraft"),
             game_source: String::from("https://piston-meta.mojang.com"),
             height: String::from("600"),
