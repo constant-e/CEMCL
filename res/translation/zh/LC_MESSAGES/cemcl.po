@@ -1,7 +1,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
-"POT-Creation-Date: 2024-12-20 12:53+0000\n"
+"POT-Creation-Date: 2025-01-01 05:41+0000\n"
 "PO-Revision-Date: 2024-10-02 11:53+0800\n"
 "Last-Translator:  <fmn_tzx@outlook.com>\n"
 "Language-Team: Chinese (simplified) <i18n-zh@googlegroups.com>\n"
@@ -76,97 +76,102 @@ msgctxt "AddGameDialog"
 msgid "Add a Game"
 msgstr "添加游戏"
 
-#: add-game-dialog.slint:42
+#: add-game-dialog.slint:41
 msgctxt "AddGameDialog"
 msgid "Minecraft Version"
 msgstr "Minecraft版本"
 
-#: add-game-dialog.slint:44
+#: add-game-dialog.slint:43
 msgctxt "AddGameDialog"
 msgid "All"
 msgstr "全部"
 
-#: add-game-dialog.slint:44
+#: add-game-dialog.slint:43
 msgctxt "AddGameDialog"
 msgid "Release"
 msgstr "正式版"
 
-#: add-game-dialog.slint:44
+#: add-game-dialog.slint:43
 msgctxt "AddGameDialog"
 msgid "Snapshot"
 msgstr "快照版"
 
-#: add-game-dialog.slint:50 add-game-dialog.slint:69
+#: add-game-dialog.slint:43
+msgctxt "AddGameDialog"
+msgid "Old"
+msgstr "远古版"
+
+#: add-game-dialog.slint:49 add-game-dialog.slint:67
 msgctxt "AddGameDialog"
 msgid "Version"
 msgstr "版本"
 
-#: add-game-dialog.slint:51
+#: add-game-dialog.slint:50
 msgctxt "AddGameDialog"
 msgid "Type"
 msgstr "类型"
 
-#: add-game-dialog.slint:61
+#: add-game-dialog.slint:59
 msgctxt "AddGameDialog"
 msgid "Mod Loader"
 msgstr "Mod加载器"
 
-#: add-game-dialog.slint:63
+#: add-game-dialog.slint:61
 msgctxt "AddGameDialog"
 msgid "None"
 msgstr "无"
 
-#: add-game-dialog.slint:70
+#: add-game-dialog.slint:68
 msgctxt "AddGameDialog"
 msgid "Modified"
 msgstr "修改时间"
 
-#: add-game-dialog.slint:78
+#: add-game-dialog.slint:76
 msgctxt "AddGameDialog"
 msgid "Customize"
 msgstr "自定义"
 
-#: add-game-dialog.slint:83
+#: add-game-dialog.slint:81
 msgctxt "AddGameDialog"
 msgid "Description: "
 msgstr "备注："
 
-#: add-game-dialog.slint:94
+#: add-game-dialog.slint:92
 msgctxt "AddGameDialog"
 msgid "Java Path: "
 msgstr "Java路径："
 
-#: add-game-dialog.slint:105
+#: add-game-dialog.slint:103
 msgctxt "AddGameDialog"
 msgid "Window Height: "
 msgstr "窗口高度："
 
-#: add-game-dialog.slint:116
+#: add-game-dialog.slint:114
 msgctxt "AddGameDialog"
 msgid "Window Width: "
 msgstr "窗口宽度："
 
-#: add-game-dialog.slint:127
+#: add-game-dialog.slint:125
 msgctxt "AddGameDialog"
 msgid "Minimum Memory: "
 msgstr "最小分配内存："
 
-#: add-game-dialog.slint:138
+#: add-game-dialog.slint:136
 msgctxt "AddGameDialog"
 msgid "Maximum Memory: "
 msgstr "最大分配内存："
 
-#: add-game-dialog.slint:149
+#: add-game-dialog.slint:147
 msgctxt "AddGameDialog"
 msgid "Java Arguments: "
 msgstr "Java参数："
 
-#: add-game-dialog.slint:160
+#: add-game-dialog.slint:158
 msgctxt "AddGameDialog"
 msgid "Minecraft Arguments: "
 msgstr "Minecraft参数："
 
-#: add-game-dialog.slint:171
+#: add-game-dialog.slint:169
 msgctxt "AddGameDialog"
 msgid "Enable Separated Version"
 msgstr "启用版本隔离"

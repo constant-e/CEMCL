@@ -114,6 +114,7 @@ pub async fn add_game_dialog(app_weak: sync::Weak<Mutex<App>>) -> Result<(), sli
                     0 => "",
                     1 => "release",
                     2 => "snapshot",
+                    3 => "old_",  // old_beta, old_alpha
                     _ => "",
                 };
                 app.download_game_list.clear();

@@ -2,7 +2,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
-"POT-Creation-Date: 2024-12-20 12:53+0000\n"
+"POT-Creation-Date: 2025-01-01 05:41+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -77,97 +77,102 @@ msgctxt "AddGameDialog"
 msgid "Add a Game"
 msgstr ""
 
-#: add-game-dialog.slint:42
+#: add-game-dialog.slint:41
 msgctxt "AddGameDialog"
 msgid "Minecraft Version"
 msgstr ""
 
-#: add-game-dialog.slint:44
+#: add-game-dialog.slint:43
 msgctxt "AddGameDialog"
 msgid "All"
 msgstr ""
 
-#: add-game-dialog.slint:44
+#: add-game-dialog.slint:43
 msgctxt "AddGameDialog"
 msgid "Release"
 msgstr ""
 
-#: add-game-dialog.slint:44
+#: add-game-dialog.slint:43
 msgctxt "AddGameDialog"
 msgid "Snapshot"
 msgstr ""
 
-#: add-game-dialog.slint:50 add-game-dialog.slint:69
+#: add-game-dialog.slint:43
+msgctxt "AddGameDialog"
+msgid "Old"
+msgstr ""
+
+#: add-game-dialog.slint:49 add-game-dialog.slint:67
 msgctxt "AddGameDialog"
 msgid "Version"
 msgstr ""
 
-#: add-game-dialog.slint:51
+#: add-game-dialog.slint:50
 msgctxt "AddGameDialog"
 msgid "Type"
 msgstr ""
 
-#: add-game-dialog.slint:61
+#: add-game-dialog.slint:59
 msgctxt "AddGameDialog"
 msgid "Mod Loader"
 msgstr ""
 
-#: add-game-dialog.slint:63
+#: add-game-dialog.slint:61
 msgctxt "AddGameDialog"
 msgid "None"
 msgstr ""
 
-#: add-game-dialog.slint:70
+#: add-game-dialog.slint:68
 msgctxt "AddGameDialog"
 msgid "Modified"
 msgstr ""
 
-#: add-game-dialog.slint:78
+#: add-game-dialog.slint:76
 msgctxt "AddGameDialog"
 msgid "Customize"
 msgstr ""
 
-#: add-game-dialog.slint:83
+#: add-game-dialog.slint:81
 msgctxt "AddGameDialog"
 msgid "Description: "
 msgstr ""
 
-#: add-game-dialog.slint:94
+#: add-game-dialog.slint:92
 msgctxt "AddGameDialog"
 msgid "Java Path: "
 msgstr ""
 
-#: add-game-dialog.slint:105
+#: add-game-dialog.slint:103
 msgctxt "AddGameDialog"
 msgid "Window Height: "
 msgstr ""
 
-#: add-game-dialog.slint:116
+#: add-game-dialog.slint:114
 msgctxt "AddGameDialog"
 msgid "Window Width: "
 msgstr ""
 
-#: add-game-dialog.slint:127
+#: add-game-dialog.slint:125
 msgctxt "AddGameDialog"
 msgid "Minimum Memory: "
 msgstr ""
 
-#: add-game-dialog.slint:138
+#: add-game-dialog.slint:136
 msgctxt "AddGameDialog"
 msgid "Maximum Memory: "
 msgstr ""
 
-#: add-game-dialog.slint:149
+#: add-game-dialog.slint:147
 msgctxt "AddGameDialog"
 msgid "Java Arguments: "
 msgstr ""
 
-#: add-game-dialog.slint:160
+#: add-game-dialog.slint:158
 msgctxt "AddGameDialog"
 msgid "Minecraft Arguments: "
 msgstr ""
 
-#: add-game-dialog.slint:171
+#: add-game-dialog.slint:169
 msgctxt "AddGameDialog"
 msgid "Enable Separated Version"
 msgstr ""

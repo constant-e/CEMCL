@@ -40,7 +40,7 @@ export component AddGameDialog inherits Dialog {
 
                 SubTitle { text: @tr("Minecraft Version"); }
                 game-combo-box := ComboBox {
-                    model: [@tr("All"), @tr("Release"), @tr("Snapshot")];
+                    model: [@tr("All"), @tr("Release"), @tr("Snapshot"), @tr("Old")];
                     selected => { root.game-combo-box-changed(self.current-index); }
                 }
                 game-table := StandardTableView {
