@@ -1,0 +1,33 @@
+import { ProgressIndicator, VerticalBox, StandardTableView } from "std-widgets.slint";
+import { Title, SectionTitle } from "components/components.slint";
+
+export component Downloader inherits Dialog {
+    title: @tr("Downloader");
+
+    in-out property <[[StandardListViewItem]]> in-progress-list <=> in-progress-table.rows;
+    in-out property <[[StandardListViewItem]]> finished-list <=> finished_table.rows;
+
+    VerticalBox {
+        Title { text: @tr("Downloader"); }
+
+        SectionTitle { text: @tr("In progress"); }
+        in-progress-table := StandardTableView {
+            columns: [
+                { title: @tr("ID") },
+                { title: @tr("Name") },
+                { title: @tr("Progress") },
+                { title: @tr("Speed") },
+                { title: @tr("ETA") },
+            ];
+        }
+
+        SectionTitle { text: @tr("Finished"); }
+        finished_table := StandardTableView {
+            columns: [
+                { title: @tr("ID") },
+                { title: @tr("Name") },
+                { title: @tr("State") },
+            ];
+        }
+    }
+}

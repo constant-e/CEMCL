@@ -3,12 +3,14 @@
 
 mod app;
 mod dialogs;
+mod downloader;
 mod file_tools;
 mod mc;
 mod settings;
 
 use app::App;
 use dialogs::{add_acc_dialog, add_game_dialog, edit_acc_dialog, edit_game_dialog};
+use downloader::ui::downloader;
 use log::error;
 use std::sync::{Arc, Mutex};
 use std::thread;
@@ -46,6 +48,13 @@ fn main() -> Result<(), slint::PlatformError> {
             }
         }) {
             error!("Failed to call spawn_local. Reason: {e}.");
+        }
+    });
+
+    // let app_weak_clone = app_weak.clone();
+    ui.on_click_downloader_btn(move || {
+        if let Err(e) = downloader() {
+            error!("Failed to start edit_game. Reason: {e}.");
         }
     });
 

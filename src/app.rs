@@ -11,6 +11,7 @@ use serde_json::json;
 use slint::{ComponentHandle, ModelRc, StandardListViewItem, VecModel};
 
 use crate::dialogs::msg_box::{err_dialog, warn_dialog};
+use crate::downloader::downloader::Downloader;
 use crate::file_tools::list_dir;
 use crate::mc::download::{Forge, GameUrl};
 use crate::{AppWindow, Messages};
@@ -85,6 +86,7 @@ pub struct App {
     pub device_code: String,
     pub download_forge_list: Vec<Forge>,
     pub download_game_list: Vec<GameUrl>,
+    pub downloader: Downloader,
     pub game_list: Vec<Game>,
     pub ui_weak: slint::Weak<AppWindow>,
 }
@@ -114,6 +116,8 @@ impl App {
                 .global::<Messages>().get_load_game_failed().to_string() + &format!("{e}");
             warn_dialog(&msg);
         }
+
+        // todo: set concurrency
         
         app.ui_weak = ui_weak;
         app.refresh_ui_acc_list();
@@ -507,6 +511,7 @@ impl Default for App {
             device_code: String::new(),
             download_forge_list: Vec::new(),
             download_game_list: Vec::new(),
+            downloader: Downloader::new(),
             game_list: Vec::new(),
             ui_weak: slint::Weak::default(),
         }

@@ -1,10 +1,12 @@
 import { Button, StandardTableView, VerticalBox, HorizontalBox } from "std-widgets.slint";
 import { Title, SubTitle } from "components/components.slint";
+
 export { Messages } from "messages.slint";
 
 export { AddAccDialog } from "add-acc-dialog.slint";
 export { AddGameDialog } from "add-game-dialog.slint";
 export { AskDialog, ErrorDialog, WarnDialog } from "dialogs.slint";
+export { Downloader } from "downloader.slint";
 export { EditAccDialog } from "edit-acc-dialog.slint";
 export { EditGameDialog } from "edit-game-dialog.slint";
 export { Settings } from "settings.slint";
@@ -23,6 +25,7 @@ export component AppWindow inherits Window {
 
     callback click-add-acc-btn();
     callback click-add-game-btn();
+    callback click-downloader-btn();
     callback click-edit-acc-btn();
     callback click-edit-game-btn();
     callback click-settings-btn();
@@ -124,6 +127,11 @@ export component AppWindow inherits Window {
             Button {
                 text: @tr("Settings");
                 clicked => { root.click-settings-btn() }
+            }
+
+            Button {
+                text: @tr("Downloader");
+                clicked => { root.click-downloader-btn() }
             }
 
             Rectangle { preferred-width: 100%; }
