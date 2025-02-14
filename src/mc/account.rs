@@ -24,7 +24,7 @@ pub struct Account {
 }
 
 impl Account {
-    pub async fn new(device_code: &str) -> Option<Self> {
+    pub async fn new(device_code: &str, ui_weak: slint::Weak<crate::AppWindow>) -> Option<Self> {
         let client_id = "866440ab-2174-4ff6-8624-290608ac9bdb";
         let client = reqwest::Client::new();
         let mut account = Account::default();
@@ -42,14 +42,19 @@ impl Account {
         let ms_json = serde_json::from_str::<Value>(&ms_res.text().await.ok()?).ok()?;
         let ms_token = ms_json["access_token"].as_str()?;
         account.refresh_token = String::from(ms_json["refresh_token"].as_str()?);
+
+        ui_weak.upgrade_in_event_loop(|ui| {
+            ui.set_progress(0.2);
+        });
+
         debug!("Finish oauth");
 
-        Account::login(&mut account, ms_token).await?;
+        Account::login(&mut account, ms_token, ui_weak).await?;
 
         Some(account)
     }
 
-    async fn login(&mut self, ms_token: &str) -> Option<()> {
+    async fn login(&mut self, ms_token: &str, ui_weak: slint::Weak<crate::AppWindow>) -> Option<()> {
         let client = reqwest::ClientBuilder::new()
             .connect_timeout(Duration::from_secs(5))
             .build().ok()?;
@@ -71,6 +76,11 @@ impl Account {
             .send().await.ok()?;
         let xbox_json = serde_json::from_str::<Value>(&xbox_res.text().await.ok()?).ok()?;
         let xbox_token = xbox_json["Token"].as_str()?;
+
+        ui_weak.upgrade_in_event_loop(|ui| {
+            ui.set_progress(0.4);
+        });
+
         debug!("Finish xbox");
 
         // Get xsts
@@ -90,6 +100,11 @@ impl Account {
         let xsts_json = serde_json::from_str::<Value>(&xsts_res.text().await.ok()?).ok()?;
         let xsts_token = xsts_json["Token"].as_str()?;
         let uhs = xsts_json["DisplayClaims"]["xui"][0]["uhs"].as_str()?;
+
+        ui_weak.upgrade_in_event_loop(|ui| {
+            ui.set_progress(0.6);
+        });
+
         debug!("Finish xsts");
 
         // Get MC
@@ -99,6 +114,11 @@ impl Account {
             .send().await.ok()?;
         let mc_json = serde_json::from_str::<Value>(&mc_res.text().await.ok()?).ok()?;
         let access_token = mc_json["access_token"].as_str()?;
+
+        ui_weak.upgrade_in_event_loop(|ui| {
+            ui.set_progress(0.8);
+        });
+
         debug!("Finish mc");
 
         // Get MC profile
@@ -107,6 +127,11 @@ impl Account {
             .header("Authorization", header)
             .send().await.ok()?;
         let profile_json = serde_json::from_str::<Value>(&profile_res.text().await.ok()?).ok()?;
+
+        ui_weak.upgrade_in_event_loop(|ui| {
+            ui.set_progress(1.0);
+        });
+
         debug!("Finish profile");
 
         self.access_token = String::from(access_token);
@@ -117,8 +142,8 @@ impl Account {
         Some(())
     }
 
-    /// 从refresh_token刷新access_token（包含判定是否为微软登录）
-    pub async fn refresh(&mut self) -> Option<()> {
+    /// 从refresh_token刷新access_token（包含判定是否为微软登录），并在UI更新进度
+    pub async fn refresh(&mut self, ui_weak: slint::Weak<crate::AppWindow>) -> Option<()> {
         if self.account_type != "msa" { return Some(()); }
         let client_id = "866440ab-2174-4ff6-8624-290608ac9bdb";
         let client = reqwest::ClientBuilder::new()
@@ -138,7 +163,13 @@ impl Account {
         let json = serde_json::from_str::<Value>(&res.text().await.ok()?).ok()?;
         let ms_token = json["access_token"].as_str()?;
 
-        self.login(ms_token).await?;
+        ui_weak.upgrade_in_event_loop(|ui| {
+            ui.set_progress(0.2);
+        });
+
+        debug!("Finish oauth");
+
+        self.login(ms_token, ui_weak).await?;
 
         Some(())
     }

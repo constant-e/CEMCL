@@ -1,6 +1,7 @@
 //! 添加账号
 
 use std::sync::{self, Mutex};
+use std::thread;
 use clipboard::{ClipboardContext, ClipboardProvider};
 use log::{error, warn};
 use slint::ComponentHandle;
@@ -67,32 +68,39 @@ pub async fn add_acc_dialog(app_weak: sync::Weak<Mutex<App>>) -> Result<(), slin
     let ui_weak_clone = ui_weak.clone();
     ui.on_ok_clicked(move || {
         if let (Some(app), Some(ui)) = (app_weak.upgrade(), ui_weak_clone.upgrade()) {
-            if let Ok(mut app) = app.try_lock() {
-                let index = ui.get_account_type_index();
-                if index == 0 {
-                    // Online Account
-                    let rt = tokio::runtime::Runtime::new().unwrap();
-                    let _tokio = rt.enter();
-                    if let Some(acc) = rt.block_on(Account::new(&app.device_code)) {
-                        account = acc;
-                    } else {
-                        error!("Failed to login.");
-                        return;
+            let index = ui.get_account_type_index();
+            if index == 0 {
+                // Online Account
+                thread::spawn(move || {
+                    if let Ok(mut app) = app.try_lock() {
+                        app.ui_weak.upgrade_in_event_loop(|ui| ui.invoke_set_loading()).unwrap();
+                        let rt = tokio::runtime::Runtime::new().unwrap();
+                        let _tokio = rt.enter();
+                        if let Some(acc) = rt.block_on(Account::new(&app.device_code, app.ui_weak.clone())) {
+                            app.add_account(&acc);
+                        } else {
+                            error!("Failed to login.");
+                        }
+                        app.ui_weak.upgrade_in_event_loop(|ui| ui.invoke_unset_loading()).unwrap();
                     }
-                } else if index == 1 {
-                    // Offline Account
-                    account.user_name = ui.get_offline_name().to_string();
-                    account.uuid = ui.get_offline_uuid().to_string();
-                } else {
-                    // Costumized Account
-                    account.account_type = ui.get_other_acc_type().to_string();
-                    account.refresh_token = ui.get_other_token().to_string();
-                    account.uuid = ui.get_other_uuid().to_string();
-                    account.user_name = ui.get_other_name().to_string();
-                }
-                app.add_account(&account);
+                });
             } else {
-                error!("Failed to lock a mutex.");
+                if let Ok(mut app) = app.try_lock() {
+                    if index == 1 {
+                        // Offline Account
+                        account.user_name = ui.get_offline_name().to_string();
+                        account.uuid = ui.get_offline_uuid().to_string();
+                    } else {
+                        // Costumized Account
+                        account.account_type = ui.get_other_acc_type().to_string();
+                        account.refresh_token = ui.get_other_token().to_string();
+                        account.uuid = ui.get_other_uuid().to_string();
+                        account.user_name = ui.get_other_name().to_string();
+                    }
+                    app.add_account(&account);
+                } else {
+                    error!("Failed to lock a mutex.");
+                }
             }
 
             ui.hide().unwrap();

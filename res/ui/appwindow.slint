@@ -1,4 +1,4 @@
-import { Button, StandardTableView, VerticalBox, HorizontalBox } from "std-widgets.slint";
+import { Button, StandardTableView, VerticalBox, HorizontalBox, ProgressIndicator } from "std-widgets.slint";
 import { Title, SubTitle } from "components/components.slint";
 
 export { Messages } from "messages.slint";
@@ -21,7 +21,8 @@ export component AppWindow inherits Window {
     in-out property <int> game-index <=> game-table.current-row;
     in-out property <[[StandardListViewItem]]> acc-list <=> acc-table.rows;
     in-out property <[[StandardListViewItem]]> game-list <=> game-table.rows;
-    in-out property <string> popup-msg;
+    in-out property <string> state-msg;
+    in-out property <float> progress;
 
     callback click-add-acc-btn();
     callback click-add-game-btn();
@@ -31,25 +32,33 @@ export component AppWindow inherits Window {
     callback click-settings-btn();
     callback click-start-btn();
     
-    public function close-popup() { popup.close(); }
-    public function show-popup() { popup.show(); }
-    public function popup-set-downloading() { popup-msg = @tr("Downloading"); }
-    public function popup-set-launching() { popup-msg = @tr("Launching"); }
-    public function popup-set-logging-in() { popup-msg = @tr("Logging in"); }
+    public function set-loading() {
+        progress-area.visible = true;
 
-    popup := PopupWindow {
-        close-policy: no-auto-close;
-        height: root.height;
-        width: root.width;
-        Rectangle {
-            background: root.background.darker(0.1);
-            height: 300px;
-            width: 400px;
-            x: (root.width - self.width) / 2;
-            y: (root.height - self.height) / 2;
-            Title { text: root.popup-msg; }
-        }
+        add-acc-btn.enabled = false;
+        add-game-btn.enabled = false;
+        downloader-btn.enabled = false;
+        edit-acc-btn.enabled = false;
+        edit-game-btn.enabled = false;
+        settings-btn.enabled = false;
+        start-btn.enabled = false;
     }
+
+    public function unset-loading() {
+        progress-area.visible = false;
+        
+        add-acc-btn.enabled = true;
+        add-game-btn.enabled = true;
+        downloader-btn.enabled = true;
+        edit-acc-btn.enabled = true;
+        edit-game-btn.enabled = true;
+        settings-btn.enabled = true;
+        start-btn.enabled = true;
+    }
+
+    public function state-set-downloading() { state-msg = @tr("Downloading"); }
+    public function state-set-launching() { state-msg = @tr("Launching"); }
+    public function state-set-logging-in() { state-msg = @tr("Logging in"); }
 
     VerticalBox {
         padding: 8px;
@@ -77,12 +86,12 @@ export component AppWindow inherits Window {
 
                     Rectangle { preferred-width: 100%; }
 
-                    Button {
+                    add-acc-btn := Button {
                         text: @tr("Add");
                         clicked => { root.click-add-acc-btn() } 
                     }
         
-                    Button {
+                    edit-acc-btn := Button {
                         text: @tr("Edit");
                         clicked => { root.click-edit-acc-btn() }
                     }
@@ -108,12 +117,12 @@ export component AppWindow inherits Window {
 
                     Rectangle { preferred-width: 100%; }
 
-                    Button {
+                    add-game-btn := Button {
                         text: @tr("Add");
                         clicked => { root.click-add-game-btn() } 
                     }
         
-                    Button {
+                    edit-game-btn := Button {
                         text: @tr("Edit");
                         clicked => { root.click-edit-game-btn() }
                     }
@@ -124,19 +133,37 @@ export component AppWindow inherits Window {
         HorizontalBox {
             padding: 0px;
 
-            Button {
+            settings-btn := Button {
                 text: @tr("Settings");
                 clicked => { root.click-settings-btn() }
             }
 
-            Button {
+            downloader-btn := Button {
                 text: @tr("Downloader");
                 clicked => { root.click-downloader-btn() }
             }
 
-            Rectangle { preferred-width: 100%; }
+            progress-area := HorizontalBox {
+                padding: 0px;
+                visible: false;
+                preferred-width: 100%;
+    
+                state := Text {
+                    vertical-alignment: center;
+                    text: state-msg;
+                }
+    
+                ProgressIndicator {
+                    progress: progress;
+                }
+    
+                Text {
+                    vertical-alignment: center;
+                    text: progress * 100 + "%";
+                }
+            }
 
-            Button {
+            start-btn := Button {
                 text: @tr("Start");
                 clicked => { root.click-start-btn(); }
             }

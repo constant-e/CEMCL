@@ -1,6 +1,6 @@
 //! 修改账号
 
-use std::sync::{self, Mutex};
+use std::{sync::{self, Mutex}, thread};
 
 use log::error;
 use slint::ComponentHandle;
@@ -38,23 +38,33 @@ pub fn edit_acc_dialog(app_weak: sync::Weak<Mutex<App>>) -> Result<(), slint::Pl
     let ui_weak_clone = ui_weak.clone();
     ui.on_ok_clicked(move || {
         if let (Some(app), Some(ui)) = (app_weak_clone.upgrade(), ui_weak_clone.upgrade()) {
-            if let Ok(mut app) = app.try_lock() {
-                let mut account = Account {
-                    access_token: String::new(),
-                    account_type: ui.get_acc_type().into(),
-                    refresh_token: ui.get_token().into(),
-                    user_name: ui.get_name().into(),
-                    uuid: ui.get_uuid().into(),
-                };
-    
-                let rt = tokio::runtime::Runtime::new().unwrap();
-                let _tokio = rt.enter();
-                rt.block_on(account.refresh());
-    
-                app.edit_account(index, account);
-            } else {
-                error!("Failed to lock a mutex.");
-            }
+            let account_type = ui.get_acc_type().to_string();
+            let refresh_token = ui.get_token().to_string();
+            let user_name = ui.get_name().to_string();
+            let uuid = ui.get_uuid().to_string();
+            thread::spawn(move || {
+                if let Ok(mut app) = app.try_lock() {
+                    app.ui_weak.upgrade_in_event_loop(|ui| ui.invoke_set_loading()).unwrap();
+
+                    let mut account = Account {
+                        access_token: String::new(),
+                        account_type,
+                        refresh_token,
+                        user_name,
+                        uuid,
+                    };
+        
+                    let rt = tokio::runtime::Runtime::new().unwrap();
+                    let _tokio = rt.enter();
+                    rt.block_on(account.refresh(app.ui_weak.clone()));
+        
+                    app.edit_account(index, account);
+
+                    app.ui_weak.upgrade_in_event_loop(|ui| ui.invoke_unset_loading()).unwrap();
+                } else {
+                    error!("Failed to lock a mutex.");
+                }
+            });
             
             ui.hide().unwrap();
         } else {

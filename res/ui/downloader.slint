@@ -3,6 +3,8 @@ import { Title, SectionTitle } from "components/components.slint";
 
 export component Downloader inherits Dialog {
     title: @tr("Downloader");
+    preferred-height: 600px;
+    preferred-width: 800px;
 
     in-out property <[[StandardListViewItem]]> in-progress-list <=> in-progress-table.rows;
     in-out property <[[StandardListViewItem]]> finished-list <=> finished_table.rows;

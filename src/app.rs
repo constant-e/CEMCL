@@ -216,15 +216,15 @@ impl App {
             return None;
         }
 
-        self.ui_weak.upgrade_in_event_loop(|ui| ui.invoke_show_popup()).ok()?;
+        self.ui_weak.upgrade_in_event_loop(|ui| ui.invoke_set_loading()).ok()?;
         
         // refresh access_token
-        self.ui_weak.upgrade_in_event_loop(|ui| ui.invoke_popup_set_logging_in()).ok()?;
-        if self.acc_list[acc_index].refresh().await.is_none() {
+        self.ui_weak.upgrade_in_event_loop(|ui| ui.invoke_state_set_logging_in()).ok()?;
+        if self.acc_list[acc_index].refresh(self.ui_weak.clone()).await.is_none() {
             error!("Failed to login.");
             self.ui_weak.upgrade_in_event_loop(|ui| {
                 err_dialog(&ui.global::<Messages>().get_login_failed());
-                ui.invoke_close_popup();
+                ui.invoke_unset_loading();
             }).unwrap();
             return None;
         }
@@ -239,11 +239,11 @@ impl App {
                 debug!("{str}");
             }
 
-            if let Err(e) = self.ui_weak.upgrade_in_event_loop(|ui| ui.invoke_popup_set_downloading()) {
+            if let Err(e) = self.ui_weak.upgrade_in_event_loop(|ui| ui.invoke_state_set_downloading()) {
                 error!("Failed to upgrade a weak pointer. Reason: {e}.");
                 self.ui_weak.upgrade_in_event_loop(move |ui| {
                     err_dialog(&format!("{e}"));
-                    ui.invoke_close_popup();
+                    ui.invoke_unset_loading();
                 }).unwrap();
                 return None;
             }
@@ -252,16 +252,16 @@ impl App {
                 error!("Failed to download.");
                 self.ui_weak.upgrade_in_event_loop(|ui| {
                     err_dialog(&ui.global::<Messages>().get_download_failed());
-                    ui.invoke_close_popup();
+                    ui.invoke_unset_loading();
                 }).unwrap();
                 return None;
             }
             
-            if let Err(e) = self.ui_weak.upgrade_in_event_loop(|ui| ui.invoke_popup_set_launching()) {
+            if let Err(e) = self.ui_weak.upgrade_in_event_loop(|ui| ui.invoke_state_set_launching()) {
                 error!("Failed to upgrade a weak pointer. Reason: {e}.");
                 self.ui_weak.upgrade_in_event_loop(move |ui| {
                     err_dialog(&format!("{e}"));
-                    ui.invoke_close_popup();
+                    ui.invoke_unset_loading();
                 }).unwrap();
                 return None;
             }
@@ -291,7 +291,7 @@ impl App {
             error!("Failed to get launch command.");
         }
 
-        self.ui_weak.upgrade_in_event_loop(|ui| ui.invoke_close_popup()).unwrap();
+        self.ui_weak.upgrade_in_event_loop(|ui| ui.invoke_unset_loading()).unwrap();
         Some(())
     }
 
