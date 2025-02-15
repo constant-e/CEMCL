@@ -33,7 +33,7 @@ pub fn downloader(app_weak: sync::Weak<Mutex<App>>) -> Result<(), slint::Platfor
                     
                         for (id, url, state) in tasks {
                             match state {
-                                DownloadState::Queued => {
+                                DownloadState::Queued(_) => {
                                     let model: Rc<VecModel<StandardListViewItem>> = Rc::from(VecModel::from(vec![StandardListViewItem::from(id.to_shared_string()), StandardListViewItem::from(url.to_shared_string()), StandardListViewItem::from(""), StandardListViewItem::from(""), StandardListViewItem::from("")]));
                                     let row: ModelRc<StandardListViewItem> = ModelRc::from(model);
                                     ui_tasks_in_process.push(row);

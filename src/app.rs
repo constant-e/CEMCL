@@ -118,7 +118,7 @@ impl App {
         }
 
         // todo: set concurrency
-        app.downloader = Downloader::new(ui_weak.clone());
+        app.downloader = Downloader::new(ui_weak.clone(), app.config.concurrency);
         
         app.ui_weak = ui_weak;
         app.refresh_ui_acc_list();
@@ -211,6 +211,8 @@ impl App {
     // we should get acc index and game index in main thread
     /// Launch the game
     pub async fn launch(&mut self, acc_index: usize, game_index: usize) -> Option<()> {
+        self.ui_weak.upgrade_in_event_loop(|ui| { ui.set_progress(0.0); });
+
         if acc_index >= self.acc_list.len() || game_index >= self.game_list.len() {
             warn!("Index out of bounds: the len is ({}, {}) but the index is ({acc_index}, {game_index}).", self.acc_list.len(), self.game_list.len());
             self.ui_weak.upgrade_in_event_loop(|ui| err_dialog(&ui.global::<Messages>().get_acc_or_game_not_selected())).unwrap();
@@ -249,8 +251,9 @@ impl App {
                 return None;
             }
 
-            if launch::download_all(&self.config, &game_download, &self.downloader).await.is_none() {
+            if launch::download_all(&self.config, &game_download, &self.downloader).is_none() {
                 error!("Failed to download.");
+                self.downloader.clear()?;
                 self.ui_weak.upgrade_in_event_loop(|ui| {
                     err_dialog(&ui.global::<Messages>().get_download_failed());
                     ui.invoke_unset_loading();
@@ -512,7 +515,7 @@ impl Default for App {
             device_code: String::new(),
             download_forge_list: Vec::new(),
             download_game_list: Vec::new(),
-            downloader: Downloader::new(slint::Weak::default()),
+            downloader: Downloader::default(),
             game_list: Vec::new(),
             ui_weak: slint::Weak::default(),
         }

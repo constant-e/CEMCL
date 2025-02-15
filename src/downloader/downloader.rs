@@ -2,6 +2,7 @@ use std::io::Write;
 use std::sync::{mpsc, Arc, Mutex};
 use std::thread::sleep;
 use futures::StreamExt;
+use tokio::sync::Semaphore;
 use std::{fs, thread};
 use std::time::Duration;
 
@@ -9,7 +10,8 @@ use log::{debug, error, info};
 
 #[derive(Clone, PartialEq)]
 pub enum DownloadState {
-    Queued,
+    /// total
+    Queued(u64),
     /// downloaded, total
     Downloading(u64, u64),
     Paused,
@@ -56,7 +58,9 @@ pub struct Downloader {
 
 /// 下载任务
 impl DownloadTask {
-    pub fn new(id: u64, url: String, path: String, client: reqwest::Client, rt: Arc<tokio::runtime::Runtime>) -> Self {
+    pub fn new(id: u64, url: String, path: String, client: reqwest::Client, rt: Arc<tokio::runtime::Runtime>, semaphore: Arc<Semaphore>) -> Self {
+        info!("create id={id} url={url} path={path}");
+        
         // 控制download task
         let (control_sender, control_receiver) = mpsc::channel();
         // 接收状态
@@ -64,15 +68,32 @@ impl DownloadTask {
 
         let url_clone = url.clone();
         let handle = rt.spawn(async move {
+            let response = match client.get(&url).send().await {
+                Ok(res) => res,
+                Err(e) => {
+                    error!("Failed to get response. Reason: {e}");
+                    progress_sender.send(DownloadState::Error(String::from("Failed to download."))).unwrap();
+                    return;
+                }
+            };
 
-            let response = client.get(&url).send().await.unwrap();
             let total_size = response.content_length().unwrap_or(0);
-            let mut stream = response.bytes_stream();
-
-            let mut state = DownloadState::Downloading(0, total_size);
+            let mut stream = response.bytes_stream();            
 
             let mut file = fs::File::create(path).unwrap();
             let mut downloaded: u64 = 0;
+
+            let mut state = DownloadState::Queued(total_size);
+            progress_sender.send(state.clone()).unwrap();
+
+            if let Err(e) = semaphore.acquire().await {
+                error!("Acquire error: {e}");
+                state = DownloadState::Error(format!("{e}"));
+                progress_sender.send(state).unwrap();
+                return;
+            }
+
+            info!("Start downloading {url}");
 
             while let Some(chunk) = stream.next().await {
                 let state = &mut state;
@@ -96,15 +117,28 @@ impl DownloadTask {
                     continue;
                 }
 
-                let chunk = chunk.unwrap();
-                file.write_all(&chunk).unwrap();
-                downloaded += chunk.len() as u64;
-                *state = DownloadState::Downloading(downloaded, total_size);
+                match chunk {
+                    Ok(chunk) => {
+                        if let Err(e) = file.write_all(&chunk) {
+                            error!("Failed to write chunk. Reason: {e}");
+                            *state = DownloadState::Error(format!("{e}"));
+                        }
+                        downloaded += chunk.len() as u64;
+                        *state = DownloadState::Downloading(downloaded, total_size);
+                        
+                    }
+                    Err(e) => {
+                        *state = DownloadState::Error(format!("{e}"));
+                    }
+                }
+                
                 progress_sender.send(state.clone()).unwrap();
             }
             state = DownloadState::Completed(total_size);
 
             progress_sender.send(state).unwrap();
+
+            info!("Finish downloading {url}");
         });
 
         DownloadTask {
@@ -113,14 +147,14 @@ impl DownloadTask {
             id,
             url: url_clone,
             progress_receiver,
-            state: DownloadState::Queued,
+            state: DownloadState::Queued(0),
         }
     }
 }
 
 /// 下载器
 impl Downloader {
-    pub fn new(app_ui_weak: slint::Weak<crate::AppWindow>) -> Self {
+    pub fn new(app_ui_weak: slint::Weak<crate::AppWindow>, concurrency: usize) -> Self {
         let client = reqwest::Client::builder()
                 .timeout(Duration::from_secs(10))
                 .build()
@@ -138,25 +172,33 @@ impl Downloader {
 
             let rt = Arc::new(tokio::runtime::Runtime::new().unwrap());
             let _tokio = rt.enter();
+            let semaphore = Arc::new(Semaphore::new(concurrency));
 
-            while let Ok(cmd) = receiver.recv() {
-                match cmd {
-                    QueueCommand::Add(url, path) => {
-                        if let Ok(mut q) = tasks.lock() {
-                            let id = (q.len() + 1) as u64;
-                            q.push(DownloadTask::new(id, url, path, client.clone(), rt.clone()));
-                        }
-                    },
-                    QueueCommand::Cancel(id) => {
-                        if let Ok(mut q) = tasks.lock() {
-                            if let Some(task) = q.iter_mut().find(|t| t.id == id) {
-                                task.controller.send(TaskCommand::Cancel).unwrap();
+            loop {
+                if let Ok(cmd) = receiver.recv() {
+                    match cmd {
+                        QueueCommand::Add(url, path) => {
+                            if let Ok(mut tasks) = tasks.try_lock() {
+                                let id = (tasks.len() + 1) as u64;
+                                tasks.push(DownloadTask::new(id, url, path, client.clone(), rt.clone(), semaphore.clone()));
+                            } else {
+                                error!("Failed to lock tasks");
                             }
-                        }
-                    },
-                    _ => {
-                        debug!("Not implemented.");
-                    },
+                        },
+                        QueueCommand::Cancel(id) => {
+                            if let Ok(mut q) = tasks.try_lock() {
+                                if let Some(task) = q.iter_mut().find(|t| t.id == id) {
+                                    task.controller.send(TaskCommand::Cancel).unwrap();
+                                }
+                            }
+                        },
+                        _ => {
+                            debug!("Not implemented.");
+                        },
+                    }
+                } else {
+                    error!("Failed to receive a command.");
+                    break;
                 }
             }
         });
@@ -184,6 +226,13 @@ impl Downloader {
                                     downloaded += downloaded_size as f64;
                                     total += total_size as f64;
                                 },
+                                DownloadState::Paused => {
+                                    in_progress = true;
+                                }
+                                DownloadState::Queued(size) => {
+                                    in_progress = true;
+                                    total += size as f64;
+                                }
                                 _ => {},
                             }
                         }
@@ -199,7 +248,7 @@ impl Downloader {
                     error!("Failed to lock a mutex.")
                 }
 
-                sleep(Duration::from_millis(500));
+                sleep(Duration::from_millis(50));
             }
         });
 
@@ -207,11 +256,26 @@ impl Downloader {
     }
 
     pub fn add(&self, url: String, path: String) -> Result<(), mpsc::SendError<QueueCommand>> {
-        self.sender.send(QueueCommand::Add(url, path))
+        match self.sender.send(QueueCommand::Add(url, path)) {
+            Ok(_) => { Ok(()) }
+            Err(e) => {
+                error!("Failed to send a command. Reason: {e}");
+                Err(e)
+            }
+        }
     }
 
     pub fn cancel(&self, id: u64) -> Result<(), mpsc::SendError<QueueCommand>> {
         self.sender.send(QueueCommand::Cancel(id))
+    }
+
+    pub fn clear(&self) -> Option<()> {
+        if let Ok(mut tasks) = self.tasks.try_lock() {
+            tasks.clear();
+            Some(())
+        } else {
+            None
+        }
     }
 
     /// returns Vec<(id, url, state)>
@@ -233,13 +297,27 @@ impl Downloader {
         if let Some(tasks) = self.get_tasks() {
             for (_, _, state) in tasks {
                 match state {
+                    DownloadState::Paused => { return true; }
+                    DownloadState::Queued(_) => { return true; }
                     DownloadState::Downloading(_, _) => { return true; }
                     _ => {}
                 }
             }
+
+            return false;
         } else {
             return true;
         }
-        return false;
+    }
+}
+
+impl Default for Downloader {
+    fn default() -> Self {
+        let (sender, _) = mpsc::channel();
+        Downloader {
+            client: reqwest::Client::new(),
+            tasks: Arc::new(Mutex::new(Vec::new())),
+            sender,
+        }
     }
 }

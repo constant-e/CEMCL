@@ -5,9 +5,11 @@
 use futures::future::join_all;
 use log::error;
 use tokio::sync::Semaphore;
+use std::thread::sleep;
 use std::env::consts as env;
 use std::fs::{self, exists};
 use std::sync::Arc;
+use std::time::Duration;
 use serde_json::Value;
 use crate::app::Config;
 use crate::downloader::downloader::Downloader;
@@ -290,7 +292,7 @@ pub async fn get_launch_command(account: &Account, game: &Game, config: &Config)
     }
 }
 
-pub async fn download_all(config: &Config, game: &GameDownload, downloader: &Downloader) -> Option<()> {
+pub fn download_all(config: &Config, game: &GameDownload, downloader: &Downloader) -> Option<()> {
     // 处理依赖
 
     // json first
@@ -298,32 +300,28 @@ pub async fn download_all(config: &Config, game: &GameDownload, downloader: &Dow
     let index_path = index_dir.clone() + &game.asset_index + ".json";
     if !exists(&index_path).ok()? {
         if !exists(&index_dir).ok()? { fs::create_dir_all(&index_dir).ok()?; }
-        download::download(game.asset_index_url.clone(), index_path, 3).await;
+        let rt = tokio::runtime::Runtime::new().unwrap();
+        let _tokio = rt.enter();
+        rt.block_on(download::download(game.asset_index_url.clone(), index_path, 3));
     }
-
-    let mut futures = Vec::new();
-    let semaphore = Arc::new(Semaphore::new(config.concurrency));
-
+    
     // assets
-    let mut ass_futures = download::download_assets(&config.game_path, &game.asset_index, &config.assets_source, &semaphore)?;
-    futures.append(&mut ass_futures);
+    download::download_assets(&config.game_path, &game.asset_index, &config.assets_source, downloader)?;
 
     // libraries
-    let mut lib_futures = download::download_libraries(&game.libraries_json, &config.game_path, &game.dir, &config.libraries_source, &semaphore)?;
-    futures.append(&mut lib_futures);
+    download::download_libraries(&game.libraries_json, &config.game_path, &game.dir, &config.libraries_source, downloader)?;
 
     let jar_path = game.dir.clone() + "/" + game.version.as_ref() + ".jar";
     if !exists(&jar_path).ok()? {
         // 本体
         let url = game.mc_url.clone()
             .replace("https://piston-meta.mojang.com", &config.game_source);
-        let future = tokio::spawn(async move {
-            let _permit = semaphore.acquire().await.unwrap();
-            download::download(url, jar_path, 3).await
-        });
-        futures.push(future);
+        downloader.add(url, jar_path).ok()?;
     }
     
-    join_all(futures).await;
+    while downloader.in_progress() {
+        sleep(Duration::from_millis(10));
+    }
+
     Some(())
 }

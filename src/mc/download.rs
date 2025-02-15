@@ -3,9 +3,12 @@
 use std::fs::{self, exists};
 use std::env::consts as env;
 use std::sync::Arc;
+use std::time::Duration;
 use log::info;
 use serde_json::Value;
 use tokio::sync::Semaphore;
+use std::thread::sleep;
+use crate::downloader::downloader::Downloader;
 use crate::file_tools::{get_parent_dir, list_file};
 use super::check_rules;
 
@@ -45,11 +48,10 @@ pub async fn download(url: String, path: String, max: usize) -> Option<()> {
 }
 
 /// 下载assets
-pub fn download_assets(path: &str, id: &str, mirror: &str, semaphore: &Arc<Semaphore>) -> Option<Vec<tokio::task::JoinHandle<Option<()>>>> {
+pub fn download_assets(path: &str, id: &str, mirror: &str, downloader: &Downloader) -> Option<()> {
     let assets_dir = path.to_string() + "/assets";
     let index_path = assets_dir.clone() + "/indexes/" + &id + ".json";
     let json = serde_json::from_str::<Value>(&fs::read_to_string(&index_path).ok()?).ok()?;
-    let mut futures = Vec::new();
     for (_, node) in json["objects"].as_object()? {
         let hash = node["hash"].as_str()?;
         let dl_path = hash[0..2].to_string() + "/" + hash;
@@ -59,92 +61,73 @@ pub fn download_assets(path: &str, id: &str, mirror: &str, semaphore: &Arc<Semap
             let dir = obj_path.clone() + "/" + &hash[0..2];
             if !exists(&dir).ok()? { fs::create_dir_all(&dir).ok()?; }
             let url = mirror.to_string() + "/" + &dl_path;
-            let semaphore = semaphore.clone();
-            let future = tokio::spawn(async move {
-                let _permit = semaphore.acquire().await.unwrap();
-                download(url.clone(), local_path.clone(), 3).await
-            });
-            futures.push(future);
+            downloader.add(url.clone(), local_path.clone()).ok()?;
         }
     }
 
-    Some(futures)
+    Some(())
 }
 
 /// 下载library
-async fn download_lib(local_path: &String, node: &Value, mirror: &String) -> Option<()> {
+fn download_lib(local_path: &String, node: &Value, mirror: &String, downloader: &Downloader) -> Option<()> {
     if !exists(&local_path).ok()? {
         let dir = get_parent_dir(&local_path);
         if !exists(&dir).ok()? { fs::create_dir_all(&dir).ok()?; }
         let url = node["url"].as_str()?.replace("https://libraries.minecraft.net", &mirror);
-        download(url.clone(), local_path.clone(), 3).await?;
+        downloader.add(url.clone(), local_path.clone()).ok()?;
     }
 
     Some(())
 }
 
 /// 下载libraries，node: mc json["libraries"]
-pub fn download_libraries(node: &Value, path: &str, game_dir: &str, mirror: &str, semaphore: &Arc<Semaphore>) -> Option<Vec<tokio::task::JoinHandle<Option<()>>>> {
-    let mut futures = Vec::new();
+pub fn download_libraries(node: &Value, path: &str, game_dir: &str, mirror: &str, downloader: &Downloader) -> Option<()> {
     let mut c = 0;
     for item in node.as_array()? {
         let (node, path, game_dir, mirror, id) = (item.clone(), path.to_string(), game_dir.to_string(), mirror.to_string(), c.clone());
-        let semaphore = semaphore.clone();
-        let future = tokio::spawn(async move {
-            let _permit = semaphore.acquire().await.unwrap();
-
-            let lib_dir = path.to_string() + "/libraries";
-            let os = if env::OS == "macOS" { "osx" } else { env::OS };
-            let natives_dir = game_dir.to_string() + "/natives-" + os + "-" + env::ARCH;
-
-            if node["rules"].is_array() {
-                if !check_rules(&node["rules"]) {
-                    return Some(());
-                }
+        let lib_dir = path.to_string() + "/libraries";
+        let os = if env::OS == "macOS" { "osx" } else { env::OS };
+        let natives_dir = game_dir.to_string() + "/natives-" + os + "-" + env::ARCH;
+        if node["rules"].is_array() {
+            if !check_rules(&node["rules"]) {
+                continue;
             }
-
-            // Add natives for old versions
-            if node["natives"][os].is_string() && node["downloads"]["classifiers"].is_object() {
-                let arch = if env::ARCH.contains("64") { "64" } else { "32" };
-                let key = node["natives"][os].as_str()?.replace("${arch}", arch);
-                let node = &node["downloads"]["classifiers"][&key];
-
-                let local_path = lib_dir.clone() + "/" + node["path"].as_str()?;  // 储存位置
-
-                download_lib(&local_path, node, &mirror).await?;
-                extract_lib(&natives_dir, &local_path, &id.to_string()).await?;
+        }
+        // Add natives for old versions
+        if node["natives"][os].is_string() && node["downloads"]["classifiers"].is_object() {
+            let arch = if env::ARCH.contains("64") { "64" } else { "32" };
+            let key = node["natives"][os].as_str()?.replace("${arch}", arch);
+            let node = &node["downloads"]["classifiers"][&key];
+            let local_path = lib_dir.clone() + "/" + node["path"].as_str()?;  // 储存位置
+            download_lib(&local_path, node, &mirror, downloader)?;
+            extract_lib(&natives_dir, &local_path, &id.to_string())?;
+        }
+        if node["downloads"]["artifact"].is_object() {
+            let local_path = lib_dir.clone() + "/" + node["downloads"]["artifact"]["path"].as_str()?;
+            download_lib(&local_path, &node["downloads"]["artifact"], &mirror, downloader)?;
+            // Add natives
+            let name: Vec<&str> = node["name"].as_str()?.split(":").collect();
+            let name = name.last()?;
+            if name.contains("natives") {
+                extract_lib(&natives_dir, &local_path, &id.to_string())?;
             }
-
-            if node["downloads"]["artifact"].is_object() {
-                let local_path = lib_dir.clone() + "/" + node["downloads"]["artifact"]["path"].as_str()?;
-                download_lib(&local_path, &node["downloads"]["artifact"], &mirror).await?;
-                // Add natives
-                let name: Vec<&str> = node["name"].as_str()?.split(":").collect();
-                let name = name.last()?;
-                if name.contains("natives") {
-                    extract_lib(&natives_dir, &local_path, &id.to_string()).await?;
-                }
-            }
-
-            Some(())
-        });
-        futures.push(future);
+        }
         c += 1;
     }
 
-    Some(futures)
+    Some(())
 }
 
 /// 解压出natives
-async fn extract_lib(natives_dir: &String, local_path: &String, id: &String) -> Option<()> {
+fn extract_lib(natives_dir: &String, local_path: &String, id: &String) -> Option<()> {
     // 目标natives文件夹
-    if !exists(&natives_dir).ok()? { tokio::fs::create_dir(&natives_dir).await.ok()?; }
+    if !exists(&natives_dir).ok()? { fs::create_dir(&natives_dir).ok()?; }
 
     // 解压用的临时文件夹
     if exists(&("temp".to_string() + id)).ok()? {
-        tokio::fs::remove_dir_all("temp".to_string() + &id.to_string()).await.ok()?;
+        fs::remove_dir_all("temp".to_string() + &id.to_string()).ok()?;
     }
-    tokio::fs::create_dir("temp".to_string() + id).await.ok()?;
+    fs::create_dir("temp".to_string() + id).ok()?;
 
     let mut zip = zip::ZipArchive::new(fs::File::open(local_path).ok()?).ok()?;
     zip.extract("temp".to_string() + &id.to_string()).ok()?;
@@ -158,9 +141,9 @@ async fn extract_lib(natives_dir: &String, local_path: &String, id: &String) -> 
         let split: Vec<&str> = name.split("/").collect();
         let file_name = split.last()?;
         let target_path = natives_dir.clone() + "/" + &file_name;
-        if !exists(&target_path).ok()? { tokio::fs::copy(name, &target_path).await.ok()?; }
+        if !exists(&target_path).ok()? { fs::copy(name, &target_path).ok()?; }
     }
-    tokio::fs::remove_dir_all("temp".to_string() + &id.to_string()).await.ok()
+    fs::remove_dir_all("temp".to_string() + &id.to_string()).ok()
 }
 
 /// 获取Forge列表 官方没有json，使用BMCLAPI2
