@@ -118,6 +118,7 @@ impl App {
         }
 
         // todo: set concurrency
+        app.downloader = Downloader::new(ui_weak.clone());
         
         app.ui_weak = ui_weak;
         app.refresh_ui_acc_list();
@@ -248,7 +249,7 @@ impl App {
                 return None;
             }
 
-            if launch::download_all(&self.config, &game_download).await.is_none() {
+            if launch::download_all(&self.config, &game_download, &self.downloader).await.is_none() {
                 error!("Failed to download.");
                 self.ui_weak.upgrade_in_event_loop(|ui| {
                     err_dialog(&ui.global::<Messages>().get_download_failed());
@@ -511,7 +512,7 @@ impl Default for App {
             device_code: String::new(),
             download_forge_list: Vec::new(),
             download_game_list: Vec::new(),
-            downloader: Downloader::new(),
+            downloader: Downloader::new(slint::Weak::default()),
             game_list: Vec::new(),
             ui_weak: slint::Weak::default(),
         }

@@ -10,6 +10,7 @@ use std::fs::{self, exists};
 use std::sync::Arc;
 use serde_json::Value;
 use crate::app::Config;
+use crate::downloader::downloader::Downloader;
 
 use super::{check_rules, download, Account, Game};
 
@@ -289,7 +290,7 @@ pub async fn get_launch_command(account: &Account, game: &Game, config: &Config)
     }
 }
 
-pub async fn download_all(config: &Config, game: &GameDownload) -> Option<()> {
+pub async fn download_all(config: &Config, game: &GameDownload, downloader: &Downloader) -> Option<()> {
     // 处理依赖
 
     // json first

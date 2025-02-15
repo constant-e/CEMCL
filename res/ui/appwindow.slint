@@ -69,7 +69,6 @@ export component AppWindow inherits Window {
             padding: 0px;
 
             VerticalBox {
-                horizontal-stretch: 1/4;
                 padding: 0px;
 
                 SubTitle { text: @tr("Account"); }
@@ -99,7 +98,6 @@ export component AppWindow inherits Window {
             }
 
             VerticalBox {
-                horizontal-stretch: 3/4;
                 padding: 0px;
 
                 SubTitle { text: @tr("Minecraft Version"); }
@@ -159,7 +157,7 @@ export component AppWindow inherits Window {
     
                 Text {
                     vertical-alignment: center;
-                    text: progress * 100 + "%";
+                    text: round(progress * 100) + "%";
                 }
             }
 

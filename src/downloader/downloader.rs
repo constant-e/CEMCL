@@ -5,14 +5,16 @@ use futures::StreamExt;
 use std::{fs, thread};
 use std::time::Duration;
 
-use log::{debug, info};
+use log::{debug, error, info};
 
 #[derive(Clone, PartialEq)]
 pub enum DownloadState {
     Queued,
-    Downloading(f64),
+    /// downloaded, total
+    Downloading(u64, u64),
     Paused,
-    Completed,
+    /// size
+    Completed(u64),
     Error(String),
     Cancelled,
 }
@@ -67,7 +69,7 @@ impl DownloadTask {
             let total_size = response.content_length().unwrap_or(0);
             let mut stream = response.bytes_stream();
 
-            let mut state = DownloadState::Downloading(0.0);
+            let mut state = DownloadState::Downloading(0, total_size);
 
             let mut file = fs::File::create(path).unwrap();
             let mut downloaded: u64 = 0;
@@ -80,7 +82,7 @@ impl DownloadTask {
                             *state = DownloadState::Paused;
                         },
                         TaskCommand::Resume => {
-                            *state = DownloadState::Downloading((downloaded as f64 / total_size as f64) * 100.0);
+                            *state = DownloadState::Downloading(downloaded, total_size);
                         },
                         TaskCommand::Cancel => {
                             *state = DownloadState::Cancelled;
@@ -97,9 +99,12 @@ impl DownloadTask {
                 let chunk = chunk.unwrap();
                 file.write_all(&chunk).unwrap();
                 downloaded += chunk.len() as u64;
-                *state = DownloadState::Downloading((downloaded as f64 / total_size as f64) * 100.0);
+                *state = DownloadState::Downloading(downloaded, total_size);
                 progress_sender.send(state.clone()).unwrap();
             }
+            state = DownloadState::Completed(total_size);
+
+            progress_sender.send(state).unwrap();
         });
 
         DownloadTask {
@@ -115,7 +120,7 @@ impl DownloadTask {
 
 /// 下载器
 impl Downloader {
-    pub fn new() -> Self {
+    pub fn new(app_ui_weak: slint::Weak<crate::AppWindow>) -> Self {
         let client = reqwest::Client::builder()
                 .timeout(Duration::from_secs(10))
                 .build()
@@ -159,12 +164,41 @@ impl Downloader {
         let tasks_clone = tasks.clone();
         // 监听状态
         thread::spawn(move || {
-            while let Ok(mut tasks) = tasks_clone.lock() {
-                for task in tasks.iter_mut() {
-                    if let Ok(state) = task.progress_receiver.try_recv() {
-                        task.state = state;
+            loop {
+                if let Ok(mut tasks) = tasks_clone.lock() {
+                    
+                    let mut downloaded = 0.0;
+                    let mut total = 0.0;
+                    let mut in_progress = false;
+
+                    for task in tasks.iter_mut() {
+                        if let Ok(state) = task.progress_receiver.try_recv() {
+                            task.state = state;
+                            match task.state {
+                                DownloadState::Completed(size) => {
+                                    downloaded += size as f64;
+                                    total += size as f64;
+                                },
+                                DownloadState::Downloading(downloaded_size, total_size) => {
+                                    in_progress = true;
+                                    downloaded += downloaded_size as f64;
+                                    total += total_size as f64;
+                                },
+                                _ => {},
+                            }
+                        }
                     }
+
+                    if in_progress {
+                        app_ui_weak.upgrade_in_event_loop(move |ui| {
+                            ui.set_progress((downloaded / total) as f32);
+                        });
+                    }
+                    
+                } else {
+                    error!("Failed to lock a mutex.")
                 }
+
                 sleep(Duration::from_millis(500));
             }
         });
@@ -193,5 +227,17 @@ impl Downloader {
         } else {
             None
         }
+    }
+
+    pub fn in_progress(&self) -> bool {
+        if let Some(tasks) = self.get_tasks() {
+            for (_, _, state) in tasks {
+                match state {
+                    DownloadState::Downloading(_, _) => { return true; }
+                    _ => {}
+                }
+            }
+        }
+        return false;
     }
 }
