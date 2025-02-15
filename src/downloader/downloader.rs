@@ -237,6 +237,8 @@ impl Downloader {
                     _ => {}
                 }
             }
+        } else {
+            return true;
         }
         return false;
     }
