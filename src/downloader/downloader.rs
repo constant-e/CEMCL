@@ -293,6 +293,21 @@ impl Downloader {
         }
     }
 
+    pub fn has_error(&self) -> bool {
+        if let Some(tasks) = self.get_tasks() {
+            for (_, _, state) in tasks {
+                match state {
+                    DownloadState::Error(_) => { return true; }
+                    _ => {}
+                }
+            }
+
+            return false;
+        } else {
+            return true;
+        }
+    }
+
     pub fn in_progress(&self) -> bool {
         if let Some(tasks) = self.get_tasks() {
             for (_, _, state) in tasks {

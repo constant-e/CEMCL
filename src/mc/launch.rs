@@ -2,6 +2,7 @@
 
 //! mc::launch 获取MC的启动参数
 
+use futures::executor::block_on;
 use futures::future::join_all;
 use log::error;
 use tokio::sync::Semaphore;
@@ -300,9 +301,7 @@ pub fn download_all(config: &Config, game: &GameDownload, downloader: &Downloade
     let index_path = index_dir.clone() + &game.asset_index + ".json";
     if !exists(&index_path).ok()? {
         if !exists(&index_dir).ok()? { fs::create_dir_all(&index_dir).ok()?; }
-        let rt = tokio::runtime::Runtime::new().unwrap();
-        let _tokio = rt.enter();
-        rt.block_on(download::download(game.asset_index_url.clone(), index_path, 3));
+        block_on(download::download(game.asset_index_url.clone(), index_path, 3));
     }
     
     // assets
@@ -321,6 +320,13 @@ pub fn download_all(config: &Config, game: &GameDownload, downloader: &Downloade
     
     while downloader.in_progress() {
         sleep(Duration::from_millis(10));
+        if downloader.has_error() {
+            return None;
+        }
+    }
+
+    if downloader.has_error() {
+        return None;
     }
 
     Some(())
