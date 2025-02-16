@@ -3,13 +3,10 @@
 //! mc::launch 获取MC的启动参数
 
 use futures::executor::block_on;
-use futures::future::join_all;
 use log::error;
-use tokio::sync::Semaphore;
 use std::thread::sleep;
 use std::env::consts as env;
 use std::fs::{self, exists};
-use std::sync::Arc;
 use std::time::Duration;
 use serde_json::Value;
 use crate::app::Config;
@@ -293,41 +290,48 @@ pub async fn get_launch_command(account: &Account, game: &Game, config: &Config)
     }
 }
 
-pub fn download_all(config: &Config, game: &GameDownload, downloader: &Downloader) -> Option<()> {
+pub fn download_all(config: &Config, game: &GameDownload, downloader: &Downloader) -> Result<(), std::io::Error> {
     // 处理依赖
 
     // json first
     let index_dir = config.game_path.clone() + "/assets/indexes/";
     let index_path = index_dir.clone() + &game.asset_index + ".json";
-    if !exists(&index_path).ok()? {
-        if !exists(&index_dir).ok()? { fs::create_dir_all(&index_dir).ok()?; }
+    if !exists(&index_path)? {
+        if !exists(&index_dir)? { fs::create_dir_all(&index_dir)?; }
         block_on(download::download(game.asset_index_url.clone(), index_path, 3));
     }
     
     // assets
     download::download_assets(&config.game_path, &game.asset_index, &config.assets_source, downloader)?;
 
-    // libraries
-    download::download_libraries(&game.libraries_json, &config.game_path, &game.dir, &config.libraries_source, downloader)?;
+    // download libraries
+    let natives = download::download_libraries(&game.libraries_json, &config.game_path, &game.dir, &config.libraries_source, downloader)?;
 
     let jar_path = game.dir.clone() + "/" + game.version.as_ref() + ".jar";
-    if !exists(&jar_path).ok()? {
+    if !exists(&jar_path)? {
         // 本体
         let url = game.mc_url.clone()
             .replace("https://piston-meta.mojang.com", &config.game_source);
-        downloader.add(url, jar_path).ok()?;
+        if let Err(e) = downloader.add(url, jar_path) {
+            return Err(std::io::Error::new(std::io::ErrorKind::Other, format!("{e}")));
+        }
     }
     
     while downloader.in_progress() {
         sleep(Duration::from_millis(10));
         if downloader.has_error() {
-            return None;
+            return Err(std::io::Error::new(std::io::ErrorKind::Other, "Downloader Error"));
         }
     }
 
     if downloader.has_error() {
-        return None;
+        return Err(std::io::Error::new(std::io::ErrorKind::Other, "Downloader Error"));
     }
 
-    Some(())
+    // extract natives
+    for (natives_dir, local_path, id) in natives {
+        download::extract_lib(&natives_dir, &local_path, &id)?;
+    }
+
+    Ok(())
 }

@@ -1,6 +1,5 @@
 use std::io::Write;
 use std::sync::{mpsc, Arc, Mutex};
-use std::thread::sleep;
 use futures::StreamExt;
 use tokio::sync::{Semaphore, TryAcquireError};
 use std::{fs, thread};
@@ -44,9 +43,7 @@ pub struct DownloadTask {
     pub handle: tokio::task::JoinHandle<()>,
     /// 从1开始
     pub id: u64,
-    /// progress receiver
-    pub progress_receiver: mpsc::Receiver<DownloadState>,
-    pub state: DownloadState,
+    pub state: Arc<Mutex<DownloadState>>,
     pub url: String,
 }
 
@@ -67,50 +64,58 @@ impl DownloadTask {
         // 接收状态
         let (progress_sender, progress_receiver) = mpsc::channel();
 
+        let state = Arc::new(Mutex::new(DownloadState::Queued(0)));
+
         let url_clone = url.clone();
+        let state_clone = state.clone();
         let handle = rt.spawn(async move {
+            let state = state_clone;
+
             let response = match client.get(&url).send().await {
                 Ok(res) => res,
                 Err(e) => {
                     error!("Failed to get response. Reason: {e}");
-                    progress_sender.send(DownloadState::Error(String::from("Failed to download."))).unwrap();
+                    while let Err(e) = progress_sender.send(DownloadState::Error(String::from("Failed to download."))) {
+                        error!("Failed to send progress. Reason: {e}");
+                    }
                     return;
                 }
             };
 
             let total_size = response.content_length().unwrap_or(0);
 
-            let mut state = DownloadState::Queued(total_size);
-            if let Err(e) = progress_sender.send(state.clone()) {
-                error!("Failed to send progress. Reason: {e}");
+            match state.lock() {
+                Ok(mut state) => *state = DownloadState::Queued(total_size),
+                Err(e) => error!("Failed to lock a mutex. Reason: {e}"),
             }
 
             while let Err(e) = semaphore.try_acquire() {
                 if e == TryAcquireError::Closed {
                     error!("Acquire error: {e}");
-                    state = DownloadState::Error(format!("{e}"));
-                    progress_sender.send(state).unwrap();
+                    match state.lock() {
+                        Ok(mut state) => *state = DownloadState::Error(format!("{e}")),
+                        Err(e) => error!("Failed to lock a mutex. Reason: {e}"),
+                    }
                     return;
                 }
 
                 if let Ok(cmd) = control_receiver.try_recv() {
-                    match cmd {
-                        TaskCommand::Pause => {
-                            state = DownloadState::Paused;
-                        },
-                        TaskCommand::Resume => {
-                            state = DownloadState::Downloading(0, total_size);
-                        },
-                        TaskCommand::Cancel => {
-                            state = DownloadState::Cancelled;
-                            if let Err(e) = progress_sender.send(state.clone()) {
-                                error!("Failed to send progress. Reason: {e}");
+                    match state.lock() {
+                        Ok(mut state) => {
+                            match cmd {
+                                TaskCommand::Pause => {
+                                    *state = DownloadState::Paused;
+                                },
+                                TaskCommand::Resume => {
+                                    *state = DownloadState::Downloading(0, total_size);
+                                },
+                                TaskCommand::Cancel => {
+                                    *state = DownloadState::Cancelled;
+                                    return;
+                                },
                             }
-                            return;
                         },
-                    }
-                    if let Err(e) = progress_sender.send(state.clone()) {
-                        error!("Failed to send progress. Reason: {e}");
+                        Err(e) => error!("Failed to lock a mutex. Reason: {e}"),
                     }
                 }
             }
@@ -121,8 +126,10 @@ impl DownloadTask {
                 Ok(file) => file,
                 Err(e) => {
                     error!("Failed to create {path}. Reason: {e}");
-                    state = DownloadState::Error(format!("{e}"));
-                    progress_sender.send(state).unwrap();
+                    match state.lock() {
+                        Ok(mut state) => *state = DownloadState::Error(format!("{e}")),
+                        Err(e) => error!("Failed to lock a mutex. Reason: {e}"),
+                    }
                     return;
                 }
             };
@@ -132,35 +139,36 @@ impl DownloadTask {
             info!("Start downloading {url}");
 
             while let Some(chunk) = stream.next().await {
-                let state = &mut state;
                 if let Ok(cmd) = control_receiver.try_recv() {
-                    match cmd {
-                        TaskCommand::Pause => {
-                            *state = DownloadState::Paused;
-                        },
-                        TaskCommand::Resume => {
-                            *state = DownloadState::Downloading(downloaded, total_size);
-                        },
-                        TaskCommand::Cancel => {
-                            *state = DownloadState::Cancelled;
-                            drop(file);
-                            fs::remove_file(path).unwrap();
-                            if let Err(e) = progress_sender.send(state.clone()) {
-                                error!("Failed to send progress. Reason: {e}");
+                    match state.lock() {
+                        Ok(mut state) => {
+                            match cmd {
+                                TaskCommand::Pause => {
+                                    *state = DownloadState::Paused;
+                                },
+                                TaskCommand::Resume => {
+                                    *state = DownloadState::Downloading(0, total_size);
+                                },
+                                TaskCommand::Cancel => {
+                                    *state = DownloadState::Cancelled;
+                                    return;
+                                },
                             }
-                            return;
                         },
-                    }
-                    if let Err(e) = progress_sender.send(state.clone()) {
-                        error!("Failed to send progress. Reason: {e}");
-                        drop(file);
-                        fs::remove_file(path).unwrap();
-                        return;
+                        Err(e) => error!("Failed to lock a mutex. Reason: {e}"),
                     }
                 }
 
-                if *state == DownloadState::Paused {
-                    continue;
+                match state.lock() {
+                    Ok(state) => {
+                        if *state == DownloadState::Paused {
+                            continue;
+                        }
+                    },
+                    Err(e) => {
+                        error!("Failed to lock a mutex. Reason: {e}");
+                        continue;
+                    },
                 }
 
                 match chunk {
@@ -169,34 +177,33 @@ impl DownloadTask {
                             error!("Failed to write chunk. Reason: {e}");
                             drop(file);
                             fs::remove_file(path).unwrap();
-                            *state = DownloadState::Error(format!("{e}"));
-                            if let Err(e) = progress_sender.send(state.clone()) {
-                                error!("Failed to send progress. Reason: {e}");
+                            match state.lock() {
+                                Ok(mut state) => *state = DownloadState::Error(format!("{e}")),
+                                Err(e) => error!("Failed to lock a mutex. Reason: {e}"),
                             }
                             return;
                         }
                         downloaded += chunk.len() as u64;
-                        *state = DownloadState::Downloading(downloaded, total_size);
+                        match state.lock() {
+                            Ok(mut state) => *state = DownloadState::Downloading(downloaded, total_size),
+                            Err(e) => error!("Failed to lock a mutex. Reason: {e}"),
+                        }
                     }
                     Err(e) => {
                         drop(file);
                         fs::remove_file(path).unwrap();
-                        *state = DownloadState::Error(format!("{e}"));
-                        if let Err(e) = progress_sender.send(state.clone()) {
-                            error!("Failed to send progress. Reason: {e}");
+                        match state.lock() {
+                            Ok(mut state) => *state = DownloadState::Error(format!("{e}")),
+                            Err(e) => error!("Failed to lock a mutex. Reason: {e}"),
                         }
                         return;
                     }
                 }
-                
-                if let Err(e) = progress_sender.send(state.clone()) {
-                    error!("Failed to send progress. Reason: {e}");
-                }
             }
-            state = DownloadState::Completed(total_size);
 
-            if let Err(e) = progress_sender.send(state.clone()) {
-                error!("Failed to send progress. Reason: {e}");
+            match state.lock() {
+                Ok(mut state) => *state = DownloadState::Completed(total_size),
+                Err(e) => error!("Failed to lock a mutex. Reason: {e}"),
             }
 
             info!("Finish downloading {url}");
@@ -207,8 +214,7 @@ impl DownloadTask {
             handle,
             id,
             url: url_clone,
-            progress_receiver,
-            state: DownloadState::Queued(0),
+            state,
         }
     }
 }
@@ -276,28 +282,26 @@ impl Downloader {
                     let mut in_progress = false;
 
                     for task in tasks.iter_mut() {
-                        if let Ok(state) = task.progress_receiver.try_recv() {
-                            task.state = state;
-                        }
-
-                        match task.state {
-                            DownloadState::Completed(size) => {
-                                downloaded += size as f64;
-                                total += size as f64;
-                            },
-                            DownloadState::Downloading(downloaded_size, total_size) => {
-                                in_progress = true;
-                                downloaded += downloaded_size as f64;
-                                total += total_size as f64;
-                            },
-                            DownloadState::Paused => {
-                                in_progress = true;
+                        if let Ok(state) = task.state.lock() {
+                            match *state {
+                                DownloadState::Completed(size) => {
+                                    downloaded += size as f64;
+                                    total += size as f64;
+                                },
+                                DownloadState::Downloading(downloaded_size, total_size) => {
+                                    in_progress = true;
+                                    downloaded += downloaded_size as f64;
+                                    total += total_size as f64;
+                                },
+                                DownloadState::Paused => {
+                                    in_progress = true;
+                                }
+                                DownloadState::Queued(size) => {
+                                    in_progress = true;
+                                    total += size as f64;
+                                }
+                                _ => {},
                             }
-                            DownloadState::Queued(size) => {
-                                in_progress = true;
-                                total += size as f64;
-                            }
-                            _ => {},
                         }
                     }
 
@@ -353,7 +357,9 @@ impl Downloader {
             let mut result = Vec::new();
 
             for task in tasks.iter() {
-                result.push((task.id, task.url.clone(), task.state.clone()));
+                if let Ok(state) = task.state.lock() {
+                    result.push((task.id, task.url.clone(), state.clone()));
+                }
             }
 
             Some(result)
