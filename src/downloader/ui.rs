@@ -1,14 +1,14 @@
 use std::sync::Mutex;
-use std::{cell::RefCell, sync};
+use std::sync;
 use std::rc::Rc;
 use std::time::Duration;
 
-use log::{error, info};
+use log::error;
 use slint::{ComponentHandle, ModelRc, StandardListViewItem, ToSharedString, VecModel};
 
 use crate::app::App;
 
-use super::downloader::{self, DownloadState};
+use super::downloader::DownloadState;
 
 pub fn downloader(app_weak: sync::Weak<Mutex<App>>) -> Result<(), slint::PlatformError> {
     let ui = crate::Downloader::new()?;
@@ -24,7 +24,6 @@ pub fn downloader(app_weak: sync::Weak<Mutex<App>>) -> Result<(), slint::Platfor
                     if let (Some(ui), Some(tasks)) =
                         (ui_weak.upgrade(), app.downloader.get_tasks())
                     {
-                        info!("Running");
                         let mut ui_tasks_in_process: Vec<ModelRc<StandardListViewItem>> = Vec::new();
                         let mut ui_tasks_finished: Vec<ModelRc<StandardListViewItem>> = Vec::new();
                     

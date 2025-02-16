@@ -211,7 +211,7 @@ impl App {
     // we should get acc index and game index in main thread
     /// Launch the game
     pub async fn launch(&mut self, acc_index: usize, game_index: usize) -> Option<()> {
-        self.ui_weak.upgrade_in_event_loop(|ui| { ui.set_progress(0.0); });
+        self.ui_weak.upgrade_in_event_loop(|ui| { ui.set_progress(0.0); }).ok()?;
 
         if acc_index >= self.acc_list.len() || game_index >= self.game_list.len() {
             warn!("Index out of bounds: the len is ({}, {}) but the index is ({acc_index}, {game_index}).", self.acc_list.len(), self.game_list.len());
