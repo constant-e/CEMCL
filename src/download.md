@@ -1,35 +1,29 @@
 # 下载
 
 ## Release
-### v0.2.1
-**注意：**这是一个预览版，未经过充分测试。
+
+### v0.2.2
+**这是一个预览版，未经过充分测试。**
 
 #### 更新日志
-［新增］
-1. 支持在线登录
-2. 部分支持多语言
-3. 支持限制下载器的并发数
-4. 在初始化失败时显示对话框
-5. 支持加载Forge列表（不能下载）
-
-［修复］
-1. 修复删除游戏时的错误下标
-2. 修复下标越界
-
-［其他］
-1. 为windows打包dll
-2. 优化日志
+1. 新增 启动时显示进度条，替换之前的弹出窗口
+2. 新增 添加一个下载器，替换旧的下载方法（仍在开发，未完成GUI部分）
+3. 新增 Windows系统下的多语言支持（并将所有版本的语言文件修改为内置）
+4. 重新支持自定义启动
+5. 部分支持下载forge
+6. 移除Windows下的控制台窗口
+7. 将UI风格切换至fluent
 
 **下载链接：**
-[Linux](https://github.com/constant-e/CEMCL/releases/download/v0.2.1/cemcl-0.2.1-linux-x86_64.zip) |
-[macOS](https://github.com/constant-e/CEMCL/releases/download/v0.2.1/cemcl-0.2.1-macos-x86_64.zip) |
-[Windows](https://github.com/constant-e/CEMCL/releases/download/v0.2.1/cemcl-0.2.1-windows-x86_64.zip)
+[Linux](https://github.com/constant-e/CEMCL/releases/download/v0.2.2/cemcl-0.2.2-linux-x86_64.zip) |
+[macOS](https://github.com/constant-e/CEMCL/releases/download/v0.2.2/cemcl-0.2.2-macos-x86_64.zip) |
+[Windows](https://github.com/constant-e/CEMCL/releases/download/v0.2.2/cemcl-0.2.2-windows-x86_64.zip)
 
 ## GitHub CI
 请前往[GitHub Actions](https://github.com/constant-e/CEMCL/actions)获取。
 
 ## 构建
-1. 安装Rust和Qt
+1. 安装Rust
 2. 克隆此仓库
    ```sh
    git clone https://github.com/constant-e/CEMCL.git
