@@ -324,7 +324,7 @@ pub fn download_all(config: &Config, game: &GameDownload, downloader: &Downloade
         }
     }
     
-    while downloader.in_progress() {
+    while downloader.in_progress().ok_or(std::io::Error::new(std::io::ErrorKind::Other, "Downloader Error"))? {
         sleep(Duration::from_millis(10));
         if downloader.has_error() {
             return Err(std::io::Error::new(std::io::ErrorKind::Other, "Downloader Error"));

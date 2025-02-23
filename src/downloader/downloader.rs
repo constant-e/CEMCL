@@ -2,7 +2,7 @@ use std::io::Write;
 use std::sync::{mpsc, Arc, Mutex};
 use std::thread::sleep;
 use futures::StreamExt;
-use tokio::sync::{Semaphore, TryAcquireError};
+use tokio::sync::{Semaphore, SemaphorePermit, TryAcquireError};
 use std::{fs, thread};
 use std::time::Duration;
 
@@ -69,6 +69,17 @@ impl DownloadTask {
         let state_clone = state.clone();
         let handle = rt.spawn(async move {
             let state = state_clone;
+            let _permit = match semaphore.acquire().await {
+                Ok(p) => p,
+                Err(e) => {
+                    error!("Failed to acquire semaphore. Reason: {e}");
+                    match state.lock() {
+                        Ok(mut state) => *state = DownloadState::Error(String::from("Failed to acquire semaphore.")),
+                        Err(e) => error!("Failed to lock a mutex. Reason: {e}"),
+                    }
+                    return;
+                }
+            };
 
             let response = match client.get(&url).send().await {
                 Ok(res) => res,
@@ -87,37 +98,6 @@ impl DownloadTask {
             match state.lock() {
                 Ok(mut state) => *state = DownloadState::Queued(total_size),
                 Err(e) => error!("Failed to lock a mutex. Reason: {e}"),
-            }
-
-            while let Err(e) = semaphore.try_acquire() {
-                if e == TryAcquireError::Closed {
-                    error!("Acquire error: {e}");
-                    match state.lock() {
-                        Ok(mut state) => *state = DownloadState::Error(format!("{e}")),
-                        Err(e) => error!("Failed to lock a mutex. Reason: {e}"),
-                    }
-                    return;
-                }
-
-                if let Ok(cmd) = control_receiver.try_recv() {
-                    match state.lock() {
-                        Ok(mut state) => {
-                            match cmd {
-                                TaskCommand::Pause => {
-                                    *state = DownloadState::Paused;
-                                },
-                                TaskCommand::Resume => {
-                                    *state = DownloadState::Downloading(0, total_size);
-                                },
-                                TaskCommand::Cancel => {
-                                    *state = DownloadState::Cancelled;
-                                    return;
-                                },
-                            }
-                        },
-                        Err(e) => error!("Failed to lock a mutex. Reason: {e}"),
-                    }
-                }
             }
 
             let mut stream = response.bytes_stream();            
@@ -358,23 +338,20 @@ impl Downloader {
         }
     }
 
-    pub fn in_progress(&self) -> bool {
-        if let Some(tasks) = self.get_tasks() {
-            for (_, _, state) in tasks {
-                match state {
-                    DownloadState::Paused => { return true; }
-                    DownloadState::Queued(_) => { return true; }
-                    DownloadState::Downloading(_, _) => { return true; }
-                    _ => {}
-                }
+    pub fn in_progress(&self) -> Option<bool> {
+        for (_, _, state) in self.get_tasks()? {
+            match state {
+                DownloadState::Paused => { return Some(true); }
+                DownloadState::Queued(_) => { return Some(true); }
+                DownloadState::Downloading(_, _) => { return Some(true); }
+                _ => {}
             }
-
-            return false;
-        } else {
-            return true;
         }
+
+        return Some(false);
     }
 
+    // TODO: use size instead of task number
     pub fn update_progress(&self, f: impl Fn(f64) -> () + 'static + Send) -> thread::JoinHandle<()> {
         let tasks = self.tasks.clone();
         thread::spawn(move || {
@@ -387,17 +364,22 @@ impl Downloader {
                         if let Ok(state) = task.state.lock() {
                             match *state {
                                 DownloadState::Completed(size) => {
-                                    downloaded += size as f64;
-                                    total += size as f64;
+                                    // downloaded += size as f64;
+                                    // total += size as f64;
+                                    downloaded += 1.0;
+                                    total += 1.0;
                                 },
                                 DownloadState::Downloading(downloaded_size, total_size) => {
-                                    downloaded += downloaded_size as f64;
-                                    total += total_size as f64;
+                                    // downloaded += downloaded_size as f64;
+                                    // total += total_size as f64;
+                                    downloaded += (downloaded_size / total_size) as f64;
+                                    total += 1.0;
                                 },
                                 // DownloadState::Paused => {
                                 // }
                                 DownloadState::Queued(size) => {
-                                    total += size as f64;
+                                    // total += size as f64;
+                                    total += 1.0;
                                 }
                                 _ => {},
                             }
