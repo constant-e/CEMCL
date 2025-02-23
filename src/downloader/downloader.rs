@@ -1,5 +1,6 @@
 use std::io::Write;
 use std::sync::{mpsc, Arc, Mutex};
+use std::thread::sleep;
 use futures::StreamExt;
 use tokio::sync::{Semaphore, TryAcquireError};
 use std::{fs, thread};
@@ -61,8 +62,6 @@ impl DownloadTask {
         
         // 控制download task
         let (control_sender, control_receiver) = mpsc::channel();
-        // 接收状态
-        let (progress_sender, progress_receiver) = mpsc::channel();
 
         let state = Arc::new(Mutex::new(DownloadState::Queued(0)));
 
@@ -75,8 +74,9 @@ impl DownloadTask {
                 Ok(res) => res,
                 Err(e) => {
                     error!("Failed to get response. Reason: {e}");
-                    while let Err(e) = progress_sender.send(DownloadState::Error(String::from("Failed to download."))) {
-                        error!("Failed to send progress. Reason: {e}");
+                    match state.lock() {
+                        Ok(mut state) => *state = DownloadState::Error(String::from("Failed to download.")),
+                        Err(e) => error!("Failed to lock a mutex. Reason: {e}"),
                     }
                     return;
                 }
@@ -138,6 +138,8 @@ impl DownloadTask {
 
             info!("Start downloading {url}");
 
+            let mut attempts = 0;
+
             while let Some(chunk) = stream.next().await {
                 if let Ok(cmd) = control_receiver.try_recv() {
                     match state.lock() {
@@ -173,6 +175,8 @@ impl DownloadTask {
 
                 match chunk {
                     Ok(chunk) => {
+                        attempts = 0;
+
                         if let Err(e) = file.write_all(&chunk) {
                             error!("Failed to write chunk. Reason: {e}");
                             drop(file);
@@ -190,6 +194,24 @@ impl DownloadTask {
                         }
                     }
                     Err(e) => {
+                        if attempts < 3 {
+                            attempts += 1;
+                            tokio::time::sleep(Duration::from_secs(1)).await;
+                            let range_header_value = format!("bytes={}-", downloaded);
+                            let new_response = client.get(&url)
+                                .header(reqwest::header::RANGE, range_header_value)
+                                .send().await;
+                            match new_response {
+                                Ok(resp) => {
+                                    stream = resp.bytes_stream();
+                                    continue;
+                                },
+                                Err(e) => {
+                                    error!("Failed to send request. Reason: {e}");
+                                }
+                            }
+                        }
+
                         drop(file);
                         fs::remove_file(path).unwrap();
                         match state.lock() {
@@ -221,7 +243,7 @@ impl DownloadTask {
 
 /// 下载器
 impl Downloader {
-    pub fn new(app_ui_weak: slint::Weak<crate::AppWindow>, concurrency: usize) -> Self {
+    pub fn new(concurrency: usize) -> Self {
         let client = reqwest::Client::builder()
                 .timeout(Duration::from_secs(10))
                 .build()
@@ -270,53 +292,6 @@ impl Downloader {
             }
 
             error!("Command sender is dropped.");
-        });
-
-        let tasks_clone = tasks.clone();
-        // 监听状态
-        thread::spawn(move || {
-            loop {
-                if let Ok(mut tasks) = tasks_clone.lock() {
-                    let mut downloaded = 0.0;
-                    let mut total = 0.0;
-                    let mut in_progress = false;
-
-                    for task in tasks.iter_mut() {
-                        if let Ok(state) = task.state.lock() {
-                            match *state {
-                                DownloadState::Completed(size) => {
-                                    downloaded += size as f64;
-                                    total += size as f64;
-                                },
-                                DownloadState::Downloading(downloaded_size, total_size) => {
-                                    in_progress = true;
-                                    downloaded += downloaded_size as f64;
-                                    total += total_size as f64;
-                                },
-                                DownloadState::Paused => {
-                                    in_progress = true;
-                                }
-                                DownloadState::Queued(size) => {
-                                    in_progress = true;
-                                    total += size as f64;
-                                }
-                                _ => {},
-                            }
-                        }
-                    }
-
-                    if in_progress {
-                        app_ui_weak.upgrade_in_event_loop(move |ui| {
-                            ui.set_progress((downloaded / total) as f32);
-                        }).unwrap();
-                    }
-                    
-                } else {
-                    error!("State thread: Failed to lock tasks.");
-                }
-
-                // sleep(Duration::from_millis(50));
-            }
         });
 
         Downloader { client, runtime: rt, tasks, sender }
@@ -398,6 +373,45 @@ impl Downloader {
         } else {
             return true;
         }
+    }
+
+    pub fn update_progress(&self, f: impl Fn(f64) -> () + 'static + Send) -> thread::JoinHandle<()> {
+        let tasks = self.tasks.clone();
+        thread::spawn(move || {
+            loop {
+                if let Ok(tasks) = tasks.lock() {
+                    let mut downloaded = 0.0;
+                    let mut total = 0.0;
+    
+                    for task in tasks.iter() {
+                        if let Ok(state) = task.state.lock() {
+                            match *state {
+                                DownloadState::Completed(size) => {
+                                    downloaded += size as f64;
+                                    total += size as f64;
+                                },
+                                DownloadState::Downloading(downloaded_size, total_size) => {
+                                    downloaded += downloaded_size as f64;
+                                    total += total_size as f64;
+                                },
+                                // DownloadState::Paused => {
+                                // }
+                                DownloadState::Queued(size) => {
+                                    total += size as f64;
+                                }
+                                _ => {},
+                            }
+                        }
+                    }
+
+                    f(downloaded / total);
+                } else {
+                    error!("State thread: Failed to lock tasks.");
+                }
+    
+                sleep(Duration::from_millis(500));
+            }
+        })
     }
 }
 

@@ -118,7 +118,7 @@ impl App {
         }
 
         // todo: set concurrency
-        app.downloader = Downloader::new(ui_weak.clone(), app.config.concurrency);
+        app.downloader = Downloader::new(app.config.concurrency);
         
         app.ui_weak = ui_weak;
         app.refresh_ui_acc_list();
@@ -251,7 +251,7 @@ impl App {
                 return None;
             }
 
-            if let Err(e) = launch::download_all(&self.config, &game_download, &self.downloader) {
+            if let Err(e) = launch::download_all(&self.config, &game_download, &self.downloader, self.ui_weak.clone()) {
                 error!("Failed to download. Reason: {e}");
                 self.downloader.clear()?;
                 self.ui_weak.upgrade_in_event_loop(move |ui| {
