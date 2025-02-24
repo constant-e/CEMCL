@@ -1,4 +1,4 @@
-use crate::{AskDialog, WarnDialog, ErrorDialog};
+use crate::{AskDialog, ErrorDialog, WarnDialog};
 use slint::ComponentHandle;
 
 pub fn ask_dialog(title: &str, msg: &str, mut on_yes: impl FnMut() -> () + 'static) {

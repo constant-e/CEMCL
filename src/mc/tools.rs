@@ -1,7 +1,7 @@
 //! 一些共用工具
 
-use std::env::consts as env;
 use log::{debug, warn};
+use std::env::consts as env;
 
 /// 检查参数是否可以添加
 pub fn check_rules(n: &serde_json::Value) -> bool {
@@ -14,7 +14,9 @@ pub fn check_rules(n: &serde_json::Value) -> bool {
                 // 暂时不支持
                 return false;
             }
-            if r["os"].is_null() { continue; } // 无意义rule
+            if r["os"].is_null() {
+                continue;
+            } // 无意义rule
             if r["action"] == "allow" {
                 if r["os"]["arch"].is_string() && r["os"]["arch"] != env::ARCH {
                     debug!("ALLOW: {} not match {}", r["os"]["arch"], env::ARCH);

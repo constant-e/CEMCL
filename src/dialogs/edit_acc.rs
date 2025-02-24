@@ -1,10 +1,13 @@
 //! 修改账号
 
-use std::{sync::{self, Mutex}, thread};
+use std::{
+    sync::{self, Mutex},
+    thread,
+};
 
+use crate::{EditAccDialog, Messages, app::App, dialogs::msg_box::err_dialog, mc::Account};
 use log::error;
 use slint::ComponentHandle;
-use crate::{app::App, dialogs::msg_box::err_dialog, mc::Account, EditAccDialog, Messages};
 
 pub fn edit_acc_dialog(app_weak: sync::Weak<Mutex<App>>) -> Result<(), slint::PlatformError> {
     let ui = EditAccDialog::new()?;
@@ -20,18 +23,30 @@ pub fn edit_acc_dialog(app_weak: sync::Weak<Mutex<App>>) -> Result<(), slint::Pl
                 ui.set_uuid(slint::SharedString::from(&account.uuid));
                 index
             } else {
-                err_dialog(&app.ui_weak.upgrade()
-                    .ok_or(slint::PlatformError::Other(String::from("Failed to upgrade a weak pointer")))?
-                    .global::<Messages>().get_acc_not_selected());
-                return Err(slint::PlatformError::Other(String::from("Failed to get the index of acc_list")));
+                err_dialog(
+                    &app.ui_weak
+                        .upgrade()
+                        .ok_or(slint::PlatformError::Other(String::from(
+                            "Failed to upgrade a weak pointer",
+                        )))?
+                        .global::<Messages>()
+                        .get_acc_not_selected(),
+                );
+                return Err(slint::PlatformError::Other(String::from(
+                    "Failed to get the index of acc_list",
+                )));
             }
         } else {
             error!("Failed to lock a mutex.");
-            return Err(slint::PlatformError::Other(String::from("Failed to lock a mutex")));
+            return Err(slint::PlatformError::Other(String::from(
+                "Failed to lock a mutex",
+            )));
         }
     } else {
         error!("Failed to upgrade a weak pointer.");
-        return Err(slint::PlatformError::Other(String::from("Failed to upgrade a weak pointer")));
+        return Err(slint::PlatformError::Other(String::from(
+            "Failed to upgrade a weak pointer",
+        )));
     };
 
     let app_weak_clone = app_weak.clone();
@@ -44,7 +59,9 @@ pub fn edit_acc_dialog(app_weak: sync::Weak<Mutex<App>>) -> Result<(), slint::Pl
             let uuid = ui.get_uuid().to_string();
             thread::spawn(move || {
                 if let Ok(mut app) = app.try_lock() {
-                    app.ui_weak.upgrade_in_event_loop(|ui| ui.invoke_set_loading()).unwrap();
+                    app.ui_weak
+                        .upgrade_in_event_loop(|ui| ui.invoke_set_loading())
+                        .unwrap();
 
                     let mut account = Account {
                         access_token: String::new(),
@@ -53,19 +70,21 @@ pub fn edit_acc_dialog(app_weak: sync::Weak<Mutex<App>>) -> Result<(), slint::Pl
                         user_name,
                         uuid,
                     };
-        
+
                     let rt = tokio::runtime::Runtime::new().unwrap();
                     let _tokio = rt.enter();
                     rt.block_on(account.refresh(app.ui_weak.clone()));
-        
+
                     app.edit_account(index, account);
 
-                    app.ui_weak.upgrade_in_event_loop(|ui| ui.invoke_unset_loading()).unwrap();
+                    app.ui_weak
+                        .upgrade_in_event_loop(|ui| ui.invoke_unset_loading())
+                        .unwrap();
                 } else {
                     error!("Failed to lock a mutex.");
                 }
             });
-            
+
             ui.hide().unwrap();
         } else {
             error!("Failed to upgrade a weak pointer.");

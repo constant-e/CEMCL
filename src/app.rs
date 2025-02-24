@@ -14,8 +14,8 @@ use crate::dialogs::msg_box::{err_dialog, warn_dialog};
 use crate::downloader::downloader::Downloader;
 use crate::file_tools::list_dir;
 use crate::mc::download::{Forge, GameUrl};
+use crate::mc::{Account, Game, launch};
 use crate::{AppWindow, Messages};
-use crate::mc::{launch, Account, Game};
 
 /// 启动器配置
 #[derive(Clone)]
@@ -98,28 +98,43 @@ impl App {
 
         if let Err(e) = app.load_acc_list() {
             warn!("Failed to load account list. Reason: {e}.");
-            let msg = ui_weak.upgrade().ok_or(ErrorKind::Other)?
-                .global::<Messages>().get_load_acc_failed().to_string() + &format!("{e}");
+            let msg = ui_weak
+                .upgrade()
+                .ok_or(ErrorKind::Other)?
+                .global::<Messages>()
+                .get_load_acc_failed()
+                .to_string()
+                + &format!("{e}");
             warn_dialog(&msg);
         }
 
         if let Err(e) = app.load_config() {
             warn!("Failed to load config. Reason: {e}.");
-            let msg = ui_weak.upgrade().ok_or(ErrorKind::Other)?
-                .global::<Messages>().get_load_config_failed().to_string() + &format!("{e}");
+            let msg = ui_weak
+                .upgrade()
+                .ok_or(ErrorKind::Other)?
+                .global::<Messages>()
+                .get_load_config_failed()
+                .to_string()
+                + &format!("{e}");
             warn_dialog(&msg);
         }
 
         if let Err(e) = app.load_game_list() {
             warn!("Failed to load game list. Reason: {e}.");
-            let msg = ui_weak.upgrade().ok_or(ErrorKind::Other)?
-                .global::<Messages>().get_load_game_failed().to_string() + &format!("{e}");
+            let msg = ui_weak
+                .upgrade()
+                .ok_or(ErrorKind::Other)?
+                .global::<Messages>()
+                .get_load_game_failed()
+                .to_string()
+                + &format!("{e}");
             warn_dialog(&msg);
         }
 
         // todo: set concurrency
         app.downloader = Downloader::new(app.config.concurrency);
-        
+
         app.ui_weak = ui_weak;
         app.refresh_ui_acc_list();
         app.refresh_ui_game_list();
@@ -191,7 +206,10 @@ impl App {
         let ui = self.ui_weak.upgrade()?;
         let index = ui.get_acc_index() as usize;
         if index >= self.acc_list.len() {
-            warn!("Index out of bounds: the len is {} but the index is {index}.", self.acc_list.len());
+            warn!(
+                "Index out of bounds: the len is {} but the index is {index}.",
+                self.acc_list.len()
+            );
             return None;
         }
         Some(index)
@@ -202,7 +220,10 @@ impl App {
         let ui = self.ui_weak.upgrade()?;
         let index = ui.get_game_index() as usize;
         if index >= self.game_list.len() {
-            warn!("Index out of bounds: the len is {} but the index is {index}.", self.game_list.len());
+            warn!(
+                "Index out of bounds: the len is {} but the index is {index}.",
+                self.game_list.len()
+            );
             return None;
         }
         Some(index)
@@ -211,28 +232,56 @@ impl App {
     // we should get acc index and game index in main thread
     /// Launch the game
     pub async fn launch(&mut self, acc_index: usize, game_index: usize) -> Option<()> {
-        self.ui_weak.upgrade_in_event_loop(|ui| { ui.set_progress(0.0); }).ok()?;
+        self.ui_weak
+            .upgrade_in_event_loop(|ui| {
+                ui.set_progress(0.0);
+            })
+            .ok()?;
 
         if acc_index >= self.acc_list.len() || game_index >= self.game_list.len() {
-            warn!("Index out of bounds: the len is ({}, {}) but the index is ({acc_index}, {game_index}).", self.acc_list.len(), self.game_list.len());
-            self.ui_weak.upgrade_in_event_loop(|ui| err_dialog(&ui.global::<Messages>().get_acc_or_game_not_selected())).unwrap();
+            warn!(
+                "Index out of bounds: the len is ({}, {}) but the index is ({acc_index}, {game_index}).",
+                self.acc_list.len(),
+                self.game_list.len()
+            );
+            self.ui_weak
+                .upgrade_in_event_loop(|ui| {
+                    err_dialog(&ui.global::<Messages>().get_acc_or_game_not_selected())
+                })
+                .unwrap();
             return None;
         }
 
-        self.ui_weak.upgrade_in_event_loop(|ui| ui.invoke_set_loading()).ok()?;
-        
+        self.ui_weak
+            .upgrade_in_event_loop(|ui| ui.invoke_set_loading())
+            .ok()?;
+
         // refresh access_token
-        self.ui_weak.upgrade_in_event_loop(|ui| ui.invoke_state_set_logging_in()).ok()?;
-        if self.acc_list[acc_index].refresh(self.ui_weak.clone()).await.is_none() {
+        self.ui_weak
+            .upgrade_in_event_loop(|ui| ui.invoke_state_set_logging_in())
+            .ok()?;
+        if self.acc_list[acc_index]
+            .refresh(self.ui_weak.clone())
+            .await
+            .is_none()
+        {
             error!("Failed to login.");
-            self.ui_weak.upgrade_in_event_loop(|ui| {
-                err_dialog(&ui.global::<Messages>().get_login_failed());
-                ui.invoke_unset_loading();
-            }).unwrap();
+            self.ui_weak
+                .upgrade_in_event_loop(|ui| {
+                    err_dialog(&ui.global::<Messages>().get_login_failed());
+                    ui.invoke_unset_loading();
+                })
+                .unwrap();
             return None;
         }
-        
-        if let Some((cmd, game_download)) = launch::get_launch_command(&self.acc_list[acc_index], &self.game_list[game_index], &self.config).await {
+
+        if let Some((cmd, game_download)) = launch::get_launch_command(
+            &self.acc_list[acc_index],
+            &self.game_list[game_index],
+            &self.config,
+        )
+        .await
+        {
             if cfg!(debug_assertions) {
                 let mut str = self.game_list[game_index].java_path.clone() + " ";
                 for i in &cmd {
@@ -242,37 +291,54 @@ impl App {
                 debug!("{str}");
             }
 
-            if let Err(e) = self.ui_weak.upgrade_in_event_loop(|ui| ui.invoke_state_set_downloading()) {
+            if let Err(e) = self
+                .ui_weak
+                .upgrade_in_event_loop(|ui| ui.invoke_state_set_downloading())
+            {
                 error!("Failed to upgrade a weak pointer. Reason: {e}.");
-                self.ui_weak.upgrade_in_event_loop(move |ui| {
-                    err_dialog(&format!("{e}"));
-                    ui.invoke_unset_loading();
-                }).unwrap();
+                self.ui_weak
+                    .upgrade_in_event_loop(move |ui| {
+                        err_dialog(&format!("{e}"));
+                        ui.invoke_unset_loading();
+                    })
+                    .unwrap();
                 return None;
             }
 
-            if let Err(e) = launch::download_all(&self.config, &game_download, &self.downloader, self.ui_weak.clone()) {
+            if let Err(e) = launch::download_all(
+                &self.config,
+                &game_download,
+                &self.downloader,
+                self.ui_weak.clone(),
+            ) {
                 error!("Failed to download. Reason: {e}");
                 self.downloader.clear()?;
-                self.ui_weak.upgrade_in_event_loop(move |ui| {
-                    let msg = ui.global::<Messages>().get_download_failed() + &format!("{e}");
-                    err_dialog(&msg);
-                    ui.invoke_unset_loading();
-                }).unwrap();
+                self.ui_weak
+                    .upgrade_in_event_loop(move |ui| {
+                        let msg = ui.global::<Messages>().get_download_failed() + &format!("{e}");
+                        err_dialog(&msg);
+                        ui.invoke_unset_loading();
+                    })
+                    .unwrap();
                 return None;
             }
-            
-            if let Err(e) = self.ui_weak.upgrade_in_event_loop(|ui| ui.invoke_state_set_launching()) {
+
+            if let Err(e) = self
+                .ui_weak
+                .upgrade_in_event_loop(|ui| ui.invoke_state_set_launching())
+            {
                 error!("Failed to upgrade a weak pointer. Reason: {e}.");
-                self.ui_weak.upgrade_in_event_loop(move |ui| {
-                    err_dialog(&format!("{e}"));
-                    ui.invoke_unset_loading();
-                }).unwrap();
+                self.ui_weak
+                    .upgrade_in_event_loop(move |ui| {
+                        err_dialog(&format!("{e}"));
+                        ui.invoke_unset_loading();
+                    })
+                    .unwrap();
                 return None;
             }
 
             let java_path = self.game_list[game_index].java_path.clone();
-            
+
             let (s, r) = sync::mpsc::channel();
             thread::spawn(move || {
                 if let Ok(_child) = Command::new(java_path).args(cmd).spawn() {
@@ -285,18 +351,23 @@ impl App {
 
             if r.recv().unwrap().is_some() {
                 if self.config.close_after_launch {
-                    self.ui_weak.upgrade_in_event_loop(|ui| ui.hide().unwrap()).ok()?;
+                    self.ui_weak
+                        .upgrade_in_event_loop(|ui| ui.hide().unwrap())
+                        .ok()?;
                 }
             } else {
                 slint::invoke_from_event_loop(|| {
                     err_dialog("Failed to run command.");
-                }).ok()?;
+                })
+                .ok()?;
             }
         } else {
             error!("Failed to get launch command.");
         }
 
-        self.ui_weak.upgrade_in_event_loop(|ui| ui.invoke_unset_loading()).unwrap();
+        self.ui_weak
+            .upgrade_in_event_loop(|ui| ui.invoke_unset_loading())
+            .unwrap();
         Some(())
     }
 
@@ -314,10 +385,18 @@ impl App {
             for item in array {
                 let account = Account {
                     access_token: String::new(),
-                    account_type: String::from(item["account_type"].as_str().ok_or(ErrorKind::InvalidData)?),
-                    refresh_token: String::from(item["token"].as_str().ok_or(ErrorKind::InvalidData)?),
+                    account_type: String::from(
+                        item["account_type"]
+                            .as_str()
+                            .ok_or(ErrorKind::InvalidData)?,
+                    ),
+                    refresh_token: String::from(
+                        item["token"].as_str().ok_or(ErrorKind::InvalidData)?,
+                    ),
                     uuid: String::from(item["uuid"].as_str().ok_or(ErrorKind::InvalidData)?),
-                    user_name: String::from(item["user_name"].as_str().ok_or(ErrorKind::InvalidData)?),
+                    user_name: String::from(
+                        item["user_name"].as_str().ok_or(ErrorKind::InvalidData)?,
+                    ),
                 };
 
                 self.acc_list.push(account);
@@ -333,18 +412,42 @@ impl App {
     /// Load the configs from config.json (won't refresh ui)
     fn load_config(&mut self) -> Result<(), std::io::Error> {
         if exists(&"config.json")? {
-            let json: serde_json::Value = serde_json::from_str(&fs::read_to_string("config.json")?.as_str())?;
-            
-            self.config.assets_source = String::from(json["assets_source"].as_str().ok_or(ErrorKind::InvalidData)?);
-            self.config.close_after_launch = json["close_after_launch"].as_bool().ok_or(ErrorKind::InvalidData)?;
-            self.config.concurrency = json["concurrency"].as_u64().ok_or(ErrorKind::InvalidData)? as usize;
-            self.config.fabric_source = String::from(json["fabric_source"].as_str().ok_or(ErrorKind::InvalidData)?);
-            self.config.forge_source = String::from(json["forge_source"].as_str().ok_or(ErrorKind::InvalidData)?);
-            self.config.game_path = String::from(json["game_path"].as_str().ok_or(ErrorKind::InvalidData)?);
-            self.config.game_source = String::from(json["game_source"].as_str().ok_or(ErrorKind::InvalidData)?);
-            self.config.height = String::from(json["height"].as_str().ok_or(ErrorKind::InvalidData)?);
-            self.config.java_path = String::from(json["java_path"].as_str().ok_or(ErrorKind::InvalidData)?);
-            self.config.libraries_source = String::from(json["libraries_source"].as_str().ok_or(ErrorKind::InvalidData)?);
+            let json: serde_json::Value =
+                serde_json::from_str(&fs::read_to_string("config.json")?.as_str())?;
+
+            self.config.assets_source = String::from(
+                json["assets_source"]
+                    .as_str()
+                    .ok_or(ErrorKind::InvalidData)?,
+            );
+            self.config.close_after_launch = json["close_after_launch"]
+                .as_bool()
+                .ok_or(ErrorKind::InvalidData)?;
+            self.config.concurrency =
+                json["concurrency"].as_u64().ok_or(ErrorKind::InvalidData)? as usize;
+            self.config.fabric_source = String::from(
+                json["fabric_source"]
+                    .as_str()
+                    .ok_or(ErrorKind::InvalidData)?,
+            );
+            self.config.forge_source = String::from(
+                json["forge_source"]
+                    .as_str()
+                    .ok_or(ErrorKind::InvalidData)?,
+            );
+            self.config.game_path =
+                String::from(json["game_path"].as_str().ok_or(ErrorKind::InvalidData)?);
+            self.config.game_source =
+                String::from(json["game_source"].as_str().ok_or(ErrorKind::InvalidData)?);
+            self.config.height =
+                String::from(json["height"].as_str().ok_or(ErrorKind::InvalidData)?);
+            self.config.java_path =
+                String::from(json["java_path"].as_str().ok_or(ErrorKind::InvalidData)?);
+            self.config.libraries_source = String::from(
+                json["libraries_source"]
+                    .as_str()
+                    .ok_or(ErrorKind::InvalidData)?,
+            );
             self.config.width = String::from(json["width"].as_str().ok_or(ErrorKind::InvalidData)?);
             self.config.xms = String::from(json["xms"].as_str().ok_or(ErrorKind::InvalidData)?);
             self.config.xmx = String::from(json["xmx"].as_str().ok_or(ErrorKind::InvalidData)?);
@@ -377,7 +480,9 @@ impl App {
                 warn!("{json_path} not exists.");
                 continue;
             }
-            if let Ok(json) = serde_json::from_str::<serde_json::Value>(&fs::read_to_string(&json_path)?.as_str()) {
+            if let Ok(json) =
+                serde_json::from_str::<serde_json::Value>(&fs::read_to_string(&json_path)?.as_str())
+            {
                 game = Game {
                     description: String::new(),
                     game_args: Vec::new(),
@@ -400,7 +505,9 @@ impl App {
             // 若config.json存在，覆盖原版json
             let cfg_path = path.clone() + "/config.json";
             if exists(&cfg_path)? {
-                if let Ok(json) = serde_json::from_str::<serde_json::Value>(&fs::read_to_string(&cfg_path)?.as_str()) {
+                if let Ok(json) = serde_json::from_str::<serde_json::Value>(
+                    &fs::read_to_string(&cfg_path)?.as_str(),
+                ) {
                     let mut game_args = Vec::new();
                     let mut jvm_args = Vec::new();
 
@@ -412,13 +519,17 @@ impl App {
                         jvm_args.push(arg.as_str().ok_or(ErrorKind::InvalidData)?.to_string());
                     }
 
-                    game.description = String::from(json["description"].as_str().ok_or(ErrorKind::InvalidData)?);
+                    game.description =
+                        String::from(json["description"].as_str().ok_or(ErrorKind::InvalidData)?);
                     game.game_args = game_args;
-                    game.height = String::from(json["height"].as_str().ok_or(ErrorKind::InvalidData)?);
-                    game.java_path = String::from(json["java_path"].as_str().ok_or(ErrorKind::InvalidData)?);
+                    game.height =
+                        String::from(json["height"].as_str().ok_or(ErrorKind::InvalidData)?);
+                    game.java_path =
+                        String::from(json["java_path"].as_str().ok_or(ErrorKind::InvalidData)?);
                     game.jvm_args = jvm_args;
                     game.separated = json["separated"].as_bool().ok_or(ErrorKind::InvalidData)?;
-                    game.width = String::from(json["width"].as_str().ok_or(ErrorKind::InvalidData)?);
+                    game.width =
+                        String::from(json["width"].as_str().ok_or(ErrorKind::InvalidData)?);
                     game.xms = String::from(json["xms"].as_str().ok_or(ErrorKind::InvalidData)?);
                     game.xmx = String::from(json["xmx"].as_str().ok_or(ErrorKind::InvalidData)?);
                 } else {
@@ -427,7 +538,7 @@ impl App {
                 }
             }
             self.game_list.push(game);
-        };
+        }
         Ok(())
     }
 
@@ -483,7 +594,8 @@ impl App {
         for account in &self.acc_list {
             let account_name = StandardListViewItem::from(account.user_name.as_str());
             let account_type = StandardListViewItem::from(account.account_type.as_str());
-            let model: Rc<VecModel<StandardListViewItem>> = Rc::from(VecModel::from(vec![account_name, account_type]));
+            let model: Rc<VecModel<StandardListViewItem>> =
+                Rc::from(VecModel::from(vec![account_name, account_type]));
             let row: ModelRc<StandardListViewItem> = ModelRc::from(model);
             ui_acc_list.push(row);
         }
@@ -499,7 +611,8 @@ impl App {
             let version = StandardListViewItem::from(game.version.as_str());
             let game_type = StandardListViewItem::from(game.game_type.as_str());
             let description = StandardListViewItem::from(game.description.as_str());
-            let model: Rc<VecModel<StandardListViewItem>> = Rc::from(VecModel::from(vec![version, game_type, description]));
+            let model: Rc<VecModel<StandardListViewItem>> =
+                Rc::from(VecModel::from(vec![version, game_type, description]));
             let row: ModelRc<StandardListViewItem> = ModelRc::from(model);
             ui_game_list.push(row);
         }

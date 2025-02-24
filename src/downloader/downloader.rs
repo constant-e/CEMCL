@@ -1,10 +1,10 @@
-use std::io::Write;
-use std::sync::{mpsc, Arc, Mutex};
-use std::thread::sleep;
 use futures::StreamExt;
-use tokio::sync::{Semaphore, SemaphorePermit, TryAcquireError};
-use std::{fs, thread};
+use std::io::Write;
+use std::sync::{Arc, Mutex, mpsc};
+use std::thread::sleep;
 use std::time::Duration;
+use std::{fs, thread};
+use tokio::sync::{Semaphore, SemaphorePermit, TryAcquireError};
 
 use log::{debug, error, info};
 
@@ -57,9 +57,16 @@ pub struct Downloader {
 
 /// 下载任务
 impl DownloadTask {
-    pub fn new(id: u64, url: String, path: String, client: reqwest::Client, rt: Arc<tokio::runtime::Runtime>, semaphore: Arc<Semaphore>) -> Self {
+    pub fn new(
+        id: u64,
+        url: String,
+        path: String,
+        client: reqwest::Client,
+        rt: Arc<tokio::runtime::Runtime>,
+        semaphore: Arc<Semaphore>,
+    ) -> Self {
         info!("create id={id} url={url} path={path}");
-        
+
         // 控制download task
         let (control_sender, control_receiver) = mpsc::channel();
 
@@ -74,7 +81,10 @@ impl DownloadTask {
                 Err(e) => {
                     error!("Failed to acquire semaphore. Reason: {e}");
                     match state.lock() {
-                        Ok(mut state) => *state = DownloadState::Error(String::from("Failed to acquire semaphore.")),
+                        Ok(mut state) => {
+                            *state =
+                                DownloadState::Error(String::from("Failed to acquire semaphore."))
+                        }
                         Err(e) => error!("Failed to lock a mutex. Reason: {e}"),
                     }
                     return;
@@ -86,7 +96,9 @@ impl DownloadTask {
                 Err(e) => {
                     error!("Failed to get response. Reason: {e}");
                     match state.lock() {
-                        Ok(mut state) => *state = DownloadState::Error(String::from("Failed to download.")),
+                        Ok(mut state) => {
+                            *state = DownloadState::Error(String::from("Failed to download."))
+                        }
                         Err(e) => error!("Failed to lock a mutex. Reason: {e}"),
                     }
                     return;
@@ -100,7 +112,7 @@ impl DownloadTask {
                 Err(e) => error!("Failed to lock a mutex. Reason: {e}"),
             }
 
-            let mut stream = response.bytes_stream();            
+            let mut stream = response.bytes_stream();
 
             let mut file = match fs::File::create(&path) {
                 Ok(file) => file,
@@ -123,18 +135,16 @@ impl DownloadTask {
             while let Some(chunk) = stream.next().await {
                 if let Ok(cmd) = control_receiver.try_recv() {
                     match state.lock() {
-                        Ok(mut state) => {
-                            match cmd {
-                                TaskCommand::Pause => {
-                                    *state = DownloadState::Paused;
-                                },
-                                TaskCommand::Resume => {
-                                    *state = DownloadState::Downloading(0, total_size);
-                                },
-                                TaskCommand::Cancel => {
-                                    *state = DownloadState::Cancelled;
-                                    return;
-                                },
+                        Ok(mut state) => match cmd {
+                            TaskCommand::Pause => {
+                                *state = DownloadState::Paused;
+                            }
+                            TaskCommand::Resume => {
+                                *state = DownloadState::Downloading(0, total_size);
+                            }
+                            TaskCommand::Cancel => {
+                                *state = DownloadState::Cancelled;
+                                return;
                             }
                         },
                         Err(e) => error!("Failed to lock a mutex. Reason: {e}"),
@@ -146,11 +156,11 @@ impl DownloadTask {
                         if *state == DownloadState::Paused {
                             continue;
                         }
-                    },
+                    }
                     Err(e) => {
                         error!("Failed to lock a mutex. Reason: {e}");
                         continue;
-                    },
+                    }
                 }
 
                 match chunk {
@@ -169,7 +179,9 @@ impl DownloadTask {
                         }
                         downloaded += chunk.len() as u64;
                         match state.lock() {
-                            Ok(mut state) => *state = DownloadState::Downloading(downloaded, total_size),
+                            Ok(mut state) => {
+                                *state = DownloadState::Downloading(downloaded, total_size)
+                            }
                             Err(e) => error!("Failed to lock a mutex. Reason: {e}"),
                         }
                     }
@@ -178,14 +190,16 @@ impl DownloadTask {
                             attempts += 1;
                             tokio::time::sleep(Duration::from_secs(1)).await;
                             let range_header_value = format!("bytes={}-", downloaded);
-                            let new_response = client.get(&url)
+                            let new_response = client
+                                .get(&url)
                                 .header(reqwest::header::RANGE, range_header_value)
-                                .send().await;
+                                .send()
+                                .await;
                             match new_response {
                                 Ok(resp) => {
                                     stream = resp.bytes_stream();
                                     continue;
-                                },
+                                }
                                 Err(e) => {
                                     error!("Failed to send request. Reason: {e}");
                                 }
@@ -225,9 +239,9 @@ impl DownloadTask {
 impl Downloader {
     pub fn new(concurrency: usize) -> Self {
         let client = reqwest::Client::builder()
-                .timeout(Duration::from_secs(10))
-                .build()
-                .unwrap();
+            .timeout(Duration::from_secs(10))
+            .build()
+            .unwrap();
         let rt = Arc::new(tokio::runtime::Runtime::new().unwrap());
         let (sender, receiver) = mpsc::channel();
         let tasks = Arc::new(Mutex::new(Vec::new()));
@@ -241,7 +255,7 @@ impl Downloader {
             let client = client_clone;
             let rt = rt_clone;
             let tasks = tasks_clone;
-            
+
             let semaphore = Arc::new(Semaphore::new(concurrency));
 
             let _tokio = rt.enter();
@@ -251,11 +265,18 @@ impl Downloader {
                     QueueCommand::Add(url, path) => {
                         if let Ok(mut tasks) = tasks.lock() {
                             let id = (tasks.len() + 1) as u64;
-                            tasks.push(DownloadTask::new(id, url, path, client.clone(), rt.clone(), semaphore.clone()));
+                            tasks.push(DownloadTask::new(
+                                id,
+                                url,
+                                path,
+                                client.clone(),
+                                rt.clone(),
+                                semaphore.clone(),
+                            ));
                         } else {
                             error!("Command thread: Failed to lock tasks");
                         }
-                    },
+                    }
                     QueueCommand::Cancel(id) => {
                         if let Ok(mut tasks) = tasks.lock() {
                             if let Some(task) = tasks.iter_mut().find(|t| t.id == id) {
@@ -264,22 +285,27 @@ impl Downloader {
                         } else {
                             error!("Command thread: Failed to lock tasks");
                         }
-                    },
+                    }
                     _ => {
                         debug!("Not implemented.");
-                    },
+                    }
                 }
             }
 
             error!("Command sender is dropped.");
         });
 
-        Downloader { client, runtime: rt, tasks, sender }
+        Downloader {
+            client,
+            runtime: rt,
+            tasks,
+            sender,
+        }
     }
 
     pub fn add(&self, url: String, path: String) -> Result<(), mpsc::SendError<QueueCommand>> {
         match self.sender.send(QueueCommand::Add(url, path)) {
-            Ok(_) => { Ok(()) }
+            Ok(_) => Ok(()),
             Err(e) => {
                 error!("Failed to send a command. Reason: {e}");
                 Err(e)
@@ -327,7 +353,9 @@ impl Downloader {
         if let Some(tasks) = self.get_tasks() {
             for (_, _, state) in tasks {
                 match state {
-                    DownloadState::Error(_) => { return true; }
+                    DownloadState::Error(_) => {
+                        return true;
+                    }
                     _ => {}
                 }
             }
@@ -341,9 +369,15 @@ impl Downloader {
     pub fn in_progress(&self) -> Option<bool> {
         for (_, _, state) in self.get_tasks()? {
             match state {
-                DownloadState::Paused => { return Some(true); }
-                DownloadState::Queued(_) => { return Some(true); }
-                DownloadState::Downloading(_, _) => { return Some(true); }
+                DownloadState::Paused => {
+                    return Some(true);
+                }
+                DownloadState::Queued(_) => {
+                    return Some(true);
+                }
+                DownloadState::Downloading(_, _) => {
+                    return Some(true);
+                }
                 _ => {}
             }
         }
@@ -352,14 +386,17 @@ impl Downloader {
     }
 
     // TODO: use size instead of task number
-    pub fn update_progress(&self, f: impl Fn(f64) -> () + 'static + Send) -> thread::JoinHandle<()> {
+    pub fn update_progress(
+        &self,
+        f: impl Fn(f64) -> () + 'static + Send,
+    ) -> thread::JoinHandle<()> {
         let tasks = self.tasks.clone();
         thread::spawn(move || {
             loop {
                 if let Ok(tasks) = tasks.lock() {
                     let mut downloaded = 0.0;
                     let mut total = 0.0;
-    
+
                     for task in tasks.iter() {
                         if let Ok(state) = task.state.lock() {
                             match *state {
@@ -368,20 +405,20 @@ impl Downloader {
                                     // total += size as f64;
                                     downloaded += 1.0;
                                     total += 1.0;
-                                },
+                                }
                                 DownloadState::Downloading(downloaded_size, total_size) => {
                                     // downloaded += downloaded_size as f64;
                                     // total += total_size as f64;
                                     downloaded += (downloaded_size / total_size) as f64;
                                     total += 1.0;
-                                },
+                                }
                                 // DownloadState::Paused => {
                                 // }
                                 DownloadState::Queued(size) => {
                                     // total += size as f64;
                                     total += 1.0;
                                 }
-                                _ => {},
+                                _ => {}
                             }
                         }
                     }
@@ -390,7 +427,7 @@ impl Downloader {
                 } else {
                     error!("State thread: Failed to lock tasks.");
                 }
-    
+
                 sleep(Duration::from_millis(500));
             }
         })

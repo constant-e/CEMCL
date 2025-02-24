@@ -1,10 +1,10 @@
 //! 修改MC版本
 
-use std::sync::{self, Mutex};
 use log::error;
 use slint::ComponentHandle;
+use std::sync::{self, Mutex};
 
-use crate::{app::App, dialogs::msg_box::err_dialog, EditGameDialog, Messages};
+use crate::{EditGameDialog, Messages, app::App, dialogs::msg_box::err_dialog};
 
 use super::msg_box::ask_dialog;
 
@@ -44,20 +44,32 @@ pub fn edit_game_dialog(app_weak: sync::Weak<Mutex<App>>) -> Result<(), slint::P
                 ui.set_xmx(game.xmx.clone().into());
                 index
             } else {
-                err_dialog(&app.ui_weak.upgrade()
-                    .ok_or(slint::PlatformError::Other(String::from("Failed to upgrade a weak pointer")))?
-                    .global::<Messages>().get_game_not_selected());
-                return Err(slint::PlatformError::Other(String::from("Failed to get the index of game_list")));
+                err_dialog(
+                    &app.ui_weak
+                        .upgrade()
+                        .ok_or(slint::PlatformError::Other(String::from(
+                            "Failed to upgrade a weak pointer",
+                        )))?
+                        .global::<Messages>()
+                        .get_game_not_selected(),
+                );
+                return Err(slint::PlatformError::Other(String::from(
+                    "Failed to get the index of game_list",
+                )));
             }
         } else {
             error!("Failed to lock a mutex.");
-            return Err(slint::PlatformError::Other(String::from("Failed to lock a mutex")));
+            return Err(slint::PlatformError::Other(String::from(
+                "Failed to lock a mutex",
+            )));
         }
     } else {
         error!("Failed to upgrade a weak pointer.");
-        return Err(slint::PlatformError::Other(String::from("Failed to upgrade a weak pointer")));
+        return Err(slint::PlatformError::Other(String::from(
+            "Failed to upgrade a weak pointer",
+        )));
     };
-    
+
     let app_weak_clone = app_weak.clone();
     let ui_weak_clone = ui_weak.clone();
     ui.on_ok_clicked(move || {
@@ -75,7 +87,7 @@ pub fn edit_game_dialog(app_weak: sync::Weak<Mutex<App>>) -> Result<(), slint::P
                         game_args.push(arg.to_string());
                     }
                 }
-                
+
                 let jvm_args_str = ui.get_jvm_args();
                 if !jvm_args_str.is_empty() {
                     for arg in jvm_args_str.split(' ') {
@@ -97,7 +109,7 @@ pub fn edit_game_dialog(app_weak: sync::Weak<Mutex<App>>) -> Result<(), slint::P
             } else {
                 error!("Failed to lock a mutex.");
             }
-            
+
             ui.hide().unwrap();
         } else {
             error!("Failed to upgrade a weak pointer.");
@@ -117,7 +129,10 @@ pub fn edit_game_dialog(app_weak: sync::Weak<Mutex<App>>) -> Result<(), slint::P
         if let (Some(app), Some(ui)) = (app_weak.upgrade(), ui_weak.upgrade()) {
             if let Ok(app) = app.try_lock() {
                 let (title, msg) = if let Some(app_ui) = app.ui_weak.upgrade() {
-                    (app_ui.global::<Messages>().get_warn(), app_ui.global::<Messages>().get_del_game_confirm())
+                    (
+                        app_ui.global::<Messages>().get_warn(),
+                        app_ui.global::<Messages>().get_del_game_confirm(),
+                    )
                 } else {
                     error!("Failed to upgrade a weak pointer.");
                     return;

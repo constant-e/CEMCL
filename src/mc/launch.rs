@@ -2,17 +2,17 @@
 
 //! mc::launch 获取MC的启动参数
 
-use futures::executor::block_on;
-use log::error;
-use std::thread::sleep;
-use std::env::consts as env;
-use std::fs::{self, exists};
-use std::time::Duration;
-use serde_json::Value;
 use crate::app::Config;
 use crate::downloader::downloader::Downloader;
+use futures::executor::block_on;
+use log::error;
+use serde_json::Value;
+use std::env::consts as env;
+use std::fs::{self, exists};
+use std::thread::sleep;
+use std::time::Duration;
 
-use super::{check_rules, download, Account, Game};
+use super::{Account, Game, check_rules, download};
 
 /// 完整下载游戏使用的信息
 pub struct GameDownload {
@@ -45,7 +45,7 @@ fn add_arg(n: &Value) -> Option<Vec<String>> {
             result.push(item.as_str().unwrap().into());
             continue;
         }
-        
+
         // 判断是否满足限制条件
         if !check_rules(&item["rules"]) {
             continue;
@@ -67,14 +67,14 @@ fn add_arg(n: &Value) -> Option<Vec<String>> {
 
 /// 获取MC和JVM参数
 fn get_args(n: &Value) -> Option<(Vec<String>, Vec<String>)> {
-    let mut game_args:Vec<String> = Vec::new();
-    let mut jvm_args:Vec<String> = vec![
+    let mut game_args: Vec<String> = Vec::new();
+    let mut jvm_args: Vec<String> = vec![
         "-XX:+UseG1GC".to_string(),
         "-XX:-UseAdaptiveSizePolicy".to_string(),
         "-XX:-OmitStackTraceInFastThrow".to_string(),
         "-Dfml.ignoreInvalidMinecraftCertificates=True".to_string(),
         "-Dfml.ignorePatchDiscrepancies=True".to_string(),
-        "-Dlog4j2.formatMsgNoLookups=true".to_string()
+        "-Dlog4j2.formatMsgNoLookups=true".to_string(),
     ];
 
     if !n["arguments"].is_null() {
@@ -88,21 +88,20 @@ fn get_args(n: &Value) -> Option<(Vec<String>, Vec<String>)> {
             game_args.push(arg.into());
         }
         jvm_args.append(&mut vec![
-            "-Djava.library.path=${natives_directory}".into(), 
+            "-Djava.library.path=${natives_directory}".into(),
             "-cp".into(),
-            "${classpath}".into()
+            "${classpath}".into(),
         ]);
     }
 
     Some((game_args, jvm_args))
 }
 
-/// 获取-cp参数 
+/// 获取-cp参数
 fn get_classpaths(n: &Value, game_path: &String) -> Option<Vec<String>> {
     let mut result: Vec<String> = Vec::new();
     for item in n.as_array()? {
-        if !item["rules"].is_null() &&
-            !check_rules(&item["rules"]) {
+        if !item["rules"].is_null() && !check_rules(&item["rules"]) {
             continue;
         }
 
@@ -125,11 +124,15 @@ fn get_classpaths(n: &Value, game_path: &String) -> Option<Vec<String>> {
 }
 
 /// 获取启动总命令
-pub async fn get_launch_command(account: &Account, game: &Game, config: &Config) -> Option<(Vec<String>, GameDownload)> {
+pub async fn get_launch_command(
+    account: &Account,
+    game: &Game,
+    config: &Config,
+) -> Option<(Vec<String>, GameDownload)> {
     let mut result: Vec<String> = Vec::new();
     let game_path = &config.game_path;
-    let dir = game_path.clone() + "/versions/" + game.version.as_str();  // 游戏目录
-    
+    let dir = game_path.clone() + "/versions/" + game.version.as_str(); // 游戏目录
+
     // 读取json
     let cfg_path = dir.clone() + "/" + game.version.as_str() + ".json";
     if let Ok(json) = serde_json::from_str::<Value>(fs::read_to_string(&cfg_path).ok()?.as_str()) {
@@ -160,7 +163,9 @@ pub async fn get_launch_command(account: &Account, game: &Game, config: &Config)
             if let Some(parent_version) = json["inheritsFrom"].as_str() {
                 let parent_path = game_path.clone() + "/versions/" + &parent_version;
                 if exists(&parent_path).ok()? {
-                    if let Ok(parent) = serde_json::from_str::<Value>(&fs::read_to_string(&parent_path).ok()?.as_str()) {
+                    if let Ok(parent) = serde_json::from_str::<Value>(
+                        &fs::read_to_string(&parent_path).ok()?.as_str(),
+                    ) {
                         if let Some(index) = parent["assetIndex"]["id"].as_str() {
                             asset_index = index.into();
                         } else {
@@ -170,8 +175,9 @@ pub async fn get_launch_command(account: &Account, game: &Game, config: &Config)
                         // MC和JVM的参数
                         if let (
                             Some((mut parent_game_args, mut parent_jvm_args)),
-                            Some((mut self_game_args, mut self_jvm_args))
-                        ) = (get_args(&parent), get_args(&json)) {
+                            Some((mut self_game_args, mut self_jvm_args)),
+                        ) = (get_args(&parent), get_args(&json))
+                        {
                             game_args.append(&mut parent_game_args);
                             game_args.append(&mut self_game_args);
                             jvm_args.append(&mut parent_jvm_args);
@@ -232,7 +238,7 @@ pub async fn get_launch_command(account: &Account, game: &Game, config: &Config)
             "--height".into(),
             game.height.clone(),
             "--width".into(),
-            game.width.clone()
+            game.width.clone(),
         ]);
 
         // 参数添加至result
@@ -266,7 +272,10 @@ pub async fn get_launch_command(account: &Account, game: &Game, config: &Config)
                 .replace("${launcher_name}", "\"CE Minecraft Launcher\"")
                 .replace("${launcher_version}", env!("CARGO_PKG_VERSION"))
                 .replace("${library_directory}", &(game_path.clone() + "/libraries"))
-                .replace("${natives_directory}", &(dir.clone() + "/natives-" + os + "-" + env::ARCH))
+                .replace(
+                    "${natives_directory}",
+                    &(dir.clone() + "/natives-" + os + "-" + env::ARCH),
+                )
                 .replace("${user_properties}", "{}")
                 .replace("${user_type}", &account.account_type)
                 .replace("${version_name}", &game.version)
@@ -290,12 +299,19 @@ pub async fn get_launch_command(account: &Account, game: &Game, config: &Config)
     }
 }
 
-pub fn download_all(config: &Config, game: &GameDownload, downloader: &Downloader, app_ui_weak: slint::Weak<crate::AppWindow>) -> Result<(), std::io::Error> {
+pub fn download_all(
+    config: &Config,
+    game: &GameDownload,
+    downloader: &Downloader,
+    app_ui_weak: slint::Weak<crate::AppWindow>,
+) -> Result<(), std::io::Error> {
     // 刷新ui进度条
     let handle = downloader.update_progress(move |progress| {
-        app_ui_weak.upgrade_in_event_loop(move |ui| {
-            ui.set_progress(progress as f32);
-        }).unwrap();
+        app_ui_weak
+            .upgrade_in_event_loop(move |ui| {
+                ui.set_progress(progress as f32);
+            })
+            .unwrap();
     });
 
     // 处理依赖
@@ -304,35 +320,66 @@ pub fn download_all(config: &Config, game: &GameDownload, downloader: &Downloade
     let index_dir = config.game_path.clone() + "/assets/indexes/";
     let index_path = index_dir.clone() + &game.asset_index + ".json";
     if !exists(&index_path)? {
-        if !exists(&index_dir)? { fs::create_dir_all(&index_dir)?; }
-        block_on(download::download(game.asset_index_url.clone(), index_path, 3));
+        if !exists(&index_dir)? {
+            fs::create_dir_all(&index_dir)?;
+        }
+        block_on(download::download(
+            game.asset_index_url.clone(),
+            index_path,
+            3,
+        ));
     }
-    
+
     // assets
-    download::download_assets(&config.game_path, &game.asset_index, &config.assets_source, downloader)?;
+    download::download_assets(
+        &config.game_path,
+        &game.asset_index,
+        &config.assets_source,
+        downloader,
+    )?;
 
     // download libraries
-    let natives = download::download_libraries(&game.libraries_json, &config.game_path, &game.dir, &config.libraries_source, downloader)?;
+    let natives = download::download_libraries(
+        &game.libraries_json,
+        &config.game_path,
+        &game.dir,
+        &config.libraries_source,
+        downloader,
+    )?;
 
     let jar_path = game.dir.clone() + "/" + game.version.as_ref() + ".jar";
     if !exists(&jar_path)? {
         // 本体
-        let url = game.mc_url.clone()
+        let url = game
+            .mc_url
+            .clone()
             .replace("https://piston-meta.mojang.com", &config.game_source);
         if let Err(e) = downloader.add(url, jar_path) {
-            return Err(std::io::Error::new(std::io::ErrorKind::Other, format!("{e}")));
+            return Err(std::io::Error::new(
+                std::io::ErrorKind::Other,
+                format!("{e}"),
+            ));
         }
     }
-    
-    while downloader.in_progress().ok_or(std::io::Error::new(std::io::ErrorKind::Other, "Downloader Error"))? {
+
+    while downloader.in_progress().ok_or(std::io::Error::new(
+        std::io::ErrorKind::Other,
+        "Downloader Error",
+    ))? {
         sleep(Duration::from_millis(10));
         if downloader.has_error() {
-            return Err(std::io::Error::new(std::io::ErrorKind::Other, "Downloader Error"));
+            return Err(std::io::Error::new(
+                std::io::ErrorKind::Other,
+                "Downloader Error",
+            ));
         }
     }
 
     if downloader.has_error() {
-        return Err(std::io::Error::new(std::io::ErrorKind::Other, "Downloader Error"));
+        return Err(std::io::Error::new(
+            std::io::ErrorKind::Other,
+            "Downloader Error",
+        ));
     }
 
     // extract natives

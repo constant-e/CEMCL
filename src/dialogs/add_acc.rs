@@ -1,15 +1,15 @@
 //! 添加账号
 
-use std::sync::{self, Mutex};
-use std::thread;
+use crate::AddAccDialog;
+use crate::Messages;
+use crate::app::App;
+use crate::mc::Account;
+use crate::mc::account::init_oauth;
 use clipboard::{ClipboardContext, ClipboardProvider};
 use log::{error, warn};
 use slint::ComponentHandle;
-use crate::app::App;
-use crate::AddAccDialog;
-use crate::mc::Account;
-use crate::mc::account::init_oauth;
-use crate::Messages;
+use std::sync::{self, Mutex};
+use std::thread;
 
 /// 添加账号Dialog
 pub async fn add_acc_dialog(app_weak: sync::Weak<Mutex<App>>) -> Result<(), slint::PlatformError> {
@@ -26,7 +26,7 @@ pub async fn add_acc_dialog(app_weak: sync::Weak<Mutex<App>>) -> Result<(), slin
     if let (Some(app), Some(ui)) = (app_weak.upgrade(), ui_weak.upgrade()) {
         if let Some((message, device_code, user_code, url)) = init_oauth().await {
             if let Ok(ctx) = ClipboardProvider::new() {
-                let mut ctx: ClipboardContext = ctx;  // type announce is needed
+                let mut ctx: ClipboardContext = ctx; // type announce is needed
                 if let Err(e) = ctx.set_contents(user_code) {
                     warn!("Failed to copy user code. Reason: {e}");
                 }
@@ -40,31 +40,49 @@ pub async fn add_acc_dialog(app_weak: sync::Weak<Mutex<App>>) -> Result<(), slin
 
             if let Ok(mut app) = app.try_lock() {
                 app.device_code = device_code;
-                let msg = app.ui_weak.upgrade()
-                    .ok_or(slint::PlatformError::Other(String::from("Failed to upgrade a weak pointer")))?
-                    .global::<Messages>().get_acc_online_msg().to_string();
+                let msg = app
+                    .ui_weak
+                    .upgrade()
+                    .ok_or(slint::PlatformError::Other(String::from(
+                        "Failed to upgrade a weak pointer",
+                    )))?
+                    .global::<Messages>()
+                    .get_acc_online_msg()
+                    .to_string();
                 let message = message + "\n" + &msg;
                 ui.set_online_msg(message.into());
             } else {
                 error!("Failed to lock a mutex.");
-                return Err(slint::PlatformError::Other(String::from("Failed to lock a mutex")));
+                return Err(slint::PlatformError::Other(String::from(
+                    "Failed to lock a mutex",
+                )));
             }
         } else {
             if let Ok(app) = app.try_lock() {
-                let msg = app.ui_weak.upgrade()
-                    .ok_or(slint::PlatformError::Other(String::from("Failed to upgrade a weak pointer")))?
-                    .global::<Messages>().get_acc_online_failed().to_string();
+                let msg = app
+                    .ui_weak
+                    .upgrade()
+                    .ok_or(slint::PlatformError::Other(String::from(
+                        "Failed to upgrade a weak pointer",
+                    )))?
+                    .global::<Messages>()
+                    .get_acc_online_failed()
+                    .to_string();
                 ui.set_online_msg(msg.into());
             } else {
                 error!("Failed to lock a mutex.");
-                return Err(slint::PlatformError::Other(String::from("Failed to lock a mutex")));
+                return Err(slint::PlatformError::Other(String::from(
+                    "Failed to lock a mutex",
+                )));
             }
         }
     } else {
         error!("Failed to upgrade a weak pointer.");
-        return Err(slint::PlatformError::Other(String::from("Failed to upgrade a weak pointer")));
+        return Err(slint::PlatformError::Other(String::from(
+            "Failed to upgrade a weak pointer",
+        )));
     }
-    
+
     let ui_weak_clone = ui_weak.clone();
     ui.on_ok_clicked(move || {
         if let (Some(app), Some(ui)) = (app_weak.upgrade(), ui_weak_clone.upgrade()) {
@@ -73,15 +91,21 @@ pub async fn add_acc_dialog(app_weak: sync::Weak<Mutex<App>>) -> Result<(), slin
                 // Online Account
                 thread::spawn(move || {
                     if let Ok(mut app) = app.try_lock() {
-                        app.ui_weak.upgrade_in_event_loop(|ui| ui.invoke_set_loading()).unwrap();
+                        app.ui_weak
+                            .upgrade_in_event_loop(|ui| ui.invoke_set_loading())
+                            .unwrap();
                         let rt = tokio::runtime::Runtime::new().unwrap();
                         let _tokio = rt.enter();
-                        if let Some(acc) = rt.block_on(Account::new(&app.device_code, app.ui_weak.clone())) {
+                        if let Some(acc) =
+                            rt.block_on(Account::new(&app.device_code, app.ui_weak.clone()))
+                        {
                             app.add_account(&acc);
                         } else {
                             error!("Failed to login.");
                         }
-                        app.ui_weak.upgrade_in_event_loop(|ui| ui.invoke_unset_loading()).unwrap();
+                        app.ui_weak
+                            .upgrade_in_event_loop(|ui| ui.invoke_unset_loading())
+                            .unwrap();
                     }
                 });
             } else {

@@ -18,9 +18,16 @@ use std::thread;
 slint::include_modules!();
 
 fn main() -> Result<(), slint::PlatformError> {
-    env_logger::builder().filter_module("cemcl",
-        if cfg!(debug_assertions) { log::LevelFilter::Debug } else { log::LevelFilter::Info }
-    ).init();
+    env_logger::builder()
+        .filter_module(
+            "cemcl",
+            if cfg!(debug_assertions) {
+                log::LevelFilter::Debug
+            } else {
+                log::LevelFilter::Info
+            },
+        )
+        .init();
 
     let ui = AppWindow::new()?;
     ui.show()?; // dialogs in app should show later than appwindow
@@ -81,7 +88,7 @@ fn main() -> Result<(), slint::PlatformError> {
     ui.on_click_settings_btn(move || {
         settings::init(app_weak_clone.clone());
     });
-    
+
     let ui_weak = ui.as_weak();
     ui.on_click_start_btn(move || {
         if let Some(ui) = ui_weak.upgrade() {

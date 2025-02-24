@@ -1,8 +1,8 @@
 //! 设置
 
 use log::error;
-use std::sync::{self, Mutex};
 use slint::ComponentHandle;
+use std::sync::{self, Mutex};
 
 use crate::{App, Settings};
 
@@ -32,7 +32,7 @@ pub fn init(app_weak: sync::Weak<Mutex<App>>) -> Option<()> {
         error!("Failed to lock a mutex.");
         return None;
     }
-    
+
     let ui_weak_clone = ui_weak.clone();
     ui.on_apply_clicked(move || {
         if let (Some(app), Some(ui)) = (app_weak.upgrade(), ui_weak_clone.upgrade()) {
@@ -54,7 +54,7 @@ pub fn init(app_weak: sync::Weak<Mutex<App>>) -> Option<()> {
                 app.config.width = ui.get_config_width().into();
                 app.config.xms = ui.get_xms().into();
                 app.config.xmx = ui.get_xmx().into();
-                
+
                 app.save_config().unwrap();
 
                 if old_game_path != new_game_path {
