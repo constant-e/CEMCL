@@ -9,6 +9,11 @@ export default defineConfig({
     root: {
       label: '简体中文',
       lang: 'zh-CN',
+      themeConfig: {
+        outline: {
+          label: '页面导航'
+        },
+      }
     },
     en: {
       label: 'English',
