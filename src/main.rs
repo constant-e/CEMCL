@@ -29,6 +29,25 @@ fn main() -> Result<(), slint::PlatformError> {
         )
         .init();
 
+    if let Some(mut path) = std::env::home_dir() {
+        let cemcl_path = path.join(".cemcl");
+        if !cemcl_path.exists() {
+            if let Err(e) = std::fs::create_dir(&cemcl_path) {
+                error!("Failed to create directory. Reason: {e}.");
+            } else {
+                path = cemcl_path;
+            }
+        } else {
+            path = cemcl_path;
+        }
+
+        if let Err(e) = std::env::set_current_dir(&path) {
+            error!("Failed to set current directory. Reason: {e}.");
+        }
+    } else {
+        error!("Failed to get home directory.");
+    }
+
     let ui = AppWindow::new()?;
     ui.show()?; // dialogs in app should show later than appwindow
     let app = Arc::new(Mutex::new(App::new(ui.as_weak()).unwrap()));

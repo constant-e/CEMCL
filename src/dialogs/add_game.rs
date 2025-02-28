@@ -182,7 +182,7 @@ pub async fn add_game_dialog(app_weak: sync::Weak<Mutex<App>>) -> Result<(), sli
                     error!("Failed to create {dir}.");
                     return;
                 };
-                
+
                 let rt = tokio::runtime::Runtime::new().unwrap();
                 let _tokio = rt.enter();
                 rt.block_on(download::download(game_url.url.clone(), dir.clone() + "/" + &game_url.version + ".json", 3));
@@ -200,7 +200,7 @@ pub async fn add_game_dialog(app_weak: sync::Weak<Mutex<App>>) -> Result<(), sli
                         version = forge.version
                     );
                     let forge_path = format!("temp/forge-{mcversion}-{version}-installer.jar", mcversion = game_url.version, version = forge.version);
-                    
+
                     let java_path = app.config.java_path.clone();
                     let game_path = app.config.game_path.clone();
                     thread::spawn(move || {
@@ -227,7 +227,7 @@ pub async fn add_game_dialog(app_weak: sync::Weak<Mutex<App>>) -> Result<(), sli
                             },
                             Err(e) => error!("Failed to run forge installer. Reason: {e}."),
                         }
-                        
+
                         if let Err(e) = fs::remove_dir_all("temp") {
                             error!("Failed to remove temp directory. Reason: {e}.");
                         }
@@ -244,7 +244,7 @@ pub async fn add_game_dialog(app_weak: sync::Weak<Mutex<App>>) -> Result<(), sli
                         game_args.push(arg.to_string());
                     }
                 }
-                
+
                 let jvm_args_str = ui.get_jvm_args();
                 if !jvm_args_str.is_empty() {
                     for arg in jvm_args_str.split(' ') {
@@ -269,7 +269,7 @@ pub async fn add_game_dialog(app_weak: sync::Weak<Mutex<App>>) -> Result<(), sli
             } else {
                 error!("Failed to lock a mutex.");
             }
-            
+
             ui.hide().unwrap();
         } else {
             error!("Failed to upgrade a weak pointer.");

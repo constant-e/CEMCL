@@ -4,7 +4,7 @@ use std::sync::{Arc, Mutex, mpsc};
 use std::thread::sleep;
 use std::time::Duration;
 use std::{fs, thread};
-use tokio::sync::{Semaphore, SemaphorePermit, TryAcquireError};
+use tokio::sync::Semaphore;
 
 use log::{debug, error, info};
 
