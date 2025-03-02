@@ -53,17 +53,18 @@ CI（持续集成）版是在GitHub中提交commit后，由GitHub Actions自动�
 7. 其他（完善log和报错，UI改进等）
 
 ## 鸣谢
-1. [clipboard](https://crates.io/crates/clipboard)：剪切板
-2. [env_logger](https://crates.io/crates/env_logger)：输出日志
-3. [futures](https://crates.io/crates/futures)：异步
-4. [log](https://crates.io/crates/log)：输出日志
-5. [reqwest](https://crates.io/crates/reqwest)：下载
-6. [serde_json](https://crates.io/crates/serde_json)：JSON解析
-7. [slint](https://crates.io/crates/slint)：GUI框架
-8. [tokio](https://crates.io/crates/tokio)：异步
-9. [uuid](https://crates.io/crates/uuid)：UUID生成
-10. [webbrowser](https://crates.io/crates/webbrowser)：打开浏览器
-11. [zip](https://crates.io/crates/zip)：解压缩
+1. [BMCLAPI2](https://bmclapidoc.bangbang93.com/)：forge下载
+2. [clipboard](https://crates.io/crates/clipboard)：剪切板
+3. [env_logger](https://crates.io/crates/env_logger)：输出日志
+4. [futures](https://crates.io/crates/futures)：异步
+5. [log](https://crates.io/crates/log)：输出日志
+6. [reqwest](https://crates.io/crates/reqwest)：下载
+7. [serde_json](https://crates.io/crates/serde_json)：JSON解析
+8. [slint](https://crates.io/crates/slint)：GUI框架
+9. [tokio](https://crates.io/crates/tokio)：异步
+10. [uuid](https://crates.io/crates/uuid)：UUID生成
+11. [webbrowser](https://crates.io/crates/webbrowser)：打开浏览器
+12. [zip](https://crates.io/crates/zip)：解压缩
 
 ## 许可证
 Apache License 2.0

@@ -2,7 +2,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
-"POT-Creation-Date: 2025-02-13 07:50+0000\n"
+"POT-Creation-Date: 2025-03-02 01:59+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -177,72 +177,72 @@ msgctxt "AddGameDialog"
 msgid "Enable Separated Version"
 msgstr ""
 
-#: appwindow.slint:36
+#: appwindow.slint:59
 msgctxt "AppWindow"
 msgid "Downloading"
 msgstr ""
 
-#: appwindow.slint:37
+#: appwindow.slint:60
 msgctxt "AppWindow"
 msgid "Launching"
 msgstr ""
 
-#: appwindow.slint:38
+#: appwindow.slint:61
 msgctxt "AppWindow"
 msgid "Logging in"
 msgstr ""
 
-#: appwindow.slint:66
+#: appwindow.slint:74
 msgctxt "AppWindow"
 msgid "Account"
 msgstr ""
 
-#: appwindow.slint:70
+#: appwindow.slint:78
 msgctxt "AppWindow"
 msgid "Name"
 msgstr ""
 
-#: appwindow.slint:71 appwindow.slint:101
+#: appwindow.slint:79 appwindow.slint:108
 msgctxt "AppWindow"
 msgid "Type"
 msgstr ""
 
-#: appwindow.slint:81 appwindow.slint:112
+#: appwindow.slint:89 appwindow.slint:119
 msgctxt "AppWindow"
 msgid "Add"
 msgstr ""
 
-#: appwindow.slint:86 appwindow.slint:117
+#: appwindow.slint:94 appwindow.slint:124
 msgctxt "AppWindow"
 msgid "Edit"
 msgstr ""
 
-#: appwindow.slint:96
+#: appwindow.slint:103
 msgctxt "AppWindow"
 msgid "Minecraft Version"
 msgstr ""
 
-#: appwindow.slint:100
+#: appwindow.slint:107
 msgctxt "AppWindow"
 msgid "Version"
 msgstr ""
 
-#: appwindow.slint:102
+#: appwindow.slint:109
 msgctxt "AppWindow"
 msgid "Description"
 msgstr ""
 
-#: appwindow.slint:128
+#: appwindow.slint:135
 msgctxt "AppWindow"
 msgid "Settings"
 msgstr ""
 
-#: appwindow.slint:133
+#: appwindow.slint:140
 msgctxt "AppWindow"
 msgid "Downloader"
 msgstr ""
 
-#: appwindow.slint:140
+#: appwindow.slint:165
 msgctxt "AppWindow"
 msgid "Start"
 msgstr ""
@@ -396,6 +396,11 @@ msgstr ""
 
 #: messages.slint:13
 msgctxt "Messages"
+msgid "Version already exists."
+msgstr ""
+
+#: messages.slint:14
+msgctxt "Messages"
 msgid "Warning"
 msgstr ""
 
@@ -519,47 +524,47 @@ msgctxt "Settings"
 msgid "Credits:\n"
 msgstr ""
 
-#: downloader.slint:5 downloader.slint:11
+#: downloader.slint:5 downloader.slint:13
 msgctxt "Downloader"
 msgid "Downloader"
 msgstr ""
 
-#: downloader.slint:13
+#: downloader.slint:15
 msgctxt "Downloader"
 msgid "In progress"
 msgstr ""
 
-#: downloader.slint:16 downloader.slint:27
+#: downloader.slint:18 downloader.slint:29
 msgctxt "Downloader"
 msgid "ID"
 msgstr ""
 
-#: downloader.slint:17 downloader.slint:28
+#: downloader.slint:19 downloader.slint:30
 msgctxt "Downloader"
 msgid "Name"
 msgstr ""
 
-#: downloader.slint:18
+#: downloader.slint:20
 msgctxt "Downloader"
 msgid "Progress"
 msgstr ""
 
-#: downloader.slint:19
+#: downloader.slint:21
 msgctxt "Downloader"
 msgid "Speed"
 msgstr ""
 
-#: downloader.slint:20
+#: downloader.slint:22
 msgctxt "Downloader"
 msgid "ETA"
 msgstr ""
 
-#: downloader.slint:24
+#: downloader.slint:26
 msgctxt "Downloader"
 msgid "Finished"
 msgstr ""
 
-#: downloader.slint:29
+#: downloader.slint:31
 msgctxt "Downloader"
 msgid "State"
 msgstr ""

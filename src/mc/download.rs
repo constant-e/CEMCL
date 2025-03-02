@@ -22,6 +22,7 @@ pub struct GameUrl {
 }
 
 /// Forge信息
+#[derive(Clone)]
 pub struct Forge {
     pub version: String,
     pub branch: String,
@@ -278,7 +279,7 @@ pub async fn list_forge(mcversion: &String) -> Option<Vec<Forge>> {
 }
 
 /// 获取下载列表
-pub async fn list_game() -> Option<Vec<GameUrl>> {
+pub async fn list_game(path: String) -> Option<Vec<GameUrl>> {
     let mut game_list = Vec::new();
 
     // 下载列表
@@ -288,8 +289,12 @@ pub async fn list_game() -> Option<Vec<GameUrl>> {
         .text()
         .await
         .ok()?;
-    // // 储存json，与官启保持一致
-    // fs::write(String::from(path) + "/version_manifest_v2.json", &text).ok()?;
+    // // 储存json，与管启一致
+    fs::write(
+        String::from(path) + "/versions/version_manifest_v2.json",
+        &text,
+    )
+    .ok()?;
 
     // 开始解析
     let json = serde_json::from_str::<Value>(&text).ok()?;

@@ -46,9 +46,11 @@ impl Account {
         let ms_token = ms_json["access_token"].as_str()?;
         account.refresh_token = String::from(ms_json["refresh_token"].as_str()?);
 
-        ui_weak.upgrade_in_event_loop(|ui| {
-            ui.set_progress(0.2);
-        });
+        ui_weak
+            .upgrade_in_event_loop(|ui| {
+                ui.set_progress(0.2);
+            })
+            .ok()?;
 
         debug!("Finish oauth");
 
@@ -88,9 +90,11 @@ impl Account {
         let xbox_json = serde_json::from_str::<Value>(&xbox_res.text().await.ok()?).ok()?;
         let xbox_token = xbox_json["Token"].as_str()?;
 
-        ui_weak.upgrade_in_event_loop(|ui| {
-            ui.set_progress(0.4);
-        });
+        ui_weak
+            .upgrade_in_event_loop(|ui| {
+                ui.set_progress(0.4);
+            })
+            .ok()?;
 
         debug!("Finish xbox");
 
@@ -115,9 +119,11 @@ impl Account {
         let xsts_token = xsts_json["Token"].as_str()?;
         let uhs = xsts_json["DisplayClaims"]["xui"][0]["uhs"].as_str()?;
 
-        ui_weak.upgrade_in_event_loop(|ui| {
-            ui.set_progress(0.6);
-        });
+        ui_weak
+            .upgrade_in_event_loop(|ui| {
+                ui.set_progress(0.6);
+            })
+            .ok()?;
 
         debug!("Finish xsts");
 
@@ -132,9 +138,11 @@ impl Account {
         let mc_json = serde_json::from_str::<Value>(&mc_res.text().await.ok()?).ok()?;
         let access_token = mc_json["access_token"].as_str()?;
 
-        ui_weak.upgrade_in_event_loop(|ui| {
-            ui.set_progress(0.8);
-        });
+        ui_weak
+            .upgrade_in_event_loop(|ui| {
+                ui.set_progress(0.8);
+            })
+            .ok()?;
 
         debug!("Finish mc");
 
@@ -148,9 +156,11 @@ impl Account {
             .ok()?;
         let profile_json = serde_json::from_str::<Value>(&profile_res.text().await.ok()?).ok()?;
 
-        ui_weak.upgrade_in_event_loop(|ui| {
-            ui.set_progress(1.0);
-        });
+        ui_weak
+            .upgrade_in_event_loop(|ui| {
+                ui.set_progress(1.0);
+            })
+            .ok()?;
 
         debug!("Finish profile");
 
@@ -189,9 +199,11 @@ impl Account {
         let json = serde_json::from_str::<Value>(&res.text().await.ok()?).ok()?;
         let ms_token = json["access_token"].as_str()?;
 
-        ui_weak.upgrade_in_event_loop(|ui| {
-            ui.set_progress(0.2);
-        });
+        ui_weak
+            .upgrade_in_event_loop(|ui| {
+                ui.set_progress(0.2);
+            })
+            .ok()?;
 
         debug!("Finish oauth");
 

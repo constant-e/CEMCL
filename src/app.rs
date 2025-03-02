@@ -146,17 +146,20 @@ impl App {
     pub fn add_account(&mut self, account: &Account) -> Option<()> {
         self.acc_list.push(account.clone());
         self.save_acc_list().ok()?;
-        self.refresh_ui_acc_list()?;
-        Some(())
+        self.refresh_ui_acc_list()
     }
 
-    /// Add a game to self.game_list, also call game.save() and self.refresh_ui_game_list()
+    /// Add a game to self.game_list, also call game.save(), self.save_launcher_profiles() and self.refresh_ui_game_list()
     pub fn add_game(&mut self, game: &Game) -> Option<()> {
         self.game_list.push(game.clone());
-        let path = self.config.game_path.clone() + "/versions/" + &game.version + "/config.json";
+        let dir = self.config.game_path.clone() + "/versions/" + &game.version;
+        if !exists(&dir).ok()? {
+            fs::create_dir_all(&dir).ok()?;
+        }
+        let path = dir + "/config.json";
         game.save(&path).ok()?;
-        self.refresh_ui_game_list()?;
-        Some(())
+        self.save_launcher_profiles().ok()?;
+        self.refresh_ui_game_list()
     }
 
     /// Delete an account, also call self.save_acc_list() and self.refresh_ui_acc_list()
@@ -167,11 +170,10 @@ impl App {
         // }
         self.acc_list.remove(index);
         self.save_acc_list().ok()?;
-        self.refresh_ui_acc_list()?;
-        Some(())
+        self.refresh_ui_acc_list()
     }
 
-    /// Delete a game, also delete the game directory and call self.refresh_ui_game_list()
+    /// Delete a game, also delete the game directory and call self.save_launcher_profiles() and self.refresh_ui_game_list()
     pub fn del_game(&mut self, index: usize) -> Option<()> {
         // if index >= self.game_list.len() {
         //     error!("Index out of bounds: the len is {} but the index is {index}.", self.game_list.len());
@@ -180,25 +182,24 @@ impl App {
         let path = self.config.game_path.clone() + "/versions/" + &self.game_list[index].version;
         self.game_list.remove(index);
         fs::remove_dir_all(path).ok()?;
-        self.refresh_ui_game_list()?;
-        Some(())
+        self.save_launcher_profiles().ok()?;
+        self.refresh_ui_game_list()
     }
 
     /// Edit an account, also call self.save_acc_list() and self.refresh_ui_acc_list()
     pub fn edit_account(&mut self, index: usize, account: Account) -> Option<()> {
         self.acc_list[index] = account;
         self.save_acc_list().ok()?;
-        self.refresh_ui_acc_list()?;
-        Some(())
+        self.refresh_ui_acc_list()
     }
 
-    /// Edit a game, also call Game::save and self.refresh_ui_game_list()
+    /// Edit a game, also call Game::save, self.save_launcher_profiles() and self.refresh_ui_game_list()
     pub fn edit_game(&mut self, index: usize, game: Game) -> Option<()> {
         let path = self.config.game_path.clone() + "/versions/" + &game.version + "/config.json";
         game.save(&path).ok()?;
         self.game_list[index] = game;
-        self.refresh_ui_game_list()?;
-        Some(())
+        self.save_launcher_profiles().ok()?;
+        self.refresh_ui_game_list()
     }
 
     /// Get the current index of account list in ui, return None when index is out of range
@@ -585,6 +586,26 @@ impl App {
             }
         );
         fs::write("config.json", json.to_string())
+    }
+
+    /// 保存管启格式的launcher_profiles.json，适配forge
+    pub fn save_launcher_profiles(&self) -> Result<(), std::io::Error> {
+        let mut json = json!({"profiles": {}});
+        for game in &self.game_list {
+            let node = serde_json::json!(
+                {
+                    "name": game.version,
+                    "type": "custom",
+                    "lastVersionId": game.version,
+                }
+            );
+            json["profiles"][&game.version] = node;
+        }
+
+        fs::write(
+            self.config.game_path.to_string() + "/launcher_profiles.json",
+            json.to_string(),
+        )
     }
 
     /// Refresh account list in ui

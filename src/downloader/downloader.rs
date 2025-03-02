@@ -432,6 +432,48 @@ impl Downloader {
             }
         })
     }
+
+    pub fn update_progress_size(
+        &self,
+        f: impl Fn(f64) -> () + 'static + Send,
+    ) -> thread::JoinHandle<()> {
+        let tasks = self.tasks.clone();
+        thread::spawn(move || {
+            loop {
+                if let Ok(tasks) = tasks.lock() {
+                    let mut downloaded = 0.0;
+                    let mut total = 0.0;
+
+                    for task in tasks.iter() {
+                        if let Ok(state) = task.state.lock() {
+                            match *state {
+                                DownloadState::Completed(size) => {
+                                    downloaded += size as f64;
+                                    total += size as f64;
+                                }
+                                DownloadState::Downloading(downloaded_size, total_size) => {
+                                    downloaded += downloaded_size as f64;
+                                    total += total_size as f64;
+                                }
+                                // DownloadState::Paused => {
+                                // }
+                                DownloadState::Queued(size) => {
+                                    total += size as f64;
+                                }
+                                _ => {}
+                            }
+                        }
+                    }
+
+                    f(downloaded / total);
+                } else {
+                    error!("State thread: Failed to lock tasks.");
+                }
+
+                sleep(Duration::from_millis(500));
+            }
+        })
+    }
 }
 
 impl Default for Downloader {

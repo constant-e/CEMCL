@@ -53,17 +53,18 @@ Run `update_tranlations.sh` to update the .po files.
 7. Others (More log, UI improvements, etc.)
 
 ## Credits
-1. [clipboard](https://crates.io/crates/clipboard): clipboard
-2. [env_logger](https://crates.io/crates/env_logger): logs
-3. [futures](https://crates.io/crates/futures): async
-4. [log](https://crates.io/crates/log): logs
-5. [reqwest](https://crates.io/crates/reqwest): downloading
-6. [serde_json](https://crates.io/crates/serde_json): JSON parsing
-7. [slint](https://crates.io/crates/slint): GUI framework
-8. [tokio](https://crates.io/crates/tokio): async
-9. [uuid](https://crates.io/crates/uuid): UUID generating
-10. [webbrowser](https://crates.io/crates/webbrowser): opening web browser
-11. [zip](https://crates.io/crates/zip): decompressing
+1. 1. [BMCLAPI2](https://bmclapidoc.bangbang93.com/): Forge downloading
+2. [clipboard](https://crates.io/crates/clipboard): clipboard
+3. [env_logger](https://crates.io/crates/env_logger): logs
+4. [futures](https://crates.io/crates/futures): async
+5. [log](https://crates.io/crates/log): logs
+6. [reqwest](https://crates.io/crates/reqwest): downloading
+7. [serde_json](https://crates.io/crates/serde_json): JSON parsing
+8. [slint](https://crates.io/crates/slint): GUI framework
+9. [tokio](https://crates.io/crates/tokio): async
+10. [uuid](https://crates.io/crates/uuid): UUID generating
+11. [webbrowser](https://crates.io/crates/webbrowser): opening web browser
+12. [zip](https://crates.io/crates/zip): decompressing
 
 ## License
 Apache License 2.0

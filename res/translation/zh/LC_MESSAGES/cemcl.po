@@ -1,7 +1,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
-"POT-Creation-Date: 2025-02-13 07:50+0000\n"
+"POT-Creation-Date: 2025-03-02 01:59+0000\n"
 "PO-Revision-Date: 2024-10-02 11:53+0800\n"
 "Last-Translator:  <fmn_tzx@outlook.com>\n"
 "Language-Team: Chinese (simplified) <i18n-zh@googlegroups.com>\n"
@@ -176,72 +176,72 @@ msgctxt "AddGameDialog"
 msgid "Enable Separated Version"
 msgstr "启用版本隔离"
 
-#: appwindow.slint:36
+#: appwindow.slint:59
 msgctxt "AppWindow"
 msgid "Downloading"
 msgstr "下载中"
 
-#: appwindow.slint:37
+#: appwindow.slint:60
 msgctxt "AppWindow"
 msgid "Launching"
 msgstr "启动中"
 
-#: appwindow.slint:38
+#: appwindow.slint:61
 msgctxt "AppWindow"
 msgid "Logging in"
 msgstr "登录中"
 
-#: appwindow.slint:66
+#: appwindow.slint:74
 msgctxt "AppWindow"
 msgid "Account"
 msgstr "账号"
 
-#: appwindow.slint:70
+#: appwindow.slint:78
 msgctxt "AppWindow"
 msgid "Name"
 msgstr "用户名"
 
-#: appwindow.slint:71 appwindow.slint:101
+#: appwindow.slint:79 appwindow.slint:108
 msgctxt "AppWindow"
 msgid "Type"
 msgstr "类型"
 
-#: appwindow.slint:81 appwindow.slint:112
+#: appwindow.slint:89 appwindow.slint:119
 msgctxt "AppWindow"
 msgid "Add"
 msgstr "添加"
 
-#: appwindow.slint:86 appwindow.slint:117
+#: appwindow.slint:94 appwindow.slint:124
 msgctxt "AppWindow"
 msgid "Edit"
 msgstr "编辑"
 
-#: appwindow.slint:96
+#: appwindow.slint:103
 msgctxt "AppWindow"
 msgid "Minecraft Version"
 msgstr "Minecraft版本"
 
-#: appwindow.slint:100
+#: appwindow.slint:107
 msgctxt "AppWindow"
 msgid "Version"
 msgstr "版本"
 
-#: appwindow.slint:102
+#: appwindow.slint:109
 msgctxt "AppWindow"
 msgid "Description"
 msgstr "备注"
 
-#: appwindow.slint:128
+#: appwindow.slint:135
 msgctxt "AppWindow"
 msgid "Settings"
 msgstr "设置"
 
-#: appwindow.slint:133
+#: appwindow.slint:140
 msgctxt "AppWindow"
 msgid "Downloader"
 msgstr "下载管理器"
 
-#: appwindow.slint:140
+#: appwindow.slint:165
 msgctxt "AppWindow"
 msgid "Start"
 msgstr "启动"
@@ -395,6 +395,11 @@ msgstr "登录失败"
 
 #: messages.slint:13
 msgctxt "Messages"
+msgid "Version already exists."
+msgstr "版本已存在"
+
+#: messages.slint:14
+msgctxt "Messages"
 msgid "Warning"
 msgstr "警告"
 
@@ -518,47 +523,47 @@ msgctxt "Settings"
 msgid "Credits:\n"
 msgstr "鸣谢：\n"
 
-#: downloader.slint:5 downloader.slint:11
+#: downloader.slint:5 downloader.slint:13
 msgctxt "Downloader"
 msgid "Downloader"
 msgstr "下载管理器"
 
-#: downloader.slint:13
+#: downloader.slint:15
 msgctxt "Downloader"
 msgid "In progress"
 msgstr "进行中"
 
-#: downloader.slint:16 downloader.slint:27
+#: downloader.slint:18 downloader.slint:29
 msgctxt "Downloader"
 msgid "ID"
 msgstr "ID"
 
-#: downloader.slint:17 downloader.slint:28
+#: downloader.slint:19 downloader.slint:30
 msgctxt "Downloader"
 msgid "Name"
 msgstr "名称"
 
-#: downloader.slint:18
+#: downloader.slint:20
 msgctxt "Downloader"
 msgid "Progress"
 msgstr "进度"
 
-#: downloader.slint:19
+#: downloader.slint:21
 msgctxt "Downloader"
 msgid "Speed"
 msgstr "下载速度"
 
-#: downloader.slint:20
+#: downloader.slint:22
 msgctxt "Downloader"
 msgid "ETA"
 msgstr "剩余时间"
 
-#: downloader.slint:24
+#: downloader.slint:26
 msgctxt "Downloader"
 msgid "Finished"
 msgstr "已完成"
 
-#: downloader.slint:29
+#: downloader.slint:31
 msgctxt "Downloader"
 msgid "State"
 msgstr "状态"

@@ -1,17 +1,21 @@
 //! 添加新MC版本
 
+use std::fs::exists;
 use std::process::Command;
 use std::rc;
 use std::sync::Mutex;
+use std::thread::sleep;
+use std::time::Duration;
 use std::{fs, sync, thread};
 
 use log::{error, warn};
 use slint::{ComponentHandle, ModelRc, StandardListViewItem, VecModel};
 
-use crate::AddGameDialog;
 use crate::app::App;
+use crate::dialogs::msg_box;
 use crate::mc::Game;
 use crate::mc::download::{self, Forge, GameUrl, list_forge};
+use crate::{AddGameDialog, Messages};
 
 /// 获取ui用的download_forge_list
 fn ui_forge_list(forge_list: &Vec<Forge>) -> ModelRc<ModelRc<StandardListViewItem>> {
@@ -83,8 +87,19 @@ pub async fn add_game_dialog(app_weak: sync::Weak<Mutex<App>>) -> Result<(), sli
     let ui = AddGameDialog::new()?;
     let ui_weak = ui.as_weak();
 
-    let game_url_list = if let Ok(Some(result)) = rt.spawn(download::list_game()).await {
-        result
+    let game_url_list = if let Some(app) = app_weak.upgrade() {
+        if let Ok(app) = app.try_lock() {
+            if let Ok(Some(result)) = rt
+                .spawn(download::list_game(app.config.game_path.clone()))
+                .await
+            {
+                result
+            } else {
+                Vec::new()
+            }
+        } else {
+            Vec::new()
+        }
     } else {
         Vec::new()
     };
@@ -168,7 +183,7 @@ pub async fn add_game_dialog(app_weak: sync::Weak<Mutex<App>>) -> Result<(), sli
     let ui_weak_clone = ui_weak.clone();
     ui.on_ok_clicked(move || {
         if let (Some(app), Some(ui)) = (app_weak.upgrade(), ui_weak_clone.upgrade()) {
-            if let Ok(mut app) = app.try_lock() {
+            if let Ok(mut app) = app.lock() {
                 let index = ui.get_game_index() as usize;
                 let len = app.download_game_list.len();
                 if index >= len {
@@ -178,60 +193,39 @@ pub async fn add_game_dialog(app_weak: sync::Weak<Mutex<App>>) -> Result<(), sli
 
                 let game_url = app.download_game_list[index].clone();
                 let dir = app.config.game_path.to_string() + "/versions/" + &game_url.version;
-                if fs::create_dir_all(&dir).is_err() {
-                    error!("Failed to create {dir}.");
-                    return;
+                let mod_type = ui.get_mod_type();
+
+                let result = match exists(&dir) {
+                    Ok(result) => result,
+                    Err(e) => {
+                        error!("Failed to check if {dir} exists. Reason: {e}.");
+                        return;
+                    }
                 };
 
-                let rt = tokio::runtime::Runtime::new().unwrap();
-                let _tokio = rt.enter();
-                rt.block_on(download::download(game_url.url.clone(), dir.clone() + "/" + &game_url.version + ".json", 3));
+                let mut add_orig = true;
+                if !result {
+                    if fs::create_dir_all(&dir).is_err() {
+                        error!("Failed to create {dir}.");
+                        return;
+                    };
 
-                // mod loader
-                let mod_type = ui.get_mod_type();
-                if mod_type == 1 {
-                    // forge
-                    let forge_index = ui.get_mod_index() as usize;
-                    let forge = &app.download_forge_list[forge_index];
-                    let forge_url = format!(
-                        "{mirror}/maven/net/minecraftforge/forge/{mcversion}-{version}/forge-{mcversion}-{version}-installer.jar",
-                        mirror = app.config.forge_source,
-                        mcversion = game_url.version,
-                        version = forge.version
-                    );
-                    let forge_path = format!("temp/forge-{mcversion}-{version}-installer.jar", mcversion = game_url.version, version = forge.version);
-
-                    let java_path = app.config.java_path.clone();
-                    let game_path = app.config.game_path.clone();
-                    thread::spawn(move || {
-                        let rt = tokio::runtime::Runtime::new().unwrap();
-                        let _tokio = rt.enter();
-
-                        if !fs::exists("temp").unwrap() {
-                            if let Err(e) = fs::create_dir("temp") {
-                                error!("Failed to create temp directory. Reason: {e}.");
-                            }
+                    let rt = tokio::runtime::Runtime::new().unwrap();
+                    let _tokio = rt.enter();
+                    rt.block_on(download::download(game_url.url.clone(), dir.clone() + "/" + &game_url.version + ".json", 3));
+                } else {
+                    if mod_type == 0 {
+                        warn!("The version already exists.");
+                        if let Some(app_ui) = app.ui_weak.upgrade() {
+                            msg_box::warn_dialog(&app_ui.global::<Messages>().get_version_exists());
+                        } else {
+                            error!("Failed to upgrade a weak pointer.");
                         }
-                        rt.block_on(download::download(forge_url, forge_path.clone(), 3));
-
-                        match Command::new(java_path)
-                            .arg("-jar")
-                            .arg(forge_path)
-                            .arg("--installClient")
-                            .arg(game_path)
-                            .spawn() {
-                            Ok(mut child) => {
-                                if let Err(e) = child.wait() {
-                                    error!("Failed to run forge installer. Reason: {e}.");
-                                }
-                            },
-                            Err(e) => error!("Failed to run forge installer. Reason: {e}."),
-                        }
-
-                        if let Err(e) = fs::remove_dir_all("temp") {
-                            error!("Failed to remove temp directory. Reason: {e}.");
-                        }
-                    });
+                        ui.hide().unwrap();
+                        return;
+                    } else {
+                        add_orig = false;
+                    }
                 }
 
                 let mut game_args = Vec::new();
@@ -260,12 +254,132 @@ pub async fn add_game_dialog(app_weak: sync::Weak<Mutex<App>>) -> Result<(), sli
                     jvm_args: jvm_args,
                     separated: ui.get_separated(),
                     game_type: game_url.game_type,
-                    version: game_url.version,
+                    version: game_url.version.clone(),
                     width: ui.get_config_width().to_string(),
                     xms: ui.get_xms().to_string(),
                     xmx: ui.get_xmx().to_string(),
                 };
-                app.add_game(&game);
+
+                // mod loader
+                match mod_type {
+                    0 => {
+                        // original
+                        if app.add_game(&game).is_none() {
+                            error!("Failed to add a game.");
+                        }
+                    },
+                    1 => {
+                        // forge
+                        let forge_index = ui.get_mod_index() as usize;
+                        let forge = app.download_forge_list[forge_index].clone();
+                        let forge_url = format!(
+                            "{mirror}/maven/net/minecraftforge/forge/{mcversion}-{version}/forge-{mcversion}-{version}-installer.jar",
+                            mirror = app.config.forge_source,
+                            mcversion = game_url.version,
+                            version = forge.version
+                        );
+                        let forge_path = format!("temp/forge-{mcversion}-{version}-installer.jar", mcversion = game_url.version, version = forge.version);
+
+                        if add_orig && app.add_game(&game).is_none() {
+                            error!("Failed to add a game.");
+                        }
+
+                        let forge_game = Game {
+                            version: game.version.clone() + "-forge-" + &forge.version,
+                            ..game
+                        };
+
+                        if app.add_game(&forge_game).is_none() {
+                            error!("Failed to add a game.");
+                        }
+
+                        let app_weak = app_weak.clone();
+                        let java_path = app.config.java_path.clone();
+                        let game_path = app.config.game_path.clone();
+                        thread::spawn(move || {
+                            let rt = tokio::runtime::Runtime::new().unwrap();
+                            let _tokio = rt.enter();
+
+                            if !fs::exists("temp").unwrap() {
+                                if let Err(e) = fs::create_dir("temp") {
+                                    error!("Failed to create temp directory. Reason: {e}.");
+                                }
+                            }
+                            if let Some(app) = app_weak.upgrade() {
+                                if let Ok(app) = app.lock() {
+                                    app.downloader.clear();
+
+                                    if let Err(e) = app.ui_weak.upgrade_in_event_loop(|ui| {
+                                        ui.set_progress(0.0);
+                                        ui.invoke_set_loading();
+                                        ui.invoke_state_set_downloading();
+                                    }) {
+                                        error!("Failed to upgrade a weak pointer. Reason: {e}.");
+                                        return;
+                                    }
+
+                                    if let Err(e) = app.downloader.add(forge_url, forge_path.clone()) {
+                                        error!("Failed to add a download task. Reason: {e}.");
+                                        return;
+                                    }
+
+                                    let app_ui_weak = app.ui_weak.clone();
+                                    let handle = app.downloader.update_progress_size(move |progress| {
+                                        app_ui_weak
+                                            .upgrade_in_event_loop(move |ui| {
+                                                ui.set_progress(progress as f32);
+                                            })
+                                            .unwrap();
+                                    });
+
+                                    while app.downloader.in_progress().unwrap() {
+                                        sleep(Duration::from_millis(10));
+                                        if app.downloader.has_error() {
+                                            error!("Failed to download forge.");
+                                            return;
+                                        }
+                                    }
+
+                                    drop(handle);
+
+                                    // 让用户手动安装
+                                    match Command::new(java_path)
+                                        .arg("-jar")
+                                        .arg(forge_path)
+                                        // .arg("--installClient")
+                                        // .arg(game_path)
+                                        .spawn() {
+                                        Ok(mut child) => {
+                                            if let Err(e) = app.ui_weak.upgrade_in_event_loop(|ui| {
+                                                ui.invoke_state_set_launching();
+                                            }) {
+                                                error!("Failed to upgrade a weak pointer. Reason: {e}.");
+                                                return;
+                                            }
+                                            if let Err(e) = child.wait() {
+                                                error!("Failed to run forge installer. Reason: {e}.");
+                                            }
+                                            app.ui_weak.upgrade_in_event_loop(|ui| ui.invoke_unset_loading()).unwrap();
+                                        },
+                                        Err(e) => {
+                                            error!("Failed to run forge installer. Reason: {e}.");
+                                            return;
+                                        },
+                                    }
+
+                                    if let Err(e) = fs::remove_dir_all("temp") {
+                                        error!("Failed to remove temp directory. Reason: {e}.");
+                                    }
+                                } else {
+                                    error!("Failed to lock a mutex.");
+                                }
+                            } else {
+                                error!("Failed to upgrade a weak pointer.");
+                            }
+                        });
+                    },
+                    _ => {},
+                }
             } else {
                 error!("Failed to lock a mutex.");
             }
