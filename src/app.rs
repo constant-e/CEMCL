@@ -239,6 +239,8 @@ impl App {
             })
             .ok()?;
 
+            self.downloader.clear()?;
+
         if acc_index >= self.acc_list.len() || game_index >= self.game_list.len() {
             warn!(
                 "Index out of bounds: the len is ({}, {}) but the index is ({acc_index}, {game_index}).",
