@@ -343,12 +343,20 @@ impl App {
             let java_path = self.game_list[game_index].java_path.clone();
 
             let (s, r) = sync::mpsc::channel();
+            let ui_weak = self.ui_weak.clone();
             thread::spawn(move || {
-                if let Ok(_child) = Command::new(java_path).args(cmd).spawn() {
-                    s.send(Some(())).unwrap();
-                } else {
-                    s.send(None).unwrap();
-                    error!("Failed to run command.");
+                match Command::new(java_path).args(cmd).spawn() {
+                    Ok(_) => {
+                        s.send(Some(())).unwrap();
+                    },
+                    Err(e) => {
+                        error!("Failed to run command. Reason: {e}");
+                        s.send(None).unwrap();
+                        ui_weak.upgrade_in_event_loop(move |ui| {
+                            let msg = ui.global::<Messages>().get_start_failed() + &format!("\n{e}");
+                            err_dialog(&msg);
+                        }).unwrap();
+                    }
                 }
             });
 

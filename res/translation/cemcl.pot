@@ -2,7 +2,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
-"POT-Creation-Date: 2025-03-02 01:59+0000\n"
+"POT-Creation-Date: 2025-03-08 10:58+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -237,9 +237,9 @@ msgctxt "AppWindow"
 msgid "Settings"
 msgstr ""
 
-#: appwindow.slint:140
+#: appwindow.slint:159
 msgctxt "AppWindow"
-msgid "Downloader"
+msgid "State"
 msgstr ""
 
 #: appwindow.slint:165
@@ -396,10 +396,15 @@ msgstr ""
 
 #: messages.slint:13
 msgctxt "Messages"
-msgid "Version already exists."
+msgid "Failed to start."
 msgstr ""
 
 #: messages.slint:14
+msgctxt "Messages"
+msgid "Version already exists."
+msgstr ""
+
+#: messages.slint:15
 msgctxt "Messages"
 msgid "Warning"
 msgstr ""

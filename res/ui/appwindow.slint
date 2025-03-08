@@ -136,11 +136,6 @@ export component AppWindow inherits Window {
                 clicked => { root.click-settings-btn() }
             }
 
-            downloader-btn := Button {
-                text: @tr("Downloader");
-                clicked => { root.click-downloader-btn() }
-            }
-
             progress-area := HorizontalBox {
                 padding: 0px;
                 visible: false;
@@ -158,6 +153,11 @@ export component AppWindow inherits Window {
                 Text {
                     vertical-alignment: center;
                     text: round(progress * 100) + "%";
+                }
+
+                downloader-btn := Button {
+                    text: @tr("State");
+                    clicked => { root.click-downloader-btn() }
                 }
             }
 

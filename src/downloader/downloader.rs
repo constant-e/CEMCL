@@ -340,6 +340,9 @@ impl Downloader {
             for task in tasks.iter() {
                 if let Ok(state) = task.state.lock() {
                     result.push((task.id, task.url.clone(), state.clone()));
+                } else {
+                    error!("Failed to lock a mutex.");
+                    return None;
                 }
             }
 

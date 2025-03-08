@@ -1,7 +1,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
-"POT-Creation-Date: 2025-03-02 01:59+0000\n"
+"POT-Creation-Date: 2025-03-08 10:58+0000\n"
 "PO-Revision-Date: 2024-10-02 11:53+0800\n"
 "Last-Translator:  <fmn_tzx@outlook.com>\n"
 "Language-Team: Chinese (simplified) <i18n-zh@googlegroups.com>\n"
@@ -236,10 +236,10 @@ msgctxt "AppWindow"
 msgid "Settings"
 msgstr "设置"
 
-#: appwindow.slint:140
+#: appwindow.slint:159
 msgctxt "AppWindow"
-msgid "Downloader"
-msgstr "下载管理器"
+msgid "State"
+msgstr "下载状态"
 
 #: appwindow.slint:165
 msgctxt "AppWindow"
@@ -395,10 +395,15 @@ msgstr "登录失败"
 
 #: messages.slint:13
 msgctxt "Messages"
+msgid "Failed to start."
+msgstr "启动失败"
+
+#: messages.slint:14
+msgctxt "Messages"
 msgid "Version already exists."
 msgstr "版本已存在"
 
-#: messages.slint:14
+#: messages.slint:15
 msgctxt "Messages"
 msgid "Warning"
 msgstr "警告"
@@ -567,3 +572,7 @@ msgstr "已完成"
 msgctxt "Downloader"
 msgid "State"
 msgstr "状态"
+
+#~ msgctxt "AppWindow"
+#~ msgid "Downloader"
+#~ msgstr "下载管理器"

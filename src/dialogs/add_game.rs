@@ -358,11 +358,19 @@ pub async fn add_game_dialog(app_weak: sync::Weak<Mutex<App>>) -> Result<(), sli
                                             }
                                             if let Err(e) = child.wait() {
                                                 error!("Failed to run forge installer. Reason: {e}.");
+                                                app.ui_weak.upgrade_in_event_loop(move |ui| {
+                                                    let msg = ui.global::<Messages>().get_start_failed() + &format!("\n{e}");
+                                                    msg_box::err_dialog(&msg);
+                                                }).unwrap();
                                             }
                                             app.ui_weak.upgrade_in_event_loop(|ui| ui.invoke_unset_loading()).unwrap();
                                         },
                                         Err(e) => {
                                             error!("Failed to run forge installer. Reason: {e}.");
+                                            app.ui_weak.upgrade_in_event_loop(move |ui| {
+                                                let msg = ui.global::<Messages>().get_start_failed() + &format!("\n{e}");
+                                                msg_box::err_dialog(&msg);
+                                            }).unwrap();
                                             return;
                                         },
                                     }
