@@ -14,8 +14,7 @@
 6. Remove the console for Windows
 7. Switch the UI style to fluent
 
-**Download Links:**
-[Linux](https://github.com/constant-e/CEMCL/releases/download/v0.2.2/cemcl-0.2.2-linux-x86_64.zip) |
+**Download Links:** [Linux](https://github.com/constant-e/CEMCL/releases/download/v0.2.2/cemcl-0.2.2-linux-x86_64.zip) |
 [macOS](https://github.com/constant-e/CEMCL/releases/download/v0.2.2/cemcl-0.2.2-macos-x86_64.zip) |
 [Windows](https://github.com/constant-e/CEMCL/releases/download/v0.2.2/cemcl-0.2.2-windows-x86_64.zip)
 
