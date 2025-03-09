@@ -14,8 +14,22 @@ use slint::{ComponentHandle, ModelRc, StandardListViewItem, VecModel};
 use crate::app::App;
 use crate::dialogs::msg_box;
 use crate::mc::Game;
-use crate::mc::download::{self, Forge, GameUrl, list_forge};
+use crate::mc::download::{self, list_forge, Fabric, Forge, GameUrl};
 use crate::{AddGameDialog, Messages};
+
+
+/// 获取ui用的download_fabric_list
+fn ui_fabric_list(fabric_list: &Vec<Fabric>) -> ModelRc<ModelRc<StandardListViewItem>> {
+    let mut ui_fabric_list: Vec<ModelRc<StandardListViewItem>> = Vec::new();
+    for fabric in fabric_list {
+        let version = StandardListViewItem::from(fabric.loader_version.as_str());
+        let model: rc::Rc<VecModel<StandardListViewItem>> =
+            rc::Rc::new(VecModel::from(vec![version.into(), StandardListViewItem::default()]));
+        let row: ModelRc<StandardListViewItem> = ModelRc::from(model);
+        ui_fabric_list.push(row);
+    }
+    ModelRc::from(rc::Rc::new(VecModel::from(ui_fabric_list)))
+}
 
 /// 获取ui用的download_forge_list
 fn ui_forge_list(forge_list: &Vec<Forge>) -> ModelRc<ModelRc<StandardListViewItem>> {
@@ -61,6 +75,8 @@ async fn load_mod(
                 warn!("Minecraft not selected.");
                 return;
             }
+
+            ui.set_mod_list(ModelRc::default());
             if index == 1 {
                 // forge
                 let version = &app.download_game_list[game_index].version;
@@ -68,9 +84,11 @@ async fn load_mod(
                 ui.set_mod_list(ui_forge_list(&app.download_forge_list));
             } else if index == 2 {
                 // fabric
+                let version = &app.download_game_list[game_index].version;
+                app.download_fabric_list = download::list_fabric(&version).await.unwrap();
+                ui.set_mod_list(ui_fabric_list(&app.download_fabric_list));
             } else {
                 app.download_forge_list.clear();
-                ui.set_mod_list(ModelRc::default());
             }
         } else {
             error!("Failed to lock a mutex.");
@@ -184,6 +202,9 @@ pub async fn add_game_dialog(app_weak: sync::Weak<Mutex<App>>) -> Result<(), sli
     ui.on_ok_clicked(move || {
         if let (Some(app), Some(ui)) = (app_weak.upgrade(), ui_weak_clone.upgrade()) {
             if let Ok(mut app) = app.lock() {
+                let rt = tokio::runtime::Runtime::new().unwrap();
+                let _tokio = rt.enter();
+
                 let index = ui.get_game_index() as usize;
                 let len = app.download_game_list.len();
                 if index >= len {
@@ -210,8 +231,6 @@ pub async fn add_game_dialog(app_weak: sync::Weak<Mutex<App>>) -> Result<(), sli
                         return;
                     };
 
-                    let rt = tokio::runtime::Runtime::new().unwrap();
-                    let _tokio = rt.enter();
                     rt.block_on(download::download(game_url.url.clone(), dir.clone() + "/" + &game_url.version + ".json", 3));
                 } else {
                     if mod_type == 0 {
@@ -385,6 +404,56 @@ pub async fn add_game_dialog(app_weak: sync::Weak<Mutex<App>>) -> Result<(), sli
                                 error!("Failed to upgrade a weak pointer.");
                             }
                         });
+                    },
+                    2 => {
+                        // fabric
+                        if add_orig && app.add_game(&game).is_none() {
+                            error!("Failed to add a game.");
+                        }
+
+                        let fabric_index = ui.get_mod_index() as usize;
+                        let fabric = app.download_fabric_list[fabric_index].clone();
+
+                        let name = format!("fabric-loader-{fabric_version}-{mc_version}",
+                            fabric_version = fabric.loader_version,
+                            mc_version = game.version,
+                        );
+
+                        let dir = format!("{mc_path}/versions/{name}",
+                            mc_path = app.config.game_path,
+                        );
+
+                        let result = match exists(&dir) {
+                            Ok(result) => result,
+                            Err(e) => {
+                                error!("Failed to check if {dir} exists. Reason: {e}.");
+                                return;
+                            }
+                        };
+
+                        if !result {
+                            if fs::create_dir_all(&dir).is_err() {
+                                error!("Failed to create {dir}.");
+                                return;
+                            };
+                        }
+
+                        let url = format!("https://meta.fabricmc.net/v2/versions/loader/{mc_version}/{fabric_version}/profile/json",
+                            fabric_version = fabric.loader_version,
+                            mc_version = game.version,
+                        );
+                        let path = format!("{dir}/{name}.json");
+
+                        rt.block_on(download::download(url, path, 3));
+
+                        let fabric_game = Game {
+                            version: name,
+                            ..game
+                        };
+
+                        if app.add_game(&fabric_game).is_none() {
+                            error!("Failed to add a game.");
+                        }
                     },
                     _ => {},
                 }

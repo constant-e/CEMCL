@@ -13,7 +13,7 @@ use slint::{ComponentHandle, ModelRc, StandardListViewItem, VecModel};
 use crate::dialogs::msg_box::{err_dialog, warn_dialog};
 use crate::downloader::downloader::Downloader;
 use crate::file_tools::list_dir;
-use crate::mc::download::{Forge, GameUrl};
+use crate::mc::download::{Fabric, Forge, GameUrl};
 use crate::mc::{Account, Game, launch};
 use crate::{AppWindow, Messages};
 
@@ -84,6 +84,7 @@ pub struct App {
     pub acc_list: Vec<Account>,
     pub config: Config,
     pub device_code: String,
+    pub download_fabric_list: Vec<Fabric>,
     pub download_forge_list: Vec<Forge>,
     pub download_game_list: Vec<GameUrl>,
     pub downloader: Downloader,
@@ -658,6 +659,7 @@ impl Default for App {
             acc_list: Vec::new(),
             config: Config::default(),
             device_code: String::new(),
+            download_fabric_list: Vec::new(),
             download_forge_list: Vec::new(),
             download_game_list: Vec::new(),
             downloader: Downloader::default(),

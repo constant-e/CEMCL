@@ -21,6 +21,13 @@ pub struct GameUrl {
     pub version: String,
 }
 
+/// Fabric信息
+#[derive(Clone)]
+pub struct Fabric {
+    pub loader_version: String,
+    pub intermediary_version: String,
+}
+
 /// Forge信息
 #[derive(Clone)]
 pub struct Forge {
@@ -87,6 +94,34 @@ pub fn download_assets(
     Ok(())
 }
 
+/// 下载Fabric
+fn download_fabric_lib(
+    base_path: &String,
+    path: &String,
+    node: &Value,
+    mirror: &String,
+    downloader: &Downloader,
+) -> Result<(), std::io::Error> {
+    let local_path = base_path.clone() + "/" + path;
+    if !exists(&local_path)? {
+        let dir = get_parent_dir(&local_path);
+        if !exists(&dir)? {
+            fs::create_dir_all(&dir)?;
+        }
+
+        let url = mirror.clone() + "/" + path;
+
+        if let Err(e) = downloader.add(url.clone(), local_path.clone()) {
+            return Err(std::io::Error::new(
+                std::io::ErrorKind::Other,
+                format!("{e}"),
+            ));
+        }
+    }
+
+    Ok(())
+}
+
 /// 下载library
 fn download_lib(
     local_path: &String,
@@ -99,13 +134,15 @@ fn download_lib(
         if !exists(&dir)? {
             fs::create_dir_all(&dir)?;
         }
-        let url = node["url"]
+        let mut url = node["url"]
             .as_str()
             .ok_or(std::io::Error::new(
                 std::io::ErrorKind::InvalidData,
                 "Invaild data",
-            ))?
-            .replace("https://libraries.minecraft.net", &mirror);
+            ))?.to_string();
+
+        url = url.replace("https://libraries.minecraft.net", &mirror);
+
         if let Err(e) = downloader.add(url.clone(), local_path.clone()) {
             return Err(std::io::Error::new(
                 std::io::ErrorKind::Other,
@@ -123,6 +160,7 @@ pub fn download_libraries(
     path: &str,
     game_dir: &str,
     mirror: &str,
+    fabric_mirror: &str,
     downloader: &Downloader,
 ) -> Result<Vec<(String, String, String)>, std::io::Error> {
     let mut c = 0;
@@ -197,6 +235,28 @@ pub fn download_libraries(
             if name.contains("natives") {
                 result.push((natives_dir, local_path, id.to_string()));
             }
+        } else {
+            if let Some(url) = node["url"].as_str() {
+                if url == "https://maven.fabricmc.net/" {
+                    // Fabric
+                    let mut path = String::new();
+                    let name = node["name"].as_str().ok_or(std::io::Error::new(
+                        std::io::ErrorKind::InvalidData,
+                        "Invaild data",
+                    ))?;
+                    let split_1: Vec<&str> = name.split(":").collect();
+                    let split_2: Vec<&str> = split_1[0].split(".").collect();
+                    for name in split_2 {
+                        path = path + name + "/";
+                    }
+                    for i in 1..split_1.len() {
+                        let name = split_1[i];
+                        path = path + name + "/";
+                    }
+                    path = path + split_1[1] + "-" + split_1[2] + ".jar";
+                    download_fabric_lib(&lib_dir, &path, &node, &fabric_mirror.to_string(), downloader)?;
+                }
+            }
         }
         c += 1;
     }
@@ -247,6 +307,29 @@ pub fn extract_lib(
     fs::remove_dir_all("temp".to_string() + &id.to_string())
 }
 
+/// 获取Fabric列表
+pub async fn list_fabric(mcversion: &String) -> Option<Vec<Fabric>> {
+    let mut fabric_list = Vec::new();
+
+    let url = String::from("https://meta.fabricmc.net/v2/versions/loader/") + mcversion;
+    let text = reqwest::get(url).await.ok()?.text().await.ok()?;
+    let json = serde_json::from_str::<Value>(&text).ok()?;
+
+    for version in json.as_array()? {
+        let loader_version = version["loader"]["version"].as_str()?.to_string();
+        let intermediary_version = version["intermediary"]["version"].as_str()?.to_string();
+
+        let fabric = Fabric {
+            loader_version: loader_version,
+            intermediary_version: intermediary_version,
+        };
+
+        fabric_list.push(fabric);
+    }
+
+    Some(fabric_list)
+}
+
 /// 获取Forge列表 官方没有json，使用BMCLAPI2
 pub async fn list_forge(mcversion: &String) -> Option<Vec<Forge>> {
     let mut forge_list = Vec::new();
@@ -289,9 +372,14 @@ pub async fn list_game(path: String) -> Option<Vec<GameUrl>> {
         .text()
         .await
         .ok()?;
-    // // 储存json，与管启一致
+
+    // 储存json，与官启一致
+    let path = path + "/versions";
+    if !exists(&path).ok()? {
+        fs::create_dir_all(&path).ok()?;
+    }
     fs::write(
-        String::from(path) + "/versions/version_manifest_v2.json",
+        String::from(path) + "/version_manifest_v2.json",
         &text,
     )
     .ok()?;

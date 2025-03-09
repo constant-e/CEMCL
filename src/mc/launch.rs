@@ -109,12 +109,27 @@ fn get_classpaths(n: &Value, game_path: &String) -> Option<Vec<String>> {
 
         if let Some(p) = item["downloads"]["artifact"]["path"].as_str() {
             temp += p;
-        } else {
+        } else if item["downloads"]["classifiers"].is_object() {
             // classifers for old versions
             let os = if env::OS == "macOS" { "osx" } else { env::OS };
             let arch = if env::ARCH.contains("64") { "64" } else { "32" };
             let key = item["natives"][os].as_str()?.replace("${arch}", arch);
             temp += item["downloads"]["classifiers"][&key]["path"].as_str()?;
+        } else {
+            // fabric
+            let mut path = String::new();
+            let name = item["name"].as_str()?;
+            let split_1: Vec<&str> = name.split(":").collect();
+            let split_2: Vec<&str> = split_1[0].split(".").collect();
+            for name in split_2 {
+                path = path + name + "/";
+            }
+            for i in 1..split_1.len() {
+                let name = split_1[i];
+                path = path + name + "/";
+            }
+            path = path + split_1[1] + "-" + split_1[2] + ".jar";
+            temp += &path;
         }
 
         result.push(temp);
@@ -136,15 +151,22 @@ pub async fn get_launch_command(
     // 读取json
     let cfg_path = dir.clone() + "/" + game.version.as_str() + ".json";
     if let Ok(json) = serde_json::from_str::<Value>(fs::read_to_string(&cfg_path).ok()?.as_str()) {
-        // assetIndex
+        // mod继承的参数
         let asset_index: String;
-        // forge需要提前写入的参数
+        let asset_index_url: String;
+        let mc_url: String;
+
+        // mod需要额外写入的参数
         let mut classpaths: Vec<String> = Vec::new();
         let mut game_args: Vec<String> = game.game_args.clone();
         let mut jvm_args: Vec<String> = game.jvm_args.clone();
-        // 判断inheritsFrom（forge需要）
+        let mut libraries_json = json["libraries"].clone();
+        // 判断inheritsFrom（mod需要）
         if json["inheritsFrom"].is_null() {
-            // 无forge
+            // 无mod loader
+            asset_index_url = json["assetIndex"]["url"].as_str()?.to_string();
+            mc_url = json["downloads"]["client"]["url"].as_str()?.to_string();
+            classpaths.push(dir.clone() + "/" + game.version.as_str() + ".jar"); // 游戏本身
             if let Some((mut temp_game_args, mut temp_jvm_args)) = get_args(&json) {
                 game_args.append(&mut temp_game_args);
                 jvm_args.append(&mut temp_jvm_args);
@@ -159,13 +181,17 @@ pub async fn get_launch_command(
                 return None;
             }
         } else {
-            // 有forge
+            // 有mod loader
             if let Some(parent_version) = json["inheritsFrom"].as_str() {
                 let parent_path = game_path.clone() + "/versions/" + &parent_version;
-                if exists(&parent_path).ok()? {
-                    if let Ok(parent) = serde_json::from_str::<Value>(
-                        &fs::read_to_string(&parent_path).ok()?.as_str(),
+                let parent_json_path = parent_path.clone() + "/" + parent_version + ".json";
+                if exists(&parent_json_path).ok()? {
+                    if let Ok(mut parent) = serde_json::from_str::<Value>(
+                        &fs::read_to_string(&parent_json_path).ok()?.as_str(),
                     ) {
+                        asset_index_url = parent["assetIndex"]["url"].as_str()?.to_string();
+                        mc_url = parent["downloads"]["client"]["url"].as_str()?.to_string();
+                        libraries_json.as_array_mut()?.append(parent["libraries"].as_array_mut()?);
                         if let Some(index) = parent["assetIndex"]["id"].as_str() {
                             asset_index = index.into();
                         } else {
@@ -187,6 +213,7 @@ pub async fn get_launch_command(
                             return None;
                         }
                         // classpaths列表
+                        classpaths.push(parent_path.clone() + "/" + parent_version + ".jar"); // 游戏本身
                         if let Some(vector) = get_classpaths(&parent["libraries"], game_path) {
                             classpaths = vector;
                         } else {
@@ -199,6 +226,7 @@ pub async fn get_launch_command(
                     }
                 } else {
                     // TODO: 下载原版
+                    error!("Failed to find {parent_path}.");
                     return None;
                 }
             } else {
@@ -214,7 +242,6 @@ pub async fn get_launch_command(
             error!("Failed to load classpaths.");
             return None;
         }
-        classpaths.push(dir.clone() + "/" + game.version.as_str() + ".jar"); // 游戏本身
 
         // classpaths列表去重，获得最终字符串
         let sep = if env::OS == "windows" { ";" } else { ":" };
@@ -284,11 +311,11 @@ pub async fn get_launch_command(
 
         // 处理依赖
         let game_download = GameDownload {
-            asset_index: asset_index,
-            asset_index_url: json["assetIndex"]["url"].as_str()?.to_string(),
-            dir: dir,
-            libraries_json: json["libraries"].clone(),
-            mc_url: json["downloads"]["client"]["url"].as_str()?.to_string(),
+            asset_index,
+            asset_index_url,
+            dir,
+            libraries_json,
+            mc_url,
             version: game.version.clone(),
         };
 
@@ -344,6 +371,7 @@ pub fn download_all(
         &config.game_path,
         &game.dir,
         &config.libraries_source,
+        &config.fabric_source,
         downloader,
     )?;
 
