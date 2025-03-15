@@ -164,8 +164,14 @@ pub async fn get_launch_command(
         // 判断inheritsFrom（mod需要）
         if json["inheritsFrom"].is_null() {
             // 无mod loader
-            asset_index_url = json["assetIndex"]["url"].as_str().ok_or(std::io::Error::other("Failed to get asset url."))?.to_string();
-            mc_url = json["downloads"]["client"]["url"].as_str().ok_or(std::io::Error::other("Failed to get mc url."))?.to_string();
+            asset_index_url = json["assetIndex"]["url"]
+                .as_str()
+                .ok_or(std::io::Error::other("Failed to get asset url."))?
+                .to_string();
+            mc_url = json["downloads"]["client"]["url"]
+                .as_str()
+                .ok_or(std::io::Error::other("Failed to get mc url."))?
+                .to_string();
             classpaths.push(dir.clone() + "/" + game.version.as_str() + ".jar"); // 游戏本身
             if let Some((mut temp_game_args, mut temp_jvm_args)) = get_args(&json) {
                 game_args.append(&mut temp_game_args);
@@ -178,7 +184,9 @@ pub async fn get_launch_command(
                 }
             } else {
                 error!("Failed to get game arguments and jvm arguments.");
-                return Err(std::io::Error::other("Failed to get game arguments and jvm arguments."));
+                return Err(std::io::Error::other(
+                    "Failed to get game arguments and jvm arguments.",
+                ));
             }
         } else {
             // 有mod loader
@@ -189,11 +197,22 @@ pub async fn get_launch_command(
                     if let Ok(mut parent) = serde_json::from_str::<Value>(
                         &fs::read_to_string(&parent_json_path)?.as_str(),
                     ) {
-                        asset_index_url = parent["assetIndex"]["url"].as_str().ok_or(std::io::Error::other("Failed to get asset url."))?.to_string();
-                        mc_url = parent["downloads"]["client"]["url"].as_str().ok_or(std::io::Error::other("Failed to get mc url."))?.to_string();
-                        libraries_json.as_array_mut()
+                        asset_index_url = parent["assetIndex"]["url"]
+                            .as_str()
+                            .ok_or(std::io::Error::other("Failed to get asset url."))?
+                            .to_string();
+                        mc_url = parent["downloads"]["client"]["url"]
+                            .as_str()
+                            .ok_or(std::io::Error::other("Failed to get mc url."))?
+                            .to_string();
+                        libraries_json
+                            .as_array_mut()
                             .ok_or(std::io::Error::other("Failed to library list."))?
-                            .append(parent["libraries"].as_array_mut().ok_or(std::io::Error::other("Failed to library list."))?);
+                            .append(
+                                parent["libraries"]
+                                    .as_array_mut()
+                                    .ok_or(std::io::Error::other("Failed to library list."))?,
+                            );
                         if let Some(index) = parent["assetIndex"]["id"].as_str() {
                             asset_index = index.into();
                         } else {
@@ -212,7 +231,9 @@ pub async fn get_launch_command(
                             jvm_args.append(&mut self_jvm_args);
                         } else {
                             error!("Failed to get arguments from {cfg_path}.");
-                            return Err(std::io::Error::other(format!("Failed to get arguments from {cfg_path}.")));
+                            return Err(std::io::Error::other(format!(
+                                "Failed to get arguments from {cfg_path}."
+                            )));
                         }
                         // classpaths列表
                         classpaths.push(parent_path.clone() + "/" + parent_version + ".jar"); // 游戏本身
@@ -224,12 +245,16 @@ pub async fn get_launch_command(
                         }
                     } else {
                         error!("Failed to load {parent_path}.");
-                        return Err(std::io::Error::other(format!("Failed to load {parent_path}.")));
+                        return Err(std::io::Error::other(format!(
+                            "Failed to load {parent_path}."
+                        )));
                     }
                 } else {
                     // TODO: 下载原版
                     error!("Failed to find {parent_path}.");
-                    return Err(std::io::Error::other(format!("Failed to find {parent_path}.")));
+                    return Err(std::io::Error::other(format!(
+                        "Failed to find {parent_path}."
+                    )));
                 }
             } else {
                 error!("Failed to get inheritsFrom.");

@@ -139,7 +139,8 @@ fn download_lib(
             .ok_or(std::io::Error::new(
                 std::io::ErrorKind::InvalidData,
                 "Invaild data",
-            ))?.to_string();
+            ))?
+            .to_string();
 
         url = url.replace("https://libraries.minecraft.net", &mirror);
 
@@ -254,7 +255,13 @@ pub fn download_libraries(
                         path = path + name + "/";
                     }
                     path = path + split_1[1] + "-" + split_1[2] + ".jar";
-                    download_fabric_lib(&lib_dir, &path, &node, &fabric_mirror.to_string(), downloader)?;
+                    download_fabric_lib(
+                        &lib_dir,
+                        &path,
+                        &node,
+                        &fabric_mirror.to_string(),
+                        downloader,
+                    )?;
                 }
             }
         }
@@ -378,11 +385,7 @@ pub async fn list_game(path: String) -> Option<Vec<GameUrl>> {
     if !exists(&path).ok()? {
         fs::create_dir_all(&path).ok()?;
     }
-    fs::write(
-        String::from(path) + "/version_manifest_v2.json",
-        &text,
-    )
-    .ok()?;
+    fs::write(String::from(path) + "/version_manifest_v2.json", &text).ok()?;
 
     // 开始解析
     let json = serde_json::from_str::<Value>(&text).ok()?;

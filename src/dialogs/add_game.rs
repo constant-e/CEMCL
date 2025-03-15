@@ -14,17 +14,18 @@ use slint::{ComponentHandle, ModelRc, StandardListViewItem, VecModel};
 use crate::app::App;
 use crate::dialogs::msg_box;
 use crate::mc::Game;
-use crate::mc::download::{self, list_forge, Fabric, Forge, GameUrl};
+use crate::mc::download::{self, Fabric, Forge, GameUrl, list_forge};
 use crate::{AddGameDialog, Messages};
-
 
 /// 获取ui用的download_fabric_list
 fn ui_fabric_list(fabric_list: &Vec<Fabric>) -> ModelRc<ModelRc<StandardListViewItem>> {
     let mut ui_fabric_list: Vec<ModelRc<StandardListViewItem>> = Vec::new();
     for fabric in fabric_list {
         let version = StandardListViewItem::from(fabric.loader_version.as_str());
-        let model: rc::Rc<VecModel<StandardListViewItem>> =
-            rc::Rc::new(VecModel::from(vec![version.into(), StandardListViewItem::default()]));
+        let model: rc::Rc<VecModel<StandardListViewItem>> = rc::Rc::new(VecModel::from(vec![
+            version.into(),
+            StandardListViewItem::default(),
+        ]));
         let row: ModelRc<StandardListViewItem> = ModelRc::from(model);
         ui_fabric_list.push(row);
     }

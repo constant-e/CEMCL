@@ -240,7 +240,7 @@ impl App {
             })
             .ok()?;
 
-            self.downloader.clear()?;
+        self.downloader.clear()?;
 
         if acc_index >= self.acc_list.len() || game_index >= self.game_list.len() {
             warn!(
@@ -284,7 +284,8 @@ impl App {
             &self.game_list[game_index],
             &self.config,
         )
-        .await {
+        .await
+        {
             Ok((cmd, game_download)) => {
                 if cfg!(debug_assertions) {
                     let mut str = self.game_list[game_index].java_path.clone() + " ";
@@ -294,7 +295,7 @@ impl App {
                     }
                     debug!("{str}");
                 }
-    
+
                 if let Err(e) = self
                     .ui_weak
                     .upgrade_in_event_loop(|ui| ui.invoke_state_set_downloading())
@@ -308,7 +309,7 @@ impl App {
                         .unwrap();
                     return None;
                 }
-    
+
                 if let Err(e) = launch::download_all(
                     &self.config,
                     &game_download,
@@ -319,14 +320,15 @@ impl App {
                     self.downloader.clear()?;
                     self.ui_weak
                         .upgrade_in_event_loop(move |ui| {
-                            let msg = ui.global::<Messages>().get_download_failed() + &format!("{e}");
+                            let msg =
+                                ui.global::<Messages>().get_download_failed() + &format!("{e}");
                             err_dialog(&msg);
                             ui.invoke_unset_loading();
                         })
                         .unwrap();
                     return None;
                 }
-    
+
                 if let Err(e) = self
                     .ui_weak
                     .upgrade_in_event_loop(|ui| ui.invoke_state_set_launching())
@@ -340,27 +342,28 @@ impl App {
                         .unwrap();
                     return None;
                 }
-    
+
                 let java_path = self.game_list[game_index].java_path.clone();
-    
+
                 let (s, r) = sync::mpsc::channel();
                 let ui_weak = self.ui_weak.clone();
-                thread::spawn(move || {
-                    match Command::new(java_path).args(cmd).spawn() {
-                        Ok(_) => {
-                            s.send(Some(())).unwrap();
-                        },
-                        Err(e) => {
-                            error!("Failed to run command. Reason: {e}");
-                            s.send(None).unwrap();
-                            ui_weak.upgrade_in_event_loop(move |ui| {
-                                let msg = ui.global::<Messages>().get_start_failed() + &format!("\n{e}");
+                thread::spawn(move || match Command::new(java_path).args(cmd).spawn() {
+                    Ok(_) => {
+                        s.send(Some(())).unwrap();
+                    }
+                    Err(e) => {
+                        error!("Failed to run command. Reason: {e}");
+                        s.send(None).unwrap();
+                        ui_weak
+                            .upgrade_in_event_loop(move |ui| {
+                                let msg =
+                                    ui.global::<Messages>().get_start_failed() + &format!("\n{e}");
                                 err_dialog(&msg);
-                            }).unwrap();
-                        }
+                            })
+                            .unwrap();
                     }
                 });
-    
+
                 if r.recv().unwrap().is_some() {
                     if self.config.close_after_launch {
                         self.ui_weak
@@ -373,7 +376,7 @@ impl App {
                     })
                     .ok()?;
                 }
-            },
+            }
             Err(e) => {
                 error!("Failed to get launch command. Reason: {e}");
                 self.ui_weak
