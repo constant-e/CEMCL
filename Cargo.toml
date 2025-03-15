@@ -7,15 +7,15 @@ license = "Apache 2.0"
 
 [dependencies]
 clipboard = "0.5.0"
-env_logger = "0.11.6"
+env_logger = "0.11.7"
 futures = "0.3.31"
 log = "0.4.26"
-reqwest = { version = "0.12.12", features = ["json", "stream"] }
-serde_json = "1.0.139"
+reqwest = { version = "0.12.14", features = ["json", "stream"] }
+serde_json = "1.0.140"
 slint = "1.10.0"
-tokio = { version = "1.43.0", features = ["full"] }
-uuid = { version = "1.15.1", features = ["v4", "fast-rng", "macro-diagnostics"] }
-webbrowser = "1.0.3"
+tokio = { version = "1.44.1", features = ["full"] }
+uuid = { version = "1.16.0", features = ["v4", "fast-rng", "macro-diagnostics"] }
+webbrowser = "1.0.4"
 zip = "2.2.3"
 
 [build-dependencies]

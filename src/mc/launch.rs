@@ -143,14 +143,14 @@ pub async fn get_launch_command(
     account: &Account,
     game: &Game,
     config: &Config,
-) -> Option<(Vec<String>, GameDownload)> {
+) -> Result<(Vec<String>, GameDownload), std::io::Error> {
     let mut result: Vec<String> = Vec::new();
     let game_path = &config.game_path;
     let dir = game_path.clone() + "/versions/" + game.version.as_str(); // 游戏目录
 
     // 读取json
     let cfg_path = dir.clone() + "/" + game.version.as_str() + ".json";
-    if let Ok(json) = serde_json::from_str::<Value>(fs::read_to_string(&cfg_path).ok()?.as_str()) {
+    if let Ok(json) = serde_json::from_str::<Value>(fs::read_to_string(&cfg_path)?.as_str()) {
         // mod继承的参数
         let asset_index: String;
         let asset_index_url: String;
@@ -164,8 +164,8 @@ pub async fn get_launch_command(
         // 判断inheritsFrom（mod需要）
         if json["inheritsFrom"].is_null() {
             // 无mod loader
-            asset_index_url = json["assetIndex"]["url"].as_str()?.to_string();
-            mc_url = json["downloads"]["client"]["url"].as_str()?.to_string();
+            asset_index_url = json["assetIndex"]["url"].as_str().ok_or(std::io::Error::other("Failed to get asset url."))?.to_string();
+            mc_url = json["downloads"]["client"]["url"].as_str().ok_or(std::io::Error::other("Failed to get mc url."))?.to_string();
             classpaths.push(dir.clone() + "/" + game.version.as_str() + ".jar"); // 游戏本身
             if let Some((mut temp_game_args, mut temp_jvm_args)) = get_args(&json) {
                 game_args.append(&mut temp_game_args);
@@ -174,29 +174,31 @@ pub async fn get_launch_command(
                     asset_index = index.into();
                 } else {
                     error!("Failed to get assetIndex.");
-                    return None;
+                    return Err(std::io::Error::other("Failed to get assetIndex."));
                 }
             } else {
                 error!("Failed to get game arguments and jvm arguments.");
-                return None;
+                return Err(std::io::Error::other("Failed to get game arguments and jvm arguments."));
             }
         } else {
             // 有mod loader
             if let Some(parent_version) = json["inheritsFrom"].as_str() {
                 let parent_path = game_path.clone() + "/versions/" + &parent_version;
                 let parent_json_path = parent_path.clone() + "/" + parent_version + ".json";
-                if exists(&parent_json_path).ok()? {
+                if exists(&parent_json_path)? {
                     if let Ok(mut parent) = serde_json::from_str::<Value>(
-                        &fs::read_to_string(&parent_json_path).ok()?.as_str(),
+                        &fs::read_to_string(&parent_json_path)?.as_str(),
                     ) {
-                        asset_index_url = parent["assetIndex"]["url"].as_str()?.to_string();
-                        mc_url = parent["downloads"]["client"]["url"].as_str()?.to_string();
-                        libraries_json.as_array_mut()?.append(parent["libraries"].as_array_mut()?);
+                        asset_index_url = parent["assetIndex"]["url"].as_str().ok_or(std::io::Error::other("Failed to get asset url."))?.to_string();
+                        mc_url = parent["downloads"]["client"]["url"].as_str().ok_or(std::io::Error::other("Failed to get mc url."))?.to_string();
+                        libraries_json.as_array_mut()
+                            .ok_or(std::io::Error::other("Failed to library list."))?
+                            .append(parent["libraries"].as_array_mut().ok_or(std::io::Error::other("Failed to library list."))?);
                         if let Some(index) = parent["assetIndex"]["id"].as_str() {
                             asset_index = index.into();
                         } else {
                             error!("Failed to get assetIndex.");
-                            return None;
+                            return Err(std::io::Error::other("Failed to get assetIndex."));
                         }
                         // MC和JVM的参数
                         if let (
@@ -210,7 +212,7 @@ pub async fn get_launch_command(
                             jvm_args.append(&mut self_jvm_args);
                         } else {
                             error!("Failed to get arguments from {cfg_path}.");
-                            return None;
+                            return Err(std::io::Error::other(format!("Failed to get arguments from {cfg_path}.")));
                         }
                         // classpaths列表
                         classpaths.push(parent_path.clone() + "/" + parent_version + ".jar"); // 游戏本身
@@ -218,20 +220,20 @@ pub async fn get_launch_command(
                             classpaths = vector;
                         } else {
                             error!("Failed to load classpaths.");
-                            return None;
+                            return Err(std::io::Error::other("Failed to load classpaths."));
                         }
                     } else {
                         error!("Failed to load {parent_path}.");
-                        return None;
+                        return Err(std::io::Error::other(format!("Failed to load {parent_path}.")));
                     }
                 } else {
                     // TODO: 下载原版
                     error!("Failed to find {parent_path}.");
-                    return None;
+                    return Err(std::io::Error::other(format!("Failed to find {parent_path}.")));
                 }
             } else {
                 error!("Failed to get inheritsFrom.");
-                return None;
+                return Err(std::io::Error::other("Failed to get inheritsFrom."));
             }
         }
 
@@ -240,7 +242,7 @@ pub async fn get_launch_command(
             classpaths.append(&mut vector);
         } else {
             error!("Failed to load classpaths.");
-            return None;
+            return Err(std::io::Error::other("Failed to load classpaths."));
         }
 
         // classpaths列表去重，获得最终字符串
@@ -275,7 +277,7 @@ pub async fn get_launch_command(
             result.push(main_class.to_string());
         } else {
             error!("Failed to get mainClass.");
-            return None;
+            return Err(std::io::Error::other("Failed to get mainClass."));
         }
         result.append(&mut game_args);
 
@@ -319,10 +321,10 @@ pub async fn get_launch_command(
             version: game.version.clone(),
         };
 
-        Some((result, game_download))
+        Ok((result, game_download))
     } else {
         error!("Failed to load {cfg_path}.");
-        None
+        Err(std::io::Error::other(format!("Failed to load {cfg_path}.")))
     }
 }
 
