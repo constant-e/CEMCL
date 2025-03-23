@@ -10,7 +10,7 @@ constant-e's Minecraft: Java Edition Launcher
 使用Rust和Slint开发的Minecraft Java版启动器
 
 ## 下载
-目前存在Release、CI版两种版本。
+**强烈建议从最新源代码构建。**
 
 ### Release版
 Release版是相对稳定的版本，适合大多数用户。
@@ -23,7 +23,7 @@ CI（持续集成）版是在GitHub中提交commit后，由GitHub Actions自动�
 前往[GitHub Actions](https://github.com/constant-e/CEMCL/actions)下载CI版。
 
 ## 构建
-1. 安装Rust和Qt
+1. 安装Rust和Qt（若需要Qt后端）
 2. 克隆此仓库
    ```sh
    git clone https://github.com/constant-e/CEMCL.git

@@ -10,10 +10,10 @@ Some of the functions are still under development.
 A Minecraft: Java Edition launcher using Rust and Slint.
 
 ## Downloads
-There are two kinds of version, Release and CI.
+**It is strongly recommended to build CEMCL from the latest source code.**
 
 ### Release
-Release versions are stable versions, which is recommended for most of the users.
+Release versions are stable versions which are recommended for most of the users.
 1. Download from [Github](https://github.com/constant-e/CEMCL/releases)
 2. Download from [website](https://constant-e.github.io/CEMCL/en/download.html)
 
@@ -23,7 +23,7 @@ CI (Continuous Integration) versions are automatically built by GitHub Actions a
 Go to [GitHub Actions](https://github.com/constant-e/CEMCL/actions) to download CI versions.
 
 ## Build
-1. Install Rust and Qt
+1. Install Rust and Qt if you want a Qt backend
 2. Clone this repository
    ```sh
    git clone https://github.com/constant-e/CEMCL.git
@@ -53,7 +53,7 @@ Run `update_tranlations.sh` to update the .po files.
 7. Others (More log, UI improvements, etc.)
 
 ## Credits
-1. 1. [BMCLAPI2](https://bmclapidoc.bangbang93.com/): Forge downloading
+1. [BMCLAPI2](https://bmclapidoc.bangbang93.com/): Forge downloading
 2. [clipboard](https://crates.io/crates/clipboard): clipboard
 3. [env_logger](https://crates.io/crates/env_logger): logs
 4. [futures](https://crates.io/crates/futures): async
