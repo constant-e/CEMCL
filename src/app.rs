@@ -4,6 +4,8 @@ use std::fs::{self, exists};
 use std::io::ErrorKind;
 use std::process::Command;
 use std::rc::Rc;
+use std::sync::Arc;
+use std::sync::atomic::AtomicBool;
 use std::{sync, thread};
 
 use log::{debug, error, warn};
@@ -310,13 +312,22 @@ impl App {
                     return None;
                 }
 
-                if let Err(e) = launch::download_all(
-                    &self.config,
-                    &game_download,
-                    &self.downloader,
-                    self.ui_weak.clone(),
-                ) {
+                // UI进度条
+                let ui_weak_clone = self.ui_weak.clone();
+                let stop = Arc::new(AtomicBool::new(false));
+                self.downloader
+                    .update_progress(stop.clone(), move |progress| {
+                        ui_weak_clone
+                            .upgrade_in_event_loop(move |ui| {
+                                ui.set_progress(progress as f32);
+                            })
+                            .unwrap();
+                    });
+
+                if let Err(e) = launch::download_all(&self.config, &game_download, &self.downloader)
+                {
                     error!("Failed to download. Reason: {e}");
+                    stop.store(true, sync::atomic::Ordering::Relaxed);
                     self.downloader.clear()?;
                     self.ui_weak
                         .upgrade_in_event_loop(move |ui| {
@@ -328,6 +339,7 @@ impl App {
                         .unwrap();
                     return None;
                 }
+                stop.store(true, sync::atomic::Ordering::Relaxed);
 
                 if let Err(e) = self
                     .ui_weak

@@ -357,17 +357,7 @@ pub fn download_all(
     config: &Config,
     game: &GameDownload,
     downloader: &Downloader,
-    app_ui_weak: slint::Weak<crate::AppWindow>,
 ) -> Result<(), std::io::Error> {
-    // 刷新ui进度条
-    let handle = downloader.update_progress(move |progress| {
-        app_ui_weak
-            .upgrade_in_event_loop(move |ui| {
-                ui.set_progress(progress as f32);
-            })
-            .unwrap();
-    });
-
     // 处理依赖
 
     // json first
@@ -441,8 +431,6 @@ pub fn download_all(
     for (natives_dir, local_path, id) in natives {
         download::extract_lib(&natives_dir, &local_path, &id)?;
     }
-
-    drop(handle);
 
     Ok(())
 }

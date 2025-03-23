@@ -1,5 +1,6 @@
 use futures::StreamExt;
 use std::io::Write;
+use std::sync::atomic::AtomicBool;
 use std::sync::{Arc, Mutex, mpsc};
 use std::thread::sleep;
 use std::time::Duration;
@@ -391,11 +392,12 @@ impl Downloader {
     // TODO: use size instead of task number
     pub fn update_progress(
         &self,
+        stop: Arc<AtomicBool>,
         f: impl Fn(f64) -> () + 'static + Send,
     ) -> thread::JoinHandle<()> {
         let tasks = self.tasks.clone();
         thread::spawn(move || {
-            loop {
+            while !stop.load(std::sync::atomic::Ordering::Relaxed) {
                 if let Ok(tasks) = tasks.lock() {
                     let mut downloaded = 0.0;
                     let mut total = 0.0;
@@ -438,11 +440,12 @@ impl Downloader {
 
     pub fn update_progress_size(
         &self,
+        stop: Arc<AtomicBool>,
         f: impl Fn(f64) -> () + 'static + Send,
     ) -> thread::JoinHandle<()> {
         let tasks = self.tasks.clone();
         thread::spawn(move || {
-            loop {
+            while !stop.load(std::sync::atomic::Ordering::Relaxed) {
                 if let Ok(tasks) = tasks.lock() {
                     let mut downloaded = 0.0;
                     let mut total = 0.0;

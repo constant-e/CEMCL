@@ -15,7 +15,7 @@ pub fn downloader(app_weak: sync::Weak<Mutex<App>>) -> Result<(), slint::Platfor
 
     // TODO: Update the UI
     if let Some(app) = app_weak.upgrade() {
-        if let Ok(app) = app.try_lock() {
+        if let Ok(app) = app.lock() {
             if let (Some(ui), Some(tasks)) = (ui_weak.upgrade(), app.downloader.get_tasks()) {
                 let mut ui_tasks_in_process: Vec<ModelRc<StandardListViewItem>> = Vec::new();
                 let mut ui_tasks_finished: Vec<ModelRc<StandardListViewItem>> = Vec::new();

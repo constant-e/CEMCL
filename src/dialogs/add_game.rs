@@ -3,7 +3,8 @@
 use std::fs::exists;
 use std::process::Command;
 use std::rc;
-use std::sync::Mutex;
+use std::sync::atomic::AtomicBool;
+use std::sync::{Arc, Mutex};
 use std::thread::sleep;
 use std::time::Duration;
 use std::{fs, sync, thread};
@@ -344,7 +345,8 @@ pub async fn add_game_dialog(app_weak: sync::Weak<Mutex<App>>) -> Result<(), sli
                                     }
 
                                     let app_ui_weak = app.ui_weak.clone();
-                                    let handle = app.downloader.update_progress_size(move |progress| {
+                                    let stop = Arc::new(AtomicBool::new(false));
+                                    app.downloader.update_progress_size(stop.clone(), move |progress| {
                                         app_ui_weak
                                             .upgrade_in_event_loop(move |ui| {
                                                 ui.set_progress(progress as f32);
@@ -356,11 +358,12 @@ pub async fn add_game_dialog(app_weak: sync::Weak<Mutex<App>>) -> Result<(), sli
                                         sleep(Duration::from_millis(10));
                                         if app.downloader.has_error() {
                                             error!("Failed to download forge.");
+                                            stop.store(true, sync::atomic::Ordering::Relaxed);
                                             return;
                                         }
                                     }
 
-                                    drop(handle);
+                                    stop.store(true, sync::atomic::Ordering::Relaxed);
 
                                     // 让用户手动安装
                                     match Command::new(java_path)

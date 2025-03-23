@@ -79,9 +79,12 @@ fn main() -> Result<(), slint::PlatformError> {
 
     let app_weak_clone = app_weak.clone();
     ui.on_click_downloader_btn(move || {
-        if let Err(e) = downloader(app_weak_clone.clone()) {
-            error!("Failed to start edit_game. Reason: {e}.");
-        }
+        let app_weak_clone = app_weak_clone.clone();
+        thread::spawn(move || {
+            if let Err(e) = downloader(app_weak_clone.clone()) {
+                error!("Failed to start edit_game. Reason: {e}.");
+            }
+        });
     });
 
     let app_weak_clone = app_weak.clone();
