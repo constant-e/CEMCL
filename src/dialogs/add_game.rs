@@ -13,7 +13,7 @@ use log::{error, warn};
 use slint::{ComponentHandle, ModelRc, StandardListViewItem, VecModel};
 
 use crate::app::App;
-use crate::dialogs::msg_box;
+use crate::dialogs::msg_box::{self, err_dialog};
 use crate::mc::Game;
 use crate::mc::download::{self, Fabric, Forge, GameUrl, list_forge};
 use crate::{AddGameDialog, Messages};
@@ -316,7 +316,7 @@ pub async fn add_game_dialog(app_weak: sync::Weak<Mutex<App>>) -> Result<(), sli
 
                         let app_weak = app_weak.clone();
                         let java_path = app.config.java_path.clone();
-                        let game_path = app.config.game_path.clone();
+                        // let game_path = app.config.game_path.clone();
                         thread::spawn(move || {
                             let rt = tokio::runtime::Runtime::new().unwrap();
                             let _tokio = rt.enter();
@@ -328,7 +328,16 @@ pub async fn add_game_dialog(app_weak: sync::Weak<Mutex<App>>) -> Result<(), sli
                             }
                             if let Some(app) = app_weak.upgrade() {
                                 if let Ok(app) = app.lock() {
-                                    app.downloader.clear();
+                                    if let Err(e) = app.downloader.clear() {
+                                        error!("Failed to clear downloader. Reason: {e}");
+                                        app.ui_weak
+                                            .upgrade_in_event_loop(move |ui| {
+                                                err_dialog(&format!("{e}"));
+                                                ui.invoke_unset_loading();
+                                            })
+                                            .unwrap();
+                                        return;
+                                    }
 
                                     if let Err(e) = app.ui_weak.upgrade_in_event_loop(|ui| {
                                         ui.set_progress(0.0);

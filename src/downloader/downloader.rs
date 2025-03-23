@@ -7,7 +7,7 @@ use std::time::Duration;
 use std::{fs, thread};
 use tokio::sync::Semaphore;
 
-use log::{debug, error, info};
+use log::{debug, error, info, warn};
 
 #[derive(Clone, PartialEq)]
 pub enum DownloadState {
@@ -51,6 +51,7 @@ pub struct DownloadTask {
 
 pub struct Downloader {
     client: reqwest::Client,
+    concurrency: usize,
     runtime: Arc<tokio::runtime::Runtime>,
     tasks: Arc<Mutex<Vec<DownloadTask>>>,
     sender: mpsc::Sender<QueueCommand>,
@@ -298,6 +299,7 @@ impl Downloader {
 
         Downloader {
             client,
+            concurrency,
             runtime: rt,
             tasks,
             sender,
@@ -318,18 +320,24 @@ impl Downloader {
         self.sender.send(QueueCommand::Cancel(id))
     }
 
-    pub fn clear(&self) -> Option<()> {
-        if let Ok(mut tasks) = self.tasks.lock() {
-            for task in tasks.iter() {
-                if let Err(e) = task.controller.send(TaskCommand::Cancel) {
-                    error!("Failed to send a command. Reason: {e}");
-                    return None;
+    pub fn clear(&self) -> Result<(), std::io::Error> {
+        match self.tasks.lock() {
+            Ok(mut tasks) => {
+                for task in tasks.iter() {
+                    if let Err(e) = task.controller.send(TaskCommand::Cancel) {
+                        warn!("Failed to send a command. Reason: {e}");
+                    }
                 }
+                tasks.clear();
+                Ok(())
             }
-            tasks.clear();
-            Some(())
-        } else {
-            None
+            Err(e) => {
+                error!("Failed to lock a mutex. Reason: {e}");
+                Err(std::io::Error::new(
+                    std::io::ErrorKind::ResourceBusy,
+                    format!("Failed to lock a mutex. Reason: {e}"),
+                ))
+            }
         }
     }
 
@@ -387,6 +395,65 @@ impl Downloader {
         }
 
         return Some(false);
+    }
+
+    pub fn restart(&mut self) {
+        let client_clone = self.client.clone();
+        let rt_clone = self.runtime.clone();
+        if let Err(e) = self.clear() {
+            error!("Failed to clear tasks. Reason: {e}");
+            self.tasks = Arc::new(Mutex::new(Vec::new()));
+        }
+        let tasks_clone = self.tasks.clone();
+        let concurrency = self.concurrency;
+        let (sender, receiver) = mpsc::channel();
+
+        // 命令线程
+        thread::spawn(move || {
+            let client = client_clone;
+            let rt = rt_clone;
+            let tasks = tasks_clone;
+
+            let semaphore = Arc::new(Semaphore::new(concurrency));
+
+            let _tokio = rt.enter();
+
+            while let Ok(cmd) = receiver.recv() {
+                match cmd {
+                    QueueCommand::Add(url, path) => {
+                        if let Ok(mut tasks) = tasks.lock() {
+                            let id = (tasks.len() + 1) as u64;
+                            tasks.push(DownloadTask::new(
+                                id,
+                                url,
+                                path,
+                                client.clone(),
+                                rt.clone(),
+                                semaphore.clone(),
+                            ));
+                        } else {
+                            error!("Command thread: Failed to lock tasks");
+                        }
+                    }
+                    QueueCommand::Cancel(id) => {
+                        if let Ok(mut tasks) = tasks.lock() {
+                            if let Some(task) = tasks.iter_mut().find(|t| t.id == id) {
+                                task.controller.send(TaskCommand::Cancel).unwrap();
+                            }
+                        } else {
+                            error!("Command thread: Failed to lock tasks");
+                        }
+                    }
+                    _ => {
+                        debug!("Not implemented.");
+                    }
+                }
+            }
+
+            error!("Command sender is dropped.");
+        });
+
+        self.sender = sender;
     }
 
     // TODO: use size instead of task number
@@ -487,6 +554,7 @@ impl Default for Downloader {
         let (sender, _) = mpsc::channel();
         Downloader {
             client: reqwest::Client::new(),
+            concurrency: crate::app::Config::default().concurrency,
             runtime: Arc::new(tokio::runtime::Runtime::new().unwrap()),
             tasks: Arc::new(Mutex::new(Vec::new())),
             sender,

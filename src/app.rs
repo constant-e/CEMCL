@@ -242,7 +242,16 @@ impl App {
             })
             .ok()?;
 
-        self.downloader.clear()?;
+        if let Err(e) = self.downloader.clear() {
+            error!("Failed to clear downloader. Reason: {e}");
+            self.ui_weak
+                .upgrade_in_event_loop(move |ui| {
+                    err_dialog(&format!("{e}"));
+                    ui.invoke_unset_loading();
+                })
+                .unwrap();
+            return None;
+        }
 
         if acc_index >= self.acc_list.len() || game_index >= self.game_list.len() {
             warn!(
@@ -328,7 +337,6 @@ impl App {
                 {
                     error!("Failed to download. Reason: {e}");
                     stop.store(true, sync::atomic::Ordering::Relaxed);
-                    self.downloader.clear()?;
                     self.ui_weak
                         .upgrade_in_event_loop(move |ui| {
                             let msg =

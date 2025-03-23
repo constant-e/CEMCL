@@ -98,7 +98,6 @@ pub fn download_assets(
 fn download_fabric_lib(
     base_path: &String,
     path: &String,
-    node: &Value,
     mirror: &String,
     downloader: &Downloader,
 ) -> Result<(), std::io::Error> {
@@ -258,7 +257,6 @@ pub fn download_libraries(
                     download_fabric_lib(
                         &lib_dir,
                         &path,
-                        &node,
                         &fabric_mirror.to_string(),
                         downloader,
                     )?;
