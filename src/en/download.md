@@ -1,4 +1,5 @@
 # Download
+**It is strongly recommended to build CEMCL from the latest source code.**
 
 ## Release
 
@@ -22,7 +23,7 @@
 Get it in [GitHub Actions](https://github.com/constant-e/CEMCL/actions).
 
 ## Build
-1. Install Rust
+1. Install Rust and Qt if you want a Qt backend
 2. Clone this repository
    ```sh
    git clone https://github.com/constant-e/CEMCL.git

@@ -1,4 +1,5 @@
 # 下载
+**强烈建议从最新源代码构建。**
 
 ## Release
 
@@ -23,7 +24,7 @@
 请前往[GitHub Actions](https://github.com/constant-e/CEMCL/actions)获取。
 
 ## 构建
-1. 安装Rust
+1. 安装Rust和Qt（若需要Qt后端）
 2. 克隆此仓库
    ```sh
    git clone https://github.com/constant-e/CEMCL.git
