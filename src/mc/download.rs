@@ -254,12 +254,7 @@ pub fn download_libraries(
                         path = path + name + "/";
                     }
                     path = path + split_1[1] + "-" + split_1[2] + ".jar";
-                    download_fabric_lib(
-                        &lib_dir,
-                        &path,
-                        &fabric_mirror.to_string(),
-                        downloader,
-                    )?;
+                    download_fabric_lib(&lib_dir, &path, &fabric_mirror.to_string(), downloader)?;
                 }
             }
         }

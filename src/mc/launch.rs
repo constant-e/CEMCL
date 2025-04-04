@@ -358,6 +358,21 @@ pub fn download_all(
     game: &GameDownload,
     downloader: &Downloader,
 ) -> Result<(), std::io::Error> {
+    let jar_path = game.dir.clone() + "/" + game.version.as_ref() + ".jar";
+    if !exists(&jar_path)? {
+        // 本体
+        let url = game
+            .mc_url
+            .clone()
+            .replace("https://piston-meta.mojang.com", &config.game_source);
+        if let Err(e) = downloader.add(url, jar_path) {
+            return Err(std::io::Error::new(
+                std::io::ErrorKind::Other,
+                format!("{e}"),
+            ));
+        }
+    }
+
     // 处理依赖
 
     // json first
@@ -391,21 +406,6 @@ pub fn download_all(
         &config.fabric_source,
         downloader,
     )?;
-
-    let jar_path = game.dir.clone() + "/" + game.version.as_ref() + ".jar";
-    if !exists(&jar_path)? {
-        // 本体
-        let url = game
-            .mc_url
-            .clone()
-            .replace("https://piston-meta.mojang.com", &config.game_source);
-        if let Err(e) = downloader.add(url, jar_path) {
-            return Err(std::io::Error::new(
-                std::io::ErrorKind::Other,
-                format!("{e}"),
-            ));
-        }
-    }
 
     while downloader.in_progress().ok_or(std::io::Error::new(
         std::io::ErrorKind::Other,
