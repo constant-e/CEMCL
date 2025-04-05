@@ -1,6 +1,6 @@
-use std::{rc::Rc, thread};
 use std::sync;
 use std::sync::Mutex;
+use std::{rc::Rc, thread};
 
 use log::error;
 use slint::{ComponentHandle, ModelRc, StandardListViewItem, ToSharedString, VecModel};
@@ -87,7 +87,9 @@ pub fn downloader(app_weak: sync::Weak<Mutex<App>>) -> Result<(), slint::Platfor
                             }
                         };
                     }
-                    ui.set_finished_list(ModelRc::from(Rc::from(VecModel::from(ui_tasks_finished))));
+                    ui.set_finished_list(ModelRc::from(Rc::from(VecModel::from(
+                        ui_tasks_finished,
+                    ))));
                     ui.set_in_progress_list(ModelRc::from(Rc::from(VecModel::from(
                         ui_tasks_in_process,
                     ))));
@@ -99,7 +101,6 @@ pub fn downloader(app_weak: sync::Weak<Mutex<App>>) -> Result<(), slint::Platfor
             error!("Failed to upgrade a weak pointer");
         }
     });
-    
 
     ui.show()
 }

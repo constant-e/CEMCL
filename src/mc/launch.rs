@@ -157,38 +157,12 @@ pub async fn get_launch_command(
         let mc_url: String;
 
         // mod需要额外写入的参数
-        let mut classpaths: Vec<String> = Vec::new();
         let mut game_args: Vec<String> = game.game_args.clone();
         let mut jvm_args: Vec<String> = game.jvm_args.clone();
         let mut libraries_json = json["libraries"].clone();
+
         // 判断inheritsFrom（mod需要）
-        if json["inheritsFrom"].is_null() {
-            // 无mod loader
-            asset_index_url = json["assetIndex"]["url"]
-                .as_str()
-                .ok_or(std::io::Error::other("Failed to get asset url."))?
-                .to_string();
-            mc_url = json["downloads"]["client"]["url"]
-                .as_str()
-                .ok_or(std::io::Error::other("Failed to get mc url."))?
-                .to_string();
-            classpaths.push(dir.clone() + "/" + game.version.as_str() + ".jar"); // 游戏本身
-            if let Some((mut temp_game_args, mut temp_jvm_args)) = get_args(&json) {
-                game_args.append(&mut temp_game_args);
-                jvm_args.append(&mut temp_jvm_args);
-                if let Some(index) = json["assetIndex"]["id"].as_str() {
-                    asset_index = index.into();
-                } else {
-                    error!("Failed to get assetIndex.");
-                    return Err(std::io::Error::other("Failed to get assetIndex."));
-                }
-            } else {
-                error!("Failed to get game arguments and jvm arguments.");
-                return Err(std::io::Error::other(
-                    "Failed to get game arguments and jvm arguments.",
-                ));
-            }
-        } else {
+        if json["inheritsFrom"].is_string() {
             // 有mod loader
             if let Some(parent_version) = json["inheritsFrom"].as_str() {
                 let parent_path = game_path.clone() + "/versions/" + &parent_version;
@@ -235,14 +209,6 @@ pub async fn get_launch_command(
                                 "Failed to get arguments from {cfg_path}."
                             )));
                         }
-                        // classpaths列表
-                        classpaths.push(parent_path.clone() + "/" + parent_version + ".jar"); // 游戏本身
-                        if let Some(vector) = get_classpaths(&parent["libraries"], game_path) {
-                            classpaths = vector;
-                        } else {
-                            error!("Failed to load classpaths.");
-                            return Err(std::io::Error::other("Failed to load classpaths."));
-                        }
                     } else {
                         error!("Failed to load {parent_path}.");
                         return Err(std::io::Error::other(format!(
@@ -250,7 +216,6 @@ pub async fn get_launch_command(
                         )));
                     }
                 } else {
-                    // TODO: 下载原版
                     error!("Failed to find {parent_path}.");
                     return Err(std::io::Error::other(format!(
                         "Failed to find {parent_path}."
@@ -260,15 +225,42 @@ pub async fn get_launch_command(
                 error!("Failed to get inheritsFrom.");
                 return Err(std::io::Error::other("Failed to get inheritsFrom."));
             }
+        } else {
+            // 无mod loader
+            asset_index_url = json["assetIndex"]["url"]
+                .as_str()
+                .ok_or(std::io::Error::other("Failed to get asset url."))?
+                .to_string();
+            mc_url = json["downloads"]["client"]["url"]
+                .as_str()
+                .ok_or(std::io::Error::other("Failed to get mc url."))?
+                .to_string();
+            if let Some((mut temp_game_args, mut temp_jvm_args)) = get_args(&json) {
+                game_args.append(&mut temp_game_args);
+                jvm_args.append(&mut temp_jvm_args);
+                if let Some(index) = json["assetIndex"]["id"].as_str() {
+                    asset_index = index.into();
+                } else {
+                    error!("Failed to get assetIndex.");
+                    return Err(std::io::Error::other("Failed to get assetIndex."));
+                }
+            } else {
+                error!("Failed to get game arguments and jvm arguments.");
+                return Err(std::io::Error::other(
+                    "Failed to get game arguments and jvm arguments.",
+                ));
+            }
         }
 
         // classpaths列表
-        if let Some(mut vector) = get_classpaths(&json["libraries"], game_path) {
+        let mut classpaths: Vec<String> = Vec::new();
+        if let Some(mut vector) = get_classpaths(&libraries_json, game_path) {
             classpaths.append(&mut vector);
         } else {
             error!("Failed to load classpaths.");
             return Err(std::io::Error::other("Failed to load classpaths."));
         }
+        classpaths.push(dir.clone() + "/" + game.version.as_str() + ".jar"); // 游戏本身
 
         // classpaths列表去重，获得最终字符串
         let sep = if env::OS == "windows" { ";" } else { ":" };
