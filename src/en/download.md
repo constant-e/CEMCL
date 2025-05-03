@@ -3,21 +3,19 @@
 
 ## Release
 
-### v0.2.2
+### v0.2.3
 **This is an alpha version which hasn't been fully tested.**
 
 #### Change Log
-1. Add a progress bar when launching, replacing the old popup window
-2. Add a downloader to replace old download methods (developing, the GUI of it hasn't work yet)
-3. Multi-language support for windows (with bundled locales for all versions)
-4. Fix the support of customized launch arguments
-5. Partially support downloading forge
-6. Remove the console for Windows
-7. Switch the UI style to fluent
+1. Support installing forge
+2. Partially support fabric
+3. Fix some errors when launching forge versions
+4. UI improvements
+5. Minor bug fixes
 
-**Download Links:** [Linux](https://github.com/constant-e/CEMCL/releases/download/v0.2.2/cemcl-0.2.2-linux-x86_64.zip) |
-[macOS](https://github.com/constant-e/CEMCL/releases/download/v0.2.2/cemcl-0.2.2-macos-x86_64.zip) |
-[Windows](https://github.com/constant-e/CEMCL/releases/download/v0.2.2/cemcl-0.2.2-windows-x86_64.zip)
+**Download Links:** [Linux](https://github.com/constant-e/CEMCL/releases/download/v0.2.3/cemcl-0.2.3-linux-x86_64.zip) |
+[macOS](https://github.com/constant-e/CEMCL/releases/download/v0.2.3/cemcl-0.2.3-macos-x86_64.zip) |
+[Windows](https://github.com/constant-e/CEMCL/releases/download/v0.2.3/cemcl-0.2.3-windows-x86_64.zip)
 
 ## GitHub CI
 Get it in [GitHub Actions](https://github.com/constant-e/CEMCL/actions).

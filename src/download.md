@@ -3,22 +3,20 @@
 
 ## Release
 
-### v0.2.2
+### v0.2.3
 **这是一个预览版，未经过充分测试。**
 
 #### 更新日志
-1. 新增 启动时显示进度条，替换之前的弹出窗口
-2. 新增 添加一个下载器，替换旧的下载方法（仍在开发，未完成GUI部分）
-3. 新增 Windows系统下的多语言支持（并将所有版本的语言文件修改为内置）
-4. 重新支持自定义启动
-5. 部分支持下载forge
-6. 移除Windows下的控制台窗口
-7. 将UI风格切换至fluent
+1. 支持安装forge
+2. 部分支持fabric
+3. 修复启动forge时的一系列问题
+4. UI改进
+5. 修复一些小Bug
 
 **下载链接：**
-[Linux](https://github.com/constant-e/CEMCL/releases/download/v0.2.2/cemcl-0.2.2-linux-x86_64.zip) |
-[macOS](https://github.com/constant-e/CEMCL/releases/download/v0.2.2/cemcl-0.2.2-macos-x86_64.zip) |
-[Windows](https://github.com/constant-e/CEMCL/releases/download/v0.2.2/cemcl-0.2.2-windows-x86_64.zip)
+[Linux](https://github.com/constant-e/CEMCL/releases/download/v0.2.3/cemcl-0.2.3-linux-x86_64.zip) |
+[macOS](https://github.com/constant-e/CEMCL/releases/download/v0.2.3/cemcl-0.2.3-macos-x86_64.zip) |
+[Windows](https://github.com/constant-e/CEMCL/releases/download/v0.2.3/cemcl-0.2.3-windows-x86_64.zip)
 
 ## GitHub CI
 请前往[GitHub Actions](https://github.com/constant-e/CEMCL/actions)获取。
