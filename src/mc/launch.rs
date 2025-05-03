@@ -65,7 +65,53 @@ fn add_arg(n: &Value) -> Option<Vec<String>> {
     Some(result)
 }
 
-/// 获取MC和JVM参数
+/// 获取MC和JVM参数（1.13+）
+fn get_args_new(n: &Value) -> Option<(Vec<String>, Vec<String>)> {
+    let mut game_args: Vec<String> = Vec::new();
+    let mut jvm_args: Vec<String> = vec![
+        "-XX:+UseG1GC".to_string(),
+        "-XX:-UseAdaptiveSizePolicy".to_string(),
+        "-XX:-OmitStackTraceInFastThrow".to_string(),
+        "-Dfml.ignoreInvalidMinecraftCertificates=True".to_string(),
+        "-Dfml.ignorePatchDiscrepancies=True".to_string(),
+        "-Dlog4j2.formatMsgNoLookups=true".to_string(),
+    ];
+
+    game_args.append(&mut add_arg(&n["arguments"]["game"])?);
+    if !n["arguments"]["jvm"].is_null() {
+        // forge无此项
+        jvm_args.append(&mut add_arg(&n["arguments"]["jvm"])?);
+    }
+
+    Some((game_args, jvm_args))
+}
+
+/// 获取MC和JVM参数（1.13-）
+fn get_args_old(n: &Value) -> Option<(Vec<String>, Vec<String>)> {
+    let mut game_args: Vec<String> = Vec::new();
+    let mut jvm_args: Vec<String> = vec![
+        "-XX:+UseG1GC".to_string(),
+        "-XX:-UseAdaptiveSizePolicy".to_string(),
+        "-XX:-OmitStackTraceInFastThrow".to_string(),
+        "-Dfml.ignoreInvalidMinecraftCertificates=True".to_string(),
+        "-Dfml.ignorePatchDiscrepancies=True".to_string(),
+        "-Dlog4j2.formatMsgNoLookups=true".to_string(),
+    ];
+
+    let args: Vec<&str> = n["minecraftArguments"].as_str()?.split(" ").collect();
+    for arg in args {
+        game_args.push(arg.into());
+    }
+    jvm_args.append(&mut vec![
+        "-Djava.library.path=${natives_directory}".into(),
+        "-cp".into(),
+        "${classpath}".into(),
+    ]);
+
+    Some((game_args, jvm_args))
+}
+
+/// 获取MC和JVM参数（原版）
 fn get_args(n: &Value) -> Option<(Vec<String>, Vec<String>)> {
     let mut game_args: Vec<String> = Vec::new();
     let mut jvm_args: Vec<String> = vec![
@@ -194,21 +240,34 @@ pub async fn get_launch_command(
                             return Err(std::io::Error::other("Failed to get assetIndex."));
                         }
                         // MC和JVM的参数
-                        if let (
-                            Some((mut parent_game_args, mut parent_jvm_args)),
-                            Some((mut self_game_args, mut self_jvm_args)),
-                        ) = (get_args(&parent), get_args(&json))
-                        {
-                            game_args.append(&mut parent_game_args);
-                            game_args.append(&mut self_game_args);
-                            jvm_args.append(&mut parent_jvm_args);
-                            jvm_args.append(&mut self_jvm_args);
+                        if !parent["arguments"].is_null() {
+                            // 1.13以上，jvm参数、game参数追加
+                            if let (
+                                Some((mut parent_game_args, mut parent_jvm_args)),
+                                Some((mut self_game_args, mut self_jvm_args)),
+                            ) = (get_args_new(&parent), get_args_new(&json)) {
+                                game_args.append(&mut parent_game_args);
+                                game_args.append(&mut self_game_args);
+                                jvm_args.append(&mut parent_jvm_args);
+                                jvm_args.append(&mut self_jvm_args);
+                            } else {
+                                error!("Failed to get arguments from {cfg_path}.");
+                                return Err(std::io::Error::other(format!(
+                                    "Failed to get arguments from {cfg_path}."
+                                )));
+                            }
                         } else {
-                            error!("Failed to get arguments from {cfg_path}.");
-                            return Err(std::io::Error::other(format!(
-                                "Failed to get arguments from {cfg_path}."
-                            )));
-                        }
+                            // 1.13以下，json中无jvm参数，minecraftArguments应覆盖原版的
+                            if let Some((mut self_game_args, mut self_jvm_args)) = get_args(&json) {
+                                game_args.append(&mut self_game_args);
+                                jvm_args.append(&mut self_jvm_args);
+                            } else {
+                                error!("Failed to get arguments from {cfg_path}.");
+                                return Err(std::io::Error::other(format!(
+                                    "Failed to get arguments from {cfg_path}."
+                                )));
+                            }
+                        }   
                     } else {
                         error!("Failed to load {parent_path}.");
                         return Err(std::io::Error::other(format!(
