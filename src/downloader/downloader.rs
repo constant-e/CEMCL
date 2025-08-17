@@ -252,6 +252,8 @@ impl Downloader {
         let rt_clone = rt.clone();
         let tasks_clone = tasks.clone();
 
+        // TODO: add a ui thread to update the UI when downloader updates itself
+
         // 命令线程
         thread::spawn(move || {
             let client = client_clone;

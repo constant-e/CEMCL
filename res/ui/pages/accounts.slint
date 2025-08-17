@@ -1,14 +1,14 @@
 import { VerticalBox, StandardTableView, HorizontalBox, Button } from "std-widgets.slint";
-import { SubTitle, HorizontalSpacing } from "../components/components.slint";
+import { Title, HorizontalSpacing } from "../components/components.slint";
 
 export component AccountsPage inherits VerticalBox {
     in-out property <int> current-index <=> table.current-row;
     in-out property <[[StandardListViewItem]]> model <=> table.rows;
 
-    callback click-add-btn(index: int);
+    callback click-add-btn();
     callback click-edit-btn(index: int);
 
-    SubTitle { text: @tr("Account"); }
+    Title { text: @tr("Account"); }
 
     table := StandardTableView {
         min-width: 250px;
@@ -23,8 +23,14 @@ export component AccountsPage inherits VerticalBox {
 
         HorizontalSpacing {}
 
-        add-btn := Button { text: @tr("Add"); }
-        
-        edit-btn := Button { text: @tr("Edit"); }
+        add-btn := Button {
+            text: @tr("Add");
+            clicked => { click-add-btn() }
+        }
+
+        edit-btn := Button {
+            text: @tr("Edit");
+            clicked => { click-edit-btn(current-index) }
+        }
     }
 }

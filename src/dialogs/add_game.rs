@@ -333,7 +333,7 @@ pub async fn add_game_dialog(app_weak: sync::Weak<Mutex<App>>) -> Result<(), sli
                                         app.ui_weak
                                             .upgrade_in_event_loop(move |ui| {
                                                 err_dialog(&format!("{e}"));
-                                                ui.invoke_unset_loading();
+                                                ui.set_state(crate::State::Spare);
                                             })
                                             .unwrap();
                                         return;
@@ -341,8 +341,7 @@ pub async fn add_game_dialog(app_weak: sync::Weak<Mutex<App>>) -> Result<(), sli
 
                                     if let Err(e) = app.ui_weak.upgrade_in_event_loop(|ui| {
                                         ui.set_progress(0.0);
-                                        ui.invoke_set_loading();
-                                        ui.invoke_state_set_downloading();
+                                        ui.set_state(crate::State::Downloading);
                                     }) {
                                         error!("Failed to upgrade a weak pointer. Reason: {e}.");
                                         return;
@@ -383,7 +382,7 @@ pub async fn add_game_dialog(app_weak: sync::Weak<Mutex<App>>) -> Result<(), sli
                                         .spawn() {
                                         Ok(mut child) => {
                                             if let Err(e) = app.ui_weak.upgrade_in_event_loop(|ui| {
-                                                ui.invoke_state_set_launching();
+                                                ui.set_state(crate::State::Launching);
                                             }) {
                                                 error!("Failed to upgrade a weak pointer. Reason: {e}.");
                                                 return;
@@ -395,7 +394,7 @@ pub async fn add_game_dialog(app_weak: sync::Weak<Mutex<App>>) -> Result<(), sli
                                                     msg_box::err_dialog(&msg);
                                                 }).unwrap();
                                             }
-                                            app.ui_weak.upgrade_in_event_loop(|ui| ui.invoke_unset_loading()).unwrap();
+                                            app.ui_weak.upgrade_in_event_loop(|ui| ui.set_state(crate::State::Spare)).unwrap();
                                         },
                                         Err(e) => {
                                             error!("Failed to run forge installer. Reason: {e}.");

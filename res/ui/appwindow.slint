@@ -4,6 +4,11 @@ import { AccountsPage, HomePage, GamesPage, DownloaderPage, SettingsPage, State,
 
 export { Settings, State }
 export { Messages } from "messages.slint";
+export { AskDialog, WarnDialog, ErrorDialog } from "components/components.slint";
+export { AddAccDialog } from "add-acc-dialog.slint";
+export { AddGameDialog } from "add-game-dialog.slint";
+export { EditAccDialog } from "edit-acc-dialog.slint";
+export { EditGameDialog } from "edit-game-dialog.slint";
 
 export component AppWindow inherits Window {
     preferred-height: 600px;
@@ -14,6 +19,7 @@ export component AppWindow inherits Window {
     in-out property <int> acc-index;
     in-out property <int> game-index;
     in-out property <[[StandardListViewItem]]> acc-model;
+    in-out property <[string]> combo-box-model;
     in-out property <[[StandardListViewItem]]> game-model;
     in-out property <State> state;
     in-out property <Settings> settings;
@@ -24,12 +30,14 @@ export component AppWindow inherits Window {
     callback click-add-acc-btn();
     callback click-add-game-btn();
     callback click-downloader-btn();
-    callback click-edit-acc-btn();
-    callback click-edit-game-btn();
+    callback click-edit-acc-btn(index: int);
+    callback click-edit-game-btn(index: int);
     callback apply-settings();
-    callback click-start-btn();
+    callback click-start-btn(index: int);
     
     HorizontalBox {
+        padding: 0px;
+
         side-bar := SideBar {
             title: "CEMCL";
             model: [@tr("Account"), @tr("Home"), @tr("Games"), @tr("Downloader"), @tr("Settings")];
@@ -49,11 +57,35 @@ export component AppWindow inherits Window {
 
         Rectangle {
             preferred-width: 100%;
-            if (side-bar.current-index == 0):  acc-page := AccountsPage { current-index: acc-index; model: acc-model; }
-            if (side-bar.current-index == 1):  home-page := HomePage { state: state; }
-            if (side-bar.current-index == 2):  games-page := GamesPage { current-index: game-index; model: game-model; }
+
+            if (side-bar.current-index == 0):  acc-page := AccountsPage {
+                current-index: acc-index;
+                model: acc-model;
+                click-add-btn() => { click-add-acc-btn() }
+                click-edit-btn(index) => { click-edit-acc-btn(index) }
+            }
+
+            if (side-bar.current-index == 1):  home-page := HomePage {
+                state: state;
+                model: combo-box-model;
+                progress: progress;
+                click-start-btn(index) => { click-start-btn(index) }
+            }
+
+            if (side-bar.current-index == 2):  games-page := GamesPage {
+                current-index: game-index;
+                model: game-model;
+                click-add-btn => { click-add-game-btn() }
+                click-edit-btn(index) => { click-edit-game-btn(index) }
+            }
+
             if (side-bar.current-index == 3):  downloader-page := DownloaderPage {}
-            if (side-bar.current-index == 4):  settings-page := SettingsPage { settings: settings; authors: authors; version: version; }
+
+            if (side-bar.current-index == 4):  settings-page := SettingsPage {
+                settings: settings;
+                authors: authors;
+                version: version;
+            }
         }
     }
 }

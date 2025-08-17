@@ -180,6 +180,10 @@ impl App {
         app.ui_weak = ui_weak;
         app.refresh_ui_acc_list();
         app.refresh_ui_game_list();
+        if app.refresh_ui_settings().is_none() {
+            error!("Failed to refresh ui settings.");
+            err_dialog("Failed to refresh ui settings.");
+        }
 
         Ok(app)
     }
@@ -686,10 +690,10 @@ impl App {
     }
 
     /// Set the config from ui, also save the config to config.json
-    pub fn set_config(&mut self) -> Option<()> {
-        let ui = self.ui_weak.upgrade()?;
+    pub fn set_config(&mut self) -> Result<(), std::io::Error> {
+        let ui = self.ui_weak.upgrade().ok_or(ErrorKind::Other)?;
         self.config = ui.get_settings().into();
-        self.save_config().ok()
+        self.save_config()
     }
 
     /// Refresh account list in ui
@@ -712,12 +716,15 @@ impl App {
     pub fn refresh_ui_settings(&self) -> Option<()> {
         let ui = self.ui_weak.upgrade()?;
         ui.set_settings(self.config.clone().into());
+        ui.set_authors(env!("CARGO_PKG_AUTHORS").into());
+        ui.set_version(env!("CARGO_PKG_VERSION").into());
         Some(())
     }
 
     /// Refresh game list in ui
     pub fn refresh_ui_game_list(&self) -> Option<()> {
         let ui = self.ui_weak.upgrade()?;
+        let mut combo_box_list: Vec<slint::SharedString> = Vec::new();
         let mut ui_game_list: Vec<ModelRc<StandardListViewItem>> = Vec::new();
         for game in &self.game_list {
             let version = StandardListViewItem::from(game.version.as_str());
@@ -726,8 +733,10 @@ impl App {
             let model: Rc<VecModel<StandardListViewItem>> =
                 Rc::from(VecModel::from(vec![version, game_type, description]));
             let row: ModelRc<StandardListViewItem> = ModelRc::from(model);
+            combo_box_list.push(game.version.clone().into());
             ui_game_list.push(row);
         }
+        ui.set_combo_box_model(ModelRc::from(Rc::from(VecModel::from(combo_box_list))));
         ui.set_game_model(ModelRc::from(Rc::from(VecModel::from(ui_game_list))));
         Some(())
     }

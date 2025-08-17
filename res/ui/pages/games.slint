@@ -1,14 +1,14 @@
 import { VerticalBox, StandardTableView, HorizontalBox, Button } from "std-widgets.slint";
-import { HorizontalSpacing, SubTitle } from "../components/components.slint";
+import { HorizontalSpacing, Title } from "../components/components.slint";
 
 export component GamesPage inherits VerticalBox {
     in-out property <int> current-index <=> table.current-row;
     in-out property <[[StandardListViewItem]]> model <=> table.rows;
 
-    callback click-add-btn(index: int);
+    callback click-add-btn();
     callback click-edit-btn(index: int);
 
-    SubTitle { text: @tr("Minecraft Version"); }
+    Title { text: @tr("Minecraft Version"); }
 
     table := StandardTableView {
         min-width: 250px;
@@ -24,8 +24,14 @@ export component GamesPage inherits VerticalBox {
 
         HorizontalSpacing {}
 
-        add-btn := Button { text: @tr("Add"); }
+        add-btn := Button {
+            text: @tr("Add");
+            clicked => { click-add-btn() }
+        }
 
-        edit-btn := Button { text: @tr("Edit"); }
+        edit-btn := Button {
+            text: @tr("Edit");
+            clicked => { click-edit-btn(current-index) }
+        }
     }
 }

@@ -9,8 +9,6 @@ export enum State {
 }
 
 export component HomePage inherits VerticalBox {
-    padding: 4px;
-
     in-out property <[string]> model <=> combo-box.model;
     in-out property <State> state;
     in-out property <float> progress;
@@ -43,6 +41,7 @@ export component HomePage inherits VerticalBox {
 
     HorizontalLayout {
         combo-box := ComboBox {
+            horizontal-stretch: 0;
             enabled: state == State.Spare;
         }
 
