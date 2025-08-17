@@ -17,7 +17,7 @@ use crate::downloader::downloader::Downloader;
 use crate::file_tools::list_dir;
 use crate::mc::download::{Fabric, Forge, GameUrl};
 use crate::mc::{Account, Game, launch};
-use crate::{AppWindow, Messages};
+use crate::{AppWindow, Messages, Settings, State};
 
 /// 启动器配置
 #[derive(Clone)]
@@ -82,6 +82,46 @@ impl Default for Config {
     }
 }
 
+impl From<Settings> for Config {
+    fn from(settings: Settings) -> Self {
+        Config {
+            assets_source: settings.assets_source.into(),
+            close_after_launch: settings.close_after_launch,
+            concurrency: settings.concurrency as usize,
+            fabric_source: settings.fabric_source.into(),
+            forge_source: settings.forge_source.into(),
+            game_path: settings.game_path.into(),
+            game_source: settings.game_source.into(),
+            height: settings.height.into(),
+            java_path: settings.java_path.into(),
+            libraries_source: settings.libraries_source.into(),
+            width: settings.width.into(),
+            xms: settings.xms.into(),
+            xmx: settings.xmx.into(),
+        }
+    }
+}
+
+impl Into<Settings> for Config {
+    fn into(self) -> Settings {
+        Settings {
+            assets_source: self.assets_source.into(),
+            close_after_launch: self.close_after_launch,
+            concurrency: self.concurrency as i32,
+            fabric_source: self.fabric_source.into(),
+            forge_source: self.forge_source.into(),
+            game_path: self.game_path.into(),
+            game_source: self.game_source.into(),
+            height: self.height.into(),
+            java_path: self.java_path.into(),
+            libraries_source: self.libraries_source.into(),
+            width: self.width.into(),
+            xms: self.xms.into(),
+            xmx: self.xmx.into(),
+        }
+    }
+}
+
 pub struct App {
     pub acc_list: Vec<Account>,
     pub config: Config,
@@ -135,7 +175,6 @@ impl App {
             warn_dialog(&msg);
         }
 
-        // todo: set concurrency
         app.downloader = Downloader::new(app.config.concurrency);
 
         app.ui_weak = ui_weak;
@@ -247,7 +286,7 @@ impl App {
             self.ui_weak
                 .upgrade_in_event_loop(move |ui| {
                     err_dialog(&format!("{e}"));
-                    ui.invoke_unset_loading();
+                    ui.set_state(State::Spare);
                 })
                 .unwrap();
             return None;
@@ -267,13 +306,9 @@ impl App {
             return None;
         }
 
-        self.ui_weak
-            .upgrade_in_event_loop(|ui| ui.invoke_set_loading())
-            .ok()?;
-
         // refresh access_token
         self.ui_weak
-            .upgrade_in_event_loop(|ui| ui.invoke_state_set_logging_in())
+            .upgrade_in_event_loop(|ui| ui.set_state(State::LoggingIn))
             .ok()?;
         if self.acc_list[acc_index]
             .refresh(self.ui_weak.clone())
@@ -284,7 +319,7 @@ impl App {
             self.ui_weak
                 .upgrade_in_event_loop(|ui| {
                     err_dialog(&ui.global::<Messages>().get_login_failed());
-                    ui.invoke_unset_loading();
+                    ui.set_state(State::Spare);
                 })
                 .unwrap();
             return None;
@@ -309,13 +344,13 @@ impl App {
 
                 if let Err(e) = self
                     .ui_weak
-                    .upgrade_in_event_loop(|ui| ui.invoke_state_set_downloading())
+                    .upgrade_in_event_loop(|ui| ui.set_state(State::Downloading))
                 {
                     error!("Failed to upgrade a weak pointer. Reason: {e}.");
                     self.ui_weak
                         .upgrade_in_event_loop(move |ui| {
                             err_dialog(&format!("{e}"));
-                            ui.invoke_unset_loading();
+                            ui.set_state(State::Spare);
                         })
                         .unwrap();
                     return None;
@@ -342,7 +377,7 @@ impl App {
                             let msg =
                                 ui.global::<Messages>().get_download_failed() + &format!("{e}");
                             err_dialog(&msg);
-                            ui.invoke_unset_loading();
+                            ui.set_state(State::Spare);
                         })
                         .unwrap();
                     return None;
@@ -351,13 +386,13 @@ impl App {
 
                 if let Err(e) = self
                     .ui_weak
-                    .upgrade_in_event_loop(|ui| ui.invoke_state_set_launching())
+                    .upgrade_in_event_loop(|ui| ui.set_state(State::Launching))
                 {
                     error!("Failed to upgrade a weak pointer. Reason: {e}.");
                     self.ui_weak
                         .upgrade_in_event_loop(move |ui| {
                             err_dialog(&format!("{e}"));
-                            ui.invoke_unset_loading();
+                            ui.set_state(State::Spare);
                         })
                         .unwrap();
                     return None;
@@ -409,7 +444,7 @@ impl App {
         }
 
         self.ui_weak
-            .upgrade_in_event_loop(|ui| ui.invoke_unset_loading())
+            .upgrade_in_event_loop(|ui| ui.set_state(State::Spare))
             .unwrap();
         Some(())
     }
@@ -630,7 +665,7 @@ impl App {
         fs::write("config.json", json.to_string())
     }
 
-    /// 保存管启格式的launcher_profiles.json，适配forge
+    /// 保存官方启动器格式的launcher_profiles.json，适配forge
     pub fn save_launcher_profiles(&self) -> Result<(), std::io::Error> {
         let mut json = json!({"profiles": {}});
         for game in &self.game_list {
@@ -650,6 +685,13 @@ impl App {
         )
     }
 
+    /// Set the config from ui, also save the config to config.json
+    pub fn set_config(&mut self) -> Option<()> {
+        let ui = self.ui_weak.upgrade()?;
+        self.config = ui.get_settings().into();
+        self.save_config().ok()
+    }
+
     /// Refresh account list in ui
     pub fn refresh_ui_acc_list(&self) -> Option<()> {
         let ui = self.ui_weak.upgrade()?;
@@ -662,7 +704,14 @@ impl App {
             let row: ModelRc<StandardListViewItem> = ModelRc::from(model);
             ui_acc_list.push(row);
         }
-        ui.set_acc_list(ModelRc::from(Rc::from(VecModel::from(ui_acc_list))));
+        ui.set_acc_model(ModelRc::from(Rc::from(VecModel::from(ui_acc_list))));
+        Some(())
+    }
+
+    /// Refresh settings in ui
+    pub fn refresh_ui_settings(&self) -> Option<()> {
+        let ui = self.ui_weak.upgrade()?;
+        ui.set_settings(self.config.clone().into());
         Some(())
     }
 
@@ -679,7 +728,7 @@ impl App {
             let row: ModelRc<StandardListViewItem> = ModelRc::from(model);
             ui_game_list.push(row);
         }
-        ui.set_game_list(ModelRc::from(Rc::from(VecModel::from(ui_game_list))));
+        ui.set_game_model(ModelRc::from(Rc::from(VecModel::from(ui_game_list))));
         Some(())
     }
 }

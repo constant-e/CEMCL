@@ -1,0 +1,39 @@
+import { Palette } from "std-widgets.slint";
+
+export component SideBarItem inherits Rectangle {
+    in-out property <bool> selected;
+    in-out property <string> text <=> label.text;
+
+    callback clicked <=> area.clicked;
+
+    min-height: label.preferred-height + 8px;
+
+    states [
+        pressed when area.pressed : {
+            background.opacity: 0.8;
+        }
+        hover when area.has-hover : {
+            background.opacity: 0.6;
+        }
+        selected when root.selected : {
+            background.opacity: 1;
+        }
+    ]
+
+    background := Rectangle {
+        opacity: 0;
+        background: Palette.background;
+
+        animate opacity { duration: 150ms; }
+    }
+
+    label := Text {
+        width: 90%;
+        vertical-alignment: center;
+    }
+
+    area := TouchArea {
+        width: 100%;
+        height: 100%;
+    }
+}

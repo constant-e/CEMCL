@@ -6,7 +6,6 @@ mod dialogs;
 mod downloader;
 mod file_tools;
 mod mc;
-mod settings;
 
 use app::App;
 use dialogs::{add_acc_dialog, add_game_dialog, edit_acc_dialog, edit_game_dialog};
@@ -104,8 +103,13 @@ fn main() -> Result<(), slint::PlatformError> {
     });
 
     let app_weak_clone = app_weak.clone();
-    ui.on_click_settings_btn(move || {
-        settings::init(app_weak_clone.clone());
+    ui.on_apply_settings(move || {
+        if let Err(e) = app_weak_clone.upgrade().and_then(|app| {
+            let mut app = app.lock().unwrap();
+            app.set_config();
+        }) {
+            error!("Failed to apply settings. Reason: {e}.");
+        }
     });
 
     let ui_weak = ui.as_weak();

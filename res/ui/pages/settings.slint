@@ -1,0 +1,261 @@
+import { TabWidget, ScrollView, StandardButton, Switch, SpinBox, LineEdit, GroupBox, VerticalBox, GridBox, HorizontalBox } from "std-widgets.slint";
+import { Title, SectionTitle, VerticalSpacing } from "../components/components.slint";
+
+export struct Settings {
+    close-after-launch: bool,
+    game-path: string,
+    concurrency: int,
+    assets-source: string,
+    libraries-source: string,
+    game-source: string,
+    fabric-source: string,
+    forge-source: string,
+    java-path: string,
+    height: string,
+    width: string,
+    xms: string,
+    xmx: string
+}
+
+export component SettingsPage inherits VerticalBox {
+    // About
+    in-out property <string> authors;
+    in-out property <string> version;
+
+    // Launcher Settings
+    in-out property <Settings> settings;
+
+    Title { text: @tr("Settings"); }
+    
+    TabWidget {
+        Tab {
+            title: @tr("Launcher Settings");
+            ScrollView {
+                VerticalBox {
+                    GroupBox {
+                        title: @tr("General");
+
+                        GridBox {
+                            padding: 0px;
+                            Text {
+                                text: @tr("Minecraft Path");
+                                vertical-alignment: center;
+                                col: 0;
+                                row: 0;
+                            }
+                            game-path-input := LineEdit {
+                                col: 1;
+                                row: 0;
+                                text: settings.game-path;
+                            }
+    
+                            close-after-launch-box := Switch {
+                                text: @tr("Close after Launching Game");
+                                col: 0;
+                                row: 1;
+                                checked: settings.close-after-launch;
+                            }
+                        }
+                    }
+
+                    GroupBox {
+                        title: @tr("Downloading Settings");
+
+                        GridBox {
+                            padding: 0px;
+                            Text {
+                                text: @tr("Concurrency");
+                                vertical-alignment: center;
+                                col: 0;
+                                row: 0;
+                            }
+                            concurrency-input := SpinBox {
+                                col: 1;
+                                row: 0;
+                                value: settings.concurrency;
+                            }
+    
+                            Text {
+                                text: @tr("Assets Source");
+                                vertical-alignment: center;
+                                col: 0;
+                                row: 1;
+                            }
+                            assets-source-input := LineEdit {
+                                col: 1;
+                                row: 1;
+                                text: settings.assets-source;
+                            }
+    
+                            Text {
+                                text: @tr("Libraries Source");
+                                vertical-alignment: center;
+                                col: 0;
+                                row: 2;
+                            }
+                            libraries-source-input := LineEdit {
+                                col: 1;
+                                row: 2;
+                                text: settings.libraries-source;
+                            }
+    
+                            Text {
+                                text: @tr("Minecraft Source");
+                                vertical-alignment: center;
+                                col: 0;
+                                row: 3;
+                            }
+                            game-source-input := LineEdit {
+                                col: 1;
+                                row: 3;
+                                text: settings.game-source;
+                            }
+                            
+                            Text {
+                                text: @tr("Fabric Source");
+                                vertical-alignment: center;
+                                col: 0;
+                                row: 4;
+                            }
+                            fabric-source-input := LineEdit {
+                                col: 1;
+                                row: 4;
+                                text: settings.fabric-source;
+                            }
+                            
+                            Text {
+                                text: @tr("Forge Source");
+                                vertical-alignment: center;
+                                col: 0;
+                                row: 5;
+                            }
+                            forge-source-input := LineEdit {
+                                col: 1;
+                                row: 5;
+                                text: settings.forge-source;
+                            }
+                        }
+                    }
+
+                    VerticalSpacing {}
+                }
+            }
+        }
+
+        Tab {
+            title: @tr("Default Minecraft Settings");
+            ScrollView {
+                GridBox {
+                    Text {
+                        text: @tr("Java Path");
+                        vertical-alignment: center;
+                        col: 0;
+                        row: 0;
+                    }
+                    java-path-input := LineEdit {
+                        col: 1;
+                        row: 0;
+                        text: settings.java-path;
+                    }
+                    Text {
+                        text: @tr("Window Height");
+                        vertical-alignment: center;
+                        col: 0;
+                        row: 1;
+                    }
+                    height-input := LineEdit {
+                        col: 1;
+                        row: 1;
+                        text: settings.height;
+                    }
+                
+                    Text {
+                        text: @tr("Window Width");
+                        vertical-alignment: center;
+                        col: 0;
+                        row: 2;
+                    }
+                    width-input := LineEdit {
+                        col: 1;
+                        row: 2;
+                        text: settings.width;
+                    }
+                
+                    Text {
+                        text: @tr("Minimum Memory");
+                        vertical-alignment: center;
+                        col: 0;
+                        row: 3;
+                    }
+                    xms-input := LineEdit {
+                        col: 1;
+                        row: 3;
+                        text: settings.xms;
+                    }
+                
+                    Text {
+                        text: @tr("Maximum Memory");
+                        vertical-alignment: center;
+                        col: 0;
+                        row: 4;
+                    }
+                    xmx-input := LineEdit {
+                        col: 1;
+                        row: 4;
+                        text: settings.xmx;
+                    }
+
+                    VerticalSpacing { row: 5; }
+                }
+            }
+        }
+
+        Tab {
+            title: @tr("About");
+            VerticalBox {
+                HorizontalBox {
+                    alignment: center;
+                    padding: 0px;
+                    Image {
+                        height: 44px;
+                        width: 44px;
+                        source: @image-url("../../pic/icon.png");
+                    }
+                    Text {
+                        text: "CE Minecraft Launcher";
+                        font-size: 28px;
+                        font-weight: 700;
+                        padding: 8px;
+                        vertical-alignment: center;
+                    }
+                }
+                
+                Text { text: @tr("Version: ") + root.version; }
+                Text { text: @tr("Github Repository: ") + "https://github.com/constant-e/CEMCL"; }
+                Text { text: @tr("Developers: ") + root.authors; }
+                Text { text: @tr("License: ") + "Apache License 2.0"; }
+                Text {
+                    text: @tr("Credits:\n") +
+                        "   1. BMCLAPI2 (https://bmclapidoc.bangbang93.com/)\n" +
+                        "   2. clipboard (https://crates.io/crates/clipboard)\n" +
+                        "   3. env_logger (https://crates.io/crates/env_logger)\n" +
+                        "   4. futures (https://crates.io/crates/futures)\n" +
+                        "   5. log (https://crates.io/crates/log)\n" +
+                        "   6. reqwest (https://crates.io/crates/reqwest)\n" +
+                        "   7. serde_json (https://crates.io/crates/serde_json)\n" +
+                        "   8. slint (https://crates.io/crates/slint)\n" +
+                        "   9. tokio (https://crates.io/crates/tokio)\n" +
+                        "   10. uuid (https://crates.io/crates/uuid)\n" +
+                        "   11. webbrowser (https://crates.io/crates/webbrowser)\n" +
+                        "   12. zip (https://crates.io/crates/zip)";
+                }
+                VerticalSpacing {}
+            }
+        }
+    }
+
+    // HorizontalBox {
+    //     StandardButton { kind: cancel;}
+    //     StandardButton { kind: apply; }
+    // }
+}
