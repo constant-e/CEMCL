@@ -1,26 +1,16 @@
-
+#
 msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
-"POT-Creation-Date: 2025-03-24 11:24+0000\n"
+"POT-Creation-Date: 2026-04-05 06:18+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
+"Language: \n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Language: \n"
-"Plural-Forms: nplurals=1; plural=0;\n"
-
-#: dialogs.slint:19
-msgctxt "WarnDialog"
-msgid "Warn"
-msgstr ""
-
-#: dialogs.slint:33
-msgctxt "ErrorDialog"
-msgid "Error"
-msgstr ""
+"Plural-Forms: \n"
 
 #: add-acc-dialog.slint:4
 msgctxt "AddAccDialog"
@@ -177,74 +167,39 @@ msgctxt "AddGameDialog"
 msgid "Enable Separated Version"
 msgstr ""
 
-#: appwindow.slint:59
-msgctxt "AppWindow"
-msgid "Downloading"
-msgstr ""
-
-#: appwindow.slint:60
-msgctxt "AppWindow"
-msgid "Launching"
-msgstr ""
-
-#: appwindow.slint:61
-msgctxt "AppWindow"
-msgid "Logging in"
-msgstr ""
-
-#: appwindow.slint:75
+#: appwindow.slint:43
 msgctxt "AppWindow"
 msgid "Account"
 msgstr ""
 
-#: appwindow.slint:80
+#: appwindow.slint:43
 msgctxt "AppWindow"
-msgid "Name"
+msgid "Home"
 msgstr ""
 
-#: appwindow.slint:81 appwindow.slint:111
+#: appwindow.slint:43
 msgctxt "AppWindow"
-msgid "Type"
+msgid "Games"
 msgstr ""
 
-#: appwindow.slint:91 appwindow.slint:122
+#: appwindow.slint:43
 msgctxt "AppWindow"
-msgid "Add"
+msgid "Downloader"
 msgstr ""
 
-#: appwindow.slint:96 appwindow.slint:127
-msgctxt "AppWindow"
-msgid "Edit"
-msgstr ""
-
-#: appwindow.slint:105
-msgctxt "AppWindow"
-msgid "Minecraft Version"
-msgstr ""
-
-#: appwindow.slint:110
-msgctxt "AppWindow"
-msgid "Version"
-msgstr ""
-
-#: appwindow.slint:112
-msgctxt "AppWindow"
-msgid "Description"
-msgstr ""
-
-#: appwindow.slint:138
+#: appwindow.slint:43
 msgctxt "AppWindow"
 msgid "Settings"
 msgstr ""
 
-#: appwindow.slint:162
-msgctxt "AppWindow"
-msgid "State"
+#: components/dialogs/dialogs.slint:19
+msgctxt "WarnDialog"
+msgid "Warn"
 msgstr ""
 
-#: appwindow.slint:168
-msgctxt "AppWindow"
-msgid "Start"
+#: components/dialogs/dialogs.slint:33
+msgctxt "ErrorDialog"
+msgid "Error"
 msgstr ""
 
 #: edit-acc-dialog.slint:5
@@ -409,168 +364,247 @@ msgctxt "Messages"
 msgid "Warning"
 msgstr ""
 
-#: settings.slint:7 settings.slint:35
-msgctxt "Settings"
-msgid "Settings"
+#: pages/home.slint:25
+msgctxt "HomePage"
+msgid "Downloading"
 msgstr ""
 
-#: settings.slint:39
-msgctxt "Settings"
-msgid "Launcher Settings"
+#: pages/home.slint:29
+msgctxt "HomePage"
+msgid "Launching"
 msgstr ""
 
-#: settings.slint:44
-msgctxt "Settings"
-msgid "General"
+#: pages/home.slint:33
+msgctxt "HomePage"
+msgid "Logging in"
 msgstr ""
 
-#: settings.slint:50
-msgctxt "Settings"
-msgid "Minecraft Path"
+#: pages/home.slint:38
+msgctxt "HomePage"
+msgid "CE Minecraft Launcher"
 msgstr ""
 
-#: settings.slint:61
-msgctxt "Settings"
-msgid "Close after Launching Game"
+#: pages/home.slint:68
+msgctxt "HomePage"
+msgid "Start"
 msgstr ""
 
-#: settings.slint:69
-msgctxt "Settings"
-msgid "Downloading Settings"
+#: pages/games.slint:11
+msgctxt "GamesPage"
+msgid "Minecraft Version"
 msgstr ""
 
-#: settings.slint:75
-msgctxt "Settings"
-msgid "Concurrency"
+#: pages/games.slint:16
+msgctxt "GamesPage"
+msgid "Version"
 msgstr ""
 
-#: settings.slint:86
-msgctxt "Settings"
-msgid "Assets Source"
+#: pages/games.slint:17
+msgctxt "GamesPage"
+msgid "Type"
 msgstr ""
 
-#: settings.slint:97
-msgctxt "Settings"
-msgid "Libraries Source"
+#: pages/games.slint:18
+msgctxt "GamesPage"
+msgid "Description"
 msgstr ""
 
-#: settings.slint:108
-msgctxt "Settings"
-msgid "Minecraft Source"
+#: pages/games.slint:28
+msgctxt "GamesPage"
+msgid "Add"
 msgstr ""
 
-#: settings.slint:119
-msgctxt "Settings"
-msgid "Fabric Source"
+#: pages/games.slint:33
+msgctxt "GamesPage"
+msgid "Edit"
 msgstr ""
 
-#: settings.slint:130
-msgctxt "Settings"
-msgid "Forge Source"
+#: pages/accounts.slint:11
+msgctxt "AccountsPage"
+msgid "Account"
 msgstr ""
 
-#: settings.slint:148
-msgctxt "Settings"
-msgid "Default Minecraft Settings"
-msgstr ""
-
-#: settings.slint:153
-msgctxt "Settings"
-msgid "Java Path"
-msgstr ""
-
-#: settings.slint:164
-msgctxt "Settings"
-msgid "Window Height"
-msgstr ""
-
-#: settings.slint:175
-msgctxt "Settings"
-msgid "Window Width"
-msgstr ""
-
-#: settings.slint:186
-msgctxt "Settings"
-msgid "Minimum Memory"
-msgstr ""
-
-#: settings.slint:197
-msgctxt "Settings"
-msgid "Maximum Memory"
-msgstr ""
-
-#: settings.slint:216
-msgctxt "Settings"
-msgid "About"
-msgstr ""
-
-#: settings.slint:238
-msgctxt "Settings"
-msgid "Version: "
-msgstr ""
-
-#: settings.slint:239
-msgctxt "Settings"
-msgid "Github Repository: "
-msgstr ""
-
-#: settings.slint:240
-msgctxt "Settings"
-msgid "Developers: "
-msgstr ""
-
-#: settings.slint:241
-msgctxt "Settings"
-msgid "License: "
-msgstr ""
-
-#: settings.slint:243
-msgctxt "Settings"
-msgid "Credits:\n"
-msgstr ""
-
-#: downloader.slint:5 downloader.slint:13
-msgctxt "Downloader"
-msgid "Downloader"
-msgstr ""
-
-#: downloader.slint:15
-msgctxt "Downloader"
-msgid "In progress"
-msgstr ""
-
-#: downloader.slint:18 downloader.slint:29
-msgctxt "Downloader"
-msgid "ID"
-msgstr ""
-
-#: downloader.slint:19 downloader.slint:30
-msgctxt "Downloader"
+#: pages/accounts.slint:16
+msgctxt "AccountsPage"
 msgid "Name"
 msgstr ""
 
-#: downloader.slint:20
-msgctxt "Downloader"
+#: pages/accounts.slint:17
+msgctxt "AccountsPage"
+msgid "Type"
+msgstr ""
+
+#: pages/accounts.slint:27
+msgctxt "AccountsPage"
+msgid "Add"
+msgstr ""
+
+#: pages/accounts.slint:32
+msgctxt "AccountsPage"
+msgid "Edit"
+msgstr ""
+
+#: pages/settings.slint:28
+msgctxt "SettingsPage"
+msgid "Settings"
+msgstr ""
+
+#: pages/settings.slint:32
+msgctxt "SettingsPage"
+msgid "Launcher Settings"
+msgstr ""
+
+#: pages/settings.slint:36
+msgctxt "SettingsPage"
+msgid "General"
+msgstr ""
+
+#: pages/settings.slint:41
+msgctxt "SettingsPage"
+msgid "Minecraft Path"
+msgstr ""
+
+#: pages/settings.slint:53
+msgctxt "SettingsPage"
+msgid "Close after Launching Game"
+msgstr ""
+
+#: pages/settings.slint:62
+msgctxt "SettingsPage"
+msgid "Downloading Settings"
+msgstr ""
+
+#: pages/settings.slint:67
+msgctxt "SettingsPage"
+msgid "Concurrency"
+msgstr ""
+
+#: pages/settings.slint:79
+msgctxt "SettingsPage"
+msgid "Assets Source"
+msgstr ""
+
+#: pages/settings.slint:91
+msgctxt "SettingsPage"
+msgid "Libraries Source"
+msgstr ""
+
+#: pages/settings.slint:103
+msgctxt "SettingsPage"
+msgid "Minecraft Source"
+msgstr ""
+
+#: pages/settings.slint:115
+msgctxt "SettingsPage"
+msgid "Fabric Source"
+msgstr ""
+
+#: pages/settings.slint:127
+msgctxt "SettingsPage"
+msgid "Forge Source"
+msgstr ""
+
+#: pages/settings.slint:146
+msgctxt "SettingsPage"
+msgid "Default Minecraft Settings"
+msgstr ""
+
+#: pages/settings.slint:150
+msgctxt "SettingsPage"
+msgid "Java Path"
+msgstr ""
+
+#: pages/settings.slint:161
+msgctxt "SettingsPage"
+msgid "Window Height"
+msgstr ""
+
+#: pages/settings.slint:173
+msgctxt "SettingsPage"
+msgid "Window Width"
+msgstr ""
+
+#: pages/settings.slint:185
+msgctxt "SettingsPage"
+msgid "Minimum Memory"
+msgstr ""
+
+#: pages/settings.slint:197
+msgctxt "SettingsPage"
+msgid "Maximum Memory"
+msgstr ""
+
+#: pages/settings.slint:214
+msgctxt "SettingsPage"
+msgid "About"
+msgstr ""
+
+#: pages/settings.slint:232
+msgctxt "SettingsPage"
+msgid "Version: "
+msgstr ""
+
+#: pages/settings.slint:233
+msgctxt "SettingsPage"
+msgid "Github Repository: "
+msgstr ""
+
+#: pages/settings.slint:234
+msgctxt "SettingsPage"
+msgid "Developers: "
+msgstr ""
+
+#: pages/settings.slint:235
+msgctxt "SettingsPage"
+msgid "License: "
+msgstr ""
+
+#: pages/settings.slint:237
+msgctxt "SettingsPage"
+msgid "Credits:\n"
+msgstr ""
+
+#: pages/downloader.slint:8
+msgctxt "DownloaderPage"
+msgid "Downloader"
+msgstr ""
+
+#: pages/downloader.slint:10
+msgctxt "DownloaderPage"
+msgid "In progress"
+msgstr ""
+
+#: pages/downloader.slint:13 pages/downloader.slint:24
+msgctxt "DownloaderPage"
+msgid "ID"
+msgstr ""
+
+#: pages/downloader.slint:14 pages/downloader.slint:25
+msgctxt "DownloaderPage"
+msgid "Name"
+msgstr ""
+
+#: pages/downloader.slint:15
+msgctxt "DownloaderPage"
 msgid "Progress"
 msgstr ""
 
-#: downloader.slint:21
-msgctxt "Downloader"
+#: pages/downloader.slint:16
+msgctxt "DownloaderPage"
 msgid "Speed"
 msgstr ""
 
-#: downloader.slint:22
-msgctxt "Downloader"
+#: pages/downloader.slint:17
+msgctxt "DownloaderPage"
 msgid "ETA"
 msgstr ""
 
-#: downloader.slint:26
-msgctxt "Downloader"
+#: pages/downloader.slint:21
+msgctxt "DownloaderPage"
 msgid "Finished"
 msgstr ""
 
-#: downloader.slint:31
-msgctxt "Downloader"
+#: pages/downloader.slint:26
+msgctxt "DownloaderPage"
 msgid "State"
 msgstr ""
-

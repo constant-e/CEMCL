@@ -1,7 +1,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
-"POT-Creation-Date: 2025-03-24 11:24+0000\n"
+"POT-Creation-Date: 2026-04-05 06:18+0000\n"
 "PO-Revision-Date: 2024-10-02 11:53+0800\n"
 "Last-Translator:  <fmn_tzx@outlook.com>\n"
 "Language-Team: Chinese (simplified) <i18n-zh@googlegroups.com>\n"
@@ -10,16 +10,6 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
-
-#: dialogs.slint:19
-msgctxt "WarnDialog"
-msgid "Warn"
-msgstr "警告"
-
-#: dialogs.slint:33
-msgctxt "ErrorDialog"
-msgid "Error"
-msgstr "错误"
 
 #: add-acc-dialog.slint:4
 msgctxt "AddAccDialog"
@@ -176,75 +166,40 @@ msgctxt "AddGameDialog"
 msgid "Enable Separated Version"
 msgstr "启用版本隔离"
 
-#: appwindow.slint:59
-msgctxt "AppWindow"
-msgid "Downloading"
-msgstr "下载中"
-
-#: appwindow.slint:60
-msgctxt "AppWindow"
-msgid "Launching"
-msgstr "启动中"
-
-#: appwindow.slint:61
-msgctxt "AppWindow"
-msgid "Logging in"
-msgstr "登录中"
-
-#: appwindow.slint:75
+#: appwindow.slint:43
 msgctxt "AppWindow"
 msgid "Account"
 msgstr "账号"
 
-#: appwindow.slint:80
+#: appwindow.slint:43
 msgctxt "AppWindow"
-msgid "Name"
-msgstr "用户名"
+msgid "Home"
+msgstr "主页"
 
-#: appwindow.slint:81 appwindow.slint:111
+#: appwindow.slint:43
 msgctxt "AppWindow"
-msgid "Type"
-msgstr "类型"
+msgid "Games"
+msgstr "游戏"
 
-#: appwindow.slint:91 appwindow.slint:122
+#: appwindow.slint:43
 msgctxt "AppWindow"
-msgid "Add"
-msgstr "添加"
+msgid "Downloader"
+msgstr "下载管理器"
 
-#: appwindow.slint:96 appwindow.slint:127
-msgctxt "AppWindow"
-msgid "Edit"
-msgstr "编辑"
-
-#: appwindow.slint:105
-msgctxt "AppWindow"
-msgid "Minecraft Version"
-msgstr "Minecraft版本"
-
-#: appwindow.slint:110
-msgctxt "AppWindow"
-msgid "Version"
-msgstr "版本"
-
-#: appwindow.slint:112
-msgctxt "AppWindow"
-msgid "Description"
-msgstr "备注"
-
-#: appwindow.slint:138
+#: appwindow.slint:43
 msgctxt "AppWindow"
 msgid "Settings"
 msgstr "设置"
 
-#: appwindow.slint:162
-msgctxt "AppWindow"
-msgid "State"
-msgstr "下载状态"
+#: components/dialogs/dialogs.slint:19
+msgctxt "WarnDialog"
+msgid "Warn"
+msgstr "警告"
 
-#: appwindow.slint:168
-msgctxt "AppWindow"
-msgid "Start"
-msgstr "启动"
+#: components/dialogs/dialogs.slint:33
+msgctxt "ErrorDialog"
+msgid "Error"
+msgstr "错误"
 
 #: edit-acc-dialog.slint:5
 msgctxt "EditAccDialog"
@@ -408,168 +363,247 @@ msgctxt "Messages"
 msgid "Warning"
 msgstr "警告"
 
-#: settings.slint:7 settings.slint:35
-msgctxt "Settings"
+#: pages/home.slint:25
+msgctxt "HomePage"
+msgid "Downloading"
+msgstr "下载中"
+
+#: pages/home.slint:29
+msgctxt "HomePage"
+msgid "Launching"
+msgstr "启动中"
+
+#: pages/home.slint:33
+msgctxt "HomePage"
+msgid "Logging in"
+msgstr "登录中"
+
+#: pages/home.slint:38
+msgctxt "HomePage"
+msgid "CE Minecraft Launcher"
+msgstr "Minecraft下载源"
+
+#: pages/home.slint:68
+msgctxt "HomePage"
+msgid "Start"
+msgstr "启动"
+
+#: pages/games.slint:11
+msgctxt "GamesPage"
+msgid "Minecraft Version"
+msgstr "Minecraft版本"
+
+#: pages/games.slint:16
+msgctxt "GamesPage"
+msgid "Version"
+msgstr "版本"
+
+#: pages/games.slint:17
+msgctxt "GamesPage"
+msgid "Type"
+msgstr "类型"
+
+#: pages/games.slint:18
+msgctxt "GamesPage"
+msgid "Description"
+msgstr "备注"
+
+#: pages/games.slint:28
+msgctxt "GamesPage"
+msgid "Add"
+msgstr "添加"
+
+#: pages/games.slint:33
+msgctxt "GamesPage"
+msgid "Edit"
+msgstr "编辑"
+
+#: pages/accounts.slint:11
+msgctxt "AccountsPage"
+msgid "Account"
+msgstr "账号"
+
+#: pages/accounts.slint:16
+msgctxt "AccountsPage"
+msgid "Name"
+msgstr "用户名"
+
+#: pages/accounts.slint:17
+msgctxt "AccountsPage"
+msgid "Type"
+msgstr "类型"
+
+#: pages/accounts.slint:27
+msgctxt "AccountsPage"
+msgid "Add"
+msgstr "添加"
+
+#: pages/accounts.slint:32
+msgctxt "AccountsPage"
+msgid "Edit"
+msgstr "编辑"
+
+#: pages/settings.slint:28
+msgctxt "SettingsPage"
 msgid "Settings"
 msgstr "设置"
 
-#: settings.slint:39
-msgctxt "Settings"
+#: pages/settings.slint:32
+msgctxt "SettingsPage"
 msgid "Launcher Settings"
 msgstr "启动器设置"
 
-#: settings.slint:44
-msgctxt "Settings"
+#: pages/settings.slint:36
+msgctxt "SettingsPage"
 msgid "General"
 msgstr "通用"
 
-#: settings.slint:50
-msgctxt "Settings"
+#: pages/settings.slint:41
+msgctxt "SettingsPage"
 msgid "Minecraft Path"
 msgstr "Minecraft路径"
 
-#: settings.slint:61
-msgctxt "Settings"
+#: pages/settings.slint:53
+msgctxt "SettingsPage"
 msgid "Close after Launching Game"
 msgstr "启动后关闭启动器"
 
-#: settings.slint:69
-msgctxt "Settings"
+#: pages/settings.slint:62
+msgctxt "SettingsPage"
 msgid "Downloading Settings"
 msgstr "下载设置"
 
-#: settings.slint:75
-msgctxt "Settings"
+#: pages/settings.slint:67
+msgctxt "SettingsPage"
 msgid "Concurrency"
 msgstr "并发数"
 
-#: settings.slint:86
-msgctxt "Settings"
+#: pages/settings.slint:79
+msgctxt "SettingsPage"
 msgid "Assets Source"
 msgstr "assets下载源"
 
-#: settings.slint:97
-msgctxt "Settings"
+#: pages/settings.slint:91
+msgctxt "SettingsPage"
 msgid "Libraries Source"
 msgstr "libraries下载源"
 
-#: settings.slint:108
-msgctxt "Settings"
+#: pages/settings.slint:103
+msgctxt "SettingsPage"
 msgid "Minecraft Source"
 msgstr "Minecraft下载源"
 
-#: settings.slint:119
-msgctxt "Settings"
+#: pages/settings.slint:115
+msgctxt "SettingsPage"
 msgid "Fabric Source"
 msgstr "Fabric下载源"
 
-#: settings.slint:130
-msgctxt "Settings"
+#: pages/settings.slint:127
+msgctxt "SettingsPage"
 msgid "Forge Source"
 msgstr "Forge下载源"
 
-#: settings.slint:148
-msgctxt "Settings"
+#: pages/settings.slint:146
+msgctxt "SettingsPage"
 msgid "Default Minecraft Settings"
 msgstr "默认游戏设置"
 
-#: settings.slint:153
-msgctxt "Settings"
+#: pages/settings.slint:150
+msgctxt "SettingsPage"
 msgid "Java Path"
 msgstr "Java路径"
 
-#: settings.slint:164
-msgctxt "Settings"
+#: pages/settings.slint:161
+msgctxt "SettingsPage"
 msgid "Window Height"
 msgstr "窗口高度"
 
-#: settings.slint:175
-msgctxt "Settings"
+#: pages/settings.slint:173
+msgctxt "SettingsPage"
 msgid "Window Width"
 msgstr "窗口宽度"
 
-#: settings.slint:186
-msgctxt "Settings"
+#: pages/settings.slint:185
+msgctxt "SettingsPage"
 msgid "Minimum Memory"
 msgstr "最小分配内存"
 
-#: settings.slint:197
-msgctxt "Settings"
+#: pages/settings.slint:197
+msgctxt "SettingsPage"
 msgid "Maximum Memory"
 msgstr "最大分配内存"
 
-#: settings.slint:216
-msgctxt "Settings"
+#: pages/settings.slint:214
+msgctxt "SettingsPage"
 msgid "About"
 msgstr "关于"
 
-#: settings.slint:238
-msgctxt "Settings"
+#: pages/settings.slint:232
+msgctxt "SettingsPage"
 msgid "Version: "
 msgstr "版本："
 
-#: settings.slint:239
-msgctxt "Settings"
+#: pages/settings.slint:233
+msgctxt "SettingsPage"
 msgid "Github Repository: "
 msgstr "GitHub仓库："
 
-#: settings.slint:240
-msgctxt "Settings"
+#: pages/settings.slint:234
+msgctxt "SettingsPage"
 msgid "Developers: "
 msgstr "开发者："
 
-#: settings.slint:241
-msgctxt "Settings"
+#: pages/settings.slint:235
+msgctxt "SettingsPage"
 msgid "License: "
 msgstr "许可证："
 
-#: settings.slint:243
-msgctxt "Settings"
+#: pages/settings.slint:237
+msgctxt "SettingsPage"
 msgid "Credits:\n"
 msgstr "鸣谢：\n"
 
-#: downloader.slint:5 downloader.slint:13
-msgctxt "Downloader"
+#: pages/downloader.slint:8
+msgctxt "DownloaderPage"
 msgid "Downloader"
 msgstr "下载管理器"
 
-#: downloader.slint:15
-msgctxt "Downloader"
+#: pages/downloader.slint:10
+msgctxt "DownloaderPage"
 msgid "In progress"
 msgstr "进行中"
 
-#: downloader.slint:18 downloader.slint:29
-msgctxt "Downloader"
+#: pages/downloader.slint:13 pages/downloader.slint:24
+msgctxt "DownloaderPage"
 msgid "ID"
 msgstr "ID"
 
-#: downloader.slint:19 downloader.slint:30
-msgctxt "Downloader"
+#: pages/downloader.slint:14 pages/downloader.slint:25
+msgctxt "DownloaderPage"
 msgid "Name"
-msgstr "名称"
+msgstr "用户名"
 
-#: downloader.slint:20
-msgctxt "Downloader"
+#: pages/downloader.slint:15
+msgctxt "DownloaderPage"
 msgid "Progress"
 msgstr "进度"
 
-#: downloader.slint:21
-msgctxt "Downloader"
+#: pages/downloader.slint:16
+msgctxt "DownloaderPage"
 msgid "Speed"
 msgstr "下载速度"
 
-#: downloader.slint:22
-msgctxt "Downloader"
+#: pages/downloader.slint:17
+msgctxt "DownloaderPage"
 msgid "ETA"
 msgstr "剩余时间"
 
-#: downloader.slint:26
-msgctxt "Downloader"
+#: pages/downloader.slint:21
+msgctxt "DownloaderPage"
 msgid "Finished"
 msgstr "已完成"
 
-#: downloader.slint:31
-msgctxt "Downloader"
+#: pages/downloader.slint:26
+msgctxt "DownloaderPage"
 msgid "State"
-msgstr "状态"
-
+msgstr "下载状态"

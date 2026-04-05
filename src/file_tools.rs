@@ -78,3 +78,24 @@ pub fn list_file(path: &String) -> std::io::Result<Vec<String>> {
     }
     Ok(result)
 }
+
+pub async fn list_file_async(path: &String) -> tokio::io::Result<Vec<String>> {
+    let mut result = Vec::new();
+    let mut entries = tokio::fs::read_dir(&Path::new(path)).await?;
+    while let Some(entry) = entries.next_entry().await? {
+        let entry_path = entry.path();
+        let path = path.clone()
+            + "/"
+            + entry_path
+                .file_name()
+                .ok_or(ErrorKind::InvalidData)?
+                .to_str()
+                .ok_or(ErrorKind::InvalidData)?;
+        if entry_path.is_dir() {
+            result.append(&mut list_file(&path)?)
+        } else {
+            result.push(path);
+        }
+    }
+    Ok(result)
+}

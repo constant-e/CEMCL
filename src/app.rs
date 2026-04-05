@@ -4,16 +4,14 @@ use std::fs::{self, exists};
 use std::io::ErrorKind;
 use std::process::Command;
 use std::rc::Rc;
-use std::sync::Arc;
-use std::sync::atomic::AtomicBool;
 use std::{sync, thread};
 
-use log::{debug, error, warn};
+use log::{debug, error, info, warn};
 use serde_json::json;
 use slint::{ComponentHandle, ModelRc, StandardListViewItem, VecModel};
 
 use crate::dialogs::msg_box::{err_dialog, warn_dialog};
-use crate::downloader::downloader::Downloader;
+use crate::downloader::DownloadManager;
 use crate::file_tools::list_dir;
 use crate::mc::download::{Fabric, Forge, GameUrl};
 use crate::mc::{Account, Game, launch};
@@ -129,7 +127,7 @@ pub struct App {
     pub download_fabric_list: Vec<Fabric>,
     pub download_forge_list: Vec<Forge>,
     pub download_game_list: Vec<GameUrl>,
-    pub downloader: Downloader,
+    pub downloader: DownloadManager,
     pub game_list: Vec<Game>,
     pub ui_weak: slint::Weak<AppWindow>,
 }
@@ -175,7 +173,7 @@ impl App {
             warn_dialog(&msg);
         }
 
-        app.downloader = Downloader::new(app.config.concurrency);
+        app.downloader = DownloadManager::new(app.config.concurrency);
 
         app.ui_weak = ui_weak;
         app.refresh_ui_acc_list();
@@ -285,16 +283,16 @@ impl App {
             })
             .ok()?;
 
-        if let Err(e) = self.downloader.clear() {
-            error!("Failed to clear downloader. Reason: {e}");
-            self.ui_weak
-                .upgrade_in_event_loop(move |ui| {
-                    err_dialog(&format!("{e}"));
-                    ui.set_state(State::Spare);
-                })
-                .unwrap();
-            return None;
-        }
+        // if let Err(e) = self.downloader.clear() {
+        //     error!("Failed to clear downloader. Reason: {e}");
+        //     self.ui_weak
+        //         .upgrade_in_event_loop(move |ui| {
+        //             err_dialog(&format!("{e}"));
+        //             ui.set_state(State::Spare);
+        //         })
+        //         .unwrap();
+        //     return None;
+        // }
 
         if acc_index >= self.acc_list.len() || game_index >= self.game_list.len() {
             warn!(
@@ -362,20 +360,19 @@ impl App {
 
                 // UI进度条
                 let ui_weak_clone = self.ui_weak.clone();
-                let stop = Arc::new(AtomicBool::new(false));
-                self.downloader
-                    .update_progress(stop.clone(), move |progress| {
-                        ui_weak_clone
-                            .upgrade_in_event_loop(move |ui| {
-                                ui.set_progress(progress as f32);
-                            })
-                            .unwrap();
-                    });
+                let f = move |progress: (u64, u64)| {
+                    info!("Download progress: {}/{}", progress.0, progress.1);
+                    ui_weak_clone
+                        .upgrade_in_event_loop(move |ui| {
+                            ui.set_progress((progress.0 as f32) / (progress.1 as f32));
+                        })
+                    .unwrap();
+                };
 
-                if let Err(e) = launch::download_all(&self.config, &game_download, &self.downloader)
+                if let Err(e) = launch::download_all(&self.config, &game_download, &self.downloader,f)
                 {
                     error!("Failed to download. Reason: {e}");
-                    stop.store(true, sync::atomic::Ordering::Relaxed);
+                    // stop.store(true, sync::atomic::Ordering::Relaxed);
                     self.ui_weak
                         .upgrade_in_event_loop(move |ui| {
                             let msg =
@@ -386,7 +383,7 @@ impl App {
                         .unwrap();
                     return None;
                 }
-                stop.store(true, sync::atomic::Ordering::Relaxed);
+                // stop.store(true, sync::atomic::Ordering::Relaxed);
 
                 if let Err(e) = self
                     .ui_weak
@@ -751,7 +748,7 @@ impl Default for App {
             download_fabric_list: Vec::new(),
             download_forge_list: Vec::new(),
             download_game_list: Vec::new(),
-            downloader: Downloader::default(),
+            downloader: DownloadManager::default(),
             game_list: Vec::new(),
             ui_weak: slint::Weak::default(),
         }

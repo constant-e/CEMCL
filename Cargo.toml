@@ -6,17 +6,20 @@ edition = "2024"
 license = "Apache 2.0"
 
 [dependencies]
+chrono = "0.4.43"
 clipboard = "0.5.0"
-env_logger = "0.11.8"
-futures = "0.3.31"
-log = "0.4.27"
-reqwest = { version = "0.12.23", features = ["json", "stream"] }
-serde_json = "1.0.142"
-slint = "1.12.1"
-tokio = { version = "1.47.1", features = ["full"] }
-uuid = { version = "1.18.0", features = ["v4", "fast-rng", "macro-diagnostics"] }
-webbrowser = "1.0.5"
-zip = "4.3.0"
+dashmap = "6.1.0"
+env_logger = "0.11.9"
+futures = "0.3.32"
+log = "0.4.29"
+reqwest = { version = "0.12.28", features = ["json", "stream"] }
+serde = "1.0.228"
+serde_json = "1.0.149"
+slint = "1.15.1"
+tokio = { version = "1.49.0", features = ["full"] }
+uuid = { version = "1.21.0", features = ["v4", "fast-rng", "macro-diagnostics"] }
+webbrowser = "1.1.0"
+zip = "8.5.0"
 
 [build-dependencies]
-slint-build = "1.12.1"
+slint-build = "1.15.1"
