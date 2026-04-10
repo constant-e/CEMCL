@@ -3,9 +3,11 @@
 //! mc::launch 获取MC的启动参数
 
 use crate::app::Config;
-use crate::downloader::downloader::Downloader;
+use crate::downloader::manager::DownloadManagerError;
+use crate::downloader::TaskSetStatus;
+use crate::downloader::{DownloadManager, TaskInfo};
 use futures::executor::block_on;
-use log::error;
+use log::{error, info, warn};
 use serde_json::Value;
 use std::env::consts as env;
 use std::fs::{self, exists};
@@ -33,6 +35,40 @@ pub struct GameDownload {
 
     /// 版本
     pub version: String,
+}
+
+pub enum DownloadError {
+    Failed,
+    Cancelled,
+    IOError(std::io::Error),
+    Other(String),
+}
+
+impl From<DownloadManagerError> for DownloadError {
+    fn from(err: DownloadManagerError) -> Self {
+        match err {
+            DownloadManagerError::TaskSetNotFound => DownloadError::Other(String::from("task set no found")),
+            DownloadManagerError::DownloadFailed => DownloadError::Failed,
+            DownloadManagerError::Other(msg) => DownloadError::Other(msg),
+        }
+    }
+}
+
+impl From<std::io::Error> for DownloadError {
+    fn from(err: std::io::Error) -> Self {
+        DownloadError::IOError(err)
+    }
+}
+
+impl std::fmt::Display for DownloadError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            DownloadError::Failed => write!(f, "Download failed."),
+            DownloadError::Cancelled => write!(f, "Download cancelled."),
+            DownloadError::IOError(e) => write!(f, "IO error: {e}"),
+            DownloadError::Other(msg) => write!(f, "{}", msg),
+        }
+    }
 }
 
 /// 从json对象单次获取参数
@@ -407,8 +443,10 @@ pub async fn get_launch_command(
 pub fn download_all(
     config: &Config,
     game: &GameDownload,
-    downloader: &Downloader,
-) -> Result<(), std::io::Error> {
+    downloader: &DownloadManager,
+    on_progress_update: impl Fn((u64, u64)) + Send + 'static,
+) -> Result<(), DownloadError> {
+    let mut tasks = Vec::new();
     let jar_path = game.dir.clone() + "/" + game.version.as_ref() + ".jar";
     if !exists(&jar_path)? {
         // 本体
@@ -416,12 +454,7 @@ pub fn download_all(
             .mc_url
             .clone()
             .replace("https://piston-meta.mojang.com", &config.game_source);
-        if let Err(e) = downloader.add(url, jar_path) {
-            return Err(std::io::Error::new(
-                std::io::ErrorKind::Other,
-                format!("{e}"),
-            ));
-        }
+        tasks.push(TaskInfo::new(url, jar_path, None, None, None, None));
     }
 
     // 处理依赖
@@ -441,46 +474,59 @@ pub fn download_all(
     }
 
     // assets
-    download::download_assets(
+    tasks.append(&mut download::download_assets(
         &config.game_path,
         &game.asset_index,
         &config.assets_source,
-        downloader,
-    )?;
+    )?);
 
     // download libraries
-    let natives = download::download_libraries(
+    tasks.append(&mut download::download_libraries(
         &game.libraries_json,
         &config.game_path,
         &game.dir,
         &config.libraries_source,
         &config.fabric_source,
-        downloader,
-    )?;
+    )?);
 
-    while downloader.in_progress().ok_or(std::io::Error::new(
-        std::io::ErrorKind::Other,
-        "Downloader Error",
-    ))? {
-        sleep(Duration::from_millis(10));
-        if downloader.has_error() {
-            return Err(std::io::Error::new(
-                std::io::ErrorKind::Other,
-                "Downloader Error",
-            ));
+    if tasks.is_empty() {
+        return Ok(());
+    }
+
+    downloader.add_taskset(game.version.clone(), tasks);
+    let _handle = downloader.start_taskset(game.version.clone());
+
+    // progress by bytes may update total bytes, which looks strange
+    let mut status = downloader.get_status_by_number(game.version.clone())?;
+    loop {
+        match status {
+            TaskSetStatus::Completed(total) => {
+                on_progress_update((total, total));
+                break
+            },
+            TaskSetStatus::Failed => {
+                error!("Failed to download {0}.", &game.version);
+                return Err(DownloadError::Failed);
+            },
+            TaskSetStatus::Cancelled => {
+                warn!("Download cancelled.");
+                return Err(DownloadError::Cancelled);
+            },
+            TaskSetStatus::Downloading(downloaded, total) => {
+                on_progress_update((downloaded, total));
+            },
+            TaskSetStatus::Paused(downloaded, total) => {
+                // This case shouldn't happen now. Pause hasn't been implemented
+                on_progress_update((downloaded, total));
+            },
+            TaskSetStatus::Pending(total) => {
+                // TODO: download this game first
+                on_progress_update((0, total));
+            },
         }
-    }
-
-    if downloader.has_error() {
-        return Err(std::io::Error::new(
-            std::io::ErrorKind::Other,
-            "Downloader Error",
-        ));
-    }
-
-    // extract natives
-    for (natives_dir, local_path, id) in natives {
-        download::extract_lib(&natives_dir, &local_path, &id)?;
+        drop(status);
+        sleep(Duration::from_millis(500));
+        status = downloader.get_status_by_number(game.version.clone())?;
     }
 
     Ok(())

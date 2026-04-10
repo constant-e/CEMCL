@@ -3,17 +3,15 @@
 use std::fs::exists;
 use std::process::Command;
 use std::rc;
-use std::sync::atomic::AtomicBool;
-use std::sync::{Arc, Mutex};
-use std::thread::sleep;
-use std::time::Duration;
+use std::sync::Mutex;
 use std::{fs, sync, thread};
 
 use log::{error, warn};
 use slint::{ComponentHandle, ModelRc, StandardListViewItem, VecModel};
 
 use crate::app::App;
-use crate::dialogs::msg_box::{self, err_dialog};
+use crate::dialogs::msg_box;
+use crate::downloader::TaskInfo;
 use crate::mc::Game;
 use crate::mc::download::{self, Fabric, Forge, GameUrl, list_forge};
 use crate::{AddGameDialog, Messages};
@@ -328,88 +326,36 @@ pub async fn add_game_dialog(app_weak: sync::Weak<Mutex<App>>) -> Result<(), sli
                             }
                             if let Some(app) = app_weak.upgrade() {
                                 if let Ok(app) = app.lock() {
-                                    if let Err(e) = app.downloader.clear() {
-                                        error!("Failed to clear downloader. Reason: {e}");
-                                        app.ui_weak
-                                            .upgrade_in_event_loop(move |ui| {
-                                                err_dialog(&format!("{e}"));
-                                                ui.invoke_unset_loading();
-                                            })
-                                            .unwrap();
-                                        return;
-                                    }
-
                                     if let Err(e) = app.ui_weak.upgrade_in_event_loop(|ui| {
                                         ui.set_progress(0.0);
-                                        ui.invoke_set_loading();
-                                        ui.invoke_state_set_downloading();
+                                        ui.set_state(crate::State::Downloading);
                                     }) {
                                         error!("Failed to upgrade a weak pointer. Reason: {e}.");
                                         return;
                                     }
 
-                                    if let Err(e) = app.downloader.add(forge_url, forge_path.clone()) {
-                                        error!("Failed to add a download task. Reason: {e}.");
-                                        return;
-                                    }
+                                    let id = format!("forge-{0}", forge.version);
+                                    let mut task = TaskInfo::new(forge_url, forge_path.clone(), None, None, None, None);
 
-                                    let app_ui_weak = app.ui_weak.clone();
-                                    let stop = Arc::new(AtomicBool::new(false));
-                                    app.downloader.update_progress_size(stop.clone(), move |progress| {
-                                        app_ui_weak
-                                            .upgrade_in_event_loop(move |ui| {
-                                                ui.set_progress(progress as f32);
-                                            })
-                                            .unwrap();
-                                    });
-
-                                    while app.downloader.in_progress().unwrap() {
-                                        sleep(Duration::from_millis(10));
-                                        if app.downloader.has_error() {
-                                            error!("Failed to download forge.");
-                                            stop.store(true, sync::atomic::Ordering::Relaxed);
-                                            return;
-                                        }
-                                    }
-
-                                    stop.store(true, sync::atomic::Ordering::Relaxed);
-
-                                    // 让用户手动安装
-                                    match Command::new(java_path)
-                                        .arg("-jar")
-                                        .arg(forge_path)
-                                        // .arg("--installClient")
-                                        // .arg(game_path)
-                                        .spawn() {
-                                        Ok(mut child) => {
-                                            if let Err(e) = app.ui_weak.upgrade_in_event_loop(|ui| {
-                                                ui.invoke_state_set_launching();
-                                            }) {
-                                                error!("Failed to upgrade a weak pointer. Reason: {e}.");
-                                                return;
-                                            }
-                                            if let Err(e) = child.wait() {
-                                                error!("Failed to run forge installer. Reason: {e}.");
-                                                app.ui_weak.upgrade_in_event_loop(move |ui| {
-                                                    let msg = ui.global::<Messages>().get_start_failed() + &format!("\n{e}");
-                                                    msg_box::err_dialog(&msg);
-                                                }).unwrap();
-                                            }
-                                            app.ui_weak.upgrade_in_event_loop(|ui| ui.invoke_unset_loading()).unwrap();
-                                        },
-                                        Err(e) => {
+                                    let ui_weak = app.ui_weak.clone();
+                                    task.on_finish = Some(Box::new(move || {
+                                        // 让用户手动安装
+                                        if let Err(e) = Command::new(&java_path)
+                                            .arg("-jar")
+                                            .arg(&forge_path)
+                                            // .arg("--installClient")
+                                            // .arg(game_path)
+                                            .spawn()
+                                        {
                                             error!("Failed to run forge installer. Reason: {e}.");
-                                            app.ui_weak.upgrade_in_event_loop(move |ui| {
+                                            ui_weak.upgrade_in_event_loop(move |ui| {
                                                 let msg = ui.global::<Messages>().get_start_failed() + &format!("\n{e}");
                                                 msg_box::err_dialog(&msg);
                                             }).unwrap();
-                                            return;
-                                        },
-                                    }
+                                        }
+                                    }));
 
-                                    if let Err(e) = fs::remove_dir_all("temp") {
-                                        error!("Failed to remove temp directory. Reason: {e}.");
-                                    }
+                                    app.downloader.add_taskset(id, [task].into());
                                 } else {
                                     error!("Failed to lock a mutex.");
                                 }

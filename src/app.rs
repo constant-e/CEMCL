@@ -4,20 +4,18 @@ use std::fs::{self, exists};
 use std::io::ErrorKind;
 use std::process::Command;
 use std::rc::Rc;
-use std::sync::Arc;
-use std::sync::atomic::AtomicBool;
 use std::{sync, thread};
 
-use log::{debug, error, warn};
+use log::{debug, error, info, warn};
 use serde_json::json;
 use slint::{ComponentHandle, ModelRc, StandardListViewItem, VecModel};
 
 use crate::dialogs::msg_box::{err_dialog, warn_dialog};
-use crate::downloader::downloader::Downloader;
+use crate::downloader::DownloadManager;
 use crate::file_tools::list_dir;
 use crate::mc::download::{Fabric, Forge, GameUrl};
 use crate::mc::{Account, Game, launch};
-use crate::{AppWindow, Messages};
+use crate::{AppWindow, Messages, Settings, State};
 
 /// 启动器配置
 #[derive(Clone)]
@@ -82,6 +80,46 @@ impl Default for Config {
     }
 }
 
+impl From<Settings> for Config {
+    fn from(settings: Settings) -> Self {
+        Config {
+            assets_source: settings.assets_source.into(),
+            close_after_launch: settings.close_after_launch,
+            concurrency: settings.concurrency as usize,
+            fabric_source: settings.fabric_source.into(),
+            forge_source: settings.forge_source.into(),
+            game_path: settings.game_path.into(),
+            game_source: settings.game_source.into(),
+            height: settings.height.into(),
+            java_path: settings.java_path.into(),
+            libraries_source: settings.libraries_source.into(),
+            width: settings.width.into(),
+            xms: settings.xms.into(),
+            xmx: settings.xmx.into(),
+        }
+    }
+}
+
+impl Into<Settings> for Config {
+    fn into(self) -> Settings {
+        Settings {
+            assets_source: self.assets_source.into(),
+            close_after_launch: self.close_after_launch,
+            concurrency: self.concurrency as i32,
+            fabric_source: self.fabric_source.into(),
+            forge_source: self.forge_source.into(),
+            game_path: self.game_path.into(),
+            game_source: self.game_source.into(),
+            height: self.height.into(),
+            java_path: self.java_path.into(),
+            libraries_source: self.libraries_source.into(),
+            width: self.width.into(),
+            xms: self.xms.into(),
+            xmx: self.xmx.into(),
+        }
+    }
+}
+
 pub struct App {
     pub acc_list: Vec<Account>,
     pub config: Config,
@@ -89,7 +127,7 @@ pub struct App {
     pub download_fabric_list: Vec<Fabric>,
     pub download_forge_list: Vec<Forge>,
     pub download_game_list: Vec<GameUrl>,
-    pub downloader: Downloader,
+    pub downloader: DownloadManager,
     pub game_list: Vec<Game>,
     pub ui_weak: slint::Weak<AppWindow>,
 }
@@ -135,12 +173,15 @@ impl App {
             warn_dialog(&msg);
         }
 
-        // todo: set concurrency
-        app.downloader = Downloader::new(app.config.concurrency);
+        app.downloader = DownloadManager::new(app.config.concurrency);
 
         app.ui_weak = ui_weak;
         app.refresh_ui_acc_list();
         app.refresh_ui_game_list();
+        if app.refresh_ui_settings().is_none() {
+            error!("Failed to refresh ui settings.");
+            err_dialog("Failed to refresh ui settings.");
+        }
 
         Ok(app)
     }
@@ -242,17 +283,6 @@ impl App {
             })
             .ok()?;
 
-        if let Err(e) = self.downloader.clear() {
-            error!("Failed to clear downloader. Reason: {e}");
-            self.ui_weak
-                .upgrade_in_event_loop(move |ui| {
-                    err_dialog(&format!("{e}"));
-                    ui.invoke_unset_loading();
-                })
-                .unwrap();
-            return None;
-        }
-
         if acc_index >= self.acc_list.len() || game_index >= self.game_list.len() {
             warn!(
                 "Index out of bounds: the len is ({}, {}) but the index is ({acc_index}, {game_index}).",
@@ -267,13 +297,9 @@ impl App {
             return None;
         }
 
-        self.ui_weak
-            .upgrade_in_event_loop(|ui| ui.invoke_set_loading())
-            .ok()?;
-
         // refresh access_token
         self.ui_weak
-            .upgrade_in_event_loop(|ui| ui.invoke_state_set_logging_in())
+            .upgrade_in_event_loop(|ui| ui.set_state(State::LoggingIn))
             .ok()?;
         if self.acc_list[acc_index]
             .refresh(self.ui_weak.clone())
@@ -284,7 +310,7 @@ impl App {
             self.ui_weak
                 .upgrade_in_event_loop(|ui| {
                     err_dialog(&ui.global::<Messages>().get_login_failed());
-                    ui.invoke_unset_loading();
+                    ui.set_state(State::Spare);
                 })
                 .unwrap();
             return None;
@@ -309,13 +335,13 @@ impl App {
 
                 if let Err(e) = self
                     .ui_weak
-                    .upgrade_in_event_loop(|ui| ui.invoke_state_set_downloading())
+                    .upgrade_in_event_loop(|ui| ui.set_state(State::Downloading))
                 {
                     error!("Failed to upgrade a weak pointer. Reason: {e}.");
                     self.ui_weak
                         .upgrade_in_event_loop(move |ui| {
                             err_dialog(&format!("{e}"));
-                            ui.invoke_unset_loading();
+                            ui.set_state(State::Spare);
                         })
                         .unwrap();
                     return None;
@@ -323,41 +349,40 @@ impl App {
 
                 // UI进度条
                 let ui_weak_clone = self.ui_weak.clone();
-                let stop = Arc::new(AtomicBool::new(false));
-                self.downloader
-                    .update_progress(stop.clone(), move |progress| {
-                        ui_weak_clone
-                            .upgrade_in_event_loop(move |ui| {
-                                ui.set_progress(progress as f32);
-                            })
-                            .unwrap();
-                    });
+                let f = move |progress: (u64, u64)| {
+                    info!("Download progress: {}/{}", progress.0, progress.1);
+                    ui_weak_clone
+                        .upgrade_in_event_loop(move |ui| {
+                            ui.set_progress((progress.0 as f32) / (progress.1 as f32));
+                        })
+                    .unwrap();
+                };
 
-                if let Err(e) = launch::download_all(&self.config, &game_download, &self.downloader)
+                if let Err(e) = launch::download_all(&self.config, &game_download, &self.downloader,f)
                 {
                     error!("Failed to download. Reason: {e}");
-                    stop.store(true, sync::atomic::Ordering::Relaxed);
+                    // stop.store(true, sync::atomic::Ordering::Relaxed);
                     self.ui_weak
                         .upgrade_in_event_loop(move |ui| {
                             let msg =
                                 ui.global::<Messages>().get_download_failed() + &format!("{e}");
                             err_dialog(&msg);
-                            ui.invoke_unset_loading();
+                            ui.set_state(State::Spare);
                         })
                         .unwrap();
                     return None;
                 }
-                stop.store(true, sync::atomic::Ordering::Relaxed);
+                // stop.store(true, sync::atomic::Ordering::Relaxed);
 
                 if let Err(e) = self
                     .ui_weak
-                    .upgrade_in_event_loop(|ui| ui.invoke_state_set_launching())
+                    .upgrade_in_event_loop(|ui| ui.set_state(State::Launching))
                 {
                     error!("Failed to upgrade a weak pointer. Reason: {e}.");
                     self.ui_weak
                         .upgrade_in_event_loop(move |ui| {
                             err_dialog(&format!("{e}"));
-                            ui.invoke_unset_loading();
+                            ui.set_state(State::Spare);
                         })
                         .unwrap();
                     return None;
@@ -409,7 +434,7 @@ impl App {
         }
 
         self.ui_weak
-            .upgrade_in_event_loop(|ui| ui.invoke_unset_loading())
+            .upgrade_in_event_loop(|ui| ui.set_state(State::Spare))
             .unwrap();
         Some(())
     }
@@ -630,7 +655,7 @@ impl App {
         fs::write("config.json", json.to_string())
     }
 
-    /// 保存管启格式的launcher_profiles.json，适配forge
+    /// 保存官方启动器格式的launcher_profiles.json，适配forge
     pub fn save_launcher_profiles(&self) -> Result<(), std::io::Error> {
         let mut json = json!({"profiles": {}});
         for game in &self.game_list {
@@ -650,6 +675,13 @@ impl App {
         )
     }
 
+    /// Set the config from ui, also save the config to config.json
+    pub fn set_config(&mut self) -> Result<(), std::io::Error> {
+        let ui = self.ui_weak.upgrade().ok_or(ErrorKind::Other)?;
+        self.config = ui.get_settings().into();
+        self.save_config()
+    }
+
     /// Refresh account list in ui
     pub fn refresh_ui_acc_list(&self) -> Option<()> {
         let ui = self.ui_weak.upgrade()?;
@@ -662,13 +694,23 @@ impl App {
             let row: ModelRc<StandardListViewItem> = ModelRc::from(model);
             ui_acc_list.push(row);
         }
-        ui.set_acc_list(ModelRc::from(Rc::from(VecModel::from(ui_acc_list))));
+        ui.set_acc_model(ModelRc::from(Rc::from(VecModel::from(ui_acc_list))));
+        Some(())
+    }
+
+    /// Refresh settings in ui
+    pub fn refresh_ui_settings(&self) -> Option<()> {
+        let ui = self.ui_weak.upgrade()?;
+        ui.set_settings(self.config.clone().into());
+        ui.set_authors(env!("CARGO_PKG_AUTHORS").into());
+        ui.set_version(env!("CARGO_PKG_VERSION").into());
         Some(())
     }
 
     /// Refresh game list in ui
     pub fn refresh_ui_game_list(&self) -> Option<()> {
         let ui = self.ui_weak.upgrade()?;
+        let mut combo_box_list: Vec<slint::SharedString> = Vec::new();
         let mut ui_game_list: Vec<ModelRc<StandardListViewItem>> = Vec::new();
         for game in &self.game_list {
             let version = StandardListViewItem::from(game.version.as_str());
@@ -677,9 +719,11 @@ impl App {
             let model: Rc<VecModel<StandardListViewItem>> =
                 Rc::from(VecModel::from(vec![version, game_type, description]));
             let row: ModelRc<StandardListViewItem> = ModelRc::from(model);
+            combo_box_list.push(game.version.clone().into());
             ui_game_list.push(row);
         }
-        ui.set_game_list(ModelRc::from(Rc::from(VecModel::from(ui_game_list))));
+        ui.set_combo_box_model(ModelRc::from(Rc::from(VecModel::from(combo_box_list))));
+        ui.set_game_model(ModelRc::from(Rc::from(VecModel::from(ui_game_list))));
         Some(())
     }
 }
@@ -693,7 +737,7 @@ impl Default for App {
             download_fabric_list: Vec::new(),
             download_forge_list: Vec::new(),
             download_game_list: Vec::new(),
-            downloader: Downloader::default(),
+            downloader: DownloadManager::default(),
             game_list: Vec::new(),
             ui_weak: slint::Weak::default(),
         }

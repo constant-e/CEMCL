@@ -59,9 +59,9 @@ pub fn edit_acc_dialog(app_weak: sync::Weak<Mutex<App>>) -> Result<(), slint::Pl
             let uuid = ui.get_uuid().to_string();
             thread::spawn(move || {
                 if let Ok(mut app) = app.try_lock() {
-                    app.ui_weak
-                        .upgrade_in_event_loop(|ui| ui.invoke_set_loading())
-                        .unwrap();
+                    // app.ui_weak
+                    //     .upgrade_in_event_loop(|ui| ui.invoke_set_loading())
+                    //     .unwrap();
 
                     let mut account = Account {
                         access_token: String::new(),
@@ -77,9 +77,9 @@ pub fn edit_acc_dialog(app_weak: sync::Weak<Mutex<App>>) -> Result<(), slint::Pl
 
                     app.edit_account(index, account);
 
-                    app.ui_weak
-                        .upgrade_in_event_loop(|ui| ui.invoke_unset_loading())
-                        .unwrap();
+                    // app.ui_weak
+                    //     .upgrade_in_event_loop(|ui| ui.invoke_unset_loading())
+                    //     .unwrap();
                 } else {
                     error!("Failed to lock a mutex.");
                 }

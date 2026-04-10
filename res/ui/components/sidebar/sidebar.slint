@@ -1,0 +1,41 @@
+import { HorizontalBox, VerticalBox, Palette } from "std-widgets.slint";
+import { SideBarItem } from "sidebar-item.slint";
+import { SubTitle } from "../text/text.slint";
+
+export component SideBar inherits Rectangle {
+    in-out property <[string]> model: [];
+    in-out property <string> title <=> label.text;
+    in-out property <int> current-index;
+    property <int> last-index: current-index;
+
+    callback index-changed(from: int, to: int);
+
+    min-width: 150px;
+
+    Rectangle {
+        background: Palette.background.darker(0.2);
+    }
+
+    VerticalBox {
+        padding-left: 0px;
+        padding-right: 0px;
+        spacing: 0px;
+        alignment: start;
+
+        label := SubTitle {
+            horizontal-alignment: center;
+            vertical-alignment: center;
+        }
+
+        for item[index] in root.model : SideBarItem {
+            clicked => {
+                index-changed(last-index, current-index);
+                last-index = current-index;
+                current-index = index;
+            }
+
+            text: item;
+            selected: index == root.current-index;
+        }
+    }
+}

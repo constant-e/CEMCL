@@ -6,11 +6,9 @@ mod dialogs;
 mod downloader;
 mod file_tools;
 mod mc;
-mod settings;
 
 use app::App;
 use dialogs::{add_acc_dialog, add_game_dialog, edit_acc_dialog, edit_game_dialog};
-use downloader::ui::downloader;
 use log::error;
 use std::sync::{Arc, Mutex};
 use std::thread;
@@ -77,15 +75,15 @@ fn main() -> Result<(), slint::PlatformError> {
         }
     });
 
-    let app_weak_clone = app_weak.clone();
-    ui.on_click_downloader_btn(move || {
-        if let Err(e) = downloader(app_weak_clone.clone()) {
-            error!("Failed to start downloader. Reason: {e}.");
-        }
-    });
+    // let app_weak_clone = app_weak.clone();
+    // ui.on_click_downloader_btn(move || {
+    //     if let Err(e) = downloader(app_weak_clone.clone()) {
+    //         error!("Failed to start downloader. Reason: {e}.");
+    //     }
+    // });
 
     let app_weak_clone = app_weak.clone();
-    ui.on_click_edit_acc_btn(move || {
+    ui.on_click_edit_acc_btn(move |index| {
         let app_weak_clone = app_weak_clone.clone();
         if let Err(e) = slint::spawn_local(async move {
             if let Err(e) = edit_acc_dialog(app_weak_clone.clone()) {
@@ -97,29 +95,36 @@ fn main() -> Result<(), slint::PlatformError> {
     });
 
     let app_weak_clone = app_weak.clone();
-    ui.on_click_edit_game_btn(move || {
+    ui.on_click_edit_game_btn(move |index| {
         if let Err(e) = edit_game_dialog(app_weak_clone.clone()) {
             error!("Failed to start edit_game. Reason: {e}.");
         }
     });
 
     let app_weak_clone = app_weak.clone();
-    ui.on_click_settings_btn(move || {
-        settings::init(app_weak_clone.clone());
+    ui.on_apply_settings(move || {
+        if app_weak_clone.upgrade().and_then(|app| {
+            let mut app = app.lock().unwrap();
+            if let Err(e) = app.set_config() {
+                error!("Failed to apply settings. Reason: {e}.");
+            }
+            Some(())
+        }).is_none() {
+            error!("Failed to upgrade a weak pointer.");
+        }
     });
 
     let ui_weak = ui.as_weak();
-    ui.on_click_start_btn(move || {
+    ui.on_click_start_btn(move |game_index| {
         if let Some(ui) = ui_weak.upgrade() {
             let app_weak = app_weak.clone();
             let acc_index = ui.get_acc_index() as usize;
-            let game_index = ui.get_game_index() as usize;
             thread::spawn(move || {
                 if let Some(app) = app_weak.upgrade() {
                     if let Ok(mut app) = app.try_lock() {
                         let rt = tokio::runtime::Runtime::new().unwrap();
                         let _tokio = rt.enter();
-                        rt.block_on(app.launch(acc_index, game_index));
+                        rt.block_on(app.launch(acc_index, game_index as usize));
                     } else {
                         error!("Failed to lock a mutex.");
                     }

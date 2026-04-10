@@ -1,7 +1,7 @@
 //! 下载文件
 
 use super::check_rules;
-use crate::downloader::downloader::Downloader;
+use crate::downloader::TaskInfo;
 use crate::file_tools::{get_parent_dir, list_file};
 use log::info;
 use serde_json::Value;
@@ -60,11 +60,11 @@ pub fn download_assets(
     path: &str,
     id: &str,
     mirror: &str,
-    downloader: &Downloader,
-) -> Result<(), std::io::Error> {
+) -> Result<Vec<TaskInfo>, std::io::Error> {
     let assets_dir = path.to_string() + "/assets";
     let index_path = assets_dir.clone() + "/indexes/" + &id + ".json";
     let json = serde_json::from_str::<Value>(&fs::read_to_string(&index_path)?)?;
+    let mut tasks = Vec::new();
     for (_, node) in json["objects"].as_object().ok_or(std::io::Error::new(
         std::io::ErrorKind::InvalidData,
         "Invaild data",
@@ -82,43 +82,13 @@ pub fn download_assets(
                 fs::create_dir_all(&dir)?;
             }
             let url = mirror.to_string() + "/" + &dl_path;
-            if let Err(e) = downloader.add(url.clone(), local_path.clone()) {
-                return Err(std::io::Error::new(
-                    std::io::ErrorKind::Other,
-                    format!("{e}"),
-                ));
-            }
+            tasks.push(TaskInfo::new(url, local_path, None, None, None, None));
+        } else {
+            // TODO: check hash
         }
     }
 
-    Ok(())
-}
-
-/// 下载Fabric
-fn download_fabric_lib(
-    base_path: &String,
-    path: &String,
-    mirror: &String,
-    downloader: &Downloader,
-) -> Result<(), std::io::Error> {
-    let local_path = base_path.clone() + "/" + path;
-    if !exists(&local_path)? {
-        let dir = get_parent_dir(&local_path);
-        if !exists(&dir)? {
-            fs::create_dir_all(&dir)?;
-        }
-
-        let url = mirror.clone() + "/" + path;
-
-        if let Err(e) = downloader.add(url.clone(), local_path.clone()) {
-            return Err(std::io::Error::new(
-                std::io::ErrorKind::Other,
-                format!("{e}"),
-            ));
-        }
-    }
-
-    Ok(())
+    Ok(tasks)
 }
 
 /// 下载library
@@ -126,45 +96,32 @@ fn download_lib(
     local_path: &String,
     node: &Value,
     mirror: &String,
-    downloader: &Downloader,
-) -> Result<(), std::io::Error> {
-    if !exists(&local_path)? {
-        let dir = get_parent_dir(&local_path);
-        if !exists(&dir)? {
-            fs::create_dir_all(&dir)?;
-        }
-        let mut url = node["url"]
-            .as_str()
-            .ok_or(std::io::Error::new(
-                std::io::ErrorKind::InvalidData,
-                "Invaild data",
-            ))?
-            .to_string();
-
-        url = url.replace("https://libraries.minecraft.net", &mirror);
-
-        if let Err(e) = downloader.add(url.clone(), local_path.clone()) {
-            return Err(std::io::Error::new(
-                std::io::ErrorKind::Other,
-                format!("{e}"),
-            ));
-        }
+) -> Result<TaskInfo, std::io::Error> {
+    let dir = get_parent_dir(&local_path);
+    if !exists(&dir)? {
+        fs::create_dir_all(&dir)?;
     }
-
-    Ok(())
+    let mut url = node["url"]
+        .as_str()
+        .ok_or(std::io::Error::new(
+            std::io::ErrorKind::InvalidData,
+            "Invaild data",
+        ))?
+        .to_string();
+    url = url.replace("https://libraries.minecraft.net", &mirror);
+    Ok(TaskInfo::new(url, local_path.clone(), None, None, None, None))
 }
 
-/// 下载libraries，node: mc json["libraries"]，返回需要解压的列表Vec<(dir, path, id)>
+/// 下载libraries，node: mc json["libraries"]，返回Tasks
 pub fn download_libraries(
     node: &Value,
     path: &str,
     game_dir: &str,
     mirror: &str,
     fabric_mirror: &str,
-    downloader: &Downloader,
-) -> Result<Vec<(String, String, String)>, std::io::Error> {
+) -> Result<Vec<TaskInfo>, std::io::Error> {
     let mut c = 0;
-    let mut result = Vec::new();
+    let mut tasks = Vec::new();
     for item in node.as_array().ok_or(std::io::Error::new(
         std::io::ErrorKind::InvalidData,
         "Invaild data",
@@ -201,8 +158,16 @@ pub fn download_libraries(
                     std::io::ErrorKind::InvalidData,
                     "Invaild data",
                 ))?; // 储存位置
-            download_lib(&local_path, node, &mirror, downloader)?;
-            result.push((natives_dir.clone(), local_path.clone(), id.to_string()));
+            if !exists(&local_path)? {
+                let mut task = download_lib(&local_path, node, &mirror)?;
+                let natives_dir_clone = natives_dir.clone();
+                task.on_finish = Some(Box::new(move || {
+                    extract_lib(&natives_dir_clone, &local_path, &id.to_string());
+                }));
+                tasks.push(task);
+            } else {
+                // TODO: check hash
+            }
         }
         if node["downloads"]["artifact"].is_object() {
             let local_path = lib_dir.clone()
@@ -213,27 +178,28 @@ pub fn download_libraries(
                         std::io::ErrorKind::InvalidData,
                         "Invaild data",
                     ))?;
-            download_lib(
-                &local_path,
-                &node["downloads"]["artifact"],
-                &mirror,
-                downloader,
-            )?;
-            // Add natives
-            let name: Vec<&str> = node["name"]
-                .as_str()
-                .ok_or(std::io::Error::new(
+            if !exists(&local_path)? {
+                let mut task = download_lib(&local_path, &node["downloads"]["artifact"], &mirror)?;
+                // Add natives
+                let name: Vec<&str> = node["name"]
+                    .as_str()
+                    .ok_or(std::io::Error::new(
+                        std::io::ErrorKind::InvalidData,
+                        "Invaild data",
+                    ))?
+                    .split(":")
+                    .collect();
+                let name = name.last().ok_or(std::io::Error::new(
                     std::io::ErrorKind::InvalidData,
                     "Invaild data",
-                ))?
-                .split(":")
-                .collect();
-            let name = name.last().ok_or(std::io::Error::new(
-                std::io::ErrorKind::InvalidData,
-                "Invaild data",
-            ))?;
-            if name.contains("natives") {
-                result.push((natives_dir, local_path, id.to_string()));
+                ))?;
+                if name.contains("natives") {
+                    let natives_dir_clone = natives_dir.clone();
+                    task.on_finish = Some(Box::new(move || {
+                        extract_lib(&natives_dir_clone, &local_path, &id.to_string());
+                    }));
+                }
+                tasks.push(task);
             }
         } else {
             if let Some(url) = node["url"].as_str() {
@@ -254,14 +220,20 @@ pub fn download_libraries(
                         path = path + name + "/";
                     }
                     path = path + split_1[1] + "-" + split_1[2] + ".jar";
-                    download_fabric_lib(&lib_dir, &path, &fabric_mirror.to_string(), downloader)?;
+                    if !exists(&path)? {
+                        let url = fabric_mirror.to_string() + "/" + &path;
+                        let local_path = lib_dir.clone() + "/" + &path;
+                        tasks.push(TaskInfo::new(url, local_path, None, None, None, None));
+                    } else {
+                        // TODO: check hash
+                    } 
                 }
             }
         }
         c += 1;
     }
 
-    Ok(result)
+    Ok(tasks)
 }
 
 /// 解压出natives
@@ -269,19 +241,19 @@ pub fn extract_lib(
     natives_dir: &String,
     local_path: &String,
     id: &String,
-) -> Result<(), std::io::Error> {
+) -> Result<(), tokio::io::Error> {
     // 目标natives文件夹
     if !exists(&natives_dir)? {
-        fs::create_dir(&natives_dir)?;
+        std::fs::create_dir(&natives_dir)?;
     }
 
     // 解压用的临时文件夹
     if exists(&("temp".to_string() + id))? {
-        fs::remove_dir_all("temp".to_string() + id)?;
+        std::fs::remove_dir_all("temp".to_string() + id)?;
     }
-    fs::create_dir("temp".to_string() + id)?;
+    std::fs::create_dir("temp".to_string() + id)?;
 
-    let mut zip = zip::ZipArchive::new(fs::File::open(local_path)?)?;
+    let mut zip = zip::ZipArchive::new(std::fs::File::open(local_path)?)?;
     zip.extract("temp".to_string() + &id.to_string())?;
     let files = list_file(&("temp".to_string() + &id.to_string()))?;
     for name in files {

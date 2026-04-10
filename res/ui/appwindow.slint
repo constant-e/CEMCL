@@ -1,15 +1,14 @@
 import { Button, StandardTableView, VerticalBox, HorizontalBox, ProgressIndicator } from "std-widgets.slint";
-import { Title, SubTitle } from "components/components.slint";
+import { Title, SubTitle, SideBar } from "components/components.slint";
+import { AccountsPage, HomePage, GamesPage, DownloaderPage, SettingsPage, State, Settings } from "pages/pages.slint";
 
+export { Settings, State }
 export { Messages } from "messages.slint";
-
+export { AskDialog, WarnDialog, ErrorDialog } from "components/components.slint";
 export { AddAccDialog } from "add-acc-dialog.slint";
 export { AddGameDialog } from "add-game-dialog.slint";
-export { AskDialog, ErrorDialog, WarnDialog } from "dialogs.slint";
-export { Downloader } from "downloader.slint";
 export { EditAccDialog } from "edit-acc-dialog.slint";
 export { EditGameDialog } from "edit-game-dialog.slint";
-export { Settings } from "settings.slint";
 
 export component AppWindow inherits Window {
     preferred-height: 600px;
@@ -17,156 +16,75 @@ export component AppWindow inherits Window {
     title: "CE Minecraft Launcher";
     icon: @image-url("../pic/icon.png");
 
-    in-out property <int> acc-index <=> acc-table.current-row;
-    in-out property <int> game-index <=> game-table.current-row;
-    in-out property <[[StandardListViewItem]]> acc-list <=> acc-table.rows;
-    in-out property <[[StandardListViewItem]]> game-list <=> game-table.rows;
-    in-out property <string> state-msg;
+    in-out property <int> acc-index;
+    in-out property <int> game-index;
+    in-out property <[[StandardListViewItem]]> acc-model;
+    in-out property <[string]> combo-box-model;
+    in-out property <[[StandardListViewItem]]> game-model;
+    in-out property <State> state;
+    in-out property <Settings> settings;
+    in-out property <string> authors;
+    in-out property <string> version;
     in-out property <float> progress;
 
     callback click-add-acc-btn();
     callback click-add-game-btn();
     callback click-downloader-btn();
-    callback click-edit-acc-btn();
-    callback click-edit-game-btn();
-    callback click-settings-btn();
-    callback click-start-btn();
+    callback click-edit-acc-btn(index: int);
+    callback click-edit-game-btn(index: int);
+    callback apply-settings();
+    callback click-start-btn(index: int);
     
-    public function set-loading() {
-        progress-area.visible = true;
+    HorizontalBox {
+        padding: 0px;
 
-        add-acc-btn.enabled = false;
-        add-game-btn.enabled = false;
-        // downloader-btn.enabled = false;
-        edit-acc-btn.enabled = false;
-        edit-game-btn.enabled = false;
-        settings-btn.enabled = false;
-        start-btn.enabled = false;
-    }
+        side-bar := SideBar {
+            title: "CEMCL";
+            model: [@tr("Account"), @tr("Home"), @tr("Games"), @tr("Downloader"), @tr("Settings")];
+            current-index: 1;
 
-    public function unset-loading() {
-        progress-area.visible = false;
-        
-        add-acc-btn.enabled = true;
-        add-game-btn.enabled = true;
-        // downloader-btn.enabled = true;
-        edit-acc-btn.enabled = true;
-        edit-game-btn.enabled = true;
-        settings-btn.enabled = true;
-        start-btn.enabled = true;
-    }
-
-    public function state-set-downloading() { state-msg = @tr("Downloading"); }
-    public function state-set-launching() { state-msg = @tr("Launching"); }
-    public function state-set-logging-in() { state-msg = @tr("Logging in"); }
-
-    VerticalBox {
-        padding: 8px;
-
-        Title { text: "CE Minecraft Launcher"; }
-
-        HorizontalBox {
-            padding: 0px;
-
-            VerticalBox {
-                padding: 0px;
-                width: 40%;
-
-                SubTitle { text: @tr("Account"); }
-
-                acc-table := StandardTableView {
-                    min-width: 250px;
-                    columns: [
-                        { title: @tr("Name") },
-                        { title: @tr("Type") }
-                    ];
+            index-changed(from, to) => {
+                if (from == 4){
+                    root.apply-settings();
                 }
-
-                HorizontalBox {
-                    padding: 0px;
-
-                    Rectangle { preferred-width: 100%; }
-
-                    add-acc-btn := Button {
-                        text: @tr("Add");
-                        clicked => { root.click-add-acc-btn() } 
-                    }
-        
-                    edit-acc-btn := Button {
-                        text: @tr("Edit");
-                        clicked => { root.click-edit-acc-btn() }
-                    }
-                }
-            }
-
-            VerticalBox {
-                padding: 0px;
-
-                SubTitle { text: @tr("Minecraft Version"); }
-
-                game-table := StandardTableView {
-                    min-width: 250px;
-                    columns: [
-                        { title: @tr("Version") },
-                        { title: @tr("Type") },
-                        { title: @tr("Description") }
-                    ];
-                }
-
-                HorizontalBox {
-                    padding: 0px;
-
-                    Rectangle { preferred-width: 100%; }
-
-                    add-game-btn := Button {
-                        text: @tr("Add");
-                        clicked => { root.click-add-game-btn() } 
-                    }
-        
-                    edit-game-btn := Button {
-                        text: @tr("Edit");
-                        clicked => { root.click-edit-game-btn() }
-                    }
+                if (to == 3) {
+                    root.click-downloader-btn();
                 }
             }
         }
 
-        HorizontalBox {
-            padding: 0px;
+        Rectangle {
+            preferred-width: 100%;
 
-            settings-btn := Button {
-                text: @tr("Settings");
-                clicked => { root.click-settings-btn() }
+            if (side-bar.current-index == 0): acc-page := AccountsPage {
+                current-index: acc-index;
+                model: acc-model;
+                click-add-btn() => { click-add-acc-btn() }
+                click-edit-btn(index) => { click-edit-acc-btn(index) }
+                current-index-changed(current-index) => { root.acc-index = current-index }
             }
 
-            progress-area := HorizontalBox {
-                padding: 0px;
-                visible: false;
-                preferred-width: 100%;
-    
-                state := Text {
-                    vertical-alignment: center;
-                    text: state-msg;
-                }
-    
-                ProgressIndicator {
-                    progress: progress;
-                }
-    
-                Text {
-                    vertical-alignment: center;
-                    text: round(progress * 100) + "%";
-                }
-
-                downloader-btn := Button {
-                    text: @tr("State");
-                    clicked => { root.click-downloader-btn() }
-                }
+            if (side-bar.current-index == 1): home-page := HomePage {
+                state: state;
+                model: combo-box-model;
+                progress: progress;
+                click-start-btn(index) => { click-start-btn(index) }
             }
 
-            start-btn := Button {
-                text: @tr("Start");
-                clicked => { root.click-start-btn(); }
+            if (side-bar.current-index == 2): games-page := GamesPage {
+                current-index: game-index;
+                model: game-model;
+                click-add-btn => { click-add-game-btn() }
+                click-edit-btn(index) => { click-edit-game-btn(index) }
+                current-index-changed(current-index) => { root.game-index = current-index }
+            }
+
+            if (side-bar.current-index == 3): downloader-page := DownloaderPage {}
+
+            if (side-bar.current-index == 4): settings-page := SettingsPage {
+                settings: settings;
+                authors: authors;
+                version: version;
             }
         }
     }

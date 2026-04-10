@@ -91,9 +91,9 @@ pub async fn add_acc_dialog(app_weak: sync::Weak<Mutex<App>>) -> Result<(), slin
                 // Online Account
                 thread::spawn(move || {
                     if let Ok(mut app) = app.try_lock() {
-                        app.ui_weak
-                            .upgrade_in_event_loop(|ui| ui.invoke_set_loading())
-                            .unwrap();
+                        // app.ui_weak
+                        //     .upgrade_in_event_loop(|ui| ui.invoke_set_loading())
+                        //     .unwrap();
                         let rt = tokio::runtime::Runtime::new().unwrap();
                         let _tokio = rt.enter();
                         if let Some(acc) =
@@ -103,9 +103,9 @@ pub async fn add_acc_dialog(app_weak: sync::Weak<Mutex<App>>) -> Result<(), slin
                         } else {
                             error!("Failed to login.");
                         }
-                        app.ui_weak
-                            .upgrade_in_event_loop(|ui| ui.invoke_unset_loading())
-                            .unwrap();
+                        // app.ui_weak
+                        //     .upgrade_in_event_loop(|ui| ui.invoke_unset_loading())
+                        //     .unwrap();
                     }
                 });
             } else {
