@@ -356,22 +356,6 @@ pub async fn add_game_dialog(app_weak: sync::Weak<Mutex<App>>) -> Result<(), sli
                                     }));
 
                                     app.downloader.add_taskset(id, [task].into());
-
-                                    // let app_ui_weak = app.ui_weak.clone();
-                                    // let stop = Arc::new(AtomicBool::new(false));
-                                    // app.downloader.update_progress_size(stop.clone(), move |progress| {
-                                    //     app_ui_weak
-                                    //         .upgrade_in_event_loop(move |ui| {
-                                    //             ui.set_progress(progress as f32);
-                                    //         })
-                                    //         .unwrap();
-                                    // });
-
-                                    // stop.store(true, sync::atomic::Ordering::Relaxed);
-
-                                    // if let Err(e) = fs::remove_dir_all("temp") {
-                                    //     error!("Failed to remove temp directory. Reason: {e}.");
-                                    // }
                                 } else {
                                     error!("Failed to lock a mutex.");
                                 }

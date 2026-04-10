@@ -6,8 +6,9 @@ export component SideBar inherits Rectangle {
     in-out property <[string]> model: [];
     in-out property <string> title <=> label.text;
     in-out property <int> current-index;
+    property <int> last-index: current-index;
 
-    callback index-changed(index: int);
+    callback index-changed(from: int, to: int);
 
     min-width: 150px;
 
@@ -28,8 +29,9 @@ export component SideBar inherits Rectangle {
 
         for item[index] in root.model : SideBarItem {
             clicked => {
-                root.current-index = index;
-                root.index-changed(index);
+                index-changed(last-index, current-index);
+                last-index = current-index;
+                current-index = index;
             }
 
             text: item;

@@ -7,6 +7,7 @@ export component AccountsPage inherits VerticalBox {
 
     callback click-add-btn();
     callback click-edit-btn(index: int);
+    callback current-index-changed(current-index: int);
 
     Title { text: @tr("Account"); }
 
@@ -16,6 +17,7 @@ export component AccountsPage inherits VerticalBox {
             { title: @tr("Name") },
             { title: @tr("Type") }
         ];
+        current-row-changed(current-row) => { root.current-index-changed(current-row) }
     }
 
     HorizontalBox {

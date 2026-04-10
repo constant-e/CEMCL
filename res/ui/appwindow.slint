@@ -43,45 +43,45 @@ export component AppWindow inherits Window {
             model: [@tr("Account"), @tr("Home"), @tr("Games"), @tr("Downloader"), @tr("Settings")];
             current-index: 1;
 
-            property <int> last-index: 0;
-            index-changed(index) => {
-                if (index == 3) {
-                    root.click-downloader-btn();
-                }
-                if (last-index == 4){
+            index-changed(from, to) => {
+                if (from == 4){
                     root.apply-settings();
                 }
-                last-index = index;
+                if (to == 3) {
+                    root.click-downloader-btn();
+                }
             }
         }
 
         Rectangle {
             preferred-width: 100%;
 
-            if (side-bar.current-index == 0):  acc-page := AccountsPage {
+            if (side-bar.current-index == 0): acc-page := AccountsPage {
                 current-index: acc-index;
                 model: acc-model;
                 click-add-btn() => { click-add-acc-btn() }
                 click-edit-btn(index) => { click-edit-acc-btn(index) }
+                current-index-changed(current-index) => { root.acc-index = current-index }
             }
 
-            if (side-bar.current-index == 1):  home-page := HomePage {
+            if (side-bar.current-index == 1): home-page := HomePage {
                 state: state;
                 model: combo-box-model;
                 progress: progress;
                 click-start-btn(index) => { click-start-btn(index) }
             }
 
-            if (side-bar.current-index == 2):  games-page := GamesPage {
+            if (side-bar.current-index == 2): games-page := GamesPage {
                 current-index: game-index;
                 model: game-model;
                 click-add-btn => { click-add-game-btn() }
                 click-edit-btn(index) => { click-edit-game-btn(index) }
+                current-index-changed(current-index) => { root.game-index = current-index }
             }
 
-            if (side-bar.current-index == 3):  downloader-page := DownloaderPage {}
+            if (side-bar.current-index == 3): downloader-page := DownloaderPage {}
 
-            if (side-bar.current-index == 4):  settings-page := SettingsPage {
+            if (side-bar.current-index == 4): settings-page := SettingsPage {
                 settings: settings;
                 authors: authors;
                 version: version;

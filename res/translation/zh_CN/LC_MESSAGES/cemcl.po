@@ -1,8 +1,9 @@
+#
 msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
-"POT-Creation-Date: 2026-04-05 06:18+0000\n"
-"PO-Revision-Date: 2024-10-02 11:53+0800\n"
+"POT-Creation-Date: 2026-04-10 10:28+0000\n"
+"PO-Revision-Date: 2026-04-10 18:06+0800\n"
 "Last-Translator:  <fmn_tzx@outlook.com>\n"
 "Language-Team: Chinese (simplified) <i18n-zh@googlegroups.com>\n"
 "Language: zh_CN\n"
@@ -79,7 +80,7 @@ msgstr "全部"
 #: add-game-dialog.slint:43
 msgctxt "AddGameDialog"
 msgid "Release"
-msgstr "正式版"
+msgstr "稳定版"
 
 #: add-game-dialog.slint:43
 msgctxt "AddGameDialog"
@@ -114,7 +115,7 @@ msgstr "无"
 #: add-game-dialog.slint:70
 msgctxt "AddGameDialog"
 msgid "Modified"
-msgstr "修改时间"
+msgstr "修改日期"
 
 #: add-game-dialog.slint:79
 msgctxt "AddGameDialog"
@@ -184,7 +185,7 @@ msgstr "游戏"
 #: appwindow.slint:43
 msgctxt "AppWindow"
 msgid "Downloader"
-msgstr "下载管理器"
+msgstr "下载"
 
 #: appwindow.slint:43
 msgctxt "AppWindow"
@@ -204,12 +205,12 @@ msgstr "错误"
 #: edit-acc-dialog.slint:5
 msgctxt "EditAccDialog"
 msgid "Edit an Account"
-msgstr "编辑账号"
+msgstr "编辑"
 
 #: edit-acc-dialog.slint:20
 msgctxt "EditAccDialog"
 msgid "Account "
-msgstr "账号 "
+msgstr "账号"
 
 #: edit-acc-dialog.slint:26
 msgctxt "EditAccDialog"
@@ -294,29 +295,29 @@ msgstr "删除"
 #: messages.slint:2
 msgctxt "Messages"
 msgid "Please select an account first."
-msgstr "请先选择一个账号。"
+msgstr "请先选择一个账号"
 
 #: messages.slint:3
 msgctxt "Messages"
 msgid "Failed to load OAuth login."
-msgstr "加载OAuth登录失败"
+msgstr "加载OAuth失败"
 
 #: messages.slint:4
 msgctxt "Messages"
 msgid ""
 "Your user code has been copied to clipboard. Press OK after you finish "
 "logging in."
-msgstr "您的代码已复制至剪切板。登录完成后，请点按OK按钮。"
+msgstr "您的代码已复制到剪切板。在完成登录后点击OK"
 
 #: messages.slint:5
 msgctxt "Messages"
 msgid "Please select an account and a game first."
-msgstr "请先选择一个账号和一个游戏。"
+msgstr "请先选择一个账号和一个游戏"
 
 #: messages.slint:6
 msgctxt "Messages"
 msgid "All the files under this game's dir will be deleted. Continue?"
-msgstr "游戏文件夹下的所有内容将被删除。是否继续？"
+msgstr "此游戏目录下的所有文件将被删除。确认继续？"
 
 #: messages.slint:7
 msgctxt "Messages"
@@ -326,7 +327,7 @@ msgstr "下载失败"
 #: messages.slint:8
 msgctxt "Messages"
 msgid "Please select a game first."
-msgstr "请先选择一个游戏。"
+msgstr "请先选择一个游戏"
 
 #: messages.slint:9
 msgctxt "Messages"
@@ -346,17 +347,17 @@ msgstr "加载游戏列表失败。原因："
 #: messages.slint:12
 msgctxt "Messages"
 msgid "Failed to login."
-msgstr "登录失败"
+msgstr "登录失败。"
 
 #: messages.slint:13
 msgctxt "Messages"
 msgid "Failed to start."
-msgstr "启动失败"
+msgstr "启动失败。"
 
 #: messages.slint:14
 msgctxt "Messages"
 msgid "Version already exists."
-msgstr "版本已存在"
+msgstr "此版本已存在"
 
 #: messages.slint:15
 msgctxt "Messages"
@@ -378,67 +379,62 @@ msgctxt "HomePage"
 msgid "Logging in"
 msgstr "登录中"
 
-#: pages/home.slint:38
-msgctxt "HomePage"
-msgid "CE Minecraft Launcher"
-msgstr "Minecraft下载源"
-
 #: pages/home.slint:68
 msgctxt "HomePage"
 msgid "Start"
 msgstr "启动"
 
-#: pages/games.slint:11
+#: pages/games.slint:12
 msgctxt "GamesPage"
 msgid "Minecraft Version"
 msgstr "Minecraft版本"
 
-#: pages/games.slint:16
+#: pages/games.slint:17
 msgctxt "GamesPage"
 msgid "Version"
 msgstr "版本"
 
-#: pages/games.slint:17
+#: pages/games.slint:18
 msgctxt "GamesPage"
 msgid "Type"
 msgstr "类型"
 
-#: pages/games.slint:18
+#: pages/games.slint:19
 msgctxt "GamesPage"
 msgid "Description"
 msgstr "备注"
 
-#: pages/games.slint:28
+#: pages/games.slint:30
 msgctxt "GamesPage"
 msgid "Add"
 msgstr "添加"
 
-#: pages/games.slint:33
+#: pages/games.slint:35
 msgctxt "GamesPage"
 msgid "Edit"
 msgstr "编辑"
 
-#: pages/accounts.slint:11
+#: pages/accounts.slint:12
 msgctxt "AccountsPage"
 msgid "Account"
 msgstr "账号"
 
-#: pages/accounts.slint:16
+#: pages/accounts.slint:17
 msgctxt "AccountsPage"
 msgid "Name"
 msgstr "用户名"
 
-#: pages/accounts.slint:17
+#: pages/accounts.slint:18
 msgctxt "AccountsPage"
 msgid "Type"
 msgstr "类型"
 
-#: pages/accounts.slint:27
+#: pages/accounts.slint:29
 msgctxt "AccountsPage"
 msgid "Add"
 msgstr "添加"
 
-#: pages/accounts.slint:32
+#: pages/accounts.slint:34
 msgctxt "AccountsPage"
 msgid "Edit"
 msgstr "编辑"
@@ -481,12 +477,12 @@ msgstr "并发数"
 #: pages/settings.slint:79
 msgctxt "SettingsPage"
 msgid "Assets Source"
-msgstr "assets下载源"
+msgstr "Assets下载源"
 
 #: pages/settings.slint:91
 msgctxt "SettingsPage"
 msgid "Libraries Source"
-msgstr "libraries下载源"
+msgstr "Libraries下载源"
 
 #: pages/settings.slint:103
 msgctxt "SettingsPage"
@@ -506,7 +502,7 @@ msgstr "Forge下载源"
 #: pages/settings.slint:146
 msgctxt "SettingsPage"
 msgid "Default Minecraft Settings"
-msgstr "默认游戏设置"
+msgstr "Minecraft默认配置"
 
 #: pages/settings.slint:150
 msgctxt "SettingsPage"
@@ -546,7 +542,7 @@ msgstr "版本："
 #: pages/settings.slint:233
 msgctxt "SettingsPage"
 msgid "Github Repository: "
-msgstr "GitHub仓库："
+msgstr "Github仓库："
 
 #: pages/settings.slint:234
 msgctxt "SettingsPage"
@@ -566,7 +562,7 @@ msgstr "鸣谢：\n"
 #: pages/downloader.slint:8
 msgctxt "DownloaderPage"
 msgid "Downloader"
-msgstr "下载管理器"
+msgstr "下载"
 
 #: pages/downloader.slint:10
 msgctxt "DownloaderPage"
@@ -581,7 +577,7 @@ msgstr "ID"
 #: pages/downloader.slint:14 pages/downloader.slint:25
 msgctxt "DownloaderPage"
 msgid "Name"
-msgstr "用户名"
+msgstr "名称"
 
 #: pages/downloader.slint:15
 msgctxt "DownloaderPage"
@@ -591,7 +587,7 @@ msgstr "进度"
 #: pages/downloader.slint:16
 msgctxt "DownloaderPage"
 msgid "Speed"
-msgstr "下载速度"
+msgstr "速度"
 
 #: pages/downloader.slint:17
 msgctxt "DownloaderPage"
@@ -606,4 +602,4 @@ msgstr "已完成"
 #: pages/downloader.slint:26
 msgctxt "DownloaderPage"
 msgid "State"
-msgstr "下载状态"
+msgstr "状态"

@@ -2,7 +2,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
-"POT-Creation-Date: 2026-04-05 06:18+0000\n"
+"POT-Creation-Date: 2026-04-10 10:28+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -379,67 +379,62 @@ msgctxt "HomePage"
 msgid "Logging in"
 msgstr ""
 
-#: pages/home.slint:38
-msgctxt "HomePage"
-msgid "CE Minecraft Launcher"
-msgstr ""
-
 #: pages/home.slint:68
 msgctxt "HomePage"
 msgid "Start"
 msgstr ""
 
-#: pages/games.slint:11
+#: pages/games.slint:12
 msgctxt "GamesPage"
 msgid "Minecraft Version"
 msgstr ""
 
-#: pages/games.slint:16
+#: pages/games.slint:17
 msgctxt "GamesPage"
 msgid "Version"
 msgstr ""
 
-#: pages/games.slint:17
+#: pages/games.slint:18
 msgctxt "GamesPage"
 msgid "Type"
 msgstr ""
 
-#: pages/games.slint:18
+#: pages/games.slint:19
 msgctxt "GamesPage"
 msgid "Description"
 msgstr ""
 
-#: pages/games.slint:28
+#: pages/games.slint:30
 msgctxt "GamesPage"
 msgid "Add"
 msgstr ""
 
-#: pages/games.slint:33
+#: pages/games.slint:35
 msgctxt "GamesPage"
 msgid "Edit"
 msgstr ""
 
-#: pages/accounts.slint:11
+#: pages/accounts.slint:12
 msgctxt "AccountsPage"
 msgid "Account"
 msgstr ""
 
-#: pages/accounts.slint:16
+#: pages/accounts.slint:17
 msgctxt "AccountsPage"
 msgid "Name"
 msgstr ""
 
-#: pages/accounts.slint:17
+#: pages/accounts.slint:18
 msgctxt "AccountsPage"
 msgid "Type"
 msgstr ""
 
-#: pages/accounts.slint:27
+#: pages/accounts.slint:29
 msgctxt "AccountsPage"
 msgid "Add"
 msgstr ""
 
-#: pages/accounts.slint:32
+#: pages/accounts.slint:34
 msgctxt "AccountsPage"
 msgid "Edit"
 msgstr ""

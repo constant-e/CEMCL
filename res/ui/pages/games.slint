@@ -7,6 +7,7 @@ export component GamesPage inherits VerticalBox {
 
     callback click-add-btn();
     callback click-edit-btn(index: int);
+    callback current-index-changed(current-index: int);
 
     Title { text: @tr("Minecraft Version"); }
 
@@ -17,6 +18,7 @@ export component GamesPage inherits VerticalBox {
             { title: @tr("Type") },
             { title: @tr("Description") }
         ];
+        current-row-changed(current-row) => { root.current-index-changed(current-row) }
     }
 
     HorizontalBox {
