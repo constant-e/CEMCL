@@ -15,64 +15,88 @@ use crate::downloader::DownloadManager;
 use crate::file_tools::list_dir;
 use crate::mc::download::{Fabric, Forge, GameUrl};
 use crate::mc::{Account, Game, launch};
-use crate::{AppWindow, Messages, Settings, State};
+use crate::{AccountInner, AccountType, AppWindow, Messages, State};
+use crate::Config as UIConfig;
+use crate::ConfigGeneral as UIConfigGeneral;
+use crate::ConfigDL as UIConfigDL;
+use crate::ConfigMC as UIConfigMC;
 
-/// 启动器配置
 #[derive(Clone)]
-pub struct Config {
-    /// assets下载源
-    pub assets_source: String,
-
+pub struct ConfigGeneral {
     /// 启动后关闭启动器
     pub close_after_launch: bool,
-
-    /// 下载时的最大并发数量
-    pub concurrency: usize,
-
-    /// Fabric下载源
-    pub fabric_source: String,
-
-    /// Forge下载源
-    pub forge_source: String,
-
     /// .minecraft路径
     pub game_path: String,
+}
 
+#[derive(Clone)]
+pub struct ConfigDL {
+    /// assets下载源
+    pub assets_source: String,
+    /// 下载时的最大并发数量
+    pub concurrency: usize,
+    /// Fabric下载源
+    pub fabric_source: String,
+    /// Forge下载源
+    pub forge_source: String,
     /// MC本体下载源
     pub game_source: String,
-
-    /// 默认游戏窗口高度
-    pub height: String,
-
-    /// java可执行文件路径
-    pub java_path: String,
-
     /// libraries下载源
     pub libraries_source: String,
+}
 
+#[derive(Clone)]
+pub struct ConfigMC {
+    /// 默认游戏窗口高度
+    pub height: String,
+    /// java可执行文件路径
+    pub java_path: String,
     /// 默认游戏窗口宽度
     pub width: String,
-
     /// 默认JVM最小内存
     pub xms: String,
-
     /// 默认JVM最大内存
     pub xmx: String,
 }
 
-impl Default for Config {
+/// 启动器配置
+#[derive(Clone)]
+pub struct Config {
+    /// 通用
+    pub general: ConfigGeneral,
+    /// 下载
+    pub dl: ConfigDL,
+    /// MC
+    pub mc: ConfigMC,
+}
+
+impl Default for ConfigGeneral {
     fn default() -> Self {
-        Config {
-            assets_source: String::from("https://resources.download.minecraft.net"),
+        ConfigGeneral {
             close_after_launch: false,
+            game_path: String::from(".minecraft"),
+        }
+    }
+}
+
+impl Default for ConfigDL {
+    fn default() -> Self {
+        ConfigDL {
+            assets_source: String::from("https://resources.download.minecraft.net"),
             concurrency: 10,
             fabric_source: String::from("https://maven.fabricmc.net"),
             forge_source: String::from("https://files.minecraftforge.net"),
-            game_path: String::from(".minecraft"),
             game_source: String::from("https://piston-meta.mojang.com"),
+            libraries_source: String::from("https://libraries.minecraft.net"),
+        }
+    }
+}
+
+impl Default for ConfigMC {
+    fn default() -> Self {
+        ConfigMC {
             height: String::from("600"),
             java_path: String::from("java"),
-            libraries_source: String::from("https://libraries.minecraft.net"),
             width: String::from("800"),
             xms: String::from("1G"),
             xmx: String::from("2G"),
@@ -80,42 +104,98 @@ impl Default for Config {
     }
 }
 
-impl From<Settings> for Config {
-    fn from(settings: Settings) -> Self {
+impl Default for Config {
+    fn default() -> Self {
         Config {
-            assets_source: settings.assets_source.into(),
-            close_after_launch: settings.close_after_launch,
-            concurrency: settings.concurrency as usize,
-            fabric_source: settings.fabric_source.into(),
-            forge_source: settings.forge_source.into(),
-            game_path: settings.game_path.into(),
-            game_source: settings.game_source.into(),
-            height: settings.height.into(),
-            java_path: settings.java_path.into(),
-            libraries_source: settings.libraries_source.into(),
-            width: settings.width.into(),
-            xms: settings.xms.into(),
-            xmx: settings.xmx.into(),
+            general: ConfigGeneral::default(),
+            dl: ConfigDL::default(),
+            mc: ConfigMC::default(),
         }
     }
 }
 
-impl Into<Settings> for Config {
-    fn into(self) -> Settings {
-        Settings {
-            assets_source: self.assets_source.into(),
-            close_after_launch: self.close_after_launch,
-            concurrency: self.concurrency as i32,
-            fabric_source: self.fabric_source.into(),
-            forge_source: self.forge_source.into(),
-            game_path: self.game_path.into(),
-            game_source: self.game_source.into(),
-            height: self.height.into(),
-            java_path: self.java_path.into(),
-            libraries_source: self.libraries_source.into(),
-            width: self.width.into(),
-            xms: self.xms.into(),
-            xmx: self.xmx.into(),
+impl From<UIConfig> for Config {
+    fn from(config: UIConfig) -> Self {
+        Config {
+            general: ConfigGeneral {
+                close_after_launch: config.general.close_after_launch,
+                game_path: config.general.game_path.to_string(),
+            },
+            dl: ConfigDL {
+                assets_source: config.dl.assets_source.to_string(),
+                concurrency: config.dl.concurrency as usize,
+                fabric_source: config.dl.fabric_source.to_string(),
+                forge_source: config.dl.forge_source.to_string(),
+                game_source: config.dl.game_source.to_string(),
+                libraries_source: config.dl.libraries_source.to_string(),
+            },
+            mc: ConfigMC {
+                height: config.mc.height.to_string(),
+                java_path: config.mc.java_path.to_string(),
+                width: config.mc.width.to_string(),
+                xms: config.mc.xms.to_string(),
+                xmx: config.mc.xmx.to_string(),
+            },
+        }
+    }
+}
+
+impl Into<UIConfig> for Config {
+    fn into(self) -> UIConfig {
+        UIConfig {
+            general: UIConfigGeneral {
+                close_after_launch: self.general.close_after_launch,
+                game_path: self.general.game_path.into(),
+            },
+            dl: UIConfigDL {
+                assets_source: self.dl.assets_source.into(),
+                concurrency: self.dl.concurrency as i32,
+                fabric_source: self.dl.fabric_source.into(),
+                forge_source: self.dl.forge_source.into(),
+                game_source: self.dl.game_source.into(),
+                libraries_source: self.dl.libraries_source.into(),
+            },
+            mc: UIConfigMC {
+                height: self.mc.height.into(),
+                java_path: self.mc.java_path.into(),
+                width: self.mc.width.into(),
+                xms: self.mc.xms.into(),
+                xmx: self.mc.xmx.into(),
+            },
+        }
+    }
+}
+
+impl From<AccountInner> for Account {
+    fn from(account: AccountInner) -> Self {
+        Account {
+            access_token: String::new(),
+            account_type: match account.account_type {
+                AccountType::Legacy => "Legacy".to_string(),
+                AccountType::MSA => "msa".to_string(),
+                AccountType::Other => "".to_string(),
+            },
+            refresh_token: account.token.into(),
+            uuid: account.uuid.into(),
+            user_name: account.user_name.into(),
+        }
+    }
+}
+
+impl From<Account> for AccountInner {
+    fn from(account: Account) -> Self {
+        let account_type = if account.account_type == "Legacy" {
+            AccountType::Legacy
+        } else if account.account_type == "msa" {
+            AccountType::MSA
+        } else {
+            AccountType::Other
+        };
+        AccountInner {
+            account_type,
+            token: account.refresh_token.into(),
+            user_name: account.user_name.into(),
+            uuid: account.uuid.into()
         }
     }
 }
@@ -173,7 +253,7 @@ impl App {
             warn_dialog(&msg);
         }
 
-        app.downloader = DownloadManager::new(app.config.concurrency);
+        app.downloader = DownloadManager::new(app.config.dl.concurrency);
 
         app.ui_weak = ui_weak;
         app.refresh_ui_acc_list();
@@ -196,7 +276,7 @@ impl App {
     /// Add a game to self.game_list, also call game.save(), self.save_launcher_profiles() and self.refresh_ui_game_list()
     pub fn add_game(&mut self, game: &Game) -> Option<()> {
         self.game_list.push(game.clone());
-        let dir = self.config.game_path.clone() + "/versions/" + &game.version;
+        let dir = self.config.general.game_path.clone() + "/versions/" + &game.version;
         if !exists(&dir).ok()? {
             fs::create_dir_all(&dir).ok()?;
         }
@@ -223,7 +303,7 @@ impl App {
         //     error!("Index out of bounds: the len is {} but the index is {index}.", self.game_list.len());
         //     return None;
         // }
-        let path = self.config.game_path.clone() + "/versions/" + &self.game_list[index].version;
+        let path = self.config.general.game_path.clone() + "/versions/" + &self.game_list[index].version;
         self.game_list.remove(index);
         fs::remove_dir_all(path).ok()?;
         self.save_launcher_profiles().ok()?;
@@ -239,7 +319,7 @@ impl App {
 
     /// Edit a game, also call Game::save, self.save_launcher_profiles() and self.refresh_ui_game_list()
     pub fn edit_game(&mut self, index: usize, game: Game) -> Option<()> {
-        let path = self.config.game_path.clone() + "/versions/" + &game.version + "/config.json";
+        let path = self.config.general.game_path.clone() + "/versions/" + &game.version + "/config.json";
         game.save(&path).ok()?;
         self.game_list[index] = game;
         self.save_launcher_profiles().ok()?;
@@ -319,7 +399,7 @@ impl App {
         match launch::get_launch_command(
             &self.acc_list[acc_index],
             &self.game_list[game_index],
-            &self.config,
+            &self.config.general.game_path,
         )
         .await
         {
@@ -358,7 +438,7 @@ impl App {
                     .unwrap();
                 };
 
-                if let Err(e) = launch::download_all(&self.config, &game_download, &self.downloader,f)
+                if let Err(e) = launch::download_all(&self.config.general.game_path, &self.config.dl, &game_download, &self.downloader,f)
                 {
                     error!("Failed to download. Reason: {e}");
                     // stop.store(true, sync::atomic::Ordering::Relaxed);
@@ -410,7 +490,7 @@ impl App {
                 });
 
                 if r.recv().unwrap().is_some() {
-                    if self.config.close_after_launch {
+                    if self.config.general.close_after_launch {
                         self.ui_weak
                             .upgrade_in_event_loop(|ui| ui.hide().unwrap())
                             .ok()?;
@@ -483,42 +563,42 @@ impl App {
             let json: serde_json::Value =
                 serde_json::from_str(&fs::read_to_string("config.json")?.as_str())?;
 
-            self.config.assets_source = String::from(
+            self.config.dl.assets_source = String::from(
                 json["assets_source"]
                     .as_str()
                     .ok_or(ErrorKind::InvalidData)?,
             );
-            self.config.close_after_launch = json["close_after_launch"]
+            self.config.general.close_after_launch = json["close_after_launch"]
                 .as_bool()
                 .ok_or(ErrorKind::InvalidData)?;
-            self.config.concurrency =
+            self.config.dl.concurrency =
                 json["concurrency"].as_u64().ok_or(ErrorKind::InvalidData)? as usize;
-            self.config.fabric_source = String::from(
+            self.config.dl.fabric_source = String::from(
                 json["fabric_source"]
                     .as_str()
                     .ok_or(ErrorKind::InvalidData)?,
             );
-            self.config.forge_source = String::from(
+            self.config.dl.forge_source = String::from(
                 json["forge_source"]
                     .as_str()
                     .ok_or(ErrorKind::InvalidData)?,
             );
-            self.config.game_path =
+            self.config.general.game_path =
                 String::from(json["game_path"].as_str().ok_or(ErrorKind::InvalidData)?);
-            self.config.game_source =
+            self.config.dl.game_source =
                 String::from(json["game_source"].as_str().ok_or(ErrorKind::InvalidData)?);
-            self.config.height =
+            self.config.mc.height =
                 String::from(json["height"].as_str().ok_or(ErrorKind::InvalidData)?);
-            self.config.java_path =
+            self.config.mc.java_path =
                 String::from(json["java_path"].as_str().ok_or(ErrorKind::InvalidData)?);
-            self.config.libraries_source = String::from(
+            self.config.dl.libraries_source = String::from(
                 json["libraries_source"]
                     .as_str()
                     .ok_or(ErrorKind::InvalidData)?,
             );
-            self.config.width = String::from(json["width"].as_str().ok_or(ErrorKind::InvalidData)?);
-            self.config.xms = String::from(json["xms"].as_str().ok_or(ErrorKind::InvalidData)?);
-            self.config.xmx = String::from(json["xmx"].as_str().ok_or(ErrorKind::InvalidData)?);
+            self.config.mc.width = String::from(json["width"].as_str().ok_or(ErrorKind::InvalidData)?);
+            self.config.mc.xms = String::from(json["xms"].as_str().ok_or(ErrorKind::InvalidData)?);
+            self.config.mc.xmx = String::from(json["xmx"].as_str().ok_or(ErrorKind::InvalidData)?);
         } else {
             self.save_config()?;
         }
@@ -530,7 +610,7 @@ impl App {
     pub fn load_game_list(&mut self) -> Result<(), std::io::Error> {
         self.game_list.clear();
 
-        let dir = self.config.game_path.clone() + "/versions";
+        let dir = self.config.general.game_path.clone() + "/versions";
 
         if !exists(&dir)? {
             // 空目录
@@ -554,15 +634,15 @@ impl App {
                 game = Game {
                     description: String::new(),
                     game_args: Vec::new(),
-                    height: self.config.height.clone(),
-                    java_path: self.config.java_path.clone(),
+                    height: self.config.mc.height.clone(),
+                    java_path: self.config.mc.java_path.clone(),
                     jvm_args: Vec::new(),
                     separated: false,
                     game_type: String::from(json["type"].as_str().ok_or(ErrorKind::InvalidData)?),
                     version: version,
-                    width: self.config.width.clone(),
-                    xms: self.config.xms.clone(),
-                    xmx: self.config.xmx.clone(),
+                    width: self.config.mc.width.clone(),
+                    xms: self.config.mc.xms.clone(),
+                    xmx: self.config.mc.xmx.clone(),
                 };
             } else {
                 // 异常，跳过此次加载
@@ -637,19 +717,19 @@ impl App {
     pub fn save_config(&self) -> Result<(), std::io::Error> {
         let json = json!(
             {
-                "assets_source": self.config.assets_source,
-                "close_after_launch": self.config.close_after_launch,
-                "concurrency": self.config.concurrency,
-                "fabric_source": self.config.fabric_source,
-                "forge_source": self.config.forge_source,
-                "game_path": self.config.game_path,
-                "game_source": self.config.game_source,
-                "height": self.config.height,
-                "java_path": self.config.java_path,
-                "libraries_source": self.config.libraries_source,
-                "width": self.config.width,
-                "xms": self.config.xms,
-                "xmx": self.config.xmx,
+                "assets_source": self.config.dl.assets_source,
+                "close_after_launch": self.config.general.close_after_launch,
+                "concurrency": self.config.dl.concurrency,
+                "fabric_source": self.config.dl.fabric_source,
+                "forge_source": self.config.dl.forge_source,
+                "game_path": self.config.general.game_path,
+                "game_source": self.config.dl.game_source,
+                "height": self.config.mc.height,
+                "java_path": self.config.mc.java_path,
+                "libraries_source": self.config.dl.libraries_source,
+                "width": self.config.mc.width,
+                "xms": self.config.mc.xms,
+                "xmx": self.config.mc.xmx,
             }
         );
         fs::write("config.json", json.to_string())
@@ -670,7 +750,7 @@ impl App {
         }
 
         fs::write(
-            self.config.game_path.to_string() + "/launcher_profiles.json",
+            self.config.general.game_path.to_string() + "/launcher_profiles.json",
             json.to_string(),
         )
     }
@@ -678,30 +758,24 @@ impl App {
     /// Set the config from ui, also save the config to config.json
     pub fn set_config(&mut self) -> Result<(), std::io::Error> {
         let ui = self.ui_weak.upgrade().ok_or(ErrorKind::Other)?;
-        self.config = ui.get_settings().into();
+        self.config = ui.get_config().into();
         self.save_config()
     }
 
     /// Refresh account list in ui
     pub fn refresh_ui_acc_list(&self) -> Option<()> {
         let ui = self.ui_weak.upgrade()?;
-        let mut ui_acc_list: Vec<ModelRc<StandardListViewItem>> = Vec::new();
-        for account in &self.acc_list {
-            let account_name = StandardListViewItem::from(account.user_name.as_str());
-            let account_type = StandardListViewItem::from(account.account_type.as_str());
-            let model: Rc<VecModel<StandardListViewItem>> =
-                Rc::from(VecModel::from(vec![account_name, account_type]));
-            let row: ModelRc<StandardListViewItem> = ModelRc::from(model);
-            ui_acc_list.push(row);
-        }
-        ui.set_acc_model(ModelRc::from(Rc::from(VecModel::from(ui_acc_list))));
+        ui.set_acc_list(ModelRc::from(Rc::from(VecModel::from(
+            self.acc_list.iter().map(|acc| acc.clone().into())
+                .collect::<Vec<AccountInner>>()
+        ))));
         Some(())
     }
 
     /// Refresh settings in ui
     pub fn refresh_ui_settings(&self) -> Option<()> {
         let ui = self.ui_weak.upgrade()?;
-        ui.set_settings(self.config.clone().into());
+        ui.set_config(self.config.clone().into());
         ui.set_authors(env!("CARGO_PKG_AUTHORS").into());
         ui.set_version(env!("CARGO_PKG_VERSION").into());
         Some(())

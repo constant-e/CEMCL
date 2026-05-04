@@ -1,8 +1,9 @@
 import { Button, StandardTableView, VerticalBox, HorizontalBox, ProgressIndicator } from "std-widgets.slint";
 import { Title, SubTitle, SideBar } from "components/components.slint";
-import { AccountsPage, HomePage, GamesPage, DownloaderPage, SettingsPage, State, Settings } from "pages/pages.slint";
+import { AccountsPage, HomePage, GamesPage, DownloaderPage, SettingsPage, State, Config, ConfigGeneral, ConfigDL, ConfigMC } from "pages/pages.slint";
+import { AccountInner } from "pages/accounts/accounts.slint";
 
-export { Settings, State }
+export { Config, ConfigGeneral, ConfigDL, ConfigMC, State }
 export { Messages } from "messages.slint";
 export { AskDialog, WarnDialog, ErrorDialog } from "components/components.slint";
 export { AddAccDialog } from "add-acc-dialog.slint";
@@ -18,11 +19,11 @@ export component AppWindow inherits Window {
 
     in-out property <int> acc-index;
     in-out property <int> game-index;
-    in-out property <[[StandardListViewItem]]> acc-model;
+    in-out property <[AccountInner]> acc-list;
     in-out property <[string]> combo-box-model;
     in-out property <[[StandardListViewItem]]> game-model;
     in-out property <State> state;
-    in-out property <Settings> settings;
+    in-out property <Config> config;
     in-out property <string> authors;
     in-out property <string> version;
     in-out property <float> progress;
@@ -30,7 +31,8 @@ export component AppWindow inherits Window {
     callback click-add-acc-btn();
     callback click-add-game-btn();
     callback click-downloader-btn();
-    callback click-edit-acc-btn(index: int);
+    callback del-acc(int);
+    callback edit-acc(int, AccountInner);
     callback click-edit-game-btn(index: int);
     callback apply-settings();
     callback click-start-btn(index: int);
@@ -58,10 +60,11 @@ export component AppWindow inherits Window {
 
             if (side-bar.current-index == 0): acc-page := AccountsPage {
                 current-index: acc-index;
-                model: acc-model;
+                accounts: acc-list;
                 click-add-btn() => { click-add-acc-btn() }
-                click-edit-btn(index) => { click-edit-acc-btn(index) }
-                current-index-changed(current-index) => { root.acc-index = current-index }
+                edited(index, account) => { edit-acc(index, account) }
+                click-switch-btn(index) => { acc-index = index }
+                click-del-btn(index) => { del-acc(index) }
             }
 
             if (side-bar.current-index == 1): home-page := HomePage {
@@ -82,9 +85,10 @@ export component AppWindow inherits Window {
             if (side-bar.current-index == 3): downloader-page := DownloaderPage {}
 
             if (side-bar.current-index == 4): settings-page := SettingsPage {
-                settings: settings;
                 authors: authors;
                 version: version;
+                config: config;
+                settings-changed() => { root.config = self.config; root.apply-settings() }
             }
         }
     }

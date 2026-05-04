@@ -2,7 +2,8 @@
 
 //! mc::launch 获取MC的启动参数
 
-use crate::app::Config;
+
+use crate::app::{ConfigDL, ConfigMC};
 use crate::downloader::manager::DownloadManagerError;
 use crate::downloader::TaskSetStatus;
 use crate::downloader::{DownloadManager, TaskInfo};
@@ -224,10 +225,9 @@ fn get_classpaths(n: &Value, game_path: &String) -> Option<Vec<String>> {
 pub async fn get_launch_command(
     account: &Account,
     game: &Game,
-    config: &Config,
+    game_path: &String
 ) -> Result<(Vec<String>, GameDownload), std::io::Error> {
     let mut result: Vec<String> = Vec::new();
-    let game_path = &config.game_path;
     let dir = game_path.clone() + "/versions/" + game.version.as_str(); // 游戏目录
 
     // 读取json
@@ -441,7 +441,8 @@ pub async fn get_launch_command(
 }
 
 pub fn download_all(
-    config: &Config,
+    game_path: &String,
+    config: &ConfigDL,
     game: &GameDownload,
     downloader: &DownloadManager,
     on_progress_update: impl Fn((u64, u64)) + Send + 'static,
@@ -460,7 +461,7 @@ pub fn download_all(
     // 处理依赖
 
     // json first
-    let index_dir = config.game_path.clone() + "/assets/indexes/";
+    let index_dir = game_path.clone() + "/assets/indexes/";
     let index_path = index_dir.clone() + &game.asset_index + ".json";
     if !exists(&index_path)? {
         if !exists(&index_dir)? {
@@ -475,7 +476,7 @@ pub fn download_all(
 
     // assets
     tasks.append(&mut download::download_assets(
-        &config.game_path,
+        game_path,
         &game.asset_index,
         &config.assets_source,
     )?);
@@ -483,7 +484,7 @@ pub fn download_all(
     // download libraries
     tasks.append(&mut download::download_libraries(
         &game.libraries_json,
-        &config.game_path,
+        game_path,
         &game.dir,
         &config.libraries_source,
         &config.fabric_source,

@@ -107,6 +107,6 @@ impl DownloadManager {
 
 impl Default for DownloadManager {
     fn default() -> Self {
-        Self::new(crate::app::Config::default().concurrency)
+        Self::new(crate::app::ConfigDL::default().concurrency)
     }
 }

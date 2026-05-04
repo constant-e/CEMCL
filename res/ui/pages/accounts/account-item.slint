@@ -1,0 +1,43 @@
+import { SubTitle, SecondaryText } from "../../components/components.slint";
+import { AccountInner, AccountType } from "account-inner.slint";
+import { StyleMetrics } from "std-widgets.slint";
+
+export component Account inherits HorizontalLayout {
+    spacing: StyleMetrics.layout-spacing;
+
+    in-out property <AccountInner> account;
+    in-out property <length> size: 48px;
+
+    function to-string(type: AccountType) -> string {
+        if type == AccountType.Legacy {
+            return @tr("Offline");
+        } else if type == AccountType.MSA {
+            return @tr("Microsoft");
+        } else {
+            return @tr("Other");
+        }
+    }
+
+    // TODO: User avatar
+    icon := Image {
+        source: @image-url("../../../pic/icon.png");
+        max-height: max(size, id.font-size + StyleMetrics.layout-spacing + type.font-size);
+        max-width: max(size, id.font-size + StyleMetrics.layout-spacing + type.font-size);
+    }
+
+    // User ID and type
+    VerticalLayout {
+        spacing: StyleMetrics.layout-spacing;
+
+        id := SubTitle {
+            horizontal-alignment: left;
+            vertical-alignment: bottom;
+            text: account.user-name;
+        }
+        type := SecondaryText {
+            horizontal-alignment: left;
+            vertical-alignment: top;
+            text: to-string(account.account-type);
+        }
+    }
+}

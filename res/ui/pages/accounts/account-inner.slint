@@ -1,0 +1,12 @@
+export enum AccountType {
+    Legacy,
+    MSA,
+    Other
+}
+
+export struct AccountInner {
+    user-name: string,
+    account-type: AccountType,
+    token: string,
+    uuid: string
+}

@@ -1,0 +1,31 @@
+import { Button, GroupBox, ScrollView, StyleMetrics } from "std-widgets.slint";
+import { Account } from "account-item.slint";
+import { AccountInner } from "account-inner.slint";
+import { HorizontalSpacing, SectionTitle } from "../../components/components.slint";
+
+export component AccountsList inherits GroupBox {
+    in-out property <[AccountInner]> accounts;
+    in property <int> current-index;
+
+    callback selected(int);
+
+    title: @tr("Other Accounts");
+
+    VerticalLayout {
+        spacing: StyleMetrics.layout-spacing;
+        for account[index] in accounts:
+            HorizontalLayout {
+                Account {
+                    account: account;
+                    size: 36px;
+                }
+
+                HorizontalSpacing {}
+
+                Button {
+                    text: @tr("Select");
+                    clicked => selected(index);
+                }
+            }
+    }
+}

@@ -1,3 +1,4 @@
+import { Palette } from "std-widgets.slint";
 export component Title inherits Text {
     font-size: 24px;
     font-weight: 700;
@@ -11,4 +12,8 @@ export component SubTitle inherits Text {
 export component SectionTitle inherits Text {
     font-size: 12px;
     font-weight: 700;    
+}
+
+export component SecondaryText inherits Text {
+    color: Palette.control-foreground.darker(0.2);
 }

@@ -108,7 +108,7 @@ pub async fn add_game_dialog(app_weak: sync::Weak<Mutex<App>>) -> Result<(), sli
     let game_url_list = if let Some(app) = app_weak.upgrade() {
         if let Ok(app) = app.try_lock() {
             if let Ok(Some(result)) = rt
-                .spawn(download::list_game(app.config.game_path.clone()))
+                .spawn(download::list_game(app.config.general.game_path.clone()))
                 .await
             {
                 result
@@ -126,15 +126,15 @@ pub async fn add_game_dialog(app_weak: sync::Weak<Mutex<App>>) -> Result<(), sli
         if let Ok(mut app) = app.try_lock() {
             // 筛选版本类型后的列表
             app.download_game_list = game_url_list.clone();
-            ui.set_config_height(app.config.height.clone().into());
-            ui.set_config_width(app.config.width.clone().into());
+            ui.set_config_height(app.config.mc.height.clone().into());
+            ui.set_config_width(app.config.mc.width.clone().into());
             ui.set_description(slint::SharedString::new());
             ui.set_game_args(slint::SharedString::new());
-            ui.set_java_path(app.config.java_path.clone().into());
+            ui.set_java_path(app.config.mc.java_path.clone().into());
             ui.set_jvm_args(slint::SharedString::new());
             ui.set_separated(false);
-            ui.set_xms(app.config.xms.clone().into());
-            ui.set_xmx(app.config.xmx.clone().into());
+            ui.set_xms(app.config.mc.xms.clone().into());
+            ui.set_xmx(app.config.mc.xmx.clone().into());
             ui.set_game_list(ui_game_url_list(&game_url_list));
         } else {
             error!("Failed to lock a mutex.");
@@ -213,7 +213,7 @@ pub async fn add_game_dialog(app_weak: sync::Weak<Mutex<App>>) -> Result<(), sli
                 }
 
                 let game_url = app.download_game_list[index].clone();
-                let dir = app.config.game_path.to_string() + "/versions/" + &game_url.version;
+                let dir = app.config.general.game_path.to_string() + "/versions/" + &game_url.version;
                 let mod_type = ui.get_mod_type();
 
                 let result = match exists(&dir) {
@@ -293,7 +293,7 @@ pub async fn add_game_dialog(app_weak: sync::Weak<Mutex<App>>) -> Result<(), sli
                         let forge = app.download_forge_list[forge_index].clone();
                         let forge_url = format!(
                             "{mirror}/maven/net/minecraftforge/forge/{mcversion}-{version}/forge-{mcversion}-{version}-installer.jar",
-                            mirror = app.config.forge_source,
+                            mirror = app.config.dl.forge_source,
                             mcversion = game_url.version,
                             version = forge.version
                         );
@@ -313,8 +313,8 @@ pub async fn add_game_dialog(app_weak: sync::Weak<Mutex<App>>) -> Result<(), sli
                         }
 
                         let app_weak = app_weak.clone();
-                        let java_path = app.config.java_path.clone();
-                        // let game_path = app.config.game_path.clone();
+                        let java_path = app.config.mc.java_path.clone();
+                        // let game_path = app.config.general.game_path.clone();
                         thread::spawn(move || {
                             let rt = tokio::runtime::Runtime::new().unwrap();
                             let _tokio = rt.enter();
@@ -379,7 +379,7 @@ pub async fn add_game_dialog(app_weak: sync::Weak<Mutex<App>>) -> Result<(), sli
                         );
 
                         let dir = format!("{mc_path}/versions/{name}",
-                            mc_path = app.config.game_path,
+                            mc_path = app.config.general.game_path,
                         );
 
                         let result = match exists(&dir) {
