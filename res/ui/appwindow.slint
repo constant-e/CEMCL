@@ -32,6 +32,7 @@ export component AppWindow inherits Window {
     callback click-edit-game-btn(index: int);
     callback apply-settings();
     callback click-start-btn(index: int);
+    callback switch-acc(index: int);
     
     HorizontalBox {
         padding: 0px;
@@ -59,7 +60,7 @@ export component AppWindow inherits Window {
                 accounts: acc-list;
                 click-add-btn() => { click-add-acc-btn() }
                 edited(index, account) => { edit-acc(index, account) }
-                click-switch-btn(index) => { acc-index = index }
+                click-switch-btn(index) => { acc-index = index; switch-acc(index) }
                 click-del-btn(index) => { del-acc(index) }
             }
 

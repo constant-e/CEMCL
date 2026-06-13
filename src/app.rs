@@ -292,6 +292,7 @@ impl From<Account> for AccountInner {
 pub struct App {
     pub acc_list: Vec<Account>,
     pub config: Config,
+    pub current_acc_index: usize,
     pub device_code: String,
     pub download_fabric_list: Vec<Fabric>,
     pub download_forge_list: Vec<Forge>,
@@ -327,6 +328,10 @@ impl App {
         app.refresh_ui_acc_list()?;
         app.refresh_ui_game_list()?;
         app.refresh_ui_settings()?;
+
+        if let Some(ui) = app.ui_weak.upgrade() {
+            ui.set_acc_index(app.current_acc_index as i32);
+        }
 
         Ok(app)
     }
@@ -571,6 +576,8 @@ impl App {
             error!("Failed to convert account.json to an array.");
             return Err(LauncherError::AccountConfigError);
         }
+
+        self.current_acc_index = json["current"].as_i64().ok_or(LauncherError::AccountConfigError)? as usize;
 
         Ok(())
     }
@@ -833,6 +840,7 @@ impl Default for App {
         App {
             acc_list: Vec::new(),
             config: Config::default(),
+            current_acc_index: 0,
             device_code: String::new(),
             download_fabric_list: Vec::new(),
             download_forge_list: Vec::new(),

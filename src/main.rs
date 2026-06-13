@@ -72,6 +72,20 @@ fn main() -> Result<(), slint::PlatformError> {
     });
 
     let app_weak_clone = app_weak.clone();
+    ui.on_switch_acc(move |index| {
+        if app_weak_clone.upgrade().and_then(|app| {
+            let mut app = app.lock().unwrap();
+            app.current_acc_index = index as usize;
+            if let Err(e) = app.save_acc_list() {
+                error!("{e}");
+            }
+            Some(())
+        }).is_none() {
+            error!("Failed to upgrade a weak pointer.");
+        }
+    });
+
+    let app_weak_clone = app_weak.clone();
     ui.on_del_acc(move |index| {
         if app_weak_clone.upgrade().and_then(|app| {
             let mut app = app.lock().unwrap();
