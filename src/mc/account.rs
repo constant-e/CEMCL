@@ -46,11 +46,11 @@ impl Account {
         let ms_token = ms_json["access_token"].as_str()?;
         account.refresh_token = String::from(ms_json["refresh_token"].as_str()?);
 
-        ui_weak
-            .upgrade_in_event_loop(|ui| {
-                ui.set_progress(0.2);
-            })
-            .ok()?;
+        // ui_weak
+        //     .upgrade_in_event_loop(|ui| {
+        //         ui.set_progress(0.2);
+        //     })
+        //     .ok()?;
 
         debug!("Finish oauth");
 
@@ -226,7 +226,7 @@ impl Default for Account {
     }
 }
 
-// request an oauth login, and return (message, device_code, user_code, link)
+/// request an oauth login, and return (message, device_code, user_code, link)
 pub async fn init_oauth() -> Option<(String, String, String, String)> {
     let client_id = "866440ab-2174-4ff6-8624-290608ac9bdb";
     let client = reqwest::ClientBuilder::new()

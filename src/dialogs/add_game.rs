@@ -10,7 +10,7 @@ use log::{error, warn};
 use slint::{ComponentHandle, ModelRc, StandardListViewItem, VecModel};
 
 use crate::app::App;
-use crate::dialogs::msg_box;
+use crate::dialogs::msgbox::{self, MsgID};
 use crate::downloader::TaskInfo;
 use crate::mc::Game;
 use crate::mc::download::{self, Fabric, Forge, GameUrl, list_forge};
@@ -235,11 +235,7 @@ pub async fn add_game_dialog(app_weak: sync::Weak<Mutex<App>>) -> Result<(), sli
                 } else {
                     if mod_type == 0 {
                         warn!("The version already exists.");
-                        if let Some(app_ui) = app.ui_weak.upgrade() {
-                            msg_box::warn_dialog(&app_ui.global::<Messages>().get_version_exists());
-                        } else {
-                            error!("Failed to upgrade a weak pointer.");
-                        }
+                        msgbox::msg_dialog(MsgID::VersionExists);
                         ui.hide().unwrap();
                         return;
                     } else {
@@ -283,7 +279,7 @@ pub async fn add_game_dialog(app_weak: sync::Weak<Mutex<App>>) -> Result<(), sli
                 match mod_type {
                     0 => {
                         // original
-                        if app.add_game(&game).is_none() {
+                        if let Err(e) = app.add_game(&game) {
                             error!("Failed to add a game.");
                         }
                     },
@@ -299,8 +295,10 @@ pub async fn add_game_dialog(app_weak: sync::Weak<Mutex<App>>) -> Result<(), sli
                         );
                         let forge_path = format!("temp/forge-{mcversion}-{version}-installer.jar", mcversion = game_url.version, version = forge.version);
 
-                        if add_orig && app.add_game(&game).is_none() {
-                            error!("Failed to add a game.");
+                        if add_orig {
+                            if let Err(e) = app.add_game(&game) {
+                                error!("Failed to add a game.");
+                            }
                         }
 
                         let forge_game = Game {
@@ -308,8 +306,8 @@ pub async fn add_game_dialog(app_weak: sync::Weak<Mutex<App>>) -> Result<(), sli
                             ..game
                         };
 
-                        if app.add_game(&forge_game).is_none() {
-                            error!("Failed to add a game.");
+                        if let Err(e) = app.add_game(&forge_game) {
+                            error!("Failed to add a game. Reason: {e}");
                         }
 
                         let app_weak = app_weak.clone();
@@ -348,10 +346,7 @@ pub async fn add_game_dialog(app_weak: sync::Weak<Mutex<App>>) -> Result<(), sli
                                             .spawn()
                                         {
                                             error!("Failed to run forge installer. Reason: {e}.");
-                                            ui_weak.upgrade_in_event_loop(move |ui| {
-                                                let msg = ui.global::<Messages>().get_start_failed() + &format!("\n{e}");
-                                                msg_box::err_dialog(&msg);
-                                            }).unwrap();
+                                            msgbox::msg_dialog(MsgID::LaunchFailed(format!("{e}")));
                                         }
                                     }));
 
@@ -366,8 +361,10 @@ pub async fn add_game_dialog(app_weak: sync::Weak<Mutex<App>>) -> Result<(), sli
                     },
                     2 => {
                         // fabric
-                        if add_orig && app.add_game(&game).is_none() {
-                            error!("Failed to add a game.");
+                        if add_orig {
+                            if let Err(e) = app.add_game(&game) {
+                                error!("Failed to add a game. Reason: {e}");
+                            }
                         }
 
                         let fabric_index = ui.get_mod_index() as usize;
@@ -410,8 +407,8 @@ pub async fn add_game_dialog(app_weak: sync::Weak<Mutex<App>>) -> Result<(), sli
                             ..game
                         };
 
-                        if app.add_game(&fabric_game).is_none() {
-                            error!("Failed to add a game.");
+                        if let Err(e) = app.add_game(&fabric_game) {
+                            error!("Failed to add a game. Reason: {e}");
                         }
                     },
                     _ => {},

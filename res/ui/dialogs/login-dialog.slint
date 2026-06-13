@@ -1,0 +1,86 @@
+import { Button, StandardButton, StyleMetrics , VerticalBox, TabWidget, HorizontalBox } from "std-widgets.slint";
+import { RoundedBackground, SubTitle, VerticalSpacing, HorizontalSpacing, SettingsGroup, SettingString, SecondaryText, SectionTitle } from "../components/components.slint";
+
+export component LoginDialog inherits Dialog {
+    title: @tr("Add a Account");
+
+    in-out property <string> user-name;
+    in-out property <string> uuid;
+
+    callback msa-clicked();
+    callback msa-ok-clicked();
+    callback offline-ok-clicked();
+
+    VerticalBox {
+        SubTitle { text: @tr("Add a Account"); }
+
+        RoundedBackground {
+            VerticalBox {
+                offline-group := SettingsGroup {
+                    title: @tr("Offline Account");
+
+                    setting-string-list: [
+                        {
+                            id: "user_name",
+                            name: @tr("Name"),
+                            value: user-name
+                        },
+                        {
+                            id: "uuid",
+                            name: @tr("UUID"),
+                            value: uuid
+                        } 
+                    ];
+
+                    setting-string-changed(id, value) => {
+                        if id == "user_name" {
+                            root.user-name = value;
+                        } else if id == "uuid" {
+                            root.uuid = value;
+                        }
+                    }
+                }
+                
+                HorizontalLayout {
+                    HorizontalSpacing {}
+                    Button {
+                        text: @tr("OK");
+                        clicked => offline-ok-clicked();
+                    }
+                }
+            }
+        }
+        
+        RoundedBackground {
+            HorizontalBox {
+                VerticalLayout {
+                    SectionTitle {
+                        vertical-alignment: center;
+                        text: @tr("Microsoft Account");
+                    }
+
+                    SecondaryText {
+                        vertical-alignment: center;
+                        text: @tr("Press OK after you finish logging in.");
+                    }
+                }
+
+                VerticalSpacing { height: StyleMetrics.layout-spacing; }
+
+                Button {
+                    text: @tr("Open in Web Browser");
+                    clicked => {
+                        msa-clicked();
+                        msa-ok-btn.enabled = true;
+                    }
+                }
+
+                msa-ok-btn := Button {
+                    text: @tr("OK");
+                    enabled: false;
+                    clicked => msa-ok-clicked();
+                }
+            }
+        }
+    }
+}

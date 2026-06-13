@@ -1,7 +1,5 @@
 //! 启动相关
-
 //! mc::launch 获取MC的启动参数
-
 
 use crate::app::{ConfigDL, ConfigMC};
 use crate::downloader::manager::DownloadManagerError;
@@ -39,8 +37,8 @@ pub struct GameDownload {
 }
 
 pub enum DownloadError {
-    Failed,
     Cancelled,
+    Failed,
     IOError(std::io::Error),
     Other(String),
 }
@@ -48,9 +46,8 @@ pub enum DownloadError {
 impl From<DownloadManagerError> for DownloadError {
     fn from(err: DownloadManagerError) -> Self {
         match err {
-            DownloadManagerError::TaskSetNotFound => DownloadError::Other(String::from("task set no found")),
-            DownloadManagerError::DownloadFailed => DownloadError::Failed,
-            DownloadManagerError::Other(msg) => DownloadError::Other(msg),
+            DownloadManagerError::TaskSetNotFound => DownloadError::Other(String::from("task set not found")),
+            _ => DownloadError::Failed,
         }
     }
 }
@@ -495,7 +492,10 @@ pub fn download_all(
     }
 
     downloader.add_taskset(game.version.clone(), tasks);
-    let _handle = downloader.start_taskset(game.version.clone());
+    if let Err(e) = downloader.start_taskset(game.version.clone()) {
+        error!("Failed to start download. Reason: {e}.");
+        return Err(DownloadError::from(e));
+    }
 
     // progress by bytes may update total bytes, which looks strange
     let mut status = downloader.get_status_by_number(game.version.clone())?;

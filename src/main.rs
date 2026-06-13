@@ -8,7 +8,7 @@ mod file_tools;
 mod mc;
 
 use app::App;
-use dialogs::{add_acc_dialog, add_game_dialog, edit_acc_dialog, edit_game_dialog};
+use dialogs::{login_dialog, add_game_dialog, edit_game_dialog};
 use log::error;
 use std::sync::{Arc, Mutex};
 use std::thread;
@@ -54,12 +54,8 @@ fn main() -> Result<(), slint::PlatformError> {
     let app_weak_clone = app_weak.clone();
     ui.on_click_add_acc_btn(move || {
         let app_weak_clone = app_weak_clone.clone();
-        if let Err(e) = slint::spawn_local(async move {
-            if let Err(e) = add_acc_dialog(app_weak_clone).await {
-                error!("Failed to start add_acc. Reason: {e}.");
-            }
-        }) {
-            error!("Failed to call spawn_local. Reason: {e}.");
+        if let Err(e) = login_dialog(app_weak_clone) {
+            error!("Failed to start add_acc. Reason: {e}.");
         }
     });
 
@@ -79,7 +75,7 @@ fn main() -> Result<(), slint::PlatformError> {
     ui.on_del_acc(move |index| {
         if app_weak_clone.upgrade().and_then(|app| {
             let mut app = app.lock().unwrap();
-            if app.del_account(index as usize).is_none() {
+            if let Err(e) = app.del_account(index as usize) {
                 error!("Failed to delete account {index}.");
             }
             Some(())
@@ -92,8 +88,8 @@ fn main() -> Result<(), slint::PlatformError> {
     ui.on_edit_acc(move |index, account| {
         if app_weak_clone.upgrade().and_then(|app| {
             let mut app = app.lock().unwrap();
-            if app.edit_account(index as usize, account.into()).is_none() {
-                error!("Failed to edit account {index}.");
+            if let Err(e) = app.edit_account(index as usize, account.into()) {
+                error!("Failed to edit account {index}. Reason: {e}");
             }
             Some(())
         }).is_none() {

@@ -5,11 +5,7 @@ import { AccountInner } from "pages/accounts/accounts.slint";
 
 export { Config, ConfigGeneral, ConfigDL, ConfigMC, State }
 export { Messages } from "messages.slint";
-export { AskDialog, WarnDialog, ErrorDialog } from "components/components.slint";
-export { AddAccDialog } from "add-acc-dialog.slint";
-export { AddGameDialog } from "add-game-dialog.slint";
-export { EditAccDialog } from "edit-acc-dialog.slint";
-export { EditGameDialog } from "edit-game-dialog.slint";
+export { AddGameDialog, EditGameDialog, AskDialog, MsgDialog, LoginDialog } from "dialogs/dialogs.slint";
 
 export component AppWindow inherits Window {
     preferred-height: 600px;
@@ -17,8 +13,8 @@ export component AppWindow inherits Window {
     title: "CE Minecraft Launcher";
     icon: @image-url("../pic/icon.png");
 
-    in-out property <int> acc-index;
-    in-out property <int> game-index;
+    in-out property <int> acc-index: 0;
+    in-out property <int> game-index: 0;
     in-out property <[AccountInner]> acc-list;
     in-out property <[string]> combo-box-model;
     in-out property <[[StandardListViewItem]]> game-model;

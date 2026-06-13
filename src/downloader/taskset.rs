@@ -3,12 +3,7 @@ use futures::future::join_all;
 use std::sync::{Arc, atomic::Ordering};
 use tokio::sync::Semaphore;
 
-use super::task::{DownloadTask, DownloadTaskStatus, TaskInfo};
-
-pub enum DownloadError {
-    Failed,
-    Other(String),
-}
+use super::task::{DownloadTask, DownloadTaskStatus, TaskInfo, DownloadTaskError};
 
 pub enum TaskSetStatus {
     Pending(u64),
@@ -127,7 +122,7 @@ impl TaskSet {
         }
     }
 
-    pub async fn start(&self) -> Result<(), DownloadError> {
+    pub async fn start(&self) -> Result<(), DownloadTaskError> {
         let mut handles = Vec::new();
 
         for task in &self.tasks {
@@ -139,18 +134,18 @@ impl TaskSet {
         for result in results {
             if let Err(e) = result {
                 error!("Failed to complete download task: {e}");
-                return Err(DownloadError::Failed);
+                return Err(e);
             }
         }
 
         Ok(())
     }
 
-    pub async fn pause(&self) -> Result<(), DownloadError> {
+    pub async fn pause(&self) -> Result<(), DownloadTaskError> {
         Ok(())
     }
 
-    pub async fn cancel(&self) -> Result<(), DownloadError> {
+    pub async fn cancel(&self) -> Result<(), DownloadTaskError> {
         Ok(())
     }
 }
