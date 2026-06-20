@@ -717,7 +717,14 @@ impl App {
 
     /// Save the account list to account.json
     pub fn save_acc_list(&self) -> Result<(), LauncherError> {
-        let acc_index = self.get_acc_index()?;
+        let acc_index = match self.get_acc_index() {
+            Ok(i) => i,
+            Err(e) => {
+                error!("{e}");
+                0
+            }
+        };
+
         let mut json = json!(
             {
                 "current": acc_index,
