@@ -44,11 +44,15 @@ impl From<MsgID> for UIMsgID {
     }
 }
 
-pub fn ask_dialog(id: MsgID, on_click_yes: impl FnMut() + 'static) -> Result<(), slint::PlatformError> {
+pub fn ask_dialog(id: MsgID, mut on_click_yes: impl FnMut() + 'static) -> Result<(), slint::PlatformError> {
     let dialog = AskDialog::new()?;
+    let weak = dialog.as_weak();
 
     dialog.set_msgid(id.into());
-    dialog.on_yes_clicked(on_click_yes);
+    dialog.on_yes_clicked(move || {
+        on_click_yes();
+        weak.upgrade().unwrap().hide().unwrap();
+    });
 
     dialog.show()
 }
