@@ -1,7 +1,7 @@
 use slint::ComponentHandle;
 
-use crate::{AskDialog, MsgDialog};
 use crate::MsgID as UIMsgID;
+use crate::{AskDialog, MsgDialog};
 
 #[derive(Clone)]
 pub enum MsgID {
@@ -27,7 +27,7 @@ impl From<MsgID> for UIMsgID {
         match value {
             MsgID::AccNotSelected => UIMsgID::AccNotSelected,
             MsgID::BothNotSelected => UIMsgID::BothNotSelected,
-            MsgID::CopyUserCodeFailed(_) => UIMsgID::CopyUserCodeFailed, 
+            MsgID::CopyUserCodeFailed(_) => UIMsgID::CopyUserCodeFailed,
             MsgID::DelAccConfirm => UIMsgID::DelAccConfirm,
             MsgID::DelGameConfirm => UIMsgID::DelGameConfirm,
             MsgID::DLFailed(_) => UIMsgID::DLFailed,
@@ -44,7 +44,10 @@ impl From<MsgID> for UIMsgID {
     }
 }
 
-pub fn ask_dialog(id: MsgID, mut on_click_yes: impl FnMut() + 'static) -> Result<(), slint::PlatformError> {
+pub fn ask_dialog(
+    id: MsgID,
+    mut on_click_yes: impl FnMut() + 'static,
+) -> Result<(), slint::PlatformError> {
     let dialog = AskDialog::new()?;
     let weak = dialog.as_weak();
 
@@ -63,13 +66,13 @@ pub fn msg_dialog(id: MsgID) -> Result<(), slint::PlatformError> {
     dialog.set_msgid(id.clone().into());
 
     match id {
-        MsgID::CopyUserCodeFailed(str) |
-        MsgID::DLFailed(str) |
-        MsgID::LoadAccFailed(str) |
-        MsgID::LoadConfigFailed(str) |
-        MsgID::LoadGameFailed(str) |
-        MsgID::LoginFailed(str) |
-        MsgID::LaunchFailed(str) => {
+        MsgID::CopyUserCodeFailed(str)
+        | MsgID::DLFailed(str)
+        | MsgID::LoadAccFailed(str)
+        | MsgID::LoadConfigFailed(str)
+        | MsgID::LoadGameFailed(str)
+        | MsgID::LoginFailed(str)
+        | MsgID::LaunchFailed(str) => {
             dialog.set_extra_str(str.into());
         }
         _ => {}

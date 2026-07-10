@@ -2,7 +2,10 @@ use dashmap::DashMap;
 use std::sync::Arc;
 use tokio::{sync::Semaphore, task::JoinHandle};
 
-use super::{task::{DownloadTaskError, TaskInfo}, taskset::{TaskSet, TaskSetStatus}};
+use super::{
+    task::{DownloadTaskError, TaskInfo},
+    taskset::{TaskSet, TaskSetStatus},
+};
 
 #[derive(Debug)]
 pub enum DownloadManagerError {
@@ -59,14 +62,14 @@ impl std::fmt::Display for DownloadManagerError {
                 } else {
                     write!(f, "Lock error")
                 }
-            },
+            }
             DownloadManagerError::SemaphoreError(e) => {
                 if let Some(reason) = e {
                     write!(f, "Semaphore error: {reason}")
                 } else {
                     write!(f, "Semaphore error")
                 }
-            },
+            }
             DownloadManagerError::SendError => write!(f, "Failed to send command to download task"),
             DownloadManagerError::RecvError => write!(f, "Failed to receive command"),
         }
@@ -89,19 +92,31 @@ impl DownloadManager {
     }
 
     pub fn add_taskset(&self, id: String, tasks: Vec<TaskInfo>) {
-        let task_set = TaskSet::new(self.client.clone(), tasks, self.semaphore.clone(), None, None, None, None);
+        let task_set = TaskSet::new(
+            self.client.clone(),
+            tasks,
+            self.semaphore.clone(),
+            None,
+            None,
+            None,
+            None,
+        );
         self.tasks.insert(id, task_set);
     }
 
-    pub fn start_taskset(&self, id: String) -> Result<JoinHandle<Result<(), DownloadTaskError>>, DownloadManagerError> {
+    pub fn start_taskset(
+        &self,
+        id: String,
+    ) -> Result<JoinHandle<Result<(), DownloadTaskError>>, DownloadManagerError> {
         let tasks = self.tasks.clone();
 
         if !tasks.contains_key(&id) {
             return Err(DownloadManagerError::TaskSetNotFound);
         }
 
-        Ok(tokio::spawn(async move { tasks.get(id.as_str()).unwrap().start().await }))
-
+        Ok(tokio::spawn(async move {
+            tasks.get(id.as_str()).unwrap().start().await
+        }))
     }
 
     pub fn cancel_taskset(&self, id: String) -> JoinHandle<Result<(), DownloadManagerError>> {
@@ -116,12 +131,18 @@ impl DownloadManager {
     }
 
     pub fn get_status(&self, id: String) -> Result<TaskSetStatus, DownloadManagerError> {
-        let taskset = self.tasks.get(id.as_str()).ok_or(DownloadManagerError::TaskSetNotFound)?;
+        let taskset = self
+            .tasks
+            .get(id.as_str())
+            .ok_or(DownloadManagerError::TaskSetNotFound)?;
         Ok(taskset.get_status())
     }
 
     pub fn get_status_by_number(&self, id: String) -> Result<TaskSetStatus, DownloadManagerError> {
-        let taskset = self.tasks.get(id.as_str()).ok_or(DownloadManagerError::TaskSetNotFound)?;
+        let taskset = self
+            .tasks
+            .get(id.as_str())
+            .ok_or(DownloadManagerError::TaskSetNotFound)?;
         Ok(taskset.get_status_by_number())
     }
 

@@ -1,8 +1,15 @@
 use futures::StreamExt;
 use log::{debug, error, warn};
 use reqwest::Client;
-use std::sync::{Arc, atomic::{AtomicU64, Ordering}};
-use tokio::{io::AsyncWriteExt, sync::{Mutex, RwLock, Semaphore, mpsc::error::TryRecvError}, time::Duration};
+use std::sync::{
+    Arc,
+    atomic::{AtomicU64, Ordering},
+};
+use tokio::{
+    io::AsyncWriteExt,
+    sync::{Mutex, RwLock, Semaphore, mpsc::error::TryRecvError},
+    time::Duration,
+};
 
 pub enum DownloadTaskError {
     Cancelled,
@@ -40,14 +47,14 @@ impl std::fmt::Display for DownloadTaskError {
                 } else {
                     write!(f, "Lock error")
                 }
-            },
+            }
             DownloadTaskError::SemaphoreError(e) => {
                 if let Some(reason) = e {
                     write!(f, "Semaphore error: {reason}")
                 } else {
                     write!(f, "Semaphore error")
                 }
-            },
+            }
             DownloadTaskError::SendError => write!(f, "Failed to send command to download task"),
             DownloadTaskError::RecvError => write!(f, "Failed to receive command"),
         }
@@ -125,8 +132,22 @@ pub struct TaskInfo {
 }
 
 impl TaskInfo {
-    pub fn new(url: String, save_path: String, on_failed: Option<Box<dyn Fn() + Send + Sync>>, on_finish: Option<Box<dyn Fn() + Send + Sync>>, on_pause: Option<Box<dyn Fn() + Send + Sync>>, on_cancel: Option<Box<dyn Fn() + Send + Sync>>) -> Self {
-        Self { url, save_path, on_failed, on_finish, on_pause, on_cancel }
+    pub fn new(
+        url: String,
+        save_path: String,
+        on_failed: Option<Box<dyn Fn() + Send + Sync>>,
+        on_finish: Option<Box<dyn Fn() + Send + Sync>>,
+        on_pause: Option<Box<dyn Fn() + Send + Sync>>,
+        on_cancel: Option<Box<dyn Fn() + Send + Sync>>,
+    ) -> Self {
+        Self {
+            url,
+            save_path,
+            on_failed,
+            on_finish,
+            on_pause,
+            on_cancel,
+        }
     }
 }
 
@@ -204,7 +225,7 @@ impl DownloadTask {
             Ok(p) => p,
             Err(e) => {
                 error!("Failed to acquire semaphore for {0}. Reason: {e}", self.url);
-                
+
                 *self.status.try_lock()? = DownloadTaskStatus::Failed;
                 return Err(e.into());
             }
@@ -215,7 +236,10 @@ impl DownloadTask {
         self.download(permit).await
     }
 
-    async fn download(&self, _permit: tokio::sync::SemaphorePermit<'_>) -> Result<(), DownloadTaskError> {
+    async fn download(
+        &self,
+        _permit: tokio::sync::SemaphorePermit<'_>,
+    ) -> Result<(), DownloadTaskError> {
         let client = self.client.clone();
         let downloaded = self.progress.0.load(Ordering::Relaxed);
         let range = if downloaded != 0 {
@@ -223,7 +247,12 @@ impl DownloadTask {
         } else {
             "bytes=0-".to_string()
         };
-        let response = match client.get(&self.url).header(reqwest::header::RANGE, range).send().await {
+        let response = match client
+            .get(&self.url)
+            .header(reqwest::header::RANGE, range)
+            .send()
+            .await
+        {
             Ok(res) => res,
             Err(e) => {
                 error!("Failed to get response for {0}. Reason: {e}", self.url);
@@ -232,7 +261,12 @@ impl DownloadTask {
             }
         };
 
-        let mut file = match tokio::fs::OpenOptions::new().create(true).append(true).open(&self.save_path).await {
+        let mut file = match tokio::fs::OpenOptions::new()
+            .create(true)
+            .append(true)
+            .open(&self.save_path)
+            .await
+        {
             Ok(file) => file,
             Err(e) => {
                 error!("Failed to open {0}. Reason: {e}", self.save_path);
@@ -241,7 +275,10 @@ impl DownloadTask {
             }
         };
 
-        let (d, t) = (self.progress.0.load(Ordering::Relaxed), self.progress.1.load(Ordering::Relaxed));
+        let (d, t) = (
+            self.progress.0.load(Ordering::Relaxed),
+            self.progress.1.load(Ordering::Relaxed),
+        );
         if t == 0 && d == 0 {
             // initialize download
             if let Some(total_bytes) = response.content_length() {
@@ -269,33 +306,39 @@ impl DownloadTask {
                     if let Some(on_pause) = &self.on_pause {
                         on_pause();
                     }
-                },
+                }
                 Ok(DownloadTaskCommand::Cancel) => {
                     *self.status.try_lock()? = DownloadTaskStatus::Cancelled;
                     debug!("Cancelled downloading {0}", self.url);
                     drop(file);
                     if let Err(e) = tokio::fs::remove_file(&self.save_path).await {
-                        error!("Failed to remove incompleted file {0}. Reason: {e}", self.save_path);
+                        error!(
+                            "Failed to remove incompleted file {0}. Reason: {e}",
+                            self.save_path
+                        );
                     }
                     if let Some(on_cancel) = &self.on_cancel {
                         on_cancel();
                     }
                     return Ok(());
-                },
+                }
                 Err(e) => {
                     if e != TryRecvError::Empty {
                         error!("Failed to receive command for {0}. Reason: {e}", self.url);
                         *self.status.try_lock()? = DownloadTaskStatus::Failed;
                         drop(file);
                         if let Err(e) = tokio::fs::remove_file(&self.save_path).await {
-                            error!("Failed to remove incompleted file {0}. Reason: {e}", self.save_path);
+                            error!(
+                                "Failed to remove incompleted file {0}. Reason: {e}",
+                                self.save_path
+                            );
                         }
                         if let Some(on_failed) = &self.on_failed {
                             on_failed();
                         }
                         return Err(e.into());
-                    }    
-                },
+                    }
+                }
                 _ => {
                     // resume, ignored
                 }
@@ -315,7 +358,7 @@ impl DownloadTask {
                         self.progress.0.fetch_add(c, Ordering::Relaxed);
                         c = 0;
                     }
-                },
+                }
                 Err(e) => {
                     if attempts < 3 {
                         attempts += 1;
@@ -330,17 +373,25 @@ impl DownloadTask {
                             .get(&self.url)
                             .header(reqwest::header::RANGE, range)
                             .send()
-                            .await 
+                            .await
                         {
-                            Ok(res) => { stream = res.bytes_stream(); }
+                            Ok(res) => {
+                                stream = res.bytes_stream();
+                            }
                             Err(e) => {
-                                error!("Failed to download get response for {0}. Reason: {e}", self.url);
+                                error!(
+                                    "Failed to download get response for {0}. Reason: {e}",
+                                    self.url
+                                );
                             }
                         }
                     } else {
                         drop(file);
                         if let Err(e) = tokio::fs::remove_file(&self.save_path).await {
-                            error!("Failed to remove incompleted file {0}. Reason: {e}", self.save_path);
+                            error!(
+                                "Failed to remove incompleted file {0}. Reason: {e}",
+                                self.save_path
+                            );
                         }
                         *self.status.try_lock()? = DownloadTaskStatus::Failed;
                         return Err(e.into());
@@ -351,7 +402,9 @@ impl DownloadTask {
         self.progress.0.fetch_add(c, Ordering::Relaxed);
         if self.progress.1.load(Ordering::Relaxed) != 0 {
             // This may happen when the total size is unknown at the beginning and the server sends more data than expected, or when the content length is wrong. In this case we just set the total size to the downloaded size to avoid confusion.
-            self.progress.1.store(self.progress.0.load(Ordering::Relaxed), Ordering::Relaxed);
+            self.progress
+                .1
+                .store(self.progress.0.load(Ordering::Relaxed), Ordering::Relaxed);
         }
 
         if let Some(on_finish) = &self.on_finish {
@@ -365,7 +418,10 @@ impl DownloadTask {
 
     pub fn try_cancel(&self) -> Result<(), DownloadTaskError> {
         if let Err(e) = self.sender.try_send(DownloadTaskCommand::Cancel) {
-            error!("Failed to send cancel command for {0}. Reason: {e}", self.url);
+            error!(
+                "Failed to send cancel command for {0}. Reason: {e}",
+                self.url
+            );
             return Err(e.into());
         }
         Ok(())
@@ -373,7 +429,10 @@ impl DownloadTask {
 
     pub fn try_pause(&self) -> Result<(), DownloadTaskError> {
         if let Err(e) = self.sender.try_send(DownloadTaskCommand::Pause) {
-            error!("Failed to send pause command for {0}. Reason: {e}", self.url);
+            error!(
+                "Failed to send pause command for {0}. Reason: {e}",
+                self.url
+            );
             return Err(e.into());
         }
         Ok(())

@@ -8,7 +8,7 @@ mod file_tools;
 mod mc;
 
 use app::App;
-use dialogs::{login_dialog, add_game_dialog, edit_game_dialog};
+use dialogs::{add_game_dialog, edit_game_dialog, login_dialog};
 use log::error;
 use std::sync::{Arc, Mutex};
 use std::thread;
@@ -73,40 +73,52 @@ fn main() -> Result<(), slint::PlatformError> {
 
     let app_weak_clone = app_weak.clone();
     ui.on_switch_acc(move |index| {
-        if app_weak_clone.upgrade().and_then(|app| {
-            let mut app = app.lock().unwrap();
-            app.current_acc_index = index as usize;
-            if let Err(e) = app.save_acc_list() {
-                error!("{e}");
-            }
-            Some(())
-        }).is_none() {
+        if app_weak_clone
+            .upgrade()
+            .and_then(|app| {
+                let mut app = app.lock().unwrap();
+                app.current_acc_index = index as usize;
+                if let Err(e) = app.save_acc_list() {
+                    error!("{e}");
+                }
+                Some(())
+            })
+            .is_none()
+        {
             error!("Failed to upgrade a weak pointer.");
         }
     });
 
     let app_weak_clone = app_weak.clone();
     ui.on_del_acc(move |index| {
-        if app_weak_clone.upgrade().and_then(|app| {
-            let mut app = app.lock().unwrap();
-            if let Err(e) = app.del_account(index as usize) {
-                error!("Failed to delete account {index}.");
-            }
-            Some(())
-        }).is_none() {
+        if app_weak_clone
+            .upgrade()
+            .and_then(|app| {
+                let mut app = app.lock().unwrap();
+                if let Err(e) = app.del_account(index as usize) {
+                    error!("Failed to delete account {index}.");
+                }
+                Some(())
+            })
+            .is_none()
+        {
             error!("Failed to upgrade a weak pointer.");
         }
     });
 
     let app_weak_clone = app_weak.clone();
     ui.on_edit_acc(move |index, account| {
-        if app_weak_clone.upgrade().and_then(|app| {
-            let mut app = app.lock().unwrap();
-            if let Err(e) = app.edit_account(index as usize, account.into()) {
-                error!("Failed to edit account {index}. Reason: {e}");
-            }
-            Some(())
-        }).is_none() {
+        if app_weak_clone
+            .upgrade()
+            .and_then(|app| {
+                let mut app = app.lock().unwrap();
+                if let Err(e) = app.edit_account(index as usize, account.into()) {
+                    error!("Failed to edit account {index}. Reason: {e}");
+                }
+                Some(())
+            })
+            .is_none()
+        {
             error!("Failed to upgrade a weak pointer.");
         }
     });
@@ -120,13 +132,17 @@ fn main() -> Result<(), slint::PlatformError> {
 
     let app_weak_clone = app_weak.clone();
     ui.on_apply_settings(move || {
-        if app_weak_clone.upgrade().and_then(|app| {
-            let mut app = app.lock().unwrap();
-            if let Err(e) = app.set_config() {
-                error!("Failed to apply settings. Reason: {e}.");
-            }
-            Some(())
-        }).is_none() {
+        if app_weak_clone
+            .upgrade()
+            .and_then(|app| {
+                let mut app = app.lock().unwrap();
+                if let Err(e) = app.set_config() {
+                    error!("Failed to apply settings. Reason: {e}.");
+                }
+                Some(())
+            })
+            .is_none()
+        {
             error!("Failed to upgrade a weak pointer.");
         }
     });

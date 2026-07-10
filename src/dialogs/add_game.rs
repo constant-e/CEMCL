@@ -5,18 +5,18 @@ use std::process::Command;
 use std::rc;
 use std::sync::Mutex;
 use std::thread::sleep;
-use std::{fs, sync, thread};
 use std::time::Duration;
+use std::{fs, sync, thread};
 
 use log::{error, warn};
 use slint::{ComponentHandle, ModelRc, StandardListViewItem, VecModel};
 
+use crate::AddGameDialog;
 use crate::app::App;
 use crate::dialogs::msgbox::{self, MsgID};
 use crate::downloader::{TaskInfo, TaskSetStatus};
 use crate::mc::Game;
 use crate::mc::download::{self, Fabric, Forge, GameUrl, list_forge};
-use crate::AddGameDialog;
 
 /// 获取ui用的download_fabric_list
 fn ui_fabric_list(fabric_list: &Vec<Fabric>) -> ModelRc<ModelRc<StandardListViewItem>> {

@@ -109,7 +109,14 @@ fn download_lib(
         ))?
         .to_string();
     url = url.replace("https://libraries.minecraft.net", &mirror);
-    Ok(TaskInfo::new(url, local_path.clone(), None, None, None, None))
+    Ok(TaskInfo::new(
+        url,
+        local_path.clone(),
+        None,
+        None,
+        None,
+        None,
+    ))
 }
 
 /// 下载libraries，node: mc json["libraries"]，返回Tasks
@@ -226,7 +233,7 @@ pub fn download_libraries(
                         tasks.push(TaskInfo::new(url, local_path, None, None, None, None));
                     } else {
                         // TODO: check hash
-                    } 
+                    }
                 }
             }
         }

@@ -10,6 +10,10 @@ use log::{debug, error, info, warn};
 use serde_json::json;
 use slint::{ComponentHandle, ModelRc, StandardListViewItem, VecModel};
 
+use crate::Config as UIConfig;
+use crate::ConfigDL as UIConfigDL;
+use crate::ConfigGeneral as UIConfigGeneral;
+use crate::ConfigMC as UIConfigMC;
 use crate::dialogs::msgbox::{self, MsgID, msg_dialog};
 use crate::downloader::DownloadManager;
 use crate::file_tools::list_dir;
@@ -17,10 +21,6 @@ use crate::mc::download::{Fabric, Forge, GameUrl};
 use crate::mc::launch::DownloadError;
 use crate::mc::{Account, Game, launch};
 use crate::{AccountInner, AccountType, AppWindow, Messages, State};
-use crate::Config as UIConfig;
-use crate::ConfigGeneral as UIConfigGeneral;
-use crate::ConfigDL as UIConfigDL;
-use crate::ConfigMC as UIConfigMC;
 
 #[derive(Debug)]
 pub enum LauncherError {
@@ -58,15 +58,18 @@ impl From<std::io::Error> for LauncherError {
     fn from(value: std::io::Error) -> Self {
         match value.kind() {
             ErrorKind::AlreadyExists => LauncherError::FileAlreadyExists,
-            ErrorKind::ConnectionAborted | ErrorKind::ConnectionRefused | ErrorKind::ConnectionReset | ErrorKind::NotConnected => {
-                LauncherError::ConnectionError
-            },
+            ErrorKind::ConnectionAborted
+            | ErrorKind::ConnectionRefused
+            | ErrorKind::ConnectionReset
+            | ErrorKind::NotConnected => LauncherError::ConnectionError,
             ErrorKind::DirectoryNotEmpty => LauncherError::DirNotEmpty,
             ErrorKind::ExecutableFileBusy => LauncherError::FileBusy,
             ErrorKind::NotFound => LauncherError::FileNotFound,
             ErrorKind::Interrupted => LauncherError::Interrupted,
             ErrorKind::NetworkDown | ErrorKind::NetworkUnreachable => LauncherError::NetworkError,
-            ErrorKind::PermissionDenied | ErrorKind::ReadOnlyFilesystem => LauncherError::PermissionDenied,
+            ErrorKind::PermissionDenied | ErrorKind::ReadOnlyFilesystem => {
+                LauncherError::PermissionDenied
+            }
             _ => LauncherError::Unknown,
         }
     }
@@ -284,7 +287,7 @@ impl From<Account> for AccountInner {
             account_type,
             token: account.refresh_token.into(),
             user_name: account.user_name.into(),
-            uuid: account.uuid.into()
+            uuid: account.uuid.into(),
         }
     }
 }
@@ -373,7 +376,8 @@ impl App {
         //     error!("Index out of bounds: the len is {} but the index is {index}.", self.game_list.len());
         //     return None;
         // }
-        let path = self.config.general.game_path.clone() + "/versions/" + &self.game_list[index].version;
+        let path =
+            self.config.general.game_path.clone() + "/versions/" + &self.game_list[index].version;
         self.game_list.remove(index);
         fs::remove_dir_all(path)?;
         self.save_launcher_profiles()?;
@@ -389,7 +393,8 @@ impl App {
 
     /// Edit a game, also call Game::save, self.save_launcher_profiles() and self.refresh_ui_game_list()
     pub fn edit_game(&mut self, index: usize, game: Game) -> Result<(), LauncherError> {
-        let path = self.config.general.game_path.clone() + "/versions/" + &game.version + "/config.json";
+        let path =
+            self.config.general.game_path.clone() + "/versions/" + &game.version + "/config.json";
         game.save(&path)?;
         self.game_list[index] = game;
         self.save_launcher_profiles()?;
@@ -426,13 +431,20 @@ impl App {
 
     // we should get acc index and game index in main thread
     /// Launch the game
-    pub async fn launch(&mut self, acc_index: usize, game_index: usize) -> Result<(), LauncherError> {
-        if self.ui_weak
+    pub async fn launch(
+        &mut self,
+        acc_index: usize,
+        game_index: usize,
+    ) -> Result<(), LauncherError> {
+        if self
+            .ui_weak
             .upgrade_in_event_loop(|ui| {
                 ui.set_progress(0.0);
-            }).is_err() {
-                return Err(LauncherError::Unknown);
-            }
+            })
+            .is_err()
+        {
+            return Err(LauncherError::Unknown);
+        }
 
         if acc_index >= self.acc_list.len() || game_index >= self.game_list.len() {
             warn!(
@@ -475,7 +487,9 @@ impl App {
                     debug!("{str}");
                 }
 
-                self.ui_weak.upgrade_in_event_loop(|ui| ui.set_state(State::Downloading)).unwrap();
+                self.ui_weak
+                    .upgrade_in_event_loop(|ui| ui.set_state(State::Downloading))
+                    .unwrap();
 
                 // UI进度条
                 let ui_weak_clone = self.ui_weak.clone();
@@ -485,11 +499,16 @@ impl App {
                         .upgrade_in_event_loop(move |ui| {
                             ui.set_progress((progress.0 as f32) / (progress.1 as f32));
                         })
-                    .unwrap();
+                        .unwrap();
                 };
 
-                if let Err(e) = launch::download_all(&self.config.general.game_path, &self.config.dl, &game_download, &self.downloader,f)
-                {
+                if let Err(e) = launch::download_all(
+                    &self.config.general.game_path,
+                    &self.config.dl,
+                    &game_download,
+                    &self.downloader,
+                    f,
+                ) {
                     error!("Failed to download. Reason: {e}");
                     //msgdialog
                     return Err(e.into());
@@ -522,12 +541,16 @@ impl App {
                 if r.recv().unwrap().is_some() {
                     if self.config.general.close_after_launch {
                         self.ui_weak
-                            .upgrade_in_event_loop(|ui| ui.hide().unwrap()).unwrap();
+                            .upgrade_in_event_loop(|ui| ui.hide().unwrap())
+                            .unwrap();
                     }
                 } else {
                     slint::invoke_from_event_loop(|| {
-                        msgbox::msg_dialog(MsgID::LaunchFailed(String::from("Failed to run command.")));
-                    }).unwrap();
+                        msgbox::msg_dialog(MsgID::LaunchFailed(String::from(
+                            "Failed to run command.",
+                        )));
+                    })
+                    .unwrap();
                 }
             }
             Err(e) => {
@@ -562,11 +585,19 @@ impl App {
                             .ok_or(LauncherError::AccountConfigError)?,
                     ),
                     refresh_token: String::from(
-                        item["token"].as_str().ok_or(LauncherError::AccountConfigError)?,
+                        item["token"]
+                            .as_str()
+                            .ok_or(LauncherError::AccountConfigError)?,
                     ),
-                    uuid: String::from(item["uuid"].as_str().ok_or(LauncherError::AccountConfigError)?),
+                    uuid: String::from(
+                        item["uuid"]
+                            .as_str()
+                            .ok_or(LauncherError::AccountConfigError)?,
+                    ),
                     user_name: String::from(
-                        item["user_name"].as_str().ok_or(LauncherError::AccountConfigError)?,
+                        item["user_name"]
+                            .as_str()
+                            .ok_or(LauncherError::AccountConfigError)?,
                     ),
                 };
 
@@ -577,7 +608,9 @@ impl App {
             return Err(LauncherError::AccountConfigError);
         }
 
-        self.current_acc_index = json["current"].as_i64().ok_or(LauncherError::AccountConfigError)? as usize;
+        self.current_acc_index = json["current"]
+            .as_i64()
+            .ok_or(LauncherError::AccountConfigError)? as usize;
 
         Ok(())
     }
@@ -596,8 +629,10 @@ impl App {
             self.config.general.close_after_launch = json["close_after_launch"]
                 .as_bool()
                 .ok_or(LauncherError::LauncherConfigError)?;
-            self.config.dl.concurrency =
-                json["concurrency"].as_u64().ok_or(LauncherError::LauncherConfigError)? as usize;
+            self.config.dl.concurrency = json["concurrency"]
+                .as_u64()
+                .ok_or(LauncherError::LauncherConfigError)?
+                as usize;
             self.config.dl.fabric_source = String::from(
                 json["fabric_source"]
                     .as_str()
@@ -608,22 +643,46 @@ impl App {
                     .as_str()
                     .ok_or(LauncherError::LauncherConfigError)?,
             );
-            self.config.general.game_path =
-                String::from(json["game_path"].as_str().ok_or(LauncherError::LauncherConfigError)?);
-            self.config.dl.game_source =
-                String::from(json["game_source"].as_str().ok_or(LauncherError::LauncherConfigError)?);
-            self.config.mc.height =
-                String::from(json["height"].as_str().ok_or(LauncherError::LauncherConfigError)?);
-            self.config.mc.java_path =
-                String::from(json["java_path"].as_str().ok_or(LauncherError::LauncherConfigError)?);
+            self.config.general.game_path = String::from(
+                json["game_path"]
+                    .as_str()
+                    .ok_or(LauncherError::LauncherConfigError)?,
+            );
+            self.config.dl.game_source = String::from(
+                json["game_source"]
+                    .as_str()
+                    .ok_or(LauncherError::LauncherConfigError)?,
+            );
+            self.config.mc.height = String::from(
+                json["height"]
+                    .as_str()
+                    .ok_or(LauncherError::LauncherConfigError)?,
+            );
+            self.config.mc.java_path = String::from(
+                json["java_path"]
+                    .as_str()
+                    .ok_or(LauncherError::LauncherConfigError)?,
+            );
             self.config.dl.libraries_source = String::from(
                 json["libraries_source"]
                     .as_str()
                     .ok_or(LauncherError::LauncherConfigError)?,
             );
-            self.config.mc.width = String::from(json["width"].as_str().ok_or(LauncherError::LauncherConfigError)?);
-            self.config.mc.xms = String::from(json["xms"].as_str().ok_or(LauncherError::LauncherConfigError)?);
-            self.config.mc.xmx = String::from(json["xmx"].as_str().ok_or(LauncherError::LauncherConfigError)?);
+            self.config.mc.width = String::from(
+                json["width"]
+                    .as_str()
+                    .ok_or(LauncherError::LauncherConfigError)?,
+            );
+            self.config.mc.xms = String::from(
+                json["xms"]
+                    .as_str()
+                    .ok_or(LauncherError::LauncherConfigError)?,
+            );
+            self.config.mc.xmx = String::from(
+                json["xmx"]
+                    .as_str()
+                    .ok_or(LauncherError::LauncherConfigError)?,
+            );
         } else {
             self.save_config()?;
         }
@@ -663,7 +722,11 @@ impl App {
                     java_path: self.config.mc.java_path.clone(),
                     jvm_args: Vec::new(),
                     separated: false,
-                    game_type: String::from(json["type"].as_str().ok_or(LauncherError::GameConfigError)?),
+                    game_type: String::from(
+                        json["type"]
+                            .as_str()
+                            .ok_or(LauncherError::GameConfigError)?,
+                    ),
                     version: version,
                     width: self.config.mc.width.clone(),
                     xms: self.config.mc.xms.clone(),
@@ -684,27 +747,57 @@ impl App {
                     let mut game_args = Vec::new();
                     let mut jvm_args = Vec::new();
 
-                    for arg in json["game_args"].as_array().ok_or(LauncherError::GameConfigError)? {
-                        game_args.push(arg.as_str().ok_or(LauncherError::GameConfigError)?.to_string());
+                    for arg in json["game_args"]
+                        .as_array()
+                        .ok_or(LauncherError::GameConfigError)?
+                    {
+                        game_args.push(
+                            arg.as_str()
+                                .ok_or(LauncherError::GameConfigError)?
+                                .to_string(),
+                        );
                     }
 
-                    for arg in json["jvm_args"].as_array().ok_or(LauncherError::GameConfigError)? {
-                        jvm_args.push(arg.as_str().ok_or(LauncherError::GameConfigError)?.to_string());
+                    for arg in json["jvm_args"]
+                        .as_array()
+                        .ok_or(LauncherError::GameConfigError)?
+                    {
+                        jvm_args.push(
+                            arg.as_str()
+                                .ok_or(LauncherError::GameConfigError)?
+                                .to_string(),
+                        );
                     }
 
-                    game.description =
-                        String::from(json["description"].as_str().ok_or(LauncherError::GameConfigError)?);
+                    game.description = String::from(
+                        json["description"]
+                            .as_str()
+                            .ok_or(LauncherError::GameConfigError)?,
+                    );
                     game.game_args = game_args;
-                    game.height =
-                        String::from(json["height"].as_str().ok_or(LauncherError::GameConfigError)?);
-                    game.java_path =
-                        String::from(json["java_path"].as_str().ok_or(LauncherError::GameConfigError)?);
+                    game.height = String::from(
+                        json["height"]
+                            .as_str()
+                            .ok_or(LauncherError::GameConfigError)?,
+                    );
+                    game.java_path = String::from(
+                        json["java_path"]
+                            .as_str()
+                            .ok_or(LauncherError::GameConfigError)?,
+                    );
                     game.jvm_args = jvm_args;
-                    game.separated = json["separated"].as_bool().ok_or(LauncherError::GameConfigError)?;
-                    game.width =
-                        String::from(json["width"].as_str().ok_or(LauncherError::GameConfigError)?);
-                    game.xms = String::from(json["xms"].as_str().ok_or(LauncherError::GameConfigError)?);
-                    game.xmx = String::from(json["xmx"].as_str().ok_or(LauncherError::GameConfigError)?);
+                    game.separated = json["separated"]
+                        .as_bool()
+                        .ok_or(LauncherError::GameConfigError)?;
+                    game.width = String::from(
+                        json["width"]
+                            .as_str()
+                            .ok_or(LauncherError::GameConfigError)?,
+                    );
+                    game.xms =
+                        String::from(json["xms"].as_str().ok_or(LauncherError::GameConfigError)?);
+                    game.xmx =
+                        String::from(json["xmx"].as_str().ok_or(LauncherError::GameConfigError)?);
                 } else {
                     warn!("Failed to load {cfg_path}.");
                     continue;
@@ -806,8 +899,10 @@ impl App {
     pub fn refresh_ui_acc_list(&self) -> Result<(), LauncherError> {
         let ui = self.ui_weak.upgrade().ok_or(LauncherError::WeakPtrError)?;
         ui.set_acc_list(ModelRc::from(Rc::from(VecModel::from(
-            self.acc_list.iter().map(|acc| acc.clone().into())
-                .collect::<Vec<AccountInner>>()
+            self.acc_list
+                .iter()
+                .map(|acc| acc.clone().into())
+                .collect::<Vec<AccountInner>>(),
         ))));
         Ok(())
     }

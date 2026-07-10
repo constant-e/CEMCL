@@ -2,8 +2,8 @@
 //! mc::launch 获取MC的启动参数
 
 use crate::app::ConfigDL;
-use crate::downloader::manager::DownloadManagerError;
 use crate::downloader::TaskSetStatus;
+use crate::downloader::manager::DownloadManagerError;
 use crate::downloader::{DownloadManager, TaskInfo};
 use futures::executor::block_on;
 use log::{error, warn};
@@ -46,7 +46,9 @@ pub enum DownloadError {
 impl From<DownloadManagerError> for DownloadError {
     fn from(err: DownloadManagerError) -> Self {
         match err {
-            DownloadManagerError::TaskSetNotFound => DownloadError::Other(String::from("task set not found")),
+            DownloadManagerError::TaskSetNotFound => {
+                DownloadError::Other(String::from("task set not found"))
+            }
             _ => DownloadError::Failed,
         }
     }
@@ -222,7 +224,7 @@ fn get_classpaths(n: &Value, game_path: &String) -> Option<Vec<String>> {
 pub async fn get_launch_command(
     account: &Account,
     game: &Game,
-    game_path: &String
+    game_path: &String,
 ) -> Result<(Vec<String>, GameDownload), std::io::Error> {
     let mut result: Vec<String> = Vec::new();
     let dir = game_path.clone() + "/versions/" + game.version.as_str(); // 游戏目录
@@ -278,7 +280,8 @@ pub async fn get_launch_command(
                             if let (
                                 Some((mut parent_game_args, mut parent_jvm_args)),
                                 Some((mut self_game_args, mut self_jvm_args)),
-                            ) = (get_args_new(&parent), get_args_new(&json)) {
+                            ) = (get_args_new(&parent), get_args_new(&json))
+                            {
                                 game_args.append(&mut parent_game_args);
                                 game_args.append(&mut self_game_args);
                                 jvm_args.append(&mut parent_jvm_args);
@@ -300,7 +303,7 @@ pub async fn get_launch_command(
                                     "Failed to get arguments from {cfg_path}."
                                 )));
                             }
-                        }   
+                        }
                     } else {
                         error!("Failed to load {parent_path}.");
                         return Err(std::io::Error::other(format!(
@@ -503,27 +506,27 @@ pub fn download_all(
         match status {
             TaskSetStatus::Completed(total) => {
                 on_progress_update((total, total));
-                break
-            },
+                break;
+            }
             TaskSetStatus::Failed => {
                 error!("Failed to download {0}.", &game.version);
                 return Err(DownloadError::Failed);
-            },
+            }
             TaskSetStatus::Cancelled => {
                 warn!("Download cancelled.");
                 return Err(DownloadError::Cancelled);
-            },
+            }
             TaskSetStatus::Downloading(downloaded, total) => {
                 on_progress_update((downloaded, total));
-            },
+            }
             TaskSetStatus::Paused(downloaded, total) => {
                 // This case shouldn't happen now. Pause hasn't been implemented
                 on_progress_update((downloaded, total));
-            },
+            }
             TaskSetStatus::Pending(total) => {
                 // TODO: download this game first
                 on_progress_update((0, total));
-            },
+            }
         }
         drop(status);
         sleep(Duration::from_millis(500));

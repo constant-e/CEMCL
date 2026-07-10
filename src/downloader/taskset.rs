@@ -1,9 +1,9 @@
-use log::error;
 use futures::future::join_all;
+use log::error;
 use std::sync::{Arc, atomic::Ordering};
 use tokio::sync::Semaphore;
 
-use super::task::{DownloadTask, DownloadTaskStatus, TaskInfo, DownloadTaskError};
+use super::task::{DownloadTask, DownloadTaskError, DownloadTaskStatus, TaskInfo};
 
 pub enum TaskSetStatus {
     Pending(u64),
@@ -25,24 +25,44 @@ pub struct TaskSet {
 }
 
 impl TaskSet {
-    pub fn new(client: reqwest::Client, tasks_info: Vec<TaskInfo>, semaphore: Arc<Semaphore>, on_cancel: Option<Box<dyn Fn() + Send + Sync>>, on_failed: Option<Box<dyn Fn() + Send + Sync>>, on_finish: Option<Box<dyn Fn() + Send + Sync>>, on_pause: Option<Box<dyn Fn() + Send + Sync>>) -> Self {
-        let tasks = tasks_info.into_iter().map(|info| {
-            let mut task = DownloadTask::new(info.url, info.save_path, client.clone(), semaphore.clone());
-            if let Some(f) = info.on_cancel {
-                task.set_on_cancel(f);
-            }
-            if let Some(f) = info.on_finish {
-                task.set_on_finish(f);
-            }
-            if let Some(f) = info.on_pause {
-                task.set_on_pause(f);
-            }
-            if let Some(f) = info.on_failed {
-                task.set_on_failed(f);
-            }
-            task
-        }).collect();
-        Self { client, tasks, semaphore, on_cancel, on_failed, on_finish, on_pause }
+    pub fn new(
+        client: reqwest::Client,
+        tasks_info: Vec<TaskInfo>,
+        semaphore: Arc<Semaphore>,
+        on_cancel: Option<Box<dyn Fn() + Send + Sync>>,
+        on_failed: Option<Box<dyn Fn() + Send + Sync>>,
+        on_finish: Option<Box<dyn Fn() + Send + Sync>>,
+        on_pause: Option<Box<dyn Fn() + Send + Sync>>,
+    ) -> Self {
+        let tasks = tasks_info
+            .into_iter()
+            .map(|info| {
+                let mut task =
+                    DownloadTask::new(info.url, info.save_path, client.clone(), semaphore.clone());
+                if let Some(f) = info.on_cancel {
+                    task.set_on_cancel(f);
+                }
+                if let Some(f) = info.on_finish {
+                    task.set_on_finish(f);
+                }
+                if let Some(f) = info.on_pause {
+                    task.set_on_pause(f);
+                }
+                if let Some(f) = info.on_failed {
+                    task.set_on_failed(f);
+                }
+                task
+            })
+            .collect();
+        Self {
+            client,
+            tasks,
+            semaphore,
+            on_cancel,
+            on_failed,
+            on_finish,
+            on_pause,
+        }
     }
 
     pub fn get_status(&self) -> TaskSetStatus {
@@ -52,26 +72,29 @@ impl TaskSet {
         let mut downloaded = 0;
         let mut total = 0;
         for task in &self.tasks {
-            let (d, t) = (task.progress.0.load(Ordering::Relaxed), task.progress.1.load(Ordering::Relaxed));
+            let (d, t) = (
+                task.progress.0.load(Ordering::Relaxed),
+                task.progress.1.load(Ordering::Relaxed),
+            );
             if t != 0 {
                 downloaded += d;
                 total += t;
             } else {
                 total += 1;
             }
-            
+
             match *task.status.try_lock().unwrap() {
                 DownloadTaskStatus::Pending => pending = true,
                 DownloadTaskStatus::Downloading => {
                     downloading = true;
-                },
+                }
                 DownloadTaskStatus::Paused => paused = true,
                 DownloadTaskStatus::Failed => return TaskSetStatus::Failed,
                 DownloadTaskStatus::Completed => {
                     if t == 0 {
                         downloaded += 1;
                     }
-                },
+                }
                 DownloadTaskStatus::Cancelled => return TaskSetStatus::Cancelled,
             }
         }
@@ -129,7 +152,7 @@ impl TaskSet {
             let handle = task.start();
             handles.push(handle);
         }
-        
+
         let results = join_all(handles).await;
         for result in results {
             if let Err(e) = result {

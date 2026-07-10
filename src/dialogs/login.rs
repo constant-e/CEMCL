@@ -68,8 +68,7 @@ pub fn login_dialog(app_weak: sync::Weak<Mutex<App>>) -> Result<(), slint::Platf
             if let Ok(mut app) = app.try_lock() {
                 let rt = tokio::runtime::Runtime::new().unwrap();
                 let _tokio = rt.enter();
-                if let Some(acc) =
-                    rt.block_on(Account::new(&app.device_code, app.ui_weak.clone()))
+                if let Some(acc) = rt.block_on(Account::new(&app.device_code, app.ui_weak.clone()))
                 {
                     if let Err(e) = app.add_account(&acc) {
                         error!("{e}");
