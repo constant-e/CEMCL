@@ -9,7 +9,6 @@ use clipboard::{ClipboardContext, ClipboardProvider};
 use log::{error, warn};
 use slint::ComponentHandle;
 use std::sync::{self, Mutex};
-use std::thread;
 
 /// 添加账号Dialog
 pub fn login_dialog(app_weak: sync::Weak<Mutex<App>>) -> Result<(), slint::PlatformError> {

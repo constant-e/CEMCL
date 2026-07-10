@@ -1,12 +1,12 @@
 //! 启动相关
 //! mc::launch 获取MC的启动参数
 
-use crate::app::{ConfigDL, ConfigMC};
+use crate::app::ConfigDL;
 use crate::downloader::manager::DownloadManagerError;
 use crate::downloader::TaskSetStatus;
 use crate::downloader::{DownloadManager, TaskInfo};
 use futures::executor::block_on;
-use log::{error, info, warn};
+use log::{error, warn};
 use serde_json::Value;
 use std::env::consts as env;
 use std::fs::{self, exists};

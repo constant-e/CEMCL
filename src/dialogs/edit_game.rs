@@ -4,9 +4,7 @@ use log::error;
 use slint::ComponentHandle;
 use std::sync::{self, Mutex};
 
-use crate::{EditGameDialog, Messages, app::App, dialogs::msgbox::{self, MsgID}};
-
-use super::msgbox::ask_dialog;
+use crate::{EditGameDialog, app::App, dialogs::msgbox::{self, MsgID}};
 
 pub fn edit_game_dialog(app_weak: sync::Weak<Mutex<App>>) -> Result<(), slint::PlatformError> {
     let ui = EditGameDialog::new()?;

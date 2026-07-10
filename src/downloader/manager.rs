@@ -4,6 +4,7 @@ use tokio::{sync::Semaphore, task::JoinHandle};
 
 use super::{task::{DownloadTaskError, TaskInfo}, taskset::{TaskSet, TaskSetStatus}};
 
+#[derive(Debug)]
 pub enum DownloadManagerError {
     TaskSetNotFound,
     // same as task error

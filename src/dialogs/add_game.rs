@@ -4,17 +4,19 @@ use std::fs::exists;
 use std::process::Command;
 use std::rc;
 use std::sync::Mutex;
+use std::thread::sleep;
 use std::{fs, sync, thread};
+use std::time::Duration;
 
 use log::{error, warn};
 use slint::{ComponentHandle, ModelRc, StandardListViewItem, VecModel};
 
 use crate::app::App;
 use crate::dialogs::msgbox::{self, MsgID};
-use crate::downloader::TaskInfo;
+use crate::downloader::{TaskInfo, TaskSetStatus};
 use crate::mc::Game;
 use crate::mc::download::{self, Fabric, Forge, GameUrl, list_forge};
-use crate::{AddGameDialog, Messages};
+use crate::AddGameDialog;
 
 /// 获取ui用的download_fabric_list
 fn ui_fabric_list(fabric_list: &Vec<Fabric>) -> ModelRc<ModelRc<StandardListViewItem>> {
@@ -280,7 +282,7 @@ pub async fn add_game_dialog(app_weak: sync::Weak<Mutex<App>>) -> Result<(), sli
                     0 => {
                         // original
                         if let Err(e) = app.add_game(&game) {
-                            error!("Failed to add a game.");
+                            error!("Failed to add a game. Reason: {e}.");
                         }
                     },
                     1 => {
@@ -297,7 +299,7 @@ pub async fn add_game_dialog(app_weak: sync::Weak<Mutex<App>>) -> Result<(), sli
 
                         if add_orig {
                             if let Err(e) = app.add_game(&game) {
-                                error!("Failed to add a game.");
+                                error!("Failed to add a game. Reason: {e}.");
                             }
                         }
 
@@ -335,7 +337,6 @@ pub async fn add_game_dialog(app_weak: sync::Weak<Mutex<App>>) -> Result<(), sli
                                     let id = format!("forge-{0}", forge.version);
                                     let mut task = TaskInfo::new(forge_url, forge_path.clone(), None, None, None, None);
 
-                                    let ui_weak = app.ui_weak.clone();
                                     task.on_finish = Some(Box::new(move || {
                                         // 让用户手动安装
                                         if let Err(e) = Command::new(&java_path)
@@ -350,7 +351,53 @@ pub async fn add_game_dialog(app_weak: sync::Weak<Mutex<App>>) -> Result<(), sli
                                         }
                                     }));
 
-                                    app.downloader.add_taskset(id, [task].into());
+                                    app.downloader.add_taskset(id.clone(), [task].into());
+                                    if let Err(e) = app.downloader.start_taskset(id.clone()) {
+                                        error!("Failed to start downloading forge. Reason: {e}.");
+                                    }
+
+                                    // TODO: 把这些写到download manager里，直接对接ui的download page
+                                    let mut status = app.downloader.get_status(id.clone()).unwrap();
+                                    loop {
+                                        match status {
+                                            TaskSetStatus::Completed(_) => {
+                                                break
+                                            },
+                                            TaskSetStatus::Failed => {
+                                                error!("Failed to download {0}.", &game.version);
+                                                break
+                                            },
+                                            TaskSetStatus::Cancelled => {
+                                                warn!("Download cancelled.");
+                                                break
+                                            },
+                                            TaskSetStatus::Downloading(downloaded, total) => {
+                                                app.ui_weak.upgrade_in_event_loop(move |ui| {
+                                                    ui.set_progress(downloaded as f32 / total as f32);
+                                                }).unwrap();
+                                            },
+                                            TaskSetStatus::Paused(downloaded, total) => {
+                                                // This case shouldn't happen now. Pause hasn't been implemented
+                                                app.ui_weak.upgrade_in_event_loop(move |ui| {
+                                                    ui.set_progress(downloaded as f32 / total as f32);
+                                                }).unwrap();
+                                            },
+                                            TaskSetStatus::Pending(_) => {
+                                                // TODO: download this game first
+                                                app.ui_weak.upgrade_in_event_loop(|ui| {
+                                                    ui.set_progress(0.0);
+                                                }).unwrap();
+                                            },
+                                        }
+                                        drop(status);
+                                        sleep(Duration::from_millis(500));
+                                        status = app.downloader.get_status(id.clone()).unwrap();
+                                    }
+
+                                    app.ui_weak.upgrade_in_event_loop(|ui| {
+                                        ui.set_state(crate::State::Spare);
+                                        ui.set_progress(0.0);
+                                    }).unwrap();
                                 } else {
                                     error!("Failed to lock a mutex.");
                                 }
