@@ -1,0 +1,20 @@
+import { GroupBox, SpinBox, Switch, LineEdit, Button, StyleMetrics } from "std-widgets.slint";
+import { HorizontalSpacing } from "spacing/spacing.slint";
+
+export component MyText inherits Text {
+    horizontal-stretch: 0;
+    vertical-alignment: center;
+    max-height: 20px;
+}
+
+export component MySpinBox inherits SpinBox {
+    minimum: 0;
+    maximum: 2147483647;
+}
+
+export component SettingsGroup inherits GroupBox {
+    GridLayout {
+        spacing: StyleMetrics.layout-spacing;
+        @children
+    }
+}

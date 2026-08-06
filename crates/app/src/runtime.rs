@@ -553,6 +553,8 @@ impl AppRuntime {
                     .request_refresh_account(acc_index)
                     .await?
                 {
+                    self.update_sender
+                        .send(UIUpdate::SetHomePageProgress(1 as u32, 5))?;
                     let mut session = self
                         .account_manager
                         .take_auth_session()
@@ -566,6 +568,8 @@ impl AppRuntime {
                                     .send(UIUpdate::SetHomePageProgress(s as u32, 5))?;
                             }
                             AuthPollAction::Done(account) => {
+                                self.update_sender
+                                    .send(UIUpdate::SetHomePageProgress(5, 5))?;
                                 self.account_manager.edit(acc_index, account)?;
                                 break;
                             }
@@ -711,11 +715,12 @@ impl AppRuntime {
         let config_dl: ConfigDL = self.downloader.get_config().clone().into();
         let config_mc = self.version_manager.get_config();
 
-        self.update_sender.send(UIUpdate::SetConfig(frontend::Config{
-            dl: config_dl.into(),
-            general: config_general.clone().into(),
-            mc: config_mc.clone().into(),
-        }))?;
+        self.update_sender
+            .send(UIUpdate::SetConfig(frontend::Config {
+                dl: config_dl.into(),
+                general: config_general.clone().into(),
+                mc: config_mc.clone().into(),
+            }))?;
 
         Ok(())
     }
@@ -724,8 +729,10 @@ impl AppRuntime {
         let authors = env!("CARGO_PKG_AUTHORS");
         let version = env!("CARGO_PKG_VERSION");
 
-        self.update_sender.send(UIUpdate::SetAuthors(authors.into()))?;
-        self.update_sender.send(UIUpdate::SetVersion(version.into()))?;
+        self.update_sender
+            .send(UIUpdate::SetAuthors(authors.into()))?;
+        self.update_sender
+            .send(UIUpdate::SetVersion(version.into()))?;
 
         Ok(())
     }

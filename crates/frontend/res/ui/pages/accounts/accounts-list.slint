@@ -5,7 +5,7 @@ import { HorizontalSpacing, SectionTitle } from "../../components/components.sli
 
 export component AccountsList inherits GroupBox {
     in-out property <[AccountInner]> accounts;
-    in property <int> current-index;
+    in-out property <int> current-index;
 
     callback selected(int);
 
@@ -24,7 +24,10 @@ export component AccountsList inherits GroupBox {
 
                 Button {
                     text: @tr("Select");
-                    clicked => selected(index);
+                    clicked => {
+                        root.current-index = index;
+                        selected(index);
+                    }
                 }
             }
     }

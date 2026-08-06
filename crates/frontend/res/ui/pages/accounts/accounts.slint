@@ -112,7 +112,7 @@ export component AccountsPage inherits VerticalBox {
 
                 AccountsList {
                     accounts: accounts;
-                    current-index: current-index;
+                    current-index <=> root.current-index;
                     selected(index) => switch-acc(index);
                 }
 

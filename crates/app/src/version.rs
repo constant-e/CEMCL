@@ -4,7 +4,8 @@ use frontend::game::MCInfo;
 use log::{error, warn};
 use serde_json::json;
 use std::{
-    collections::HashSet, fs::{create_dir_all, exists, read_to_string, remove_dir_all, write},
+    collections::HashSet,
+    fs::{create_dir_all, exists, read_to_string, remove_dir_all, write},
 };
 
 use mc::{MCInstallation, manifest::MCDL};
@@ -49,6 +50,7 @@ impl VersionManager {
 
     pub fn add(&mut self, version: &MCInstallation) -> Result<(), LauncherError> {
         self.version_list.push(version.clone());
+        self.version_list.sort_by(|a, b| a.version.cmp(&b.version));
 
         self.save()?;
         self.save_launcher_profiles()?;
@@ -59,7 +61,7 @@ impl VersionManager {
         let version = &self.get(index).version;
         let path = self.config.path.clone() + "/versions/" + version;
         remove_dir_all(path)?;
-        
+
         self.version_list.remove(index as usize);
 
         // if index = self.current_index, then switch to another version.

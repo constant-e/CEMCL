@@ -68,7 +68,7 @@ export component AppWindow inherits Window {
                 del-acc(index) => { del-acc(index) }
                 edit-acc(index, account) => { edit-acc(index, account) }
                 open-login-dialog() => { root.open-login-dialog() }
-                switch-acc(index) => { switch-acc(index) }
+                switch-acc(index) => { root.switch-acc(index) }
             }
 
             if (side-bar.current-index == 1): home-page := HomePage {
