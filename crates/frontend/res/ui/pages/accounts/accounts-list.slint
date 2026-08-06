@@ -12,8 +12,8 @@ export component AccountsList inherits GroupBox {
     title: @tr("Other Accounts");
 
     ListView {
-        // spacing: StyleMetrics.layout-spacing;
-        preferred-height: 3 * 48px + 2 * StyleMetrics.layout-spacing;
+        preferred-height: accounts.length * (48px + StyleMetrics.layout-spacing);
+        max-height: 3 * 48px + 2 * StyleMetrics.layout-spacing;
         for account[index] in accounts:
             HorizontalLayout {
                 padding-bottom: StyleMetrics.layout-spacing;
