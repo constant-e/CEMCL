@@ -421,7 +421,7 @@ impl AppRuntime {
                         jvm_args: Vec::new(),
                         separated: false,
                         width: config.width,
-                        wrapper: String::new(),
+                        wrapper: config.wrapper.clone(),
                         xms: config.xms.clone(),
                         xmx: config.xmx.clone(),
                     }))?;
@@ -827,6 +827,10 @@ impl AppRuntime {
             config_mc.width = json["width"]
                 .as_u64()
                 .ok_or(LauncherError::LauncherConfigError)? as u32;
+            config_mc.wrapper = String::from(json["wrapper"]
+                .as_str()
+                .ok_or(LauncherError::LauncherConfigError)?
+            );
             config_mc.xms = String::from(
                 json["xms"]
                     .as_str()
