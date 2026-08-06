@@ -1,6 +1,2 @@
-.idea
-.vscode
-/*.json
-/logs
-/target
 Cargo.lock
+/target

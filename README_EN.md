@@ -3,9 +3,6 @@ constant-e's Minecraft: Java Edition Launcher
 
 Language: [简体中文](README.md) | English
 
-## Notice
-Some of the functions are still under development.
-
 ## Introduction
 A Minecraft: Java Edition launcher using Rust and Slint.
 
@@ -14,16 +11,16 @@ A Minecraft: Java Edition launcher using Rust and Slint.
 
 ### Release
 Release versions are stable versions which are recommended for most of the users.
-1. Download from [Github](https://github.com/constant-e/CEMCL/releases)
-2. Download from [website](https://constant-e.github.io/CEMCL/en/download.html)
+
+Download from [Github](https://github.com/constant-e/CEMCL/releases)
 
 ### CI
 CI (Continuous Integration) versions are automatically built by GitHub Actions after committing. They are updated more frequently and sometimes unstable.
 
-Go to [GitHub Actions](https://github.com/constant-e/CEMCL/actions) to download CI versions.
+Download from [GitHub Actions](https://github.com/constant-e/CEMCL/actions)
 
 ## Build
-1. Install Rust and Qt if you want a Qt backend
+1. Install Rust
 2. Clone this repository
    ```sh
    git clone https://github.com/constant-e/CEMCL.git
@@ -41,16 +38,12 @@ Go to [GitHub Actions](https://github.com/constant-e/CEMCL/actions) to download 
 [Documents](https://constant-e.github.io/CEMCL/en/docs)
 
 ## Translating
-Run `update_tranlations.sh` to update the .po files.
+Run `crates/frontend/update_tranlations.sh` to update the .po files.
 
 ## Roadmap
-1. (Completed) Launch Minecraft
-2. (Completed) Support customized configures
-3. (Completed) Multi-language support
-4. (Completed) Support installing Minecraft
-5. (Completed) Support online login
-6. (Developing) Support installing modified Minecraft
-7. Others (More log, UI improvements, etc.)
+1. Basic functions (v0.1.x and v0.2.x) (completed)
+2. Better UI and function (v0.3.x) (developing)
+3. More modules
 
 ## Credits
 1. [BMCLAPI2](https://bmclapidoc.bangbang93.com/): Forge downloading

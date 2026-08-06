@@ -1,0 +1,106 @@
+import { Button, StandardTableView, VerticalBox, HorizontalBox, ProgressIndicator } from "std-widgets.slint";
+import { Title, SubTitle, SideBar } from "components/components.slint";
+import { AccountsPage, HomePage, GamesPage, DownloaderPage, JavaPage, SettingsPage, State, Config, ConfigGeneral, ConfigDL, ConfigMC } from "pages/pages.slint";
+import { AccountInner } from "pages/accounts/accounts.slint";
+
+export { Config, ConfigGeneral, ConfigDL, ConfigMC, State }
+export { AddGameDialog, EditGameDialog, AskDialog, MsgDialog, LoginDialog } from "dialogs/dialogs.slint";
+
+export component AppWindow inherits Window {
+    preferred-height: 600px;
+    preferred-width: 800px;
+    title: "CE Minecraft Launcher";
+    icon: @image-url("../pic/icon.png");
+
+    in-out property <int> acc-index: 0;
+    in-out property <int> game-index: 0;
+    in-out property <[AccountInner]> acc-list;
+    in-out property <[string]> combo-box-model;
+    in-out property <[[StandardListViewItem]]> game-model;
+    in-out property <[[StandardListViewItem]]> java-model;
+    in-out property <State> state;
+    in-out property <Config> config;
+    in-out property <string> authors;
+    in-out property <string> version;
+    in-out property <float> progress;
+
+    // Send command to App
+    callback del-acc(int);
+    callback del-game(int);
+    callback del-java(int);
+    callback edit-acc(int, AccountInner);
+    callback set-config(Config);
+    callback start(int, int);
+    callback switch-acc(int);
+    
+    // Call UI (Rust)
+    callback open-add-game-dialog();
+    callback open-add-java-dialog();
+    callback open-edit-game-dialog(int);
+    callback open-edit-java-dialog(int);
+    callback open-login-dialog();
+    
+    HorizontalBox {
+        padding: 0px;
+
+        side-bar := SideBar {
+            title: "CEMCL";
+            model: [@tr("Account"), @tr("Home"), @tr("Games"), @tr("Downloader"), @tr("Java"), @tr("Settings")];
+            current-index: 1;
+
+            index-changed(from, to) => {
+                if (from == 5){
+                    root.set-config(root.config);
+                }
+                if (to == 3) {
+                    // Download Page
+                }
+            }
+        }
+
+        Rectangle {
+            preferred-width: 100%;
+
+            if (side-bar.current-index == 0): acc-page := AccountsPage {
+                current-index: acc-index;
+                accounts: acc-list;
+                del-acc(index) => { del-acc(index) }
+                edit-acc(index, account) => { edit-acc(index, account) }
+                open-login-dialog() => { root.open-login-dialog() }
+                switch-acc(index) => { acc-index = index; switch-acc(index) }
+            }
+
+            if (side-bar.current-index == 1): home-page := HomePage {
+                state: state;
+                index: game-index;
+                model: combo-box-model;
+                progress: progress;
+                current-index-changed(index) => { root.game-index = index }
+                start(index) => { start(root.acc-index, index) }
+            }
+
+            if (side-bar.current-index == 2): games-page := GamesPage {
+                current-index: game-index;
+                model: game-model;
+                open-add-game-dialog => { open-add-game-dialog() }
+                open-edit-game-dialog(index) => { open-edit-game-dialog(index) }
+                current-index-changed(current-index) => { root.game-index = current-index }
+            }
+
+            if (side-bar.current-index == 3): downloader-page := DownloaderPage {}
+
+            if (side-bar.current-index == 4): java-page := JavaPage {
+                model: java-model;
+                open-add-java-dialog => { open-add-java-dialog() }
+                del-java(index) => { del-java(index) }
+            }
+
+            if (side-bar.current-index == 5): settings-page := SettingsPage {
+                authors: authors;
+                version: version;
+                config: config;
+                set-config(config) => { root.config = config; root.set-config(root.config) }
+            }
+        }
+    }
+}

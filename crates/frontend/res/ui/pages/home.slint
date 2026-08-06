@@ -1,0 +1,80 @@
+import { HorizontalBox, ProgressIndicator, VerticalBox, ComboBox, Button } from "std-widgets.slint";
+import { Title, HorizontalSpacing, VerticalSpacing } from "../components/components.slint";
+
+export enum State {
+    Spare,
+    Downloading,
+    Launching,
+    LoggingIn
+}
+
+export component HomePage inherits VerticalBox {
+    in-out property <int> index <=> combo-box.current-index;
+    in-out property <[string]> model <=> combo-box.model;
+    in-out property <State> state;
+    in-out property <float> progress;
+
+    callback current-index-changed(index: int);
+    callback start(index: int);
+
+    states [
+        spare when state == State.Spare: {
+            progress-area.visible: false;
+            state-text.text: "";
+        }
+        downloading when state == State.Downloading: {
+            progress-area.visible: true;
+            state-text.text: @tr("Downloading");
+        }
+        launching when state == State.Launching: {
+            progress-area.visible: true;
+            state-text.text: @tr("Launching");
+        }
+        logging-in when state == State.LoggingIn: {
+            progress-area.visible: true;
+            state-text.text: @tr("Logging in");
+        }
+
+    ]
+
+    Title { text: "CE Minecraft Launcher"; }
+
+    VerticalSpacing {}
+
+    HorizontalLayout {
+        combo-box := ComboBox {
+            horizontal-stretch: 0;
+            enabled: state == State.Spare;
+            selected => {
+                root.current-index-changed(index);
+            }
+        }
+
+        progress-area := HorizontalBox {
+
+            visible: false;
+            preferred-width: 100%;
+    
+            state-text := Text {
+                vertical-alignment: center;
+            }
+    
+            ProgressIndicator {
+                progress: progress;
+            }
+    
+            Text {
+                vertical-alignment: center;
+                text: round(progress * 100) + "%";
+            }
+        }
+
+        start-btn := Button {
+            text: @tr("Start");
+            enabled: state == State.Spare && combo-box.model.length != 0;
+            clicked => {
+                root.start(combo-box.current-index);
+            }
+        }
+    }
+}

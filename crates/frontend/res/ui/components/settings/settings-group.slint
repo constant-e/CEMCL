@@ -1,0 +1,55 @@
+import { GroupBox, SpinBox, Switch, LineEdit, Button, StyleMetrics, ScrollView } from "std-widgets.slint";
+import { SettingString, SettingInt, SettingBool } from "settings-inner.slint";
+import { HorizontalSpacing } from "../spacing/spacing.slint";
+
+export component SettingsGroup inherits GroupBox {
+    in-out property <[SettingString]> setting-string-list;
+    in-out property <[SettingInt]> setting-int-list;
+    in-out property <[SettingBool]> setting-bool-list;
+
+    callback setting-string-changed(string, string);
+    callback setting-int-changed(string, int);
+    callback setting-bool-changed(string, bool);
+
+    GridLayout {
+        spacing: StyleMetrics.layout-spacing;
+
+        for setting in setting-bool-list:
+            Row {
+                Switch {
+                    text: setting.name;
+                    checked: setting.value;
+                    toggled() => { setting.value = self.checked; root.setting-bool-changed(setting.id, self.checked) }
+                    max-height: 20px;
+                }
+            }
+
+        for setting in setting-int-list:
+            Row {
+                Text {
+                    text: setting.name;
+                    vertical-alignment: center;
+                    max-height: 20px;
+                }
+                SpinBox {
+                    value: setting.value;
+                    minimum: 0;
+                    maximum: 2147483647;
+                    edited(value) => { setting.value = value; root.setting-int-changed(setting.id, value) }
+                }
+            }
+
+        for setting in setting-string-list:
+            Row {
+                Text {
+                    text: setting.name;
+                    vertical-alignment: center;
+                    max-height: 20px;
+                }
+                LineEdit {
+                    text: setting.value;
+                    edited() => { setting.value = self.text; root.setting-string-changed(setting.id, self.text) }
+                }
+            }
+    }
+}

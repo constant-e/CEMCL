@@ -1,0 +1,13 @@
+[package]
+name = "downloader"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+
+[dependencies]
+dashmap = "6.2.1"
+futures = "0.3.33"
+log = { workspace = true }
+reqwest = { workspace = true }
+tokio = { workspace = true }

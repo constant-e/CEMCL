@@ -1,0 +1,128 @@
+import { HorizontalBox, Palette, StyleMetrics, VerticalBox, Button, GroupBox } from "std-widgets.slint";
+import { Title, HorizontalSpacing, SecondaryText, SubTitle, SettingsGroup, SettingString, VerticalSpacing } from "../../components/components.slint";
+import { Account } from "account-item.slint";
+import { AccountInner } from "account-inner.slint";
+import { AccountsList } from "accounts-list.slint";
+
+export { AccountInner }
+
+export component AccountsPage inherits VerticalBox {
+    in-out property <int> current-index;
+    in-out property <[AccountInner]> accounts;
+
+    callback open-login-dialog();
+    callback del-acc(int);
+    callback edit-acc(int, AccountInner);
+    callback switch-acc(int);
+
+    property <bool> edit: false;
+    property <bool> switch: false;
+
+    function to-ui-list(account: AccountInner) -> [SettingString] {
+        let user-name: SettingString = {
+            id: "user_name",
+            name: @tr("Name"),
+            value: account.user-name
+        };
+
+        let uuid: SettingString = {
+            id: "uuid",
+            name: @tr("UUID"),
+            value: account.uuid
+        };
+
+        let token: SettingString = {
+            id: "token",
+            name: @tr("Token"),
+            value: account.token
+        };
+
+        return [user-name, uuid, token];
+    }
+
+    Title { text: @tr("Account"); }
+
+    Rectangle {
+        background: Palette.control-background;
+        border-radius: 8px;
+        vertical-stretch: 0;
+
+        VerticalBox {
+            HorizontalLayout {
+                Account {
+                    account: accounts[current-index];
+                }
+
+                HorizontalSpacing {}
+
+                // Buttons
+                VerticalLayout {
+                    spacing: StyleMetrics.layout-spacing;
+
+                    edit-btn := Button {
+                        text: @tr("Edit");
+                        clicked => {
+                            edit = !edit;
+                            switch = false;
+                        }
+                    }
+
+                    switch-btn := Button {
+                        text: @tr("Switch");
+                        clicked => {
+                            edit = false;
+                            switch = !switch;
+                        }
+                    }
+                }
+            }
+
+            if (edit): VerticalLayout {
+                spacing: StyleMetrics.layout-spacing;
+                
+                SettingsGroup {
+                    title: @tr("Edit {}", accounts[current-index].user-name);
+                    setting-string-list: to-ui-list(accounts[current-index]);
+                    setting-string-changed(id, value) => {
+                        if (id == "user_name") {
+                            accounts[current-index].user-name = value;
+                        } else if (id == "uuid") {
+                            accounts[current-index].uuid = value;
+                        } else if (id == "token") {
+                            accounts[current-index].token = value;
+                        }
+                        edit-acc(current-index, accounts[current-index]);
+                    }
+                }
+
+                HorizontalLayout {
+                    HorizontalSpacing {}
+                    Button {
+                        text: @tr("Delete");
+                        clicked => del-acc(current-index);
+                    }
+                }
+            }
+
+            if (switch): VerticalLayout {
+                spacing: StyleMetrics.layout-spacing;
+
+                AccountsList {
+                    accounts: accounts;
+                    current-index: current-index;
+                    selected(index) => switch-acc(index);
+                }
+
+                HorizontalLayout {
+                    HorizontalSpacing {}
+                    Button {
+                        text: @tr("Add");
+                        clicked => open-login-dialog();
+                    }
+                }
+            }
+        }
+    }
+
+    VerticalSpacing {}
+}

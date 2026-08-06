@@ -1,0 +1,120 @@
+import { StandardButton, Button, Switch, LineEdit, GridBox } from "std-widgets.slint";
+import { SubTitle, SettingsGroup } from "../../components/components.slint";
+
+import { MCConfig } from "game.slint";
+
+export component EditGameDialog inherits Dialog {
+    title: @tr("Edit a Game");
+    preferred-height: 200px;
+    preferred-width: 400px;
+
+    in-out property <MCConfig> game-config;
+    in-out property <string> version;
+
+    callback del-game();
+    callback edit-game(MCConfig);
+
+    VerticalLayout {
+        SettingsGroup {
+            title: @tr("Edit {}", version);
+    
+            setting-bool-list: [
+                {
+                    id: "separated",
+                    name: @tr("Separated"),
+                    value: game-config.separated,
+                }
+            ];
+            setting-int-list: [
+                {
+                    id: "height",
+                    name: @tr("Window height"),
+                    value: game-config.height,
+                },
+                {
+                    id: "width",
+                    name: @tr("Window width"),
+                    value: game-config.width,
+                },
+            ];
+            setting-string-list: [
+                {
+                    id: "description",
+                    name: @tr("Description"),
+                    value: game-config.description,
+                },
+                {
+                    id: "game-args",
+                    name: @tr("Game args"),
+                    value: game-config.game-args,
+                },
+                {
+                    id: "java-path",
+                    name: @tr("Java path"),
+                    value: game-config.java-path,
+                },
+                {
+                    id: "jvm-args",
+                    name: @tr("JVM args"),
+                    value: game-config.jvm-args,
+                },
+                {
+                    id: "wrapper",
+                    name: @tr("Wrapper"),
+                    value: game-config.wrapper,
+                },
+                {
+                    id: "xms",
+                    name: @tr("Minimum memory"),
+                    value: game-config.xms,
+                },
+                {
+                    id: "xmx",
+                    name: @tr("Maximum memory"),
+                    value: game-config.xmx,
+                },
+            ];
+
+            setting-bool-changed(id, value) => {
+                if id == "separated" {
+                    root.game-config.separated = value;
+                }
+            }
+            setting-int-changed(id, value) => {
+                if id == "height" {
+                    root.game-config.height = value;
+                } else if id == "width" {
+                    root.game-config.width = value;
+                }
+            }
+            setting-string-changed(id, value) => {
+                if id == "description" {
+                    root.game-config.description = value;
+                } else if id == "game-args" {
+                    root.game-config.game-args = value;
+                } else if id == "java-path" {
+                    root.game-config.java-path = value;
+                } else if id == "jvm-args" {
+                    root.game-config.jvm-args = value;
+                } else if id == "wrapper" {
+                    root.game-config.wrapper = value;
+                } else if id == "xms" {
+                    root.game-config.xms = value;
+                } else if id == "xmx" {
+                    root.game-config.xmx = value;
+                }
+            }
+        }
+    }
+
+    Button {
+        text: @tr("Delete");
+        dialog-button-role: action;
+        clicked => { root.del-game() }
+    }
+    StandardButton { kind: cancel; }
+    StandardButton {
+        kind: ok;
+        clicked => { root.edit-game(game-config) }
+    }
+}

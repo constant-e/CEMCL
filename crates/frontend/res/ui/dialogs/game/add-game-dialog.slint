@@ -1,0 +1,191 @@
+import { Title, SettingBool, SettingString, SettingsGroup, SubTitle, VerticalSpacing } from "../../components/components.slint";
+import { ComboBox, StandardButton, StandardTableView, Switch, LineEdit, VerticalBox, HorizontalBox, GridBox } from "std-widgets.slint";
+
+import { MCConfig } from "game.slint";
+
+export component AddGameDialog inherits Dialog {
+    title: @tr("Add a Game");
+    preferred-height: 600px;
+    preferred-width: 800px;
+
+    in-out property <int> game-index <=> game-table.current-row;
+    in-out property <[[StandardListViewItem]]> game-list <=> game-table.rows;
+    in-out property <int> game-type <=> game-combo-box.current-index;
+
+    in-out property <int> mod-index <=> mod-table.current-row;
+    in-out property <[[StandardListViewItem]]> mod-list <=> mod-table.rows;
+    in-out property <int> mod-type <=> mod-combo-box.current-index;
+
+    in-out property <MCConfig> game-config;
+
+    callback get-default-game-config();
+    callback get-game-list(int);
+    // mc combo index, mc index, mod combo index
+    callback get-mod-list(int, int, int);
+    // mc combo, mc, mod combo, mod
+    callback add-game(int, int, int, int, MCConfig);
+
+    VerticalBox {
+        padding: 0px;
+
+        Title { text: @tr("Add a Game"); }
+        HorizontalBox {
+            padding: 0px;
+
+            VerticalBox {
+                padding: 0px;
+
+                SubTitle { text: @tr("Minecraft Version"); }
+                game-combo-box := ComboBox {
+                    model: [@tr("All"), @tr("Release"), @tr("Snapshot"), @tr("Old Alpha"), @tr("Old Beta")];
+                    selected => { root.get-game-list(self.current-index); }
+                }
+                game-table := StandardTableView {
+                    columns: [
+                        { title: @tr("Version") },
+                        { title: @tr("Type") }
+                    ];
+                    min-width: 200px;
+
+                    current-row-changed(row) => {
+                        if mod-combo-box.current-index != 0 {
+                            root.get-mod-list(game-combo-box.current-index, row, mod-combo-box.current-index);
+                        }
+                    }
+                }
+            }
+    
+            VerticalBox {
+                padding: 0px;
+
+                SubTitle { text: @tr("Mod Loader"); }
+                mod-combo-box := ComboBox {
+                    model: [@tr("None"), "Forge", "Fabric"];
+                    selected => {
+                        if self.current-index != 0 {
+                            root.get-mod-list(game-combo-box.current-index, game-table.current-row, self.current-index);
+                        } else {
+                            root.mod-list = [];
+                        }
+                        
+                    }
+                }
+                mod-table := StandardTableView {
+                    min-width: 200px;
+                    columns: [
+                        { title: @tr("Version") },
+                        { title: @tr("Modified") }
+                    ];
+                }
+            }
+
+            VerticalLayout {
+                SettingsGroup {
+                    title: @tr("Customize");
+                    vertical-stretch: 0;
+
+                    setting-bool-list: [
+                        {
+                            id: "separated",
+                            name: @tr("Separated"),
+                            value: game-config.separated,
+                        }
+                    ];
+
+                    setting-int-list: [
+                        {
+                            id: "height",
+                            name: @tr("Window height"),
+                            value: game-config.height,
+                        },
+                        {
+                            id: "width",
+                            name: @tr("Window width"),
+                            value: game-config.width,
+                        },
+                    ];
+
+                    setting-string-list: [
+                        {
+                            id: "description",
+                            name: @tr("Description"),
+                            value: game-config.description,
+                        },
+                        {
+                            id: "game-args",
+                            name: @tr("Game args"),
+                            value: game-config.game-args,
+                        },
+                        {
+                            id: "java-path",
+                            name: @tr("Java path"),
+                            value: game-config.java-path,
+                        },
+                        {
+                            id: "jvm-args",
+                            name: @tr("JVM args"),
+                            value: game-config.jvm-args,
+                        },
+                        {
+                            id: "wrapper",
+                            name: @tr("Wrapper"),
+                            value: game-config.wrapper,
+                        },
+                        {
+                            id: "xms",
+                            name: @tr("Minimum memory"),
+                            value: game-config.xms,
+                        },
+                        {
+                            id: "xmx",
+                            name: @tr("Maximum memory"),
+                            value: game-config.xmx,
+                        },
+                    ];
+
+                    setting-bool-changed(id, value) => {
+                        if id == "separated" {
+                            root.game-config.separated = value;
+                        }
+                    }
+
+                    setting-int-changed(id, value) => {
+                        if id == "height" {
+                            root.game-config.height = value;
+                        } else if id == "width" {
+                            root.game-config.width = value;
+                        }
+                    }
+
+                    setting-string-changed(id, value) => {
+                        if id == "description" {
+                            root.game-config.description = value;
+                        } else if id == "game-args" {
+                            root.game-config.game-args = value;
+                        } else if id == "java-path" {
+                            root.game-config.java-path = value;
+                        } else if id == "jvm-args" {
+                            root.game-config.jvm-args = value;
+                        } else if id == "wrapper" {
+                            root.game-config.wrapper = value;
+                        } else if id == "xms" {
+                            root.game-config.xms = value;
+                        } else if id == "xmx" {
+                            root.game-config.xmx = value;
+                        }
+                    }
+                }
+
+                VerticalSpacing {}
+            }
+        }
+    }
+
+    StandardButton { kind: cancel; }
+    StandardButton {
+        kind: ok;
+        clicked => {
+            root.add-game(game-combo-box.current-index, game-table.current-row, mod-combo-box.current-index, mod-table.current-row, game-config);
+        }
+    }
+}
