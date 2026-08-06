@@ -1,5 +1,5 @@
 import { TabWidget, ScrollView, StandardButton, Switch, SpinBox, LineEdit, GroupBox, VerticalBox, GridBox, HorizontalBox } from "std-widgets.slint";
-import { Title, SectionTitle, VerticalSpacing, SettingsGroup, SettingString, SettingBool, SettingInt, HorizontalSpacing } from "../components/components.slint";
+import { Title, SectionTitle, VerticalSpacing, SettingsGroup, HorizontalSpacing, MyText, MySpinBox } from "../components/components.slint";
 
 export struct ConfigGeneral {
     close_after_launch: bool,
@@ -50,95 +50,72 @@ export component SettingsPage inherits VerticalBox {
                 SettingsGroup {
                     vertical-stretch: 0;
                     title: @tr("General");
-                    setting-bool-list: [
-                        {
-                            id: "close_after_launch",
-                            name: @tr("Close after Launching Game"),
-                            value: config.general.close-after-launch
+                    Row {
+                        MyText { text: @tr("Minecraft Path"); }
+                        LineEdit {
+                            text <=> config.general.game-path;
+                            edited => { set-config(root.config); }
                         }
-                    ];
-                    setting-string-list: [
-                        {
-                            id: "game_path",
-                            name: @tr("Minecraft Path"),
-                            value: config.general.game-path
+                    }
+                    Row {
+                        Switch {
+                            text: @tr("Quit after Launch");
+                            checked <=> config.general.close-after-launch;
+                            toggled => { set-config(root.config); }
                         }
-                    ];
-                    setting-bool-changed(id, value) => {
-                        if (id == "close_after_launch") {
-                            config.general.close-after-launch = value;
-                        }
-                        root.set-config(root.config);
-                    };
-                    setting-string-changed(id, value) => {
-                        if (id == "game_path") {
-                            config.general.game-path = value;
-                            config.mc.path = value;
-                        }
-                        root.set-config(root.config);
-                    };
+                    }
                 }
 
                 SettingsGroup {
                     vertical-stretch: 0;
                     title: @tr("Downloading Settings");
 
-                    setting-int-list: [
-                        {
-                            id: "concurrency",
-                            name: @tr("Concurrency"),
-                            value: config.dl.concurrency
+                    Row {
+                        MyText { text: @tr("Concurrency"); }
+                        MySpinBox {
+                            value <=> config.dl.concurrency;
+                            edited => { set-config(root.config) }
                         }
-                    ];
+                    }
 
-                    setting-string-list: [
-                        {
-                            id: "assets_source",
-                            name: @tr("Assets Source"),
-                            value: config.dl.assets-source
-                        },
-                        {
-                            id: "libraries_source",
-                            name: @tr("Libraries Source"),
-                            value: config.dl.libraries-source
-                        },
-                        {
-                            id: "game_source",
-                            name: @tr("Minecraft Source"),
-                            value: config.dl.game-source
-                        },
-                        {
-                            id: "fabric_source",
-                            name: @tr("Fabric Source"),
-                            value: config.dl.fabric-source
-                        },
-                        {
-                            id: "forge_source",
-                            name: @tr("Forge Source"),
-                            value: config.dl.forge-source
+                    Row {
+                        MyText { text: @tr("Assets Source"); }
+                        LineEdit {
+                            text <=> config.dl.assets-source;
+                            edited => { set-config(root.config); }
                         }
-                    ];
+                    }
 
-                    setting-string-changed(id, value) => {
-                        if (id == "assets_source") {
-                            config.dl.assets-source = value;
-                        } else if (id == "libraries_source") {
-                            config.dl.libraries-source = value;
-                        } else if (id == "game_source") {
-                            config.dl.game-source = value;
-                        } else if (id == "fabric_source") {
-                            config.dl.fabric-source = value;
-                        } else if (id == "forge_source") {
-                            config.dl.forge-source = value;
+                    Row {
+                        MyText { text: @tr("Libraries Source"); }
+                        LineEdit {
+                            text <=> config.dl.libraries-source;
+                            edited => { set-config(root.config); }
                         }
-                        root.set-config(root.config);
-                    };
+                    }
 
-                    setting-int-changed(id, value) => {
-                        if (id == "concurrency") {
-                            config.dl.concurrency = value;
+                    Row {
+                        MyText { text: @tr("Minecraft Source"); }
+                        LineEdit {
+                            text <=> config.dl.game-source;
+                            edited => { set-config(root.config); }
                         }
-                        root.set-config(root.config);
+                    }
+
+                    Row {
+                        MyText { text: @tr("Fabric Source"); }
+                        LineEdit {
+                            text <=> config.dl.fabric-source;
+                            edited => { set-config(root.config); }
+                        }
+                    }
+
+                    Row {
+                        MyText { text: @tr("Forge Source"); }
+                        LineEdit {
+                            text <=> config.dl.forge-source;
+                            edited => { set-config(root.config); }
+                        }
                     }
                 }
 
@@ -152,62 +129,53 @@ export component SettingsPage inherits VerticalBox {
                 SettingsGroup {
                     vertical-stretch: 0;
                     title: @tr("Default Minecraft Settings");
-                    setting-string-list: [
-                        {
-                            id: "java_path",
-                            name: @tr("Java Path"),
-                            value: config.mc.java-path
-                        },
-                        {
-                            id: "wrapper",
-                            name: @tr("Wrapper"),
-                            value: config.mc.wrapper
-                        },
-                        {
-                            id: "xms",
-                            name: @tr("Minimum Memory"),
-                            value: config.mc.xms
-                        },
-                        {
-                            id: "xmx",
-                            name: @tr("Maximum Memory"),
-                            value: config.mc.xmx
-                        }
-                    ];
 
-                    setting-int-list: [
-                        {
-                            id: "height",
-                            name: @tr("Window Height"),
-                            value: config.mc.height
-                        },
-                        {
-                            id: "width",
-                            name: @tr("Window Width"),
-                            value: config.mc.width
-                        },
-                    ];
-
-                    setting-string-changed(id, value) => {
-                        if (id == "java_path") {
-                            config.mc.java-path = value;
-                        } else if (id == "wrapper") {
-                            config.mc.wrapper = value;
-                        } else if (id == "xms") {
-                            config.mc.xms = value;
-                        } else if (id == "xmx") {
-                            config.mc.xmx = value;
+                    Row {
+                        MyText { text: @tr("Java Path"); }
+                        LineEdit {
+                            text <=> config.mc.java-path;
+                            edited => { set-config(root.config); }
                         }
-                        root.set-config(root.config);
-                    };
+                    }
 
-                    setting-int-changed(id, value) => {
-                        if (id == "height") {
-                            config.mc.height = value;
-                        } else if (id == "width") {
-                            config.mc.width = value;
+                    Row {
+                        MyText { text: @tr("Wrapper"); }
+                        LineEdit {
+                            text <=> config.mc.wrapper;
+                            edited => { set-config(root.config); }
                         }
-                        root.set-config(root.config);
+                    }
+
+                    Row {
+                        MyText { text: @tr("Minimum Memory"); }
+                        LineEdit {
+                            text <=> config.mc.xms;
+                            edited => { set-config(root.config); }
+                        }
+                    }
+
+                    Row {
+                        MyText { text: @tr("Maximum Memory"); }
+                        LineEdit {
+                            text <=> config.mc.xmx;
+                            edited => { set-config(root.config); }
+                        }
+                    }
+
+                    Row {
+                        MyText { text: @tr("Window Height"); }
+                        MySpinBox {
+                            value <=> config.mc.height;
+                            edited => { set-config(root.config); }
+                        }
+                    }
+
+                    Row {
+                        MyText { text: @tr("Window Width"); }
+                        MySpinBox {
+                            value <=> config.mc.width;
+                            edited => { set-config(root.config); }
+                        }
                     }
                 }
 

@@ -1,5 +1,5 @@
-import { Button, StandardButton, StyleMetrics , VerticalBox, TabWidget, HorizontalBox } from "std-widgets.slint";
-import { RoundedBackground, SubTitle, VerticalSpacing, HorizontalSpacing, SettingsGroup, SettingString, SecondaryText, SectionTitle } from "../components/components.slint";
+import { Button, StandardButton, StyleMetrics , VerticalBox, TabWidget, HorizontalBox, LineEdit } from "std-widgets.slint";
+import { RoundedBackground, SubTitle, VerticalSpacing, HorizontalSpacing, SettingsGroup, SecondaryText, SectionTitle, MyText } from "../components/components.slint";
 
 export component LoginDialog inherits Dialog {
     title: @tr("Add a Account");
@@ -19,24 +19,17 @@ export component LoginDialog inherits Dialog {
                 offline-group := SettingsGroup {
                     title: @tr("Offline Account");
 
-                    setting-string-list: [
-                        {
-                            id: "user_name",
-                            name: @tr("Name"),
-                            value: user-name
-                        },
-                        {
-                            id: "uuid",
-                            name: @tr("UUID"),
-                            value: uuid
-                        } 
-                    ];
+                    Row {
+                        MyText { text: @tr("Name"); }
+                        LineEdit {
+                            text <=> root.user-name;
+                        }
+                    }
 
-                    setting-string-changed(id, value) => {
-                        if id == "user_name" {
-                            root.user-name = value;
-                        } else if id == "uuid" {
-                            root.uuid = value;
+                    Row {
+                        MyText { text: @tr("UUID"); }
+                        LineEdit {
+                            text <=> root.uuid;
                         }
                     }
                 }

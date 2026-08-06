@@ -234,6 +234,13 @@ impl AppWindow {
             }
         });
 
+        let tx = cmd_tx.clone();
+        ui.on_switch_ver(move |index| {
+            if let Err(e) = tx.send(UICommand::SwitchGame(index as u32)) {
+                error!("{e}");
+            }
+        });
+
         let ui_weak_clone = ui_weak.clone();
         let add_game_dialog_clone = add_game_dialog.clone();
         let edit_game_dialog_clone = edit_game_dialog.clone();

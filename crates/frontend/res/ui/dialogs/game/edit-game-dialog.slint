@@ -1,5 +1,5 @@
 import { StandardButton, Button, Switch, LineEdit, GridBox } from "std-widgets.slint";
-import { SubTitle, SettingsGroup } from "../../components/components.slint";
+import { SubTitle, SettingsGroup, MyText, MySpinBox } from "../../components/components.slint";
 
 import { MCConfig } from "game.slint";
 
@@ -17,92 +17,76 @@ export component EditGameDialog inherits Dialog {
     VerticalLayout {
         SettingsGroup {
             title: @tr("Edit {}", version);
-    
-            setting-bool-list: [
-                {
-                    id: "separated",
-                    name: @tr("Separated"),
-                    value: game-config.separated,
-                }
-            ];
-            setting-int-list: [
-                {
-                    id: "height",
-                    name: @tr("Window height"),
-                    value: game-config.height,
-                },
-                {
-                    id: "width",
-                    name: @tr("Window width"),
-                    value: game-config.width,
-                },
-            ];
-            setting-string-list: [
-                {
-                    id: "description",
-                    name: @tr("Description"),
-                    value: game-config.description,
-                },
-                {
-                    id: "game-args",
-                    name: @tr("Game args"),
-                    value: game-config.game-args,
-                },
-                {
-                    id: "java-path",
-                    name: @tr("Java path"),
-                    value: game-config.java-path,
-                },
-                {
-                    id: "jvm-args",
-                    name: @tr("JVM args"),
-                    value: game-config.jvm-args,
-                },
-                {
-                    id: "wrapper",
-                    name: @tr("Wrapper"),
-                    value: game-config.wrapper,
-                },
-                {
-                    id: "xms",
-                    name: @tr("Minimum memory"),
-                    value: game-config.xms,
-                },
-                {
-                    id: "xmx",
-                    name: @tr("Maximum memory"),
-                    value: game-config.xmx,
-                },
-            ];
 
-            setting-bool-changed(id, value) => {
-                if id == "separated" {
-                    root.game-config.separated = value;
+            Row {
+                MyText { text: @tr("Window height"); }
+                MySpinBox {
+                    value <=> game-config.height;
                 }
             }
-            setting-int-changed(id, value) => {
-                if id == "height" {
-                    root.game-config.height = value;
-                } else if id == "width" {
-                    root.game-config.width = value;
+
+            Row {
+                MyText { text: @tr("Window width"); }
+                MySpinBox {
+                    value <=> game-config.width;
                 }
             }
-            setting-string-changed(id, value) => {
-                if id == "description" {
-                    root.game-config.description = value;
-                } else if id == "game-args" {
-                    root.game-config.game-args = value;
-                } else if id == "java-path" {
-                    root.game-config.java-path = value;
-                } else if id == "jvm-args" {
-                    root.game-config.jvm-args = value;
-                } else if id == "wrapper" {
-                    root.game-config.wrapper = value;
-                } else if id == "xms" {
-                    root.game-config.xms = value;
-                } else if id == "xmx" {
-                    root.game-config.xmx = value;
+
+            Row {
+                MyText { text: @tr("Description"); }
+                LineEdit {
+                    text <=> game-config.description;
                 }
+            }
+
+            Row {
+                MyText { text: @tr("Game args"); }
+                LineEdit {
+                    text <=> game-config.game-args;
+                }
+            }
+
+            Row {
+                MyText { text: @tr("Java path"); }
+                LineEdit {
+                    text <=> game-config.java-path;
+                }
+            }
+
+            Row {
+                MyText { text: @tr("JVM args"); }
+                LineEdit {
+                    text <=> game-config.jvm-args;
+                }
+            }
+
+            Row {
+                MyText { text: @tr("Wrapper"); }
+                LineEdit {
+                    text <=> game-config.wrapper;
+                }
+            }
+
+            Row {
+                MyText { text: @tr("Minimum memory"); }
+                LineEdit {
+                    text <=> game-config.xms;
+                }
+            }
+
+            Row {
+                MyText { text: @tr("Maximum memory"); }
+                LineEdit {
+                    text <=> game-config.xmx;
+                }
+            }
+
+            Row {
+                Switch {
+                    text: @tr("Separated");
+                    horizontal-stretch: 1;
+                    checked <=> game-config.separated;
+                }    
             }
         }
     }

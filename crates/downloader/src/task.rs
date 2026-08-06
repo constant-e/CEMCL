@@ -1,5 +1,5 @@
 use futures::StreamExt;
-use log::{debug, error, warn};
+use log::{error, info, warn};
 use reqwest::Client;
 use std::sync::{
     Arc,
@@ -218,7 +218,7 @@ impl DownloadTask {
     /// start the task
     /// the task may not start immediately due to the concurrency limit
     pub async fn start(&self) -> Result<(), DownloadTaskError> {
-        debug!("created url={0} path={1}", self.url, self.save_path);
+        info!("created url={0} path={1}", self.url, self.save_path);
         let semaphore = self.semaphore.clone();
 
         let permit = match semaphore.acquire().await {
@@ -292,7 +292,7 @@ impl DownloadTask {
 
         let mut stream = response.bytes_stream();
 
-        debug!("Start downloading {0}", self.url);
+        info!("Start downloading {0}", self.url);
 
         let mut attempts: u8 = 0;
         // update progress every 256KB
@@ -302,14 +302,14 @@ impl DownloadTask {
             match self.receiver.try_write()?.try_recv() {
                 Ok(DownloadTaskCommand::Pause) => {
                     *self.status.try_lock()? = DownloadTaskStatus::Paused;
-                    debug!("Paused {0}", self.url);
+                    info!("Paused {0}", self.url);
                     if let Some(on_pause) = &self.on_pause {
                         on_pause();
                     }
                 }
                 Ok(DownloadTaskCommand::Cancel) => {
                     *self.status.try_lock()? = DownloadTaskStatus::Cancelled;
-                    debug!("Cancelled downloading {0}", self.url);
+                    info!("Cancelled downloading {0}", self.url);
                     drop(file);
                     if let Err(e) = tokio::fs::remove_file(&self.save_path).await {
                         error!(
@@ -412,7 +412,7 @@ impl DownloadTask {
         }
 
         *self.status.try_lock()? = DownloadTaskStatus::Completed;
-        debug!("Finish downloading {0}", self.url);
+        info!("Finish downloading {0}", self.url);
         Ok(())
     }
 

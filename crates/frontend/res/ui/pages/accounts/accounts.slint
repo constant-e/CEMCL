@@ -1,5 +1,5 @@
-import { HorizontalBox, Palette, StyleMetrics, VerticalBox, Button, GroupBox } from "std-widgets.slint";
-import { Title, HorizontalSpacing, SecondaryText, SubTitle, SettingsGroup, SettingString, VerticalSpacing } from "../../components/components.slint";
+import { HorizontalBox, Palette, StyleMetrics, VerticalBox, Button, GroupBox, LineEdit } from "std-widgets.slint";
+import { Title, HorizontalSpacing, SecondaryText, SubTitle, SettingsGroup, MyText, VerticalSpacing } from "../../components/components.slint";
 import { Account } from "account-item.slint";
 import { AccountInner } from "account-inner.slint";
 import { AccountsList } from "accounts-list.slint";
@@ -17,28 +17,6 @@ export component AccountsPage inherits VerticalBox {
 
     property <bool> edit: false;
     property <bool> switch: false;
-
-    function to-ui-list(account: AccountInner) -> [SettingString] {
-        let user-name: SettingString = {
-            id: "user_name",
-            name: @tr("Name"),
-            value: account.user-name
-        };
-
-        let uuid: SettingString = {
-            id: "uuid",
-            name: @tr("UUID"),
-            value: account.uuid
-        };
-
-        let token: SettingString = {
-            id: "token",
-            name: @tr("Token"),
-            value: account.token
-        };
-
-        return [user-name, uuid, token];
-    }
 
     Title { text: @tr("Account"); }
 
@@ -82,16 +60,41 @@ export component AccountsPage inherits VerticalBox {
                 
                 SettingsGroup {
                     title: @tr("Edit {}", accounts[current-index].user-name);
-                    setting-string-list: to-ui-list(accounts[current-index]);
-                    setting-string-changed(id, value) => {
-                        if (id == "user_name") {
-                            accounts[current-index].user-name = value;
-                        } else if (id == "uuid") {
-                            accounts[current-index].uuid = value;
-                        } else if (id == "token") {
-                            accounts[current-index].token = value;
+                    Row {
+                        MyText {
+                            text: @tr("Name");
                         }
-                        edit-acc(current-index, accounts[current-index]);
+                        LineEdit {
+                            text: accounts[current-index].user-name;
+                            edited(text) => {
+                                accounts[current-index].user-name = text;
+                                edit-acc(current-index, accounts[current-index])
+                            }
+                        }
+                    }
+                    Row {
+                        MyText {
+                            text: @tr("UUID");
+                        }
+                        LineEdit {
+                            text: accounts[current-index].uuid;
+                            edited(text) => {
+                                accounts[current-index].uuid = text;
+                                edit-acc(current-index, accounts[current-index])
+                            }
+                        }
+                    }
+                    Row {
+                        MyText {
+                            text: @tr("Token");
+                        }
+                        LineEdit {
+                            text: accounts[current-index].token;
+                            edited(text) => {
+                                accounts[current-index].token = text;
+                                edit-acc(current-index, accounts[current-index])
+                            }
+                        }
                     }
                 }
 

@@ -32,6 +32,7 @@ export component AppWindow inherits Window {
     callback set-config(Config);
     callback start(int, int);
     callback switch-acc(int);
+    callback switch-ver(int);
     
     // Call UI (Rust)
     callback open-add-game-dialog();
@@ -62,29 +63,29 @@ export component AppWindow inherits Window {
             preferred-width: 100%;
 
             if (side-bar.current-index == 0): acc-page := AccountsPage {
-                current-index: acc-index;
-                accounts: acc-list;
+                current-index <=> acc-index;
+                accounts <=> acc-list;
                 del-acc(index) => { del-acc(index) }
                 edit-acc(index, account) => { edit-acc(index, account) }
                 open-login-dialog() => { root.open-login-dialog() }
-                switch-acc(index) => { acc-index = index; switch-acc(index) }
+                switch-acc(index) => { switch-acc(index) }
             }
 
             if (side-bar.current-index == 1): home-page := HomePage {
                 state: state;
-                index: game-index;
+                index <=> game-index;
                 model: combo-box-model;
                 progress: progress;
-                current-index-changed(index) => { root.game-index = index }
+                current-index-changed(index) => { switch-ver(index) }
                 start(index) => { start(root.acc-index, index) }
             }
 
             if (side-bar.current-index == 2): games-page := GamesPage {
-                current-index: game-index;
+                current-index <=> game-index;
                 model: game-model;
                 open-add-game-dialog => { open-add-game-dialog() }
                 open-edit-game-dialog(index) => { open-edit-game-dialog(index) }
-                current-index-changed(current-index) => { root.game-index = current-index }
+                current-index-changed(current-index) => { switch-ver(current-index) }
             }
 
             if (side-bar.current-index == 3): downloader-page := DownloaderPage {}
@@ -98,8 +99,8 @@ export component AppWindow inherits Window {
             if (side-bar.current-index == 5): settings-page := SettingsPage {
                 authors: authors;
                 version: version;
-                config: config;
-                set-config(config) => { root.config = config; root.set-config(root.config) }
+                config <=> config;
+                set-config(config) => { root.set-config(config) }
             }
         }
     }
