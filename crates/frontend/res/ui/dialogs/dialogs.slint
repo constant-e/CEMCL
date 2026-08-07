@@ -4,12 +4,15 @@ export { MCConfig } from "game/game.slint";
 export { LoginDialog } from "login-dialog.slint";
 export { EditGameDialog } from "game/edit-game-dialog.slint";
 
+export enum AskID {
+    DelAccConfirm,      // Confirm to delete an account
+    DelGameConfirm,     // Confirm to delete a game
+}
+
 export enum MsgID {
     AccNotSelected,     // On launch, not select account
     BothNotSelected,    // On launch, not select account and game
     CopyUserCodeFailed, // On login, copy usercode failed, with user code provided
-    DelAccConfirm,      // Confirm to delete an account
-    DelGameConfirm,     // Confirm to delete a game
     DLFailed,           // Download failed, with reason
     GameNotSelected,    // On launch, not select game
     LoadAccFailed,      // On init, failed to load account list, with reason
@@ -23,24 +26,34 @@ export enum MsgID {
 }
 
 export component AskDialog inherits Dialog {
-    in property <MsgID> msgid;
+    in property <AskID> msgid;
     in property <string> extra-str: "";
+    callback yes-clicked();
 
     VerticalLayout {
         text := Text {}
     }
 
     states [
-        DelAccConfirm when msgid == MsgID.DelAccConfirm: {
+        DelAccConfirm when msgid == AskID.DelAccConfirm: {
             text.text: @tr("Are you sure to delete this account?");
         }
-        DelGameConfirm when msgid == MsgID.DelGameConfirm: {
+        DelGameConfirm when msgid == AskID.DelGameConfirm: {
             text.text: @tr("All the files under this Minecraft installation's folder will be deleted. Continue?");
         }
     ]
 
-    StandardButton { kind: yes; }
-    StandardButton { kind: no; }
+    StandardButton {
+        kind: yes;
+        clicked => {
+            root.yes-clicked();
+            root.close();
+        }
+    }
+    StandardButton {
+        kind: no;
+        clicked => root.close();
+    }
 }
 
 export component MsgDialog inherits Dialog {
@@ -87,5 +100,8 @@ export component MsgDialog inherits Dialog {
         }
     ]
 
-    StandardButton { kind: ok; }
+    StandardButton {
+        kind: ok;
+        clicked => root.close();
+    }
 }

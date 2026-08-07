@@ -2,6 +2,7 @@ pub mod account;
 mod app_window;
 pub mod game;
 pub mod home;
+pub mod msg_box;
 mod settings;
 mod ui;
 

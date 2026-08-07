@@ -9,7 +9,7 @@ use crate::ui::{self, AddGameDialog, EditGameDialog, LoginDialog};
 use crate::{
     account::{self, Account},
     game::{self, Fabric, Forge, MCConfig, MCDL, MCType, ModType},
-    home,
+    home, msg_box,
 };
 
 // UI -> App
@@ -39,6 +39,8 @@ pub enum UICommand {
 
 // App -> UI
 pub enum UIUpdate {
+    AskBox(msg_box::AskID, Box<dyn Fn() + Send + 'static>),
+    MsgBox(msg_box::MsgID),
     SetAccountIndex(u32),
     SetAccountList(Vec<Account>),
     SetAddGameDefault(MCConfig),
@@ -124,14 +126,24 @@ impl AppWindow {
 
         let tx = cmd_tx.clone();
         ui.on_del_acc(move |index| {
-            if let Err(e) = tx.send(UICommand::DelAccount(index as u32)) {
-                error!("{e}");
+            let tx = tx.clone();
+            if let Err(e) = msg_box::ask_box(msg_box::AskID::DelAccConfirm, move || {
+                if let Err(e) = tx.send(UICommand::DelAccount(index as u32)) {
+                    error!("{e}");
+                }
+            }) {
+                error!("{e}")
             }
         });
 
         let tx = cmd_tx.clone();
         ui.on_del_game(move |index| {
-            if let Err(e) = tx.send(UICommand::DelGame(index as u32)) {
+            let tx = tx.clone();
+            if let Err(e) = msg_box::ask_box(msg_box::AskID::DelGameConfirm, move || {
+                if let Err(e) = tx.send(UICommand::DelGame(index as u32)) {
+                    error!("{e}");
+                }
+            }) {
                 error!("{e}")
             }
         });
@@ -276,6 +288,16 @@ impl AppWindow {
         login_dialog: Arc<Mutex<Option<slint::Weak<LoginDialog>>>>,
     ) {
         match update {
+            UIUpdate::AskBox(id, f) => {
+                if let Err(e) = msg_box::ask_box(id, f) {
+                    error!("{e}");
+                }
+            }
+            UIUpdate::MsgBox(id) => {
+                if let Err(e) = msg_box::msg_box(id) {
+                    error!("{e}");
+                }
+            }
             UIUpdate::SetAccountIndex(index) => {
                 if let Err(e) = ui_weak.upgrade_in_event_loop(move |ui| {
                     ui.set_acc_index(index as i32);

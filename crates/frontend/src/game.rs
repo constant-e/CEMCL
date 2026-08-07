@@ -6,6 +6,7 @@ use std::rc;
 use tokio::sync::mpsc::UnboundedSender;
 
 use crate::app_window::UICommand;
+use crate::msg_box;
 use crate::ui::{self, AddGameDialog, EditGameDialog};
 
 pub enum ModType {
@@ -300,8 +301,13 @@ pub fn edit_game_dialog(
 
     let tx_clone = tx.clone();
     ui.on_del_game(move || {
-        if let Err(e) = tx_clone.send(UICommand::DelGame(index)) {
-            error!("{e}");
+        let tx = tx_clone.clone();
+        if let Err(e) = msg_box::ask_box(msg_box::AskID::DelGameConfirm, move || {
+            if let Err(e) = tx.send(UICommand::DelGame(index as u32)) {
+                error!("{e}");
+            }
+        }) {
+            error!("{e}")
         }
     });
 

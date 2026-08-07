@@ -827,9 +827,10 @@ impl AppRuntime {
             config_mc.width = json["width"]
                 .as_u64()
                 .ok_or(LauncherError::LauncherConfigError)? as u32;
-            config_mc.wrapper = String::from(json["wrapper"]
-                .as_str()
-                .ok_or(LauncherError::LauncherConfigError)?
+            config_mc.wrapper = String::from(
+                json["wrapper"]
+                    .as_str()
+                    .ok_or(LauncherError::LauncherConfigError)?,
             );
             config_mc.xms = String::from(
                 json["xms"]
