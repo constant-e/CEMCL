@@ -59,6 +59,7 @@ export component SettingsPage inherits VerticalBox {
                     }
                     Row {
                         Switch {
+                            colspan: 2;
                             text: @tr("Quit after Launch");
                             checked <=> config.general.close-after-launch;
                             toggled => { set-config(root.config); }

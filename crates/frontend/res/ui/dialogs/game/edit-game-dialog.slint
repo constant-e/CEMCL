@@ -83,6 +83,7 @@ export component EditGameDialog inherits Dialog {
 
             Row {
                 Switch {
+                    colspan: 2;
                     text: @tr("Separated");
                     horizontal-stretch: 1;
                     checked <=> game-config.separated;
