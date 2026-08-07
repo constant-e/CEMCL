@@ -15,7 +15,7 @@
 
 **Download Links:** [Linux](https://github.com/constant-e/CEMCL/releases/download/v0.3.0/cemcl-0.3.0-linux-x86_64) |
 [macOS](https://github.com/constant-e/CEMCL/releases/download/v0.3.0/cemcl-0.3.0-macos-arm64) |
-[Windows](https://github.com/constant-e/CEMCL/releases/download/v0.3.0/cemcl-0.3.0-windows-x86_64)
+[Windows](https://github.com/constant-e/CEMCL/releases/download/v0.3.0/cemcl-0.3.0-windows-x86_64.exe)
 
 ## GitHub CI
 Get it in [GitHub Actions](https://github.com/constant-e/CEMCL/actions).
