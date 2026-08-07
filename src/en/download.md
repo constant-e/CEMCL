@@ -13,9 +13,9 @@
 4. Memorize the account and version you select
 5. Minor bug fixes
 
-**Download Links:** [Linux](https://github.com/constant-e/CEMCL/releases/download/v0.3.0/cemcl-0.3.0-linux-x86_64.zip) |
-[macOS](https://github.com/constant-e/CEMCL/releases/download/v0.3.0/cemcl-0.3.0-macos-arm64.zip) |
-[Windows](https://github.com/constant-e/CEMCL/releases/download/v0.3.0/cemcl-0.3.0-windows-x86_64.zip)
+**Download Links:** [Linux](https://github.com/constant-e/CEMCL/releases/download/v0.3.0/cemcl-0.3.0-linux-x86_64) |
+[macOS](https://github.com/constant-e/CEMCL/releases/download/v0.3.0/cemcl-0.3.0-macos-arm64) |
+[Windows](https://github.com/constant-e/CEMCL/releases/download/v0.3.0/cemcl-0.3.0-windows-x86_64)
 
 ## GitHub CI
 Get it in [GitHub Actions](https://github.com/constant-e/CEMCL/actions).
