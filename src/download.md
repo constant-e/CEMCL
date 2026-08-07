@@ -3,26 +3,26 @@
 
 ## Release
 
-### v0.2.3
+### v0.3.0
 **这是一个预览版，未经过充分测试。**
 
 #### 更新日志
-1. 支持安装forge
-2. 部分支持fabric
-3. 修复启动forge时的一系列问题
-4. UI改进
+1. **破坏性变化** 更新了各个配置文件的格式，并将各版本的配置文件统一储存在.cemcl下
+2. 构建了全新的分页式UI，包含一个全新的账号页
+3. 支持在启动时添加封装器
+4. 支持记忆上次选中的账号和游戏版本
 5. 修复一些小Bug
 
 **下载链接：**
-[Linux](https://github.com/constant-e/CEMCL/releases/download/v0.2.3/cemcl-0.2.3-linux-x86_64.zip) |
-[macOS](https://github.com/constant-e/CEMCL/releases/download/v0.2.3/cemcl-0.2.3-macos-x86_64.zip) |
-[Windows](https://github.com/constant-e/CEMCL/releases/download/v0.2.3/cemcl-0.2.3-windows-x86_64.zip)
+[Linux](https://github.com/constant-e/CEMCL/releases/download/v0.3.0/cemcl-0.3.0-linux-x86_64.zip) |
+[macOS](https://github.com/constant-e/CEMCL/releases/download/v0.3.0/cemcl-0.3.0-macos-arm64.zip) |
+[Windows](https://github.com/constant-e/CEMCL/releases/download/v0.3.0/cemcl-0.3.0-windows-x86_64.zip)
 
 ## GitHub CI
 请前往[GitHub Actions](https://github.com/constant-e/CEMCL/actions)获取。
 
 ## 构建
-1. 安装Rust和Qt（若需要Qt后端）
+1. 安装Rust
 2. 克隆此仓库
    ```sh
    git clone https://github.com/constant-e/CEMCL.git

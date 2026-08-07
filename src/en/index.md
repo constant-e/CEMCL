@@ -14,9 +14,9 @@ hero:
 
 features:
   - title: Free and Open Source
-    details: Open source on GitHub.
+    details: Open source on GitHub
   - title: Cross-platfrom
-    details: Can run on Windows, macOS, Linux, etc.
+    details: Support Windows / macOS / Linux
   - title: Efficient
-    details: The Rust lang and Slint make the app efficient.
+    details: Developed using Rust and native GUI framework
 ---

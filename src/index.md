@@ -13,10 +13,10 @@ hero:
       link: /docs
 
 features:
-  - title: 开源 免费
-    details: 在GitHub上开源，免费。
+  - title: 开源
+    details: 在GitHub上开源
   - title: 跨平台
-    details: 可以在Windows、macOS、Linux等多平台运行。
+    details: 支持Windows / macOS / Linux
   - title: 高效
-    details: 使用Rust语言和Slint进行原生GUI开发，效率高、占用小。
+    details: 使用Rust语言和原生GUI开发，效率高、占用小
 ---
