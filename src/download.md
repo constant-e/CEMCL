@@ -14,9 +14,9 @@
 5. 修复一些小Bug
 
 **下载链接：**
-[Linux](https://github.com/constant-e/CEMCL/releases/download/v0.3.0/cemcl-0.3.0-linux-x86_64.zip) |
-[macOS](https://github.com/constant-e/CEMCL/releases/download/v0.3.0/cemcl-0.3.0-macos-arm64.zip) |
-[Windows](https://github.com/constant-e/CEMCL/releases/download/v0.3.0/cemcl-0.3.0-windows-x86_64.zip)
+[Linux](https://github.com/constant-e/CEMCL/releases/download/v0.3.0/cemcl-0.3.0-linux-x86_64) |
+[macOS](https://github.com/constant-e/CEMCL/releases/download/v0.3.0/cemcl-0.3.0-macos-arm64) |
+[Windows](https://github.com/constant-e/CEMCL/releases/download/v0.3.0/cemcl-0.3.0-windows-x86_64)
 
 ## GitHub CI
 请前往[GitHub Actions](https://github.com/constant-e/CEMCL/actions)获取。
