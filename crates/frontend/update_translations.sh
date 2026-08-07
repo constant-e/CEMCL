@@ -1,7 +1,7 @@
 #!/bin/sh
 
 echo "Generating frontend.pot ..."
-cd res/frontend
+cd res/ui
 find -name \*.slint | xargs slint-tr-extractor -o ../translation/frontend.pot
 
 echo "Updating zh_CN.po ..."
