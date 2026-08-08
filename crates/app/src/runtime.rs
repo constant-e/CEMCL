@@ -10,7 +10,8 @@ use mc::{
     },
 };
 use serde_json::json;
-use std::{collections::HashMap, fs, process::Command};
+use utils::get_parent_dir;
+use std::{collections::HashMap, fs::{self, create_dir_all, exists, remove_dir_all}, process::Command};
 use tokio::time::{Duration, sleep};
 
 use crate::{
@@ -310,16 +311,29 @@ impl AppRuntime {
 
                             let task_info =
                                 download_forge(&version.version, forge.clone(), "{forge_source}");
+                            
+                            let dir = get_parent_dir(&task_info.save_path);
+                            if !exists(&dir)? {
+                                create_dir_all(&dir)?;
+                            }
 
                             let java_path = config.java_path.clone();
                             let forge_path = task_info.save_path.clone();
                             let f = move || {
-                                if let Err(e) = Command::new(&java_path)
+                                match Command::new(&java_path)
                                     .arg("-jar")
                                     .arg(&forge_path)
                                     .spawn()
                                 {
-                                    error!("Failed to run forge installer. Reason: {e}.");
+                                    Ok(mut child) => {
+                                        if let Err(e) = child.wait() {
+                                            error!("{e}");
+                                            if exists(&dir).unwrap() {
+                                                remove_dir_all(&dir).unwrap();
+                                            }
+                                        }
+                                    }
+                                    Err(e) => error!("Failed to run forge installer. Reason: {e}."),
                                 }
                             };
 

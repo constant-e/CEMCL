@@ -180,7 +180,7 @@ pub fn download_forge(mcversion: &str, forge: Forge, mirror: &str) -> TaskInfo {
     );
 
     let forge_path = format!(
-        "temp/forge-{mcversion}-{version}-installer.jar",
+        "temp-forge-{mcversion}-{version}/forge-{mcversion}-{version}-installer.jar",
         version = forge.version
     );
 
