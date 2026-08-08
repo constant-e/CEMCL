@@ -63,7 +63,9 @@ export component AddGameDialog inherits Dialog {
                     model: [@tr("None"), "Forge", "Fabric"];
                     selected => {
                         if self.current-index != 0 {
-                            root.get-mod-list(game-combo-box.current-index, game-table.current-row, self.current-index);
+                            if game-table.current-row >= 0 && game-table.current-row < game-list.length {
+                                root.get-mod-list(game-combo-box.current-index, game-table.current-row, self.current-index);
+                            }
                         } else {
                             root.mod-list = [];
                         }
