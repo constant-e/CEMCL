@@ -579,8 +579,9 @@ impl AppRuntime {
                 }
 
                 self.update_sender.send(UIUpdate::SetHomePageStatus(
-                    frontend::home::State::Downloading,
+                    frontend::home::State::Launching,
                 ))?;
+                tokio::task::yield_now().await;
 
                 let account = self.account_manager.get(acc_index);
                 let version = self.version_manager.get(ver_index);
@@ -589,6 +590,10 @@ impl AppRuntime {
                         .await?;
 
                 if dl_list.len() != 0 {
+                    self.update_sender.send(UIUpdate::SetHomePageStatus(
+                        frontend::home::State::Downloading,
+                    ))?;
+                    tokio::task::yield_now().await;
                     let tasks: Vec<downloader::task::TaskInfo> = dl_list
                         .into_iter()
                         .map(|i| {
@@ -617,6 +622,7 @@ impl AppRuntime {
                                     total as u32,
                                     total as u32,
                                 ))?;
+                                tokio::task::yield_now().await;
                                 break;
                             }
                             downloader::taskset::TaskSetStatus::Failed => {
@@ -631,6 +637,7 @@ impl AppRuntime {
                                     downloaded as u32,
                                     total as u32,
                                 ))?;
+                                tokio::task::yield_now().await;
                             }
                             downloader::taskset::TaskSetStatus::Paused(downloaded, total) => {
                                 // This case shouldn't happen now. Pause hasn't been implemented
@@ -638,11 +645,13 @@ impl AppRuntime {
                                     downloaded as u32,
                                     total as u32,
                                 ))?;
+                                tokio::task::yield_now().await;
                             }
                             downloader::taskset::TaskSetStatus::Pending(total) => {
                                 // TODO: download this game first
                                 self.update_sender
                                     .send(UIUpdate::SetHomePageProgress(0, total as u32))?;
+                                tokio::task::yield_now().await;
                             }
                         }
                         drop(status);
@@ -654,8 +663,10 @@ impl AppRuntime {
                 self.update_sender.send(UIUpdate::SetHomePageStatus(
                     frontend::home::State::Launching,
                 ))?;
+                tokio::task::yield_now().await;
                 self.update_sender
-                    .send(UIUpdate::SetHomePageProgress(1, 1))?;
+                    .send(UIUpdate::SetHomePageProgress(1, 2))?;
+                tokio::task::yield_now().await;
 
                 let (s, r) = std::sync::mpsc::channel();
                 let mut cmd = Command::new(if version.wrapper.is_empty() {
@@ -672,6 +683,9 @@ impl AppRuntime {
 
                 match r.recv().unwrap() {
                     Ok(_) => {
+                        self.update_sender
+                            .send(UIUpdate::SetHomePageProgress(2, 2))?;
+                        tokio::task::yield_now().await;
                         if self.config.close_after_launch {
                             self.update_sender.send(UIUpdate::Quit)?;
                         }

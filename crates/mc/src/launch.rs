@@ -44,6 +44,15 @@ impl From<DownloadError> for LaunchError {
     }
 }
 
+impl From<utils::DLError> for LaunchError {
+    fn from(value: utils::DLError) -> Self {
+        match value {
+            utils::DLError::IOError(err) => LaunchError::IOError(err),
+            utils::DLError::ReqwestError(err) => LaunchError::ReqwestError(err),
+        }
+    }
+}
+
 /// 从json对象单次获取参数
 fn add_arg(n: &Value) -> Result<Vec<String>, LaunchError> {
     let mut result: Vec<String> = Vec::new();
@@ -395,7 +404,7 @@ pub async fn get_launch_command(
         if !exists(&index_dir)? {
             fs::create_dir_all(&index_dir)?;
         }
-        futures::executor::block_on(download(asset_index_url.clone(), index_path, 3));
+        download(asset_index_url.clone(), index_path, 3).await?;
     }
 
     // assets

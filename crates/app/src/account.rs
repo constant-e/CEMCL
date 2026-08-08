@@ -119,8 +119,8 @@ impl AccountManager {
 
     /// return (uri, code)
     pub async fn request_login(&mut self) -> Result<(String, String), LauncherError> {
-        if self.current_session.is_some() {
-            drop(self.current_session.take().unwrap());
+        if let Some(session) = self.current_session.take() {
+            drop(session);
         }
 
         let (uri, code, session) = request_oauth().await?;
@@ -131,8 +131,8 @@ impl AccountManager {
 
     /// return Ok(false) if account isn't msa
     pub async fn request_refresh_account(&mut self, index: u32) -> Result<bool, LauncherError> {
-        if self.current_session.is_some() {
-            drop(self.current_session.take().unwrap());
+        if let Some(session) = self.current_session.take() {
+            drop(session);
         }
 
         let account = &mut self.account_list[index as usize];
