@@ -16,11 +16,11 @@ jobs:
 
     strategy:
       matrix:
-        os: [windows-latest, macos-26, ubuntu-latest]
+        os: [windows-latest, macos-latest, ubuntu-latest]
     
     steps:
     - name: Checkout
-      uses: actions/checkout@v4
+      uses: actions/checkout@v7.0.1
     - name: Setup Rust
       run: rustup update
     - name: Install dependencies
@@ -31,7 +31,7 @@ jobs:
     - name: Build release
       run: cargo build --release --verbose
     - name: Upload artifact
-      uses: actions/upload-artifact@v4.3.6
+      uses: actions/upload-artifact@v7.0.1
       with:
         name: artifact-${{ matrix.os }}
         path: |

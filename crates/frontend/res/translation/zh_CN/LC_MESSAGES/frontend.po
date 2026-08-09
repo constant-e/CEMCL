@@ -2,7 +2,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
-"POT-Creation-Date: 2026-08-07 01:15+0000\n"
+"POT-Creation-Date: 2026-08-09 04:54+0000\n"
 "PO-Revision-Date: 2026-04-10 18:06+0800\n"
 "Last-Translator:  <fmn_tzx@outlook.com>\n"
 "Language-Team: Chinese (simplified) <i18n-zh@googlegroups.com>\n"
@@ -209,8 +209,8 @@ msgstr "版本："
 
 #: pages/settings.slint:207
 msgctxt "SettingsPage"
-msgid "Github Repository: "
-msgstr "Github仓库："
+msgid "GitHub Repository: "
+msgstr "GitHub仓库："
 
 #: pages/settings.slint:208
 msgctxt "SettingsPage"
@@ -322,7 +322,7 @@ msgctxt "AddGameDialog"
 msgid "Old Beta"
 msgstr "远古版Beta"
 
-#: dialogs/game/add-game-dialog.slint:45 dialogs/game/add-game-dialog.slint:76
+#: dialogs/game/add-game-dialog.slint:45 dialogs/game/add-game-dialog.slint:78
 msgctxt "AddGameDialog"
 msgid "Version"
 msgstr "版本"
@@ -342,62 +342,62 @@ msgctxt "AddGameDialog"
 msgid "None"
 msgstr "无"
 
-#: dialogs/game/add-game-dialog.slint:77
+#: dialogs/game/add-game-dialog.slint:79
 msgctxt "AddGameDialog"
 msgid "Modified"
 msgstr "修改日期"
 
-#: dialogs/game/add-game-dialog.slint:84
+#: dialogs/game/add-game-dialog.slint:86
 msgctxt "AddGameDialog"
 msgid "Customize"
 msgstr "自定义"
 
-#: dialogs/game/add-game-dialog.slint:88
+#: dialogs/game/add-game-dialog.slint:90
 msgctxt "AddGameDialog"
 msgid "Window height"
 msgstr "窗口高度"
 
-#: dialogs/game/add-game-dialog.slint:95
+#: dialogs/game/add-game-dialog.slint:97
 msgctxt "AddGameDialog"
 msgid "Window width"
 msgstr "窗口宽度"
 
-#: dialogs/game/add-game-dialog.slint:102
+#: dialogs/game/add-game-dialog.slint:104
 msgctxt "AddGameDialog"
 msgid "Description"
 msgstr "备注"
 
-#: dialogs/game/add-game-dialog.slint:109
+#: dialogs/game/add-game-dialog.slint:111
 msgctxt "AddGameDialog"
 msgid "Game args"
 msgstr "Minecraft参数"
 
-#: dialogs/game/add-game-dialog.slint:116
+#: dialogs/game/add-game-dialog.slint:118
 msgctxt "AddGameDialog"
 msgid "Java path"
 msgstr "Java路径"
 
-#: dialogs/game/add-game-dialog.slint:123
+#: dialogs/game/add-game-dialog.slint:125
 msgctxt "AddGameDialog"
 msgid "JVM args"
 msgstr "JVM参数"
 
-#: dialogs/game/add-game-dialog.slint:130
+#: dialogs/game/add-game-dialog.slint:132
 msgctxt "AddGameDialog"
 msgid "Wrapper"
 msgstr "封装器"
 
-#: dialogs/game/add-game-dialog.slint:137
+#: dialogs/game/add-game-dialog.slint:139
 msgctxt "AddGameDialog"
 msgid "Minimum memory"
 msgstr "最小分配内存"
 
-#: dialogs/game/add-game-dialog.slint:144
+#: dialogs/game/add-game-dialog.slint:146
 msgctxt "AddGameDialog"
 msgid "Maximum memory"
 msgstr "最大分配内存"
 
-#: dialogs/game/add-game-dialog.slint:153
+#: dialogs/game/add-game-dialog.slint:155
 msgctxt "AddGameDialog"
 msgid "Separated"
 msgstr "版本隔离"
@@ -613,127 +613,3 @@ msgstr "Java"
 msgctxt "AppWindow"
 msgid "Settings"
 msgstr "设置"
-
-#~ msgctxt "AddAccDialog"
-#~ msgid "Online Account"
-#~ msgstr "在线账号"
-
-#~ msgctxt "AddAccDialog"
-#~ msgid "Please wait ..."
-#~ msgstr "请稍候 ..."
-
-#~ msgctxt "AddAccDialog"
-#~ msgid "Account Type"
-#~ msgstr "账号类型"
-
-#~ msgctxt "AddAccDialog"
-#~ msgid "User Name"
-#~ msgstr "用户名"
-
-#~ msgctxt "AddGameDialog"
-#~ msgid "Old"
-#~ msgstr "远古版"
-
-#~ msgctxt "AddGameDialog"
-#~ msgid "Java Arguments"
-#~ msgstr "Java参数"
-
-#~ msgctxt "AddGameDialog"
-#~ msgid "Minecraft Arguments"
-#~ msgstr "Minecraft参数"
-
-#~ msgctxt "AddGameDialog"
-#~ msgid "Enable Separated Version"
-#~ msgstr "启用版本隔离"
-
-#~ msgctxt "WarnDialog"
-#~ msgid "Warn"
-#~ msgstr "警告"
-
-#~ msgctxt "ErrorDialog"
-#~ msgid "Error"
-#~ msgstr "错误"
-
-#~ msgctxt "EditAccDialog"
-#~ msgid "Account "
-#~ msgstr "账号"
-
-#~ msgctxt "EditAccDialog"
-#~ msgid "Account Type"
-#~ msgstr "账号类型"
-
-#~ msgctxt "EditAccDialog"
-#~ msgid "Token"
-#~ msgstr "Token"
-
-#~ msgctxt "EditAccDialog"
-#~ msgid "User Name"
-#~ msgstr "用户名"
-
-#~ msgctxt "EditAccDialog"
-#~ msgid "UUID"
-#~ msgstr "UUID"
-
-#~ msgctxt "EditGameDialog"
-#~ msgid "Java Arguments"
-#~ msgstr "Java参数"
-
-#~ msgctxt "EditGameDialog"
-#~ msgid "Minecraft Arguments"
-#~ msgstr "Minecraft参数"
-
-#~ msgctxt "EditGameDialog"
-#~ msgid "Enable Separated Version"
-#~ msgstr "启用版本隔离"
-
-#~ msgctxt "Messages"
-#~ msgid "Failed to download."
-#~ msgstr "下载失败"
-
-#~ msgctxt "Messages"
-#~ msgid "Failed to load game list. Reason: "
-#~ msgstr "加载游戏列表失败。原因："
-
-#~ msgctxt "Messages"
-#~ msgid "Version already exists."
-#~ msgstr "此版本已存在"
-
-#~ msgctxt "Messages"
-#~ msgid "Warning"
-#~ msgstr "警告"
-
-#~ msgctxt "AccountsPage"
-#~ msgid "Type"
-#~ msgstr "类型"
-
-#~ msgctxt "DownloaderPage"
-#~ msgid "In progress"
-#~ msgstr "进行中"
-
-#~ msgctxt "DownloaderPage"
-#~ msgid "ID"
-#~ msgstr "ID"
-
-#~ msgctxt "DownloaderPage"
-#~ msgid "Name"
-#~ msgstr "名称"
-
-#~ msgctxt "DownloaderPage"
-#~ msgid "Progress"
-#~ msgstr "进度"
-
-#~ msgctxt "DownloaderPage"
-#~ msgid "Speed"
-#~ msgstr "速度"
-
-#~ msgctxt "DownloaderPage"
-#~ msgid "ETA"
-#~ msgstr "剩余时间"
-
-#~ msgctxt "DownloaderPage"
-#~ msgid "Finished"
-#~ msgstr "已完成"
-
-#~ msgctxt "DownloaderPage"
-#~ msgid "State"
-#~ msgstr "状态"
