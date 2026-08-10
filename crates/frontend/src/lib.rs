@@ -4,9 +4,10 @@ pub mod game;
 pub mod home;
 mod msg_box;
 mod settings;
-mod ui;
+pub mod ui;
 
 pub use app_window::AppWindow;
+pub use app_window::JavaInfo;
 pub use app_window::UICommand;
 pub use app_window::UIUpdate;
 pub use msg_box::MsgID;

@@ -16,6 +16,7 @@ export component JavaPage inherits VerticalBox {
             { title: @tr("Version") },
             { title: @tr("Path") }
         ];
+        current-row-changed(current-row) => { root.current-index-changed(current-row) }
     }
 
     HorizontalBox {

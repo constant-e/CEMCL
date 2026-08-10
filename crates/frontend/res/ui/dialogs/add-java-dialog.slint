@@ -1,4 +1,92 @@
+import { StandardButton, LineEdit, Button, GridBox } from "std-widgets.slint";
+import { Title, SettingsGroup, MyText, VerticalSpacing, SubTitle } from "../components/components.slint";
+
+export enum JavaCheckResult {
+    None,
+    Detected,
+    PathIsEmpty,
+    JavaExecutableNotFound,
+    ReleaseFileInvalid,
+    IOError,
+}
+
 export component AddJavaDialog inherits Dialog {
     title: @tr("Add a Java Installation");
-    
+    preferred-height: 200px;
+    preferred-width: 450px;
+
+    in-out property <string> java-path;
+    in-out property <JavaCheckResult> check-result;
+    in-out property <string> check-version;
+
+    callback add-java(string);
+    callback check-java(string);
+
+    GridBox {
+        padding: 0px;
+
+        SubTitle {
+            text: @tr("Add a Java Installation");
+            colspan: 3;
+        }
+
+        Row {
+            MyText {
+                text: @tr("Java Home");
+            }
+
+            path-input := LineEdit {
+                text <=> java-path;
+            }
+
+            check-btn := Button {
+                text: @tr("Detect");
+                clicked => {
+                    root.check-result = JavaCheckResult.None;
+                    root.check-java(root.java-path);
+                }
+            }
+        }
+
+        Row {
+            result-text := Text {
+                colspan: 3;
+            }
+
+            states [
+                None when root.check-result == JavaCheckResult.None: {
+                    result-text.text: "";
+                }
+                Detected when root.check-result == JavaCheckResult.Detected: {
+                    result-text.text: @tr("Java {0} detected", root.check-version);
+                }
+                PathIsEmpty when root.check-result == JavaCheckResult.PathIsEmpty: {
+                    result-text.text: @tr("Path is empty");
+                }
+                JavaExecutableNotFound when root.check-result == JavaCheckResult.JavaExecutableNotFound: {
+                    result-text.text: @tr("Java executable not found in this path");
+                }
+                ReleaseFileInvalid when root.check-result == JavaCheckResult.ReleaseFileInvalid: {
+                    result-text.text: @tr("Release file is invalid");
+                }
+                IOError when root.check-result == JavaCheckResult.IOError: {
+                    result-text.text: @tr("Failed to read Java information");
+                }
+            ]
+        }
+
+        Row {
+            VerticalSpacing { colspan: 3; }
+        }
+    }
+
+    StandardButton {
+        kind: ok;
+        clicked => {
+            root.add-java(root.java-path);
+        }
+    }
+    StandardButton {
+        kind: cancel;
+    }
 }

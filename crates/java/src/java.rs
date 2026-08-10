@@ -5,8 +5,10 @@ use std::process::Command;
 
 use super::java_version::JavaVersion;
 
+#[derive(Debug)]
 pub enum JavaInstallationError {
     JavaExecutableNotFound,
+    PathIsEmpty,
     ReleaseFileInvalid,
     IOError(std::io::Error),
 }
@@ -25,10 +27,21 @@ pub struct JavaInstallation {
 
 impl JavaInstallation {
     pub fn new(path: String) -> Result<Self, JavaInstallationError> {
+        if path.is_empty() {
+            return Err(JavaInstallationError::PathIsEmpty);
+        }
         Ok(JavaInstallation {
             path: path.clone(),
             version: Self::i_get_version(&path)?,
         })
+    }
+
+    pub fn get_path(&self) -> &str {
+        &self.path
+    }
+
+    pub fn get_version(&self) -> &JavaVersion {
+        &self.version
     }
 
     pub fn get_java_path(&self) -> Result<String, JavaInstallationError> {

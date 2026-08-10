@@ -33,6 +33,8 @@ pub enum LauncherError {
     GameConfigError,
     /// Operation interrupted
     Interrupted,
+    /// Java installation error
+    JavaInstallationError,
     /// launcher config.json invalid
     LauncherConfigError,
     /// Login data invalid
@@ -191,6 +193,7 @@ impl std::fmt::Display for LauncherError {
             LauncherError::FileNotFound => write!(f, "File not found"),
             LauncherError::GameConfigError => write!(f, "Game config error"),
             LauncherError::Interrupted => write!(f, "Operation interrupted"),
+            LauncherError::JavaInstallationError => write!(f, "Java installation error"),
             LauncherError::LauncherConfigError => write!(f, "Launcher config error"),
             LauncherError::LoginInvalid(s) => write!(f, "Login data invalid. Failed to find {s}."),
             LauncherError::MutexError(s) => write!(f, "Mutex Lock Error. {s}"),

@@ -2,6 +2,7 @@
 
 mod account;
 mod errors;
+mod java_manager;
 mod runtime;
 mod version;
 

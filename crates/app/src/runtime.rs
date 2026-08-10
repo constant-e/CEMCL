@@ -16,6 +16,7 @@ use tokio::time::{Duration, sleep};
 
 use crate::{
     account::{frontend_account, to_account_type},
+    java_manager::JavaManager,
     version::{
         ConfigMC, VersionManager, frontend_fabric, frontend_forge, frontend_mc_config,
         frontend_mc_dl, frontend_mc_info, frontend_mc_type,
@@ -212,6 +213,7 @@ pub struct AppRuntime {
     config: ConfigGeneral,
     cmd_receiver: Option<tokio::sync::mpsc::UnboundedReceiver<UICommand>>,
     downloader: DownloadManager,
+    java_manager: JavaManager,
     update_sender: tokio::sync::mpsc::UnboundedSender<UIUpdate>,
     version_manager: VersionManager,
 }
@@ -224,6 +226,7 @@ impl AppRuntime {
         let account_manager = AccountManager::new()?;
         let (config_dl, config_general, config_mc) = AppRuntime::i_load_config()?;
         let downloader = DownloadManager::new(config_dl.into());
+        let java_manager = JavaManager::new()?;
         let version_manager = VersionManager::new(config_mc.clone())?;
 
         Ok(Self {
@@ -232,6 +235,7 @@ impl AppRuntime {
             config: config_general,
             cmd_receiver: Some(cmd_receiver),
             downloader,
+            java_manager,
             update_sender,
             version_manager,
         })
@@ -241,6 +245,7 @@ impl AppRuntime {
         self.refresh_ui_info()?;
         self.refresh_ui_acc_list()?;
         self.refresh_ui_config()?;
+        self.refresh_ui_java_list()?;
         self.refresh_ui_version_list()?;
         Ok(())
     }
@@ -371,6 +376,30 @@ impl AppRuntime {
                 self.refresh_ui_version_list()?;
                 self.update_sender.send(UIUpdate::QuitAddGameDialog)?;
             }
+            UICommand::AddJava(java_path) => {
+                self.java_manager.add(java_path)?;
+                self.refresh_ui_java_list()?;
+                self.update_sender.send(UIUpdate::QuitAddJavaDialog)?;
+            }
+            UICommand::CheckJava(java_path) => {
+                use java::java::JavaInstallationError;
+                let (result, version) = match java::java::JavaInstallation::new(java_path) {
+                    Ok(installation) => {
+                        (frontend::ui::JavaCheckResult::Detected, installation.get_version().to_string())
+                    }
+                    Err(e) => {
+                        let result = match e {
+                            JavaInstallationError::PathIsEmpty => frontend::ui::JavaCheckResult::PathIsEmpty,
+                            JavaInstallationError::JavaExecutableNotFound => frontend::ui::JavaCheckResult::JavaExecutableNotFound,
+                            JavaInstallationError::ReleaseFileInvalid => frontend::ui::JavaCheckResult::ReleaseFileInvalid,
+                            JavaInstallationError::IOError(_) => frontend::ui::JavaCheckResult::IOError,
+                        };
+                        (result, String::new())
+                    }
+                };
+                self.update_sender
+                    .send(UIUpdate::SetJavaCheckResult(result, version))?;
+            }
             UICommand::DelAccount(index) => {
                 self.account_manager.del(index)?;
                 self.refresh_ui_acc_list()?;
@@ -380,7 +409,10 @@ impl AppRuntime {
                 self.refresh_ui_version_list()?;
                 self.update_sender.send(UIUpdate::QuitEditGameDialog)?;
             }
-            UICommand::DelJava(index) => {}
+            UICommand::DelJava(index) => {
+                self.java_manager.del(index)?;
+                self.refresh_ui_java_list()?;
+            }
             UICommand::EditAccount(index, account) => {
                 let mut i_account = self.account_manager.get(index).clone();
                 i_account.account_type = to_account_type(account.account_type);
@@ -439,6 +471,8 @@ impl AppRuntime {
                         xms: config.xms.clone(),
                         xmx: config.xmx.clone(),
                     }))?;
+                // Also send the Java list when the add game dialog opens
+                self.refresh_ui_java_list()?;
             }
             UICommand::GetAddGameList(filter) => {
                 let mut list = if let Some(list) = &self.cache.dl_mc_list {
@@ -527,11 +561,16 @@ impl AppRuntime {
                     .send(UIUpdate::SetEditGameConfig(frontend_mc_config(
                         self.version_manager.get(index).clone(),
                     )))?;
+                // Also send the Java list when the edit game dialog opens
+                self.refresh_ui_java_list()?;
             }
             UICommand::GetEditGameVersion(index) => {
                 self.update_sender.send(UIUpdate::SetEditGameVersion(
                     self.version_manager.get(index).version.clone(),
                 ))?;
+            }
+            UICommand::GetJavaList => {
+                self.refresh_ui_java_list()?;
             }
             UICommand::SetConfig(config) => {
                 self.config = config.general.into();
@@ -776,6 +815,20 @@ impl AppRuntime {
         ))?;
         self.update_sender
             .send(UIUpdate::SetGameIndex(version_index))?;
+        Ok(())
+    }
+
+    fn refresh_ui_java_list(&self) -> Result<(), LauncherError> {
+        let java_list: Vec<frontend::JavaInfo> = self
+            .java_manager
+            .get_java_list()
+            .iter()
+            .map(|j| frontend::JavaInfo {
+                version: j.get_version().to_string(),
+                path: j.get_path().to_string(),
+            })
+            .collect();
+        self.update_sender.send(UIUpdate::SetJavaList(java_list))?;
         Ok(())
     }
 

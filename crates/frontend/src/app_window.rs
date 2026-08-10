@@ -1,11 +1,14 @@
 //! AppWindow UI封装
 use log::error;
 use slint::ComponentHandle;
+use slint::{ModelRc, StandardListViewItem, VecModel};
+use std::rc;
 use std::sync::{Arc, Mutex};
+use tokio::sync::mpsc::UnboundedSender;
 
 use crate::game::{MCInfo, ui_combo_box_list, ui_game_dl_list, ui_game_list};
 use crate::settings::Config;
-use crate::ui::{self, AddGameDialog, EditGameDialog, LoginDialog};
+use crate::ui::{self, AddGameDialog, AddJavaDialog, EditGameDialog, LoginDialog};
 use crate::{
     account::{self, Account},
     game::{self, Fabric, Forge, MCConfig, MCDL, MCType, ModType},
@@ -17,6 +20,8 @@ pub enum UICommand {
     /// User name and UUID
     AddOfflineAccount(String, String),
     AddGame(Option<MCType>, u32, Option<ModType>, u32, MCConfig),
+    AddJava(String),
+    CheckJava(String),
     DelAccount(u32),
     DelGame(u32),
     DelJava(u32),
@@ -29,6 +34,7 @@ pub enum UICommand {
     GetAddModListForge(Option<MCType>, u32),
     GetEditGameConfig(u32),
     GetEditGameVersion(u32),
+    GetJavaList,
     GetOfflineAccount,
     RequestLogin,
     SetConfig(Config),
@@ -55,12 +61,22 @@ pub enum UIUpdate {
     SetHomePageStatus(home::State),
     SetGameIndex(u32),
     SetGameList(Vec<MCInfo>),
+    SetJavaList(Vec<JavaInfo>),
+    SetJavaCheckResult(ui::JavaCheckResult, String),
     SetOfflineAccount(Account),
     SetVersion(String),
     Quit,
     QuitAddGameDialog,
+    QuitAddJavaDialog,
     QuitEditGameDialog,
     QuitLoginDialog,
+}
+
+/// Java 安装信息，用于前端展示
+#[derive(Clone)]
+pub struct JavaInfo {
+    pub version: String,
+    pub path: String,
 }
 
 #[derive(Debug)]
@@ -109,6 +125,7 @@ pub struct AppWindow {
     cmd_receiver: Option<tokio::sync::mpsc::UnboundedReceiver<UICommand>>,
     // dialogs
     add_game_dialog: Arc<Mutex<Option<slint::Weak<AddGameDialog>>>>,
+    add_java_dialog: Arc<Mutex<Option<slint::Weak<AddJavaDialog>>>>,
     edit_game_dialog: Arc<Mutex<Option<slint::Weak<EditGameDialog>>>>,
     login_dialog: Arc<Mutex<Option<slint::Weak<LoginDialog>>>>,
 }
@@ -119,6 +136,7 @@ impl AppWindow {
         let (update_tx, mut update_rx) = tokio::sync::mpsc::unbounded_channel();
         let ui = ui::AppWindow::new()?;
         let add_game_dialog = Arc::new(Mutex::new(None));
+        let add_java_dialog = Arc::new(Mutex::new(None));
         let edit_game_dialog = Arc::new(Mutex::new(None));
         let login_dialog = Arc::new(Mutex::new(None));
 
@@ -182,7 +200,23 @@ impl AppWindow {
         });
 
         let tx = cmd_tx.clone();
-        ui.on_open_add_java_dialog(move || {});
+        let dialog = add_java_dialog.clone();
+        ui.on_open_add_java_dialog(move || match dialog.lock() {
+            Ok(mut dialog) => {
+                let tx = tx.clone();
+                match add_java_dialog_fn(tx) {
+                    Ok(w) => {
+                        *dialog = Some(w);
+                    }
+                    Err(e) => {
+                        error!("{e}");
+                    }
+                }
+            }
+            Err(e) => {
+                error!("{e}");
+            }
+        });
 
         let tx = cmd_tx.clone();
         let dialog = edit_game_dialog.clone();
@@ -204,7 +238,9 @@ impl AppWindow {
         });
 
         let tx = cmd_tx.clone();
-        ui.on_open_edit_java_dialog(move |index| {});
+        ui.on_open_edit_java_dialog(move |index| {
+            // TODO: implement edit java dialog
+        });
 
         let tx = cmd_tx.clone();
         let dialog = login_dialog.clone();
@@ -255,6 +291,7 @@ impl AppWindow {
 
         let ui_weak_clone = ui_weak.clone();
         let add_game_dialog_clone = add_game_dialog.clone();
+        let add_java_dialog_clone = add_java_dialog.clone();
         let edit_game_dialog_clone = edit_game_dialog.clone();
         let login_dialog_clone = login_dialog.clone();
         tokio::spawn(async move {
@@ -263,6 +300,7 @@ impl AppWindow {
                     update,
                     ui_weak_clone.clone(),
                     add_game_dialog_clone.clone(),
+                    add_java_dialog_clone.clone(),
                     edit_game_dialog_clone.clone(),
                     login_dialog_clone.clone(),
                 )
@@ -275,6 +313,7 @@ impl AppWindow {
             update_sender: update_tx,
             cmd_receiver: Some(cmd_rx),
             add_game_dialog,
+            add_java_dialog,
             edit_game_dialog,
             login_dialog,
         })
@@ -284,6 +323,7 @@ impl AppWindow {
         update: UIUpdate,
         ui_weak: slint::Weak<ui::AppWindow>,
         add_game_dialog: Arc<Mutex<Option<slint::Weak<AddGameDialog>>>>,
+        add_java_dialog: Arc<Mutex<Option<slint::Weak<AddJavaDialog>>>>,
         edit_game_dialog: Arc<Mutex<Option<slint::Weak<EditGameDialog>>>>,
         login_dialog: Arc<Mutex<Option<slint::Weak<LoginDialog>>>>,
     ) {
@@ -427,6 +467,26 @@ impl AppWindow {
                     error!("{e}")
                 }
             }
+            UIUpdate::SetJavaList(list) => {
+                if let Err(e) = ui_weak.upgrade_in_event_loop(move |ui| {
+                    ui.set_java_model(ui_java_list(&list));
+                }) {
+                    error!("{e}")
+                }
+            }
+            UIUpdate::SetJavaCheckResult(result, version) => match get(add_java_dialog) {
+                Ok(w) => {
+                    if let Err(e) = w.upgrade_in_event_loop(move |dialog| {
+                        dialog.set_check_result(result);
+                        dialog.set_check_version(version.into());
+                    }) {
+                        error!("{e}");
+                    }
+                }
+                Err(e) => {
+                    error!("{e}");
+                }
+            },
             UIUpdate::SetOfflineAccount(account) => match get(login_dialog) {
                 Ok(w) => {
                     if let Err(e) = w.upgrade_in_event_loop(move |dialog| {
@@ -455,6 +515,18 @@ impl AppWindow {
                 }
             }
             UIUpdate::QuitAddGameDialog => match get(add_game_dialog) {
+                Ok(w) => {
+                    if let Err(e) = w.upgrade_in_event_loop(move |dialog| {
+                        dialog.hide().unwrap();
+                    }) {
+                        error!("{e}");
+                    }
+                }
+                Err(e) => {
+                    error!("{e}");
+                }
+            },
+            UIUpdate::QuitAddJavaDialog => match get(add_java_dialog) {
                 Ok(w) => {
                     if let Err(e) = w.upgrade_in_event_loop(move |dialog| {
                         dialog.hide().unwrap();
@@ -504,4 +576,43 @@ impl AppWindow {
     pub fn run(&self) -> Result<(), slint::PlatformError> {
         self.ui.run()
     }
+}
+
+/// Create the Add Java dialog and wire up callbacks
+fn add_java_dialog_fn(
+    tx: UnboundedSender<UICommand>,
+) -> Result<slint::Weak<AddJavaDialog>, slint::PlatformError> {
+    let ui = AddJavaDialog::new()?;
+    let ui_weak = ui.as_weak();
+
+    let tx_clone = tx.clone();
+    ui.on_add_java(move |path| {
+        if let Err(e) = tx_clone.send(UICommand::AddJava(path.into())) {
+            error!("{e}");
+        }
+    });
+
+    let tx_clone = tx.clone();
+    ui.on_check_java(move |path| {
+        if let Err(e) = tx_clone.send(UICommand::CheckJava(path.into())) {
+            error!("{e}");
+        }
+    });
+
+    ui.show()?;
+    Ok(ui_weak)
+}
+
+/// Convert a list of JavaInfo to a Slint model for the Java table
+pub fn ui_java_list(list: &Vec<JavaInfo>) -> ModelRc<ModelRc<StandardListViewItem>> {
+    let mut ui_java_list: Vec<ModelRc<StandardListViewItem>> = Vec::new();
+    for java in list {
+        let version = StandardListViewItem::from(java.version.as_str());
+        let path = StandardListViewItem::from(java.path.as_str());
+        let model: rc::Rc<VecModel<StandardListViewItem>> =
+            rc::Rc::new(VecModel::from(vec![version.into(), path.into()]));
+        let row: ModelRc<StandardListViewItem> = ModelRc::from(model);
+        ui_java_list.push(row);
+    }
+    ModelRc::from(rc::Rc::new(VecModel::from(ui_java_list)))
 }

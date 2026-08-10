@@ -11,8 +11,9 @@ path = "src/main.rs"
 
 [dependencies]
 downloader = { path = "../downloader" }
-mc = { path = "../mc" }
 frontend = { path = "../frontend" }
+java = { path = "../java" }
+mc = { path = "../mc" }
 utils = { path = "../utils" }
 
 env_logger = "0.11.11"

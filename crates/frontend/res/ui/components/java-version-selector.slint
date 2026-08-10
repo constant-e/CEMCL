@@ -1,0 +1,12 @@
+import { ComboBox } from "std-widgets.slint";
+
+export component JavaVersionSelector inherits ComboBox {
+    // This component wraps ComboBox to provide a Java version selector.
+    // The model is set from Rust code with the list of Java versions.
+    // Usage: set the model property with a list of Java version strings.
+
+    init => {
+        // Default empty model, will be populated by Rust code
+        self.model = [];
+    }
+}
