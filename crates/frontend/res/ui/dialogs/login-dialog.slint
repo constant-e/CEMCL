@@ -1,5 +1,5 @@
 import { Button, StandardButton, StyleMetrics , VerticalBox, TabWidget, HorizontalBox, LineEdit } from "std-widgets.slint";
-import { RoundedBackground, SubTitle, VerticalSpacing, HorizontalSpacing, SettingsGroup, SecondaryText, SectionTitle, MyText } from "../components/components.slint";
+import { RoundedBackground, SubTitle, VerticalSpacing, HorizontalSpacing, SettingsGroup, SectionTitle, MyText } from "../components/components.slint";
 
 export component LoginDialog inherits Dialog {
     title: @tr("Add a Account");
@@ -52,7 +52,7 @@ export component LoginDialog inherits Dialog {
                         text: @tr("Microsoft Account");
                     }
 
-                    SecondaryText {
+                    Text {
                         vertical-alignment: center;
                         text: @tr("Your user code will be automatically copied.") + "\n" + @tr("Press OK after you finish logging in.");
                     }

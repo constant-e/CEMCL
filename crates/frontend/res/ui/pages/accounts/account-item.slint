@@ -1,4 +1,4 @@
-import { SubTitle, SecondaryText } from "../../components/components.slint";
+import { SubTitle } from "../../components/components.slint";
 import { AccountInner, AccountType } from "account-inner.slint";
 import { StyleMetrics } from "std-widgets.slint";
 
@@ -34,7 +34,7 @@ export component Account inherits HorizontalLayout {
             vertical-alignment: bottom;
             text: account.user-name;
         }
-        type := SecondaryText {
+        type := Text {
             horizontal-alignment: left;
             vertical-alignment: top;
             text: to-string(account.account-type);

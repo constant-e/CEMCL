@@ -1,4 +1,4 @@
-import { Palette } from "std-widgets.slint";
+import { Palette, StyleMetrics } from "std-widgets.slint";
 
 export component SideBarItem inherits Rectangle {
     in-out property <bool> selected;
@@ -6,7 +6,7 @@ export component SideBarItem inherits Rectangle {
 
     callback clicked <=> area.clicked;
 
-    min-height: label.preferred-height + 8px;
+    min-height: label.preferred-height + StyleMetrics.layout-spacing;
 
     states [
         pressed when area.pressed : {
