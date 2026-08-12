@@ -49,7 +49,8 @@ pub struct MCConfig {
     pub description: String,
     pub game_args: Vec<String>,
     pub height: u32,
-    pub java_path: String,
+    /// java 列表中的索引，-1 表示未选择
+    pub java_index: i32,
     pub jvm_args: Vec<String>,
     pub separated: bool,
     pub width: u32,
@@ -94,7 +95,7 @@ impl From<ui::MCConfig> for MCConfig {
             description: value.description.into(),
             game_args,
             height: value.height as u32,
-            java_path: value.java_path.into(),
+            java_index: value.java_index,
             jvm_args,
             separated: value.separated,
             width: value.width as u32,
@@ -125,7 +126,7 @@ impl From<MCConfig> for ui::MCConfig {
             description: value.description.into(),
             game_args: game_args.into(),
             height: value.height as i32,
-            java_path: value.java_path.into(),
+            java_index: value.java_index,
             jvm_args: jvm_args.into(),
             separated: value.separated,
             width: value.width as i32,
@@ -275,6 +276,20 @@ pub fn add_game_dialog(
                 config.into(),
             ))
             .unwrap();
+    });
+
+    let tx_clone = tx.clone();
+    ui.on_game_selected(move |mc_type, mc_index| {
+        let mc_filter = match mc_type {
+            1 => Some(MCType::Release),
+            2 => Some(MCType::Snapshot),
+            3 => Some(MCType::OldAlpha),
+            4 => Some(MCType::OldBeta),
+            _ => None,
+        };
+        if let Err(e) = tx_clone.send(UICommand::GetAddGameJavaList(mc_filter, mc_index as u32)) {
+            error!("{e}");
+        }
     });
 
     let ui_weak_clone = ui_weak.clone();

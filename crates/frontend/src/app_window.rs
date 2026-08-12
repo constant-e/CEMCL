@@ -1,12 +1,11 @@
 //! AppWindow UI封装
 use log::error;
 use slint::ComponentHandle;
-use slint::{ModelRc, StandardListViewItem, VecModel};
-use std::rc;
 use std::sync::{Arc, Mutex};
 use tokio::sync::mpsc::UnboundedSender;
 
 use crate::game::{MCInfo, ui_combo_box_list, ui_game_dl_list, ui_game_list};
+use crate::java::{self, JavaInfo};
 use crate::settings::Config;
 use crate::ui::{self, AddGameDialog, AddJavaDialog, EditGameDialog, LoginDialog};
 use crate::{
@@ -29,6 +28,7 @@ pub enum UICommand {
     EditGame(u32, MCConfig),
     FinishLogin,
     GetAddGameDefault,
+    GetAddGameJavaList(Option<MCType>, u32),
     GetAddGameList(Option<MCType>),
     GetAddModListFabric(Option<MCType>, u32),
     GetAddModListForge(Option<MCType>, u32),
@@ -38,6 +38,7 @@ pub enum UICommand {
     GetOfflineAccount,
     RequestLogin,
     SetConfig(Config),
+    SetDefaultJava(i32),
     Start(u32, u32),
     SwitchAccount(u32),
     SwitchGame(u32),
@@ -50,18 +51,22 @@ pub enum UIUpdate {
     SetAccountIndex(u32),
     SetAccountList(Vec<Account>),
     SetAddGameDefault(MCConfig),
+    SetAddGameJavaList(Vec<String>),
     SetAddGameList(Vec<MCDL>),
     SetAddModListFabric(Vec<Fabric>),
     SetAddModListForge(Vec<Forge>),
     SetAuthors(String),
     SetConfig(Config),
     SetEditGameConfig(MCConfig),
+    SetEditGameJavaList(Vec<String>),
     SetEditGameVersion(String),
     SetHomePageProgress(u32, u32),
     SetHomePageStatus(home::State),
     SetGameIndex(u32),
     SetGameList(Vec<MCInfo>),
+    SetJavaIndex(i32),
     SetJavaList(Vec<JavaInfo>),
+    SetJavaModel(Vec<String>),
     SetJavaCheckResult(ui::JavaCheckResult, String),
     SetOfflineAccount(Account),
     SetVersion(String),
@@ -70,13 +75,6 @@ pub enum UIUpdate {
     QuitAddJavaDialog,
     QuitEditGameDialog,
     QuitLoginDialog,
-}
-
-/// Java 安装信息，用于前端展示
-#[derive(Clone)]
-pub struct JavaInfo {
-    pub version: String,
-    pub path: String,
 }
 
 #[derive(Debug)]
@@ -204,7 +202,7 @@ impl AppWindow {
         ui.on_open_add_java_dialog(move || match dialog.lock() {
             Ok(mut dialog) => {
                 let tx = tx.clone();
-                match add_java_dialog_fn(tx) {
+                match java::add_java_dialog(tx) {
                     Ok(w) => {
                         *dialog = Some(w);
                     }
@@ -264,6 +262,13 @@ impl AppWindow {
         let tx = cmd_tx.clone();
         ui.on_set_config(move |config| {
             if let Err(e) = tx.send(UICommand::SetConfig(config.into())) {
+                error!("{e}");
+            }
+        });
+
+        let tx = cmd_tx.clone();
+        ui.on_java_selected(move |index| {
+            if let Err(e) = tx.send(UICommand::SetDefaultJava(index)) {
                 error!("{e}");
             }
         });
@@ -364,6 +369,19 @@ impl AppWindow {
                     error!("{e}");
                 }
             },
+            UIUpdate::SetAddGameJavaList(list) => match get(add_game_dialog) {
+                Ok(w) => {
+                    if let Err(e) = w.upgrade_in_event_loop(move |dialog| {
+                        let items: Vec<slint::SharedString> = list.iter().map(|s| s.as_str().into()).collect();
+                        dialog.set_java_combo_model(slint::ModelRc::from(std::rc::Rc::new(slint::VecModel::from(items))));
+                    }) {
+                        error!("{e}");
+                    }
+                }
+                Err(e) => {
+                    error!("{e}");
+                }
+            },
             UIUpdate::SetAddGameList(list) => match get(add_game_dialog) {
                 Ok(w) => {
                     if let Err(e) = w.upgrade_in_event_loop(move |dialog| {
@@ -426,6 +444,19 @@ impl AppWindow {
                     error!("{e}");
                 }
             },
+            UIUpdate::SetEditGameJavaList(list) => match get(edit_game_dialog) {
+                Ok(w) => {
+                    if let Err(e) = w.upgrade_in_event_loop(move |dialog| {
+                        let items: Vec<slint::SharedString> = list.iter().map(|s| s.as_str().into()).collect();
+                        dialog.set_java_combo_model(slint::ModelRc::from(std::rc::Rc::new(slint::VecModel::from(items))));
+                    }) {
+                        error!("{e}");
+                    }
+                }
+                Err(e) => {
+                    error!("{e}");
+                }
+            },
             UIUpdate::SetEditGameVersion(version) => match get(edit_game_dialog) {
                 Ok(w) => {
                     if let Err(e) = w.upgrade_in_event_loop(move |dialog| {
@@ -469,7 +500,22 @@ impl AppWindow {
             }
             UIUpdate::SetJavaList(list) => {
                 if let Err(e) = ui_weak.upgrade_in_event_loop(move |ui| {
-                    ui.set_java_model(ui_java_list(&list));
+                    ui.set_java_model(java::ui_java_list(&list));
+                }) {
+                    error!("{e}")
+                }
+            }
+            UIUpdate::SetJavaModel(list) => {
+                if let Err(e) = ui_weak.upgrade_in_event_loop(move |ui| {
+                    let items: Vec<slint::SharedString> = list.iter().map(|s| s.as_str().into()).collect();
+                    ui.set_java_combo_model(slint::ModelRc::from(std::rc::Rc::new(slint::VecModel::from(items))));
+                }) {
+                    error!("{e}")
+                }
+            }
+            UIUpdate::SetJavaIndex(index) => {
+                if let Err(e) = ui_weak.upgrade_in_event_loop(move |ui| {
+                    ui.set_java_index(index);
                 }) {
                     error!("{e}")
                 }
@@ -576,43 +622,4 @@ impl AppWindow {
     pub fn run(&self) -> Result<(), slint::PlatformError> {
         self.ui.run()
     }
-}
-
-/// Create the Add Java dialog and wire up callbacks
-fn add_java_dialog_fn(
-    tx: UnboundedSender<UICommand>,
-) -> Result<slint::Weak<AddJavaDialog>, slint::PlatformError> {
-    let ui = AddJavaDialog::new()?;
-    let ui_weak = ui.as_weak();
-
-    let tx_clone = tx.clone();
-    ui.on_add_java(move |path| {
-        if let Err(e) = tx_clone.send(UICommand::AddJava(path.into())) {
-            error!("{e}");
-        }
-    });
-
-    let tx_clone = tx.clone();
-    ui.on_check_java(move |path| {
-        if let Err(e) = tx_clone.send(UICommand::CheckJava(path.into())) {
-            error!("{e}");
-        }
-    });
-
-    ui.show()?;
-    Ok(ui_weak)
-}
-
-/// Convert a list of JavaInfo to a Slint model for the Java table
-pub fn ui_java_list(list: &Vec<JavaInfo>) -> ModelRc<ModelRc<StandardListViewItem>> {
-    let mut ui_java_list: Vec<ModelRc<StandardListViewItem>> = Vec::new();
-    for java in list {
-        let version = StandardListViewItem::from(java.version.as_str());
-        let path = StandardListViewItem::from(java.path.as_str());
-        let model: rc::Rc<VecModel<StandardListViewItem>> =
-            rc::Rc::new(VecModel::from(vec![version.into(), path.into()]));
-        let row: ModelRc<StandardListViewItem> = ModelRc::from(model);
-        ui_java_list.push(row);
-    }
-    ModelRc::from(rc::Rc::new(VecModel::from(ui_java_list)))
 }

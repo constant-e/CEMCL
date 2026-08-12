@@ -15,8 +15,8 @@ pub struct MCInstallation {
     /// 窗口高度
     pub height: u32,
 
-    /// java可执行文件路径
-    pub java_path: String,
+    /// java 列表中的索引，None 表示未选择
+    pub java_index: Option<u32>,
 
     /// JVM自定义参数
     pub jvm_args: Vec<String>,

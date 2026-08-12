@@ -10,24 +10,32 @@ impl From<&str> for JavaVersion {
     fn from(version_str: &str) -> Self {
         let vec = version_str.split('.').collect::<Vec<&str>>();
         if version_str.starts_with("1.") {
-            // <= Java 8
-            let vec2 = vec[2].split("_").collect::<Vec<&str>>();
+            // <= Java 8, e.g. "1.8.0_202" or "1.8.0"
+            let feature = vec.get(1).and_then(|s| s.parse().ok()).unwrap_or(0);
+            let (interim, update) = if vec.len() > 2 {
+                let vec2 = vec[2].split('_').collect::<Vec<&str>>();
+                let interim = vec2[0].parse().unwrap_or(0);
+                let update = vec2.get(1).and_then(|s| s.parse().ok()).unwrap_or(0);
+                (interim, update)
+            } else {
+                (0, 0)
+            };
             JavaVersion {
-                feature: vec[1].parse().unwrap_or(0),
-                interim: vec2[0].parse().unwrap_or(0),
-                update: vec2[1].parse().unwrap_or(0),
+                feature,
+                interim,
+                update,
                 patch: 0,
             }
         } else {
-            // >= Java 9
-            let mut patch = 0;
-            if vec.len() == 4 {
-                patch = vec[3].parse().unwrap_or(0);
-            }
+            // >= Java 9, e.g. "21.0.1" or just "21"
+            let feature = vec.first().and_then(|s| s.parse().ok()).unwrap_or(0);
+            let interim = vec.get(1).and_then(|s| s.parse().ok()).unwrap_or(0);
+            let update = vec.get(2).and_then(|s| s.parse().ok()).unwrap_or(0);
+            let patch = vec.get(3).and_then(|s| s.parse().ok()).unwrap_or(0);
             JavaVersion {
-                feature: vec[0].parse().unwrap_or(0),
-                interim: vec[1].parse().unwrap_or(0),
-                update: vec[2].parse().unwrap_or(0),
+                feature,
+                interim,
+                update,
                 patch,
             }
         }
@@ -37,17 +45,15 @@ impl From<&str> for JavaVersion {
 impl std::fmt::Display for JavaVersion {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         if self.feature <= 8 {
-            write!(f, "1.{}.{}.{}", self.feature, self.interim, self.update)
+            write!(f, "1.{}.{}_{}", self.feature, self.interim, self.update)
+        } else if self.patch == 0 {
+            write!(f, "{}.{}.{}", self.feature, self.interim, self.update)
         } else {
-            if self.patch == 0 {
-                write!(f, "{}.{}.{}", self.feature, self.interim, self.update)
-            } else {
-                write!(
-                    f,
-                    "{}.{}.{}.{}",
-                    self.feature, self.interim, self.update, self.patch
-                )
-            }
+            write!(
+                f,
+                "{}.{}.{}.{}",
+                self.feature, self.interim, self.update, self.patch
+            )
         }
     }
 }

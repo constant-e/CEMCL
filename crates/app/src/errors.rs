@@ -2,6 +2,7 @@
 use std::io::ErrorKind;
 
 use downloader::DownloadManagerError;
+use java::java::JavaInstallationError;
 use mc::account::auth::AuthError;
 use mc::{DownloadError, launch::LaunchError};
 
@@ -34,7 +35,11 @@ pub enum LauncherError {
     /// Operation interrupted
     Interrupted,
     /// Java installation error
-    JavaInstallationError,
+    JavaConfigError,
+    /// Java exec not found
+    JavaExecutableNotFound,
+    /// Java Release file invalid
+    JavaReleaseFileInvalid,
     /// launcher config.json invalid
     LauncherConfigError,
     /// Login data invalid
@@ -120,6 +125,17 @@ impl From<DownloadError> for LauncherError {
     }
 }
 
+impl From<JavaInstallationError> for LauncherError {
+    fn from(value: JavaInstallationError) -> Self {
+        match value {
+            JavaInstallationError::IOError(err) => err.into(),
+            JavaInstallationError::JavaExecutableNotFound => LauncherError::JavaExecutableNotFound,
+            JavaInstallationError::PathIsEmpty => LauncherError::JavaConfigError,
+            JavaInstallationError::ReleaseFileInvalid => LauncherError::JavaReleaseFileInvalid,
+        }
+    }
+}
+
 impl From<LaunchError> for LauncherError {
     fn from(value: LaunchError) -> Self {
         match value {
@@ -193,7 +209,9 @@ impl std::fmt::Display for LauncherError {
             LauncherError::FileNotFound => write!(f, "File not found"),
             LauncherError::GameConfigError => write!(f, "Game config error"),
             LauncherError::Interrupted => write!(f, "Operation interrupted"),
-            LauncherError::JavaInstallationError => write!(f, "Java installation error"),
+            LauncherError::JavaConfigError => write!(f, "Java config error"),
+            LauncherError::JavaExecutableNotFound => write!(f, "Java executable not found"),
+            LauncherError::JavaReleaseFileInvalid => write!(f, "Java release file invalid"),
             LauncherError::LauncherConfigError => write!(f, "Launcher config error"),
             LauncherError::LoginInvalid(s) => write!(f, "Login data invalid. Failed to find {s}."),
             LauncherError::MutexError(s) => write!(f, "Mutex Lock Error. {s}"),

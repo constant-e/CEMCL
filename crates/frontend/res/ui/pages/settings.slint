@@ -1,5 +1,5 @@
-import { TabWidget, ScrollView, StandardButton, Switch, SpinBox, LineEdit, GroupBox, VerticalBox, GridBox, HorizontalBox } from "std-widgets.slint";
-import { Title, SectionTitle, VerticalSpacing, SettingsGroup, HorizontalSpacing, MyText, MySpinBox } from "../components/components.slint";
+import { TabWidget, ScrollView, StandardButton, Switch, SpinBox, LineEdit, GroupBox, VerticalBox, GridBox, HorizontalBox, ComboBox } from "std-widgets.slint";
+import { Title, SectionTitle, VerticalSpacing, SettingsGroup, HorizontalSpacing, MyText, MySpinBox, JavaVersionSelector } from "../components/components.slint";
 
 export struct ConfigGeneral {
     close_after_launch: bool,
@@ -16,7 +16,6 @@ export struct ConfigDL {
 }
 
 export struct ConfigMC {
-    java_path: string,
     path: string,
     width: int,
     wrapper: string,
@@ -39,7 +38,12 @@ export component SettingsPage inherits VerticalBox {
     // Launcher Settings
     in-out property <Config> config;
 
+    // Java selector (separate from config)
+    in-out property <[string]> java-combo-model;
+    in-out property <int> java-index;
+
     callback set-config(Config);
+    callback java-selected(int);
 
     Title { text: @tr("Settings"); }
     
@@ -133,9 +137,10 @@ export component SettingsPage inherits VerticalBox {
 
                     Row {
                         MyText { text: @tr("Java Path"); }
-                        LineEdit {
-                            text <=> config.mc.java-path;
-                            edited => { set-config(root.config); }
+                        java-combo-box := JavaVersionSelector {
+                            model <=> root.java-combo-model;
+                            current-index <=> root.java-index;
+                            selected => { root.java-selected(java-combo-box.current-index); }
                         }
                     }
 

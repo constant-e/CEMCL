@@ -5,7 +5,7 @@ use log::{error, warn};
 use serde_json::json;
 use std::{
     collections::HashSet,
-    fs::{create_dir_all, exists, read_to_string, remove_dir_all, write},
+    fs::{exists, read_to_string, remove_dir_all, write},
 };
 
 use mc::{MCInstallation, manifest::MCDL};
@@ -17,8 +17,6 @@ use crate::LauncherError;
 pub struct ConfigMC {
     /// 默认游戏窗口高度
     pub height: u32,
-    /// java可执行文件路径
-    pub java_path: String,
     /// .minecraft位置
     pub path: String,
     /// 默认游戏窗口宽度
@@ -106,6 +104,37 @@ impl VersionManager {
         self.config = config
     }
 
+    /// 为所有版本解析最佳 Java 索引。对每个版本，根据其 MC 版本 JSON 中的 javaVersion 要求，
+    /// 在 Java 列表中查找最佳兼容版本。仅在首次加载或 Java 列表变更时调用。
+    /// 如果找不到兼容版本，java_index 设为 None（未选择）。
+    pub fn resolve_java_indices(&mut self, java_manager: &crate::java::JavaManager) {
+        for installation in &mut self.version_list {
+            // 如果已经设置了 java_index，跳过
+            if installation.java_index.is_some() {
+                continue;
+            }
+
+            // Read the MC version JSON to get javaVersion requirement
+            let json_path = format!(
+                "{}/versions/{}/{}.json",
+                self.config.path, installation.version, installation.version
+            );
+            let min_java = if let Ok(content) = std::fs::read_to_string(&json_path) {
+                if let Ok(json) = serde_json::from_str::<serde_json::Value>(&content) {
+                    json["javaVersion"]["majorVersion"]
+                        .as_u64()
+                        .map(|v| ::java::java_version::JavaVersion::from(v.to_string().as_str()))
+                } else {
+                    None
+                }
+            } else {
+                None
+            };
+
+            installation.java_index = java_manager.find_best_java_index(min_java.as_ref());
+        }
+    }
+
     fn i_load(config: ConfigMC) -> Result<(Vec<MCInstallation>, u32), LauncherError> {
         let mut version_name_set = HashSet::new();
         let mut version_list = Vec::new();
@@ -158,10 +187,9 @@ impl VersionManager {
                     height: node["height"]
                         .as_i64()
                         .ok_or(LauncherError::GameConfigError)? as u32,
-                    java_path: node["java_path"]
-                        .as_str()
-                        .ok_or(LauncherError::GameConfigError)?
-                        .to_string(),
+                    java_index: node["java_index"]
+                        .as_u64()
+                        .map(|v| v as u32),
                     jvm_args: node["jvm_args"]
                         .as_array()
                         .ok_or(LauncherError::GameConfigError)?
@@ -214,7 +242,7 @@ impl VersionManager {
                 description: String::new(),
                 game_args: Vec::new(),
                 height: config.height,
-                java_path: config.java_path.clone(),
+                java_index: None, // 未选择，等待用户配置
                 jvm_args: Vec::new(),
                 separated: false,
                 game_type: to_mc_type(
@@ -299,7 +327,7 @@ fn to_json_value(version: &MCInstallation) -> serde_json::Value {
         "game_args": version.game_args,
         "game_type": version.game_type.as_str(),
         "height": version.height,
-        "java_path": version.java_path,
+        "java_index": version.java_index,
         "jvm_args": version.jvm_args,
         "separated": version.separated,
         "version": version.version,
@@ -342,7 +370,7 @@ pub fn frontend_mc_config(config: MCInstallation) -> frontend::game::MCConfig {
         description: config.description,
         game_args: config.game_args,
         height: config.height,
-        java_path: config.java_path,
+        java_index: config.java_index.map(|i| i as i32).unwrap_or(-1),
         jvm_args: config.jvm_args,
         separated: config.separated,
         width: config.width,

@@ -1,5 +1,7 @@
 //! Settings Page
 
+use slint::ModelRc;
+use std::rc;
 use crate::ui;
 
 #[derive(Clone)]
@@ -30,8 +32,6 @@ pub struct ConfigDL {
 pub struct ConfigMC {
     /// 默认游戏窗口高度
     pub height: u32,
-    /// java可执行文件路径
-    pub java_path: String,
     /// 默认游戏窗口宽度
     pub width: u32,
     /// 封装器
@@ -81,7 +81,6 @@ impl From<ui::ConfigMC> for ConfigMC {
     fn from(value: ui::ConfigMC) -> Self {
         Self {
             height: value.height as u32,
-            java_path: value.java_path.into(),
             width: value.width as u32,
             wrapper: value.wrapper.into(),
             xms: value.xms.into(),
@@ -127,7 +126,6 @@ impl From<ConfigMC> for ui::ConfigMC {
     fn from(value: ConfigMC) -> Self {
         Self {
             height: value.height as i32,
-            java_path: value.java_path.into(),
             width: value.width as i32,
             wrapper: value.wrapper.into(),
             xms: value.xms.into(),

@@ -73,6 +73,8 @@ impl JavaInstallation {
                     return Ok(JavaVersion::from(version_str));
                 }
             }
+
+            return Err(JavaInstallationError::ReleaseFileInvalid)
         }
 
         // get the result of java -version

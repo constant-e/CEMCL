@@ -1,5 +1,5 @@
-import { StandardButton, Button, Switch, LineEdit, GridBox } from "std-widgets.slint";
-import { SubTitle, SettingsGroup, MyText, MySpinBox } from "../../components/components.slint";
+import { StandardButton, Button, Switch, LineEdit, GridBox, ComboBox, HorizontalBox } from "std-widgets.slint";
+import { SubTitle, SettingsGroup, MyText, MySpinBox, JavaVersionSelector } from "../../components/components.slint";
 
 import { MCConfig } from "game.slint";
 
@@ -10,6 +10,10 @@ export component EditGameDialog inherits Dialog {
 
     in-out property <MCConfig> game-config;
     in-out property <string> version;
+
+    // Java selector (separate from config)
+    in-out property <[string]> java-combo-model;
+    in-out property <int> java-index;
 
     callback del-game();
     callback edit-game(MCConfig);
@@ -48,8 +52,9 @@ export component EditGameDialog inherits Dialog {
 
             Row {
                 MyText { text: @tr("Java path"); }
-                LineEdit {
-                    text <=> game-config.java-path;
+                JavaVersionSelector {
+                    model <=> root.java-combo-model;
+                    current-index <=> root.java-index;
                 }
             }
 

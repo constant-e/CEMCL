@@ -1,4 +1,4 @@
-import { Title, SettingsGroup, SubTitle, VerticalSpacing, MyText, MySpinBox } from "../../components/components.slint";
+import { Title, SettingsGroup, SubTitle, VerticalSpacing, MyText, MySpinBox, JavaVersionSelector } from "../../components/components.slint";
 import { ComboBox, StandardButton, StandardTableView, Switch, LineEdit, VerticalBox, HorizontalBox, GridBox } from "std-widgets.slint";
 
 import { MCConfig } from "game.slint";
@@ -18,12 +18,18 @@ export component AddGameDialog inherits Dialog {
 
     in-out property <MCConfig> game-config;
 
+    // Java selector (separate from config)
+    in-out property <[string]> java-combo-model;
+    in-out property <int> java-index;
+
     callback get-default-game-config();
     callback get-game-list(int);
     // mc combo index, mc index, mod combo index
     callback get-mod-list(int, int, int);
     // mc combo, mc, mod combo, mod
     callback add-game(int, int, int, int, MCConfig);
+    // Called when game selection changes, to refresh Java compatibility
+    callback game-selected(int, int);
 
     VerticalBox {
         padding: 0px;
@@ -48,6 +54,7 @@ export component AddGameDialog inherits Dialog {
                     min-width: 200px;
 
                     current-row-changed(row) => {
+                        root.game-selected(game-combo-box.current-index, row);
                         if mod-combo-box.current-index != 0 {
                             root.get-mod-list(game-combo-box.current-index, row, mod-combo-box.current-index);
                         }
@@ -116,8 +123,9 @@ export component AddGameDialog inherits Dialog {
 
                     Row {
                         MyText { text: @tr("Java path"); }
-                        LineEdit {
-                            text <=> game-config.java-path;
+                        JavaVersionSelector {
+                            model <=> root.java-combo-model;
+                            current-index <=> root.java-index;
                         }
                     }
 

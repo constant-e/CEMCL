@@ -20,6 +20,8 @@ export component AppWindow inherits Window {
     in-out property <[[StandardListViewItem]]> java-model;
     in-out property <State> state;
     in-out property <Config> config;
+    in-out property <[string]> java-combo-model;
+    in-out property <int> java-index;
     in-out property <string> authors;
     in-out property <string> version;
     in-out property <float> progress;
@@ -30,6 +32,7 @@ export component AppWindow inherits Window {
     callback del-java(int);
     callback edit-acc(int, AccountInner);
     callback set-config(Config);
+    callback java-selected(int);
     callback start(int, int);
     callback switch-acc(int);
     callback switch-ver(int);
@@ -101,7 +104,10 @@ export component AppWindow inherits Window {
                 authors: authors;
                 version: version;
                 config <=> config;
+                java-combo-model <=> root.java-combo-model;
+                java-index <=> root.java-index;
                 set-config(config) => { root.set-config(config) }
+                java-selected(index) => { root.java-selected(index) }
             }
         }
     }

@@ -6,7 +6,7 @@ use mc::{
     MCInstallation,
     account::{Account, auth::AuthPollAction},
     manifest::{
-        Fabric, Forge, MCDL, download_fabric, download_forge, download_mc, list_fabric, list_forge,
+        Fabric, Forge, MCDL, download_fabric, download_forge, download_mc,
     },
 };
 use serde_json::json;
@@ -16,7 +16,7 @@ use tokio::time::{Duration, sleep};
 
 use crate::{
     account::{frontend_account, to_account_type},
-    java_manager::JavaManager,
+    java::JavaManager,
     version::{
         ConfigMC, VersionManager, frontend_fabric, frontend_forge, frontend_mc_config,
         frontend_mc_dl, frontend_mc_info, frontend_mc_type,
@@ -25,8 +25,9 @@ use crate::{
 use downloader::{Config as DownloaderConfig, DownloadManager, task::TaskInfo};
 use frontend::{
     UICommand,
-    UIUpdate::{self, SetAccountIndex},
-    game::{MCInfo, ModType},
+    UIUpdate,
+    game::ModType,
+    java,
 };
 
 use crate::{account::AccountManager, errors::LauncherError};
@@ -109,7 +110,6 @@ impl From<frontend::ConfigMC> for ConfigMC {
     fn from(value: frontend::ConfigMC) -> Self {
         Self {
             height: value.height,
-            java_path: value.java_path,
             path: value.path,
             width: value.width,
             wrapper: value.wrapper,
@@ -145,7 +145,6 @@ impl From<ConfigMC> for frontend::ConfigMC {
     fn from(value: ConfigMC) -> Self {
         Self {
             height: value.height,
-            java_path: value.java_path,
             path: value.path,
             width: value.width,
             wrapper: value.wrapper,
@@ -181,7 +180,6 @@ impl Default for ConfigMC {
     fn default() -> Self {
         ConfigMC {
             height: 600,
-            java_path: String::from("java"),
             path: ConfigGeneral::default().game_path,
             width: 800,
             wrapper: String::new(),
@@ -226,8 +224,10 @@ impl AppRuntime {
         let account_manager = AccountManager::new()?;
         let (config_dl, config_general, config_mc) = AppRuntime::i_load_config()?;
         let downloader = DownloadManager::new(config_dl.into());
-        let java_manager = JavaManager::new()?;
-        let version_manager = VersionManager::new(config_mc.clone())?;
+        let mut java_manager = JavaManager::new()?;
+        java_manager.auto_detect_system_java();
+        let mut version_manager = VersionManager::new(config_mc.clone())?;
+        version_manager.resolve_java_indices(&java_manager);
 
         Ok(Self {
             account_manager,
@@ -322,7 +322,11 @@ impl AppRuntime {
                                 create_dir_all(&dir)?;
                             }
 
-                            let java_path = config.java_path.clone();
+                            let java_path = if config.java_index >= 0 {
+                                self.java_manager.get_java_path_by_index(config.java_index as u32)?
+                            } else {
+                                "java".to_string()
+                            };
                             let forge_path = task_info.save_path.clone();
                             let f = move || {
                                 match Command::new(&java_path)
@@ -363,7 +367,7 @@ impl AppRuntime {
                     game_args: config.game_args,
                     game_type: ver_type,
                     height: config.height,
-                    java_path: config.java_path,
+                    java_index: if config.java_index >= 0 { Some(config.java_index as u32) } else { None },
                     jvm_args: config.jvm_args,
                     separated: config.separated,
                     version: ver,
@@ -379,11 +383,12 @@ impl AppRuntime {
             UICommand::AddJava(java_path) => {
                 self.java_manager.add(java_path)?;
                 self.refresh_ui_java_list()?;
+                self.refresh_ui_config()?;
                 self.update_sender.send(UIUpdate::QuitAddJavaDialog)?;
             }
             UICommand::CheckJava(java_path) => {
-                use java::java::JavaInstallationError;
-                let (result, version) = match java::java::JavaInstallation::new(java_path) {
+                use ::java::java::JavaInstallationError;
+                let (result, version) = match ::java::java::JavaInstallation::new(java_path) {
                     Ok(installation) => {
                         (frontend::ui::JavaCheckResult::Detected, installation.get_version().to_string())
                     }
@@ -412,6 +417,7 @@ impl AppRuntime {
             UICommand::DelJava(index) => {
                 self.java_manager.del(index)?;
                 self.refresh_ui_java_list()?;
+                self.refresh_ui_config()?;
             }
             UICommand::EditAccount(index, account) => {
                 let mut i_account = self.account_manager.get(index).clone();
@@ -427,7 +433,7 @@ impl AppRuntime {
                 version.description = installation.description;
                 version.game_args = installation.game_args;
                 version.height = installation.height;
-                version.java_path = installation.java_path;
+                version.java_index = if installation.java_index >= 0 { Some(installation.java_index as u32) } else { None };
                 version.jvm_args = installation.jvm_args;
                 version.separated = installation.separated;
                 version.width = installation.width;
@@ -458,12 +464,15 @@ impl AppRuntime {
             }
             UICommand::GetAddGameDefault => {
                 let config = self.version_manager.get_config();
+                let java_list = self.build_java_info_list(None);
+                let java_model: Vec<String> = java::ui_java_combo_box_list(&java_list);
+                let java_index = self.java_manager.get_default().map(|i| i as i32).unwrap_or(-1);
                 self.update_sender
                     .send(UIUpdate::SetAddGameDefault(frontend::game::MCConfig {
                         description: String::new(),
                         game_args: Vec::new(),
                         height: config.height,
-                        java_path: config.java_path.clone(),
+                        java_index,
                         jvm_args: Vec::new(),
                         separated: false,
                         width: config.width,
@@ -471,8 +480,34 @@ impl AppRuntime {
                         xms: config.xms.clone(),
                         xmx: config.xmx.clone(),
                     }))?;
-                // Also send the Java list when the add game dialog opens
-                self.refresh_ui_java_list()?;
+                self.update_sender
+                    .send(UIUpdate::SetAddGameJavaList(java_model))?;
+                // Also send the Java list for the Java page table
+                self.update_sender.send(UIUpdate::SetJavaList(java_list))?;
+            }
+            UICommand::GetAddGameJavaList(mc_type, mc_index) => {
+                let mut list = if let Some(list) = &self.cache.dl_mc_list {
+                    list.clone()
+                } else {
+                    let list = mc::manifest::list_game(self.config.game_path.clone()).await?;
+                    self.cache.dl_mc_list = Some(list.clone());
+                    list
+                };
+
+                if let Some(mc_type) = mc_type {
+                    list = list
+                        .into_iter()
+                        .filter(|v| frontend_mc_type(v.game_type.clone()) == mc_type)
+                        .collect();
+                }
+
+                if (mc_index as usize) < list.len() {
+                    let mc = &list[mc_index as usize];
+                    let java_list = self.build_java_info_list(Some(&mc.version));
+                    let java_model: Vec<String> = java::ui_java_combo_box_list(&java_list);
+                    self.update_sender
+                        .send(UIUpdate::SetAddGameJavaList(java_model))?;
+                }
             }
             UICommand::GetAddGameList(filter) => {
                 let mut list = if let Some(list) = &self.cache.dl_mc_list {
@@ -557,12 +592,17 @@ impl AppRuntime {
                     .send(UIUpdate::SetAddModListForge(forge_list))?;
             }
             UICommand::GetEditGameConfig(index) => {
+                let version = self.version_manager.get(index).clone();
+                let java_list = self.build_java_info_list(Some(&version.version));
+                let java_model: Vec<String> = java::ui_java_combo_box_list(&java_list);
                 self.update_sender
-                    .send(UIUpdate::SetEditGameConfig(frontend_mc_config(
-                        self.version_manager.get(index).clone(),
-                    )))?;
-                // Also send the Java list when the edit game dialog opens
-                self.refresh_ui_java_list()?;
+                    .send(UIUpdate::SetEditGameConfig(frontend::game::MCConfig {
+                        java_index: version.java_index.map(|i| i as i32).unwrap_or(-1),
+                        ..frontend_mc_config(version.clone())
+                    }))?;
+                self.update_sender
+                    .send(UIUpdate::SetEditGameJavaList(java_model))?;
+                self.update_sender.send(UIUpdate::SetJavaList(java_list))?;
             }
             UICommand::GetEditGameVersion(index) => {
                 self.update_sender.send(UIUpdate::SetEditGameVersion(
@@ -577,6 +617,10 @@ impl AppRuntime {
                 self.downloader.set_config(ConfigDL::from(config.dl).into());
                 self.version_manager.set_config(config.mc.into());
                 self.save_config()?;
+            }
+            UICommand::SetDefaultJava(index) => {
+                let idx = if index >= 0 { Some(index as u32) } else { None };
+                self.java_manager.set_default(idx)?;
             }
             UICommand::GetOfflineAccount => {
                 self.update_sender
@@ -722,13 +766,18 @@ impl AppRuntime {
                 tokio::task::yield_now().await;
 
                 let (s, r) = std::sync::mpsc::channel();
+                // 如果未选择 Java，直接使用系统 PATH 中的 java
+                let java_path = match version.java_index {
+                    Some(idx) => self.java_manager.get_java_path_by_index(idx)?,
+                    None => "java".to_string(),
+                };
                 let mut cmd = Command::new(if version.wrapper.is_empty() {
-                    version.java_path.clone()
+                    java_path.clone()
                 } else {
                     version.wrapper.clone()
                 });
                 if !version.wrapper.is_empty() {
-                    cmd.arg(version.java_path.clone());
+                    cmd.arg(java_path);
                 }
                 cmd.args(cmd_list);
 
@@ -781,6 +830,9 @@ impl AppRuntime {
         let config_general = &self.config;
         let config_dl: ConfigDL = self.downloader.get_config().clone().into();
         let config_mc = self.version_manager.get_config();
+        let java_list = self.build_java_info_list(None);
+        let java_model: Vec<String> = java::ui_java_combo_box_list(&java_list);
+        let java_index = self.java_manager.get_default().map(|i| i as i32).unwrap_or(-1);
 
         self.update_sender
             .send(UIUpdate::SetConfig(frontend::Config {
@@ -788,6 +840,10 @@ impl AppRuntime {
                 general: config_general.clone().into(),
                 mc: config_mc.clone().into(),
             }))?;
+        self.update_sender
+            .send(UIUpdate::SetJavaModel(java_model))?;
+        self.update_sender
+            .send(UIUpdate::SetJavaIndex(java_index))?;
 
         Ok(())
     }
@@ -819,19 +875,89 @@ impl AppRuntime {
     }
 
     fn refresh_ui_java_list(&self) -> Result<(), LauncherError> {
-        let java_list: Vec<frontend::JavaInfo> = self
-            .java_manager
-            .get_java_list()
-            .iter()
-            .map(|j| frontend::JavaInfo {
-                version: j.get_version().to_string(),
-                path: j.get_path().to_string(),
-            })
-            .collect();
+        let java_list = self.build_java_info_list(None);
         self.update_sender.send(UIUpdate::SetJavaList(java_list))?;
         Ok(())
     }
 
+    fn build_java_info_list(&self, mc_version: Option<&str>) -> Vec<frontend::JavaInfo> {
+        let min_java = mc_version.and_then(|v| min_java_version_for_mc(v, &self.config.game_path));
+        self.java_manager
+            .get_java_list()
+            .iter()
+            .map(|j| {
+                let compatible = match &min_java {
+                    Some(min) => j.get_version() >= min,
+                    None => true,
+                };
+                frontend::JavaInfo {
+                    version: j.get_version().to_string(),
+                    path: j.get_path().to_string(),
+                    compatible,
+                }
+            })
+            .collect()
+    }
+}
+
+/// Determine the minimum Java version required for a given Minecraft version.
+/// Reads the MC version JSON file to get the `javaVersion.majorVersion` field.
+/// Falls back to hardcoded rules if the JSON cannot be read.
+fn min_java_version_for_mc(mc_version: &str, game_path: &str) -> Option<::java::java_version::JavaVersion> {
+    // Extract the base MC version from modded version strings like "fabric-loader-0.16.10-1.21.5"
+    let base_version = extract_mc_version(mc_version);
+
+    // Try to read from the MC version JSON file
+    let json_path = format!("{}/versions/{}/{}.json", game_path, base_version, base_version);
+    if let Ok(content) = std::fs::read_to_string(&json_path) {
+        if let Ok(json) = serde_json::from_str::<serde_json::Value>(&content) {
+            if let Some(major) = json["javaVersion"]["majorVersion"].as_u64() {
+                return Some(::java::java_version::JavaVersion::from(major.to_string().as_str()));
+            }
+        }
+    }
+
+    // Fallback: hardcoded rules based on MC version
+    let parts: Vec<&str> = base_version.split(".").collect();
+    if parts.len() < 2 {
+        return None;
+    }
+    let major: u32 = parts[0].parse().ok()?;
+    let minor: u32 = parts[1].parse().ok()?;
+    let patch: u32 = parts.get(2).and_then(|p| p.parse().ok()).unwrap_or(0);
+
+    if major > 1 || (major == 1 && minor >= 21) || (major == 1 && minor == 20 && patch >= 5) {
+        Some(::java::java_version::JavaVersion::from("21"))
+    } else if major == 1 && minor >= 18 {
+        Some(::java::java_version::JavaVersion::from("17"))
+    } else if major == 1 && minor == 17 {
+        Some(::java::java_version::JavaVersion::from("16"))
+    } else {
+        Some(::java::java_version::JavaVersion::from("1.8"))
+    }
+}
+
+/// Extract the base Minecraft version from a modded version string.
+/// e.g. "fabric-loader-0.16.10-1.21.5" -> "1.21.5"
+///      "1.21.5-forge-52.0.0" -> "1.21.5"
+///      "1.21.5" -> "1.21.5"
+fn extract_mc_version(version: &str) -> &str {
+    // For fabric: "fabric-loader-X.Y.Z-MC_VERSION"
+    if let Some(rest) = version.strip_prefix("fabric-loader-") {
+        // Find the last '-' and take everything after it
+        if let Some(pos) = rest.rfind('-') {
+            return &rest[pos + 1..];
+        }
+        return rest;
+    }
+    // For forge: "MC_VERSION-forge-X.Y.Z"
+    if let Some(pos) = version.find("-forge-") {
+        return &version[..pos];
+    }
+    version
+}
+
+impl AppRuntime {
     pub async fn run(&mut self) -> Result<(), LauncherError> {
         self.init()?;
 
@@ -895,11 +1021,6 @@ impl AppRuntime {
             config_mc.height = json["height"]
                 .as_u64()
                 .ok_or(LauncherError::LauncherConfigError)? as u32;
-            config_mc.java_path = String::from(
-                json["java_path"]
-                    .as_str()
-                    .ok_or(LauncherError::LauncherConfigError)?,
-            );
             config_dl.libraries_source = String::from(
                 json["libraries_source"]
                     .as_str()
@@ -954,7 +1075,6 @@ impl AppRuntime {
                 "game_path": config.game_path,
                 "game_source": config_dl.game_source,
                 "height": config_mc.height,
-                "java_path": config_mc.java_path,
                 "libraries_source": config_dl.libraries_source,
                 "width": config_mc.width,
                 "wrapper": config_mc.wrapper,
