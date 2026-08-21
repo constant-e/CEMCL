@@ -1,0 +1,46 @@
+import { Button, ProgressIndicator, VerticalBox } from "std-widgets.slint";
+
+export component ForgeDownloadDialog inherits Dialog {
+    title: @tr("Installing Forge");
+    preferred-height: 200px;
+    preferred-width: 400px;
+
+    in-out property <string> message;
+    in-out property <float> progress;
+    in-out property <bool> installing;
+
+    callback hide-clicked();
+    callback cancel-clicked();
+
+    VerticalBox {
+        padding: 0px;
+
+        Text {
+            text: root.installing ? @tr("Installing Forge") : message;
+            wrap: word-wrap;
+        }
+
+        ProgressIndicator {
+            progress: root.progress;
+        }
+
+        Text {
+            text: round(root.progress * 100) + "%";
+            horizontal-alignment: center;
+        }
+
+        HorizontalLayout {
+            alignment: end;
+
+            hide-btn := Button {
+                text: @tr("Hide");
+                clicked => { root.hide-clicked(); }
+            }
+
+            cancel-btn := Button {
+                text: @tr("Cancel");
+                clicked => { root.cancel-clicked(); }
+            }
+        }
+    }
+}

@@ -7,7 +7,7 @@ use tokio::sync::mpsc::UnboundedSender;
 
 use crate::app_window::UICommand;
 use crate::msg_box;
-use crate::ui::{self, AddGameDialog, EditGameDialog};
+use crate::ui::{self, AddGameDialog, EditGameDialog, ForgeDownloadDialog};
 
 pub enum ModType {
     Fabric,
@@ -345,5 +345,30 @@ pub fn edit_game_dialog(
     ui.show()?;
     tx.send(UICommand::GetEditGameConfig(index)).unwrap();
     tx.send(UICommand::GetEditGameVersion(index)).unwrap();
+    Ok(ui_weak)
+}
+
+/// Forge 安装进度弹窗
+pub fn forge_download_dialog(
+    tx: UnboundedSender<UICommand>,
+) -> Result<slint::Weak<ForgeDownloadDialog>, slint::PlatformError> {
+    let ui = ForgeDownloadDialog::new()?;
+    let ui_weak = ui.as_weak();
+
+    let tx_clone = tx.clone();
+    ui.on_hide_clicked(move || {
+        if let Err(e) = tx_clone.send(UICommand::HideForgeDownloadDialog) {
+            error!("{e}");
+        }
+    });
+
+    let tx_clone = tx.clone();
+    ui.on_cancel_clicked(move || {
+        if let Err(e) = tx_clone.send(UICommand::CancelForgeDownload) {
+            error!("{e}");
+        }
+    });
+
+    ui.show()?;
     Ok(ui_weak)
 }

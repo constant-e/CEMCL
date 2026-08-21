@@ -12,7 +12,6 @@ use mc::{
 use serde_json::json;
 use utils::get_parent_dir;
 use std::{collections::HashMap, fs::{self, create_dir_all, exists, remove_dir_all}, process::Command};
-use tokio::time::{Duration, sleep};
 
 use crate::{
     account::{frontend_account, to_account_type},
@@ -205,13 +204,26 @@ impl CacheData {
     }
 }
 
+/// 等待 Forge 安装完成的待添加版本
+struct PendingForge {
+    /// 下载任务集 id
+    id: String,
+    /// Forge 安装成功后要加入版本列表的安装信息
+    installation: MCInstallation,
+}
+
 pub struct AppRuntime {
     account_manager: AccountManager,
     cache: CacheData,
     config: ConfigGeneral,
     cmd_receiver: Option<tokio::sync::mpsc::UnboundedReceiver<UICommand>>,
     downloader: DownloadManager,
+    downloader_broadcast: tokio::sync::broadcast::Receiver<downloader::TaskSetStatusInfo>,
+    /// Latest status of each task set, updated by the broadcast
+    task_set_status: HashMap<String, frontend::downloader::TaskSetInfo>,
     java_manager: JavaManager,
+    /// 等待 Forge 安装完成的待添加版本
+    pending_forge: Option<PendingForge>,
     update_sender: tokio::sync::mpsc::UnboundedSender<UIUpdate>,
     version_manager: VersionManager,
 }
@@ -224,6 +236,7 @@ impl AppRuntime {
         let account_manager = AccountManager::new()?;
         let (config_dl, config_general, config_mc) = AppRuntime::i_load_config()?;
         let downloader = DownloadManager::new(config_dl.into());
+        let downloader_broadcast = downloader.subscribe();
         let mut java_manager = JavaManager::new()?;
         java_manager.auto_detect_system_java();
         let mut version_manager = VersionManager::new(config_mc.clone())?;
@@ -235,7 +248,10 @@ impl AppRuntime {
             config: config_general,
             cmd_receiver: Some(cmd_receiver),
             downloader,
+            downloader_broadcast,
+            task_set_status: HashMap::new(),
             java_manager,
+            pending_forge: None,
             update_sender,
             version_manager,
         })
@@ -280,7 +296,15 @@ impl AppRuntime {
                 let version = &mc_list[mc_index as usize];
                 let mut ver = version.version.clone();
                 let ver_type = version.game_type.clone();
-                download_mc(&self.config.game_path, version.clone()).await?;
+
+                // 判断原版是否已下载，未下载则先下载
+                let mc_json_path = format!(
+                    "{}/versions/{}/{}.json",
+                    self.config.game_path, version.version, version.version
+                );
+                if !exists(&mc_json_path)? {
+                    download_mc(&self.config.game_path, version.clone()).await?;
+                }
 
                 if let Some(filter) = mod_type {
                     match filter {
@@ -304,6 +328,29 @@ impl AppRuntime {
                                 "fabric-loader-{fabric_version}-{ver}",
                                 fabric_version = fabric.loader_version,
                             );
+
+                            // Fabric 无独立安装环节，直接添加
+                            let installation = MCInstallation {
+                                description: config.description,
+                                game_args: config.game_args,
+                                game_type: ver_type,
+                                height: config.height,
+                                java_index: if config.java_index >= 0 {
+                                    Some(config.java_index as u32)
+                                } else {
+                                    None
+                                },
+                                jvm_args: config.jvm_args,
+                                separated: config.separated,
+                                version: ver,
+                                width: config.width,
+                                wrapper: config.wrapper,
+                                xms: config.xms,
+                                xmx: config.xmx,
+                            };
+                            self.version_manager.add(&installation)?;
+                            self.refresh_ui_version_list()?;
+                            self.update_sender.send(UIUpdate::QuitAddGameDialog)?;
                         }
                         ModType::Forge => {
                             let mod_list = if let Some(list) = self.cache.dl_forge_list.take() {
@@ -316,7 +363,7 @@ impl AppRuntime {
 
                             let task_info =
                                 download_forge(&version.version, forge.clone(), "{forge_source}");
-                            
+
                             let dir = get_parent_dir(&task_info.save_path);
                             if !exists(&dir)? {
                                 create_dir_all(&dir)?;
@@ -358,27 +405,70 @@ impl AppRuntime {
                             let id = format!("{0}-forge-{1}", &version.version, &forge.version);
                             self.downloader.add_taskset(id.clone(), vec![task]);
                             self.downloader.start_taskset(id.clone())?;
-                            ver = id;
+
+                            // 记录待添加的安装信息，Forge 安装成功后再加入版本列表
+                            self.pending_forge = Some(PendingForge {
+                                id,
+                                installation: MCInstallation {
+                                    description: config.description,
+                                    game_args: config.game_args,
+                                    game_type: ver_type,
+                                    height: config.height,
+                                    java_index: if config.java_index >= 0 {
+                                        Some(config.java_index as u32)
+                                    } else {
+                                        None
+                                    },
+                                    jvm_args: config.jvm_args,
+                                    separated: config.separated,
+                                    version: format!(
+                                        "{mc_version}-forge-{forge_version}",
+                                        mc_version = version.version,
+                                        forge_version = forge.version,
+                                    ),
+                                    width: config.width,
+                                    wrapper: config.wrapper,
+                                    xms: config.xms,
+                                    xmx: config.xmx,
+                                },
+                            });
+
+                            // 显示 Forge 下载弹窗
+                            self.update_sender.send(UIUpdate::ShowForgeDownloadDialog(
+                                format!(
+                                    "Downloading Forge {forge_version} for Minecraft {mc_version}",
+                                    forge_version = forge.version,
+                                    mc_version = version.version,
+                                ),
+                            ))?;
+                            // 关闭添加游戏弹窗
+                            self.update_sender.send(UIUpdate::QuitAddGameDialog)?;
                         }
                     }
+                } else {
+                    // 无 mod loader，直接添加
+                    let installation = MCInstallation {
+                        description: config.description,
+                        game_args: config.game_args,
+                        game_type: ver_type,
+                        height: config.height,
+                        java_index: if config.java_index >= 0 {
+                            Some(config.java_index as u32)
+                        } else {
+                            None
+                        },
+                        jvm_args: config.jvm_args,
+                        separated: config.separated,
+                        version: ver,
+                        width: config.width,
+                        wrapper: config.wrapper,
+                        xms: config.xms,
+                        xmx: config.xmx,
+                    };
+                    self.version_manager.add(&installation)?;
+                    self.refresh_ui_version_list()?;
+                    self.update_sender.send(UIUpdate::QuitAddGameDialog)?;
                 }
-                let installation = MCInstallation {
-                    description: config.description,
-                    game_args: config.game_args,
-                    game_type: ver_type,
-                    height: config.height,
-                    java_index: if config.java_index >= 0 { Some(config.java_index as u32) } else { None },
-                    jvm_args: config.jvm_args,
-                    separated: config.separated,
-                    version: ver,
-                    width: config.width,
-                    wrapper: config.wrapper,
-                    xms: config.xms,
-                    xmx: config.xmx,
-                };
-                self.version_manager.add(&installation)?;
-                self.refresh_ui_version_list()?;
-                self.update_sender.send(UIUpdate::QuitAddGameDialog)?;
             }
             UICommand::AddJava(java_path) => {
                 self.java_manager.add(java_path)?;
@@ -628,6 +718,24 @@ impl AppRuntime {
                         Account::default(),
                     )))?;
             }
+            UICommand::HideForgeDownloadDialog => {
+                self.update_sender.send(UIUpdate::QuitForgeDownloadDialog)?;
+            }
+            UICommand::CancelForgeDownload => {
+                if let Some(pending) = self.pending_forge.take() {
+                    self.downloader.cancel_taskset(pending.id);
+                }
+                self.update_sender.send(UIUpdate::QuitForgeDownloadDialog)?;
+            }
+            UICommand::PauseTaskSet(id) => {
+                self.downloader.pause_taskset(id);
+            }
+            UICommand::ResumeTaskSet(id) => {
+                self.downloader.resume_taskset(id);
+            }
+            UICommand::CancelTaskSet(id) => {
+                self.downloader.cancel_taskset(id);
+            }
             UICommand::RequestLogin => {
                 let (uri, code) = self.account_manager.request_login().await?;
                 let mut ctx: ClipboardContext = ClipboardProvider::new()?;
@@ -681,9 +789,9 @@ impl AppRuntime {
                 tokio::task::yield_now().await;
 
                 let account = self.account_manager.get(acc_index);
-                let version = self.version_manager.get(ver_index);
+                let version = self.version_manager.get(ver_index).clone();
                 let (cmd_list, dl_list) =
-                    mc::launch::get_launch_command(account, version, &self.config.game_path)
+                    mc::launch::get_launch_command(account, &version, &self.config.game_path)
                         .await?;
 
                 if dl_list.len() != 0 {
@@ -709,11 +817,23 @@ impl AppRuntime {
                     self.downloader.add_taskset(id.clone(), tasks);
                     self.downloader.start_taskset(id.clone())?;
 
-                    // progress by bytes may update total bytes, which looks strange
-                    // TODO: make it a broadcast in downloader
-                    let mut status = self.downloader.get_status_by_number(id.clone())?;
+                    // Wait for the download to complete via broadcast.
+                    // The home page progress is based on the number of completed tasks.
                     loop {
-                        match status {
+                        let info = match self.downloader_broadcast.recv().await {
+                            Ok(info) => info,
+                            Err(tokio::sync::broadcast::error::RecvError::Lagged(_)) => {
+                                continue;
+                            }
+                            Err(tokio::sync::broadcast::error::RecvError::Closed) => {
+                                return Err(LauncherError::ChannelClosed);
+                            }
+                        };
+                        self.handle_broadcast(info.clone())?;
+                        if info.id != id {
+                            continue;
+                        }
+                        match info.status_by_number {
                             downloader::taskset::TaskSetStatus::Completed(total) => {
                                 self.update_sender.send(UIUpdate::SetHomePageProgress(
                                     total as u32,
@@ -737,7 +857,6 @@ impl AppRuntime {
                                 tokio::task::yield_now().await;
                             }
                             downloader::taskset::TaskSetStatus::Paused(downloaded, total) => {
-                                // This case shouldn't happen now. Pause hasn't been implemented
                                 self.update_sender.send(UIUpdate::SetHomePageProgress(
                                     downloaded as u32,
                                     total as u32,
@@ -745,15 +864,11 @@ impl AppRuntime {
                                 tokio::task::yield_now().await;
                             }
                             downloader::taskset::TaskSetStatus::Pending(total) => {
-                                // TODO: download this game first
                                 self.update_sender
                                     .send(UIUpdate::SetHomePageProgress(0, total as u32))?;
                                 tokio::task::yield_now().await;
                             }
                         }
-                        drop(status);
-                        sleep(Duration::from_millis(500)).await;
-                        status = self.downloader.get_status_by_number(id.clone())?;
                     }
                 }
 
@@ -974,8 +1089,107 @@ impl AppRuntime {
                         self.update_sender.send(UIUpdate::SetHomePageProgress(0, 0))?;
                     }
                 },
+                info = self.downloader_broadcast.recv() => {
+                    match info {
+                        Ok(info) => self.handle_broadcast(info)?,
+                        Err(tokio::sync::broadcast::error::RecvError::Lagged(_)) => {}
+                        Err(tokio::sync::broadcast::error::RecvError::Closed) => {
+                            return Err(LauncherError::ChannelClosed);
+                        }
+                    }
+                },
             }
         }
+    }
+
+    /// Handle a broadcast message from the downloader
+    fn handle_broadcast(
+        &mut self,
+        info: downloader::TaskSetStatusInfo,
+    ) -> Result<(), LauncherError> {
+        // 处理 Forge 安装任务集
+        if let Some(pending) = &self.pending_forge {
+            if pending.id == info.id {
+                match info.status.clone() {
+                    downloader::taskset::TaskSetStatus::Downloading(downloaded, total) => {
+                        let progress = if total != 0 {
+                            downloaded as f32 / total as f32
+                        } else {
+                            0.0
+                        };
+                        self.update_sender
+                            .send(UIUpdate::SetForgeDownloadProgress(progress))?;
+                        // 下载完成，正在运行 Forge 安装程序
+                        if total != 0 && downloaded >= total {
+                            self.update_sender
+                                .send(UIUpdate::SetForgeDownloadInstalling(true))?;
+                        }
+                    }
+                    downloader::taskset::TaskSetStatus::Pending(_) => {
+                        self.update_sender
+                            .send(UIUpdate::SetForgeDownloadProgress(0.0))?;
+                    }
+                    downloader::taskset::TaskSetStatus::Completed(_) => {
+                        // Forge 安装成功，将版本加入列表
+                        let installation = pending.installation.clone();
+                        self.pending_forge = None;
+                        self.version_manager.add(&installation)?;
+                        self.refresh_ui_version_list()?;
+                        self.update_sender.send(UIUpdate::QuitForgeDownloadDialog)?;
+                        self.update_sender.send(UIUpdate::QuitAddGameDialog)?;
+                    }
+                    downloader::taskset::TaskSetStatus::Failed => {
+                        self.pending_forge = None;
+                        self.update_sender.send(UIUpdate::QuitForgeDownloadDialog)?;
+                    }
+                    downloader::taskset::TaskSetStatus::Cancelled => {
+                        self.pending_forge = None;
+                        self.update_sender.send(UIUpdate::QuitForgeDownloadDialog)?;
+                    }
+                    downloader::taskset::TaskSetStatus::Paused(downloaded, total) => {
+                        let progress = if total != 0 {
+                            downloaded as f32 / total as f32
+                        } else {
+                            0.0
+                        };
+                        self.update_sender
+                            .send(UIUpdate::SetForgeDownloadProgress(progress))?;
+                    }
+                }
+            }
+        }
+
+        self.task_set_status.insert(
+            info.id.clone(),
+            frontend::downloader::TaskSetInfo {
+                id: info.id,
+                status: match info.status {
+                    downloader::taskset::TaskSetStatus::Pending(_) => {
+                        frontend::downloader::TaskSetStatus::Pending
+                    }
+                    downloader::taskset::TaskSetStatus::Downloading(_, _) => {
+                        frontend::downloader::TaskSetStatus::Downloading
+                    }
+                    downloader::taskset::TaskSetStatus::Paused(_, _) => {
+                        frontend::downloader::TaskSetStatus::Paused
+                    }
+                    downloader::taskset::TaskSetStatus::Completed(_) => {
+                        frontend::downloader::TaskSetStatus::Completed
+                    }
+                    downloader::taskset::TaskSetStatus::Cancelled => {
+                        frontend::downloader::TaskSetStatus::Cancelled
+                    }
+                    downloader::taskset::TaskSetStatus::Failed => {
+                        frontend::downloader::TaskSetStatus::Failed
+                    }
+                },
+                progress: info.progress,
+            },
+        );
+        let list: Vec<frontend::downloader::TaskSetInfo> =
+            self.task_set_status.values().cloned().collect();
+        self.update_sender.send(UIUpdate::SetTaskSetList(list))?;
+        Ok(())
     }
 
     fn i_load_config() -> Result<(ConfigDL, ConfigGeneral, ConfigMC), LauncherError> {

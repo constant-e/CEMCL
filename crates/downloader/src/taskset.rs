@@ -5,6 +5,7 @@ use tokio::sync::Semaphore;
 
 use super::task::{DownloadTask, DownloadTaskError, DownloadTaskStatus, TaskInfo};
 
+#[derive(Clone, Debug)]
 pub enum TaskSetStatus {
     Pending(u64),
     Downloading(u64, u64),
@@ -145,10 +146,32 @@ impl TaskSet {
         }
     }
 
+    /// Get the progress of the task set based on the total file size.
+    /// Returns (downloaded_bytes, total_bytes).
+    pub fn get_progress(&self) -> (u64, u64) {
+        let mut downloaded = 0;
+        let mut total = 0;
+        for task in &self.tasks {
+            let (d, t) = (
+                task.progress.0.load(Ordering::Relaxed),
+                task.progress.1.load(Ordering::Relaxed),
+            );
+            downloaded += d;
+            total += t;
+        }
+        (downloaded, total)
+    }
+
     pub async fn start(&self) -> Result<(), DownloadTaskError> {
         let mut handles = Vec::new();
 
         for task in &self.tasks {
+            let status = *task.status.try_lock()?;
+            if status != DownloadTaskStatus::Pending {
+                // Only start pending tasks. Paused tasks should be resumed
+                // via the resume method.
+                continue;
+            }
             let handle = task.start();
             handles.push(handle);
         }
@@ -165,10 +188,65 @@ impl TaskSet {
     }
 
     pub async fn pause(&self) -> Result<(), DownloadTaskError> {
+        for task in &self.tasks {
+            task.try_pause()?;
+        }
+        if let Some(on_pause) = &self.on_pause {
+            on_pause();
+        }
         Ok(())
     }
 
     pub async fn cancel(&self) -> Result<(), DownloadTaskError> {
+        for task in &self.tasks {
+            task.try_cancel()?;
+        }
+        if let Some(on_cancel) = &self.on_cancel {
+            on_cancel();
+        }
+        Ok(())
+    }
+
+    pub async fn resume(&self) -> Result<(), DownloadTaskError> {
+        let mut handles = Vec::new();
+
+        for task in &self.tasks {
+            let status = *task.status.try_lock()?;
+            match status {
+                DownloadTaskStatus::Pending => {
+                    // The task has never been started
+                    let handle = task.start();
+                    handles.push(handle);
+                }
+                DownloadTaskStatus::Paused => {
+                    if task.is_started() {
+                        // The task is waiting for the resume command
+                        task.try_resume()?;
+                    } else {
+                        // The task was paused before it started
+                        let handle = task.start();
+                        handles.push(handle);
+                    }
+                }
+                DownloadTaskStatus::Downloading => {
+                    // The task is already downloading
+                }
+                DownloadTaskStatus::Completed
+                | DownloadTaskStatus::Failed
+                | DownloadTaskStatus::Cancelled => {
+                    // The task has finished, nothing to do
+                }
+            }
+        }
+
+        let results = join_all(handles).await;
+        for result in results {
+            if let Err(e) = result {
+                error!("Failed to complete download task: {e}");
+                return Err(e);
+            }
+        }
+
         Ok(())
     }
 }

@@ -1,8 +1,138 @@
-import { ProgressIndicator, VerticalBox, StandardTableView } from "std-widgets.slint";
-import { Title, SectionTitle } from "../components/components.slint";
+import { ProgressIndicator, VerticalBox, HorizontalBox, Button, ScrollView, StyleMetrics } from "std-widgets.slint";
+import { Title, SectionTitle, HorizontalSpacing, VerticalSpacing } from "../components/components.slint";
+
+export enum TaskSetStatus {
+    Pending,
+    Downloading,
+    Paused,
+    Completed,
+    Failed,
+    Cancelled
+}
+
+export struct TaskSetInfo {
+    id: string,
+    status: TaskSetStatus,
+    downloaded: float,
+    total: float
+}
+
+component TaskSetItem inherits HorizontalLayout {
+    spacing: StyleMetrics.layout-spacing;
+
+    in property <TaskSetInfo> info;
+    in property <bool> finished;
+
+    callback pause();
+    callback resume();
+    callback cancel();
+
+    function status-text(status: TaskSetStatus) -> string {
+        if status == TaskSetStatus.Pending {
+            return @tr("Pending");
+        } else if status == TaskSetStatus.Downloading {
+            return @tr("Downloading");
+        } else if status == TaskSetStatus.Paused {
+            return @tr("Paused");
+        } else if status == TaskSetStatus.Completed {
+            return @tr("Completed");
+        } else if status == TaskSetStatus.Failed {
+            return @tr("Failed");
+        } else {
+            return @tr("Cancelled");
+        }
+    }
+
+    function progress-text(info: TaskSetInfo) -> string {
+        if info.total > 0 {
+            return round(info.downloaded * 100 / info.total) + "%";
+        } else {
+            return "0%";
+        }
+    }
+
+    id-text := Text {
+        text: info.id;
+        vertical-alignment: center;
+        horizontal-stretch: 1;
+    }
+
+    status-label := Text {
+        text: status-text(info.status);
+        vertical-alignment: center;
+        horizontal-stretch: 0;
+    }
+
+    progress-label := Text {
+        text: progress-text(info);
+        vertical-alignment: center;
+        horizontal-stretch: 0;
+    }
+
+    ProgressIndicator {
+        progress: info.total > 0 ? info.downloaded / info.total : 0;
+        horizontal-stretch: 0;
+    }
+
+    if !finished: HorizontalLayout {
+        pause-btn := Button {
+            text: @tr("Pause");
+            enabled: info.status == TaskSetStatus.Downloading || info.status == TaskSetStatus.Pending;
+            clicked => { pause(); }
+        }
+
+        resume-btn := Button {
+            text: @tr("Resume");
+            enabled: info.status == TaskSetStatus.Paused;
+            clicked => { resume(); }
+        }
+
+        cancel-btn := Button {
+            text: @tr("Cancel");
+            enabled: info.status != TaskSetStatus.Completed && info.status != TaskSetStatus.Failed && info.status != TaskSetStatus.Cancelled;
+            clicked => { cancel(); }
+        }
+    }
+}
 
 export component DownloaderPage inherits VerticalBox {
+    in property <[TaskSetInfo]> unfinished-list;
+    in property <[TaskSetInfo]> finished-list;
+
+    callback pause(string);
+    callback resume(string);
+    callback cancel-task(string);
+
     Title { text: @tr("Downloader"); }
 
-    Text { text: "开发中"; }
+    VerticalSpacing {}
+
+    SectionTitle { text: @tr("Unfinished"); }
+
+    ScrollView {
+        VerticalBox {
+            for info in unfinished-list:
+                TaskSetItem {
+                    info: info;
+                    finished: false;
+                    pause() => { root.pause(info.id); }
+                    resume() => { root.resume(info.id); }
+                    cancel() => { root.cancel-task(info.id); }
+                }
+        }
+    }
+
+    VerticalSpacing {}
+
+    SectionTitle { text: @tr("Finished"); }
+
+    ScrollView {
+        VerticalBox {
+            for info in finished-list:
+                TaskSetItem {
+                    info: info;
+                    finished: true;
+                }
+        }
+    }
 }

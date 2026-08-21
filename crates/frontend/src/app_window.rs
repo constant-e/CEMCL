@@ -2,12 +2,11 @@
 use log::error;
 use slint::ComponentHandle;
 use std::sync::{Arc, Mutex};
-use tokio::sync::mpsc::UnboundedSender;
 
 use crate::game::{MCInfo, ui_combo_box_list, ui_game_dl_list, ui_game_list};
 use crate::java::{self, JavaInfo};
 use crate::settings::Config;
-use crate::ui::{self, AddGameDialog, AddJavaDialog, EditGameDialog, LoginDialog};
+use crate::ui::{self, AddGameDialog, AddJavaDialog, EditGameDialog, ForgeDownloadDialog, LoginDialog};
 use crate::{
     account::{self, Account},
     game::{self, Fabric, Forge, MCConfig, MCDL, MCType, ModType},
@@ -36,7 +35,12 @@ pub enum UICommand {
     GetEditGameVersion(u32),
     GetJavaList,
     GetOfflineAccount,
+    HideForgeDownloadDialog,
+    CancelForgeDownload,
+    PauseTaskSet(String),
     RequestLogin,
+    ResumeTaskSet(String),
+    CancelTaskSet(String),
     SetConfig(Config),
     SetDefaultJava(i32),
     Start(u32, u32),
@@ -69,7 +73,13 @@ pub enum UIUpdate {
     SetJavaModel(Vec<String>),
     SetJavaCheckResult(ui::JavaCheckResult, String),
     SetOfflineAccount(Account),
+    SetTaskSetList(Vec<crate::downloader::TaskSetInfo>),
     SetVersion(String),
+    ShowForgeDownloadDialog(String),
+    SetForgeDownloadMessage(String),
+    SetForgeDownloadProgress(f32),
+    SetForgeDownloadInstalling(bool),
+    QuitForgeDownloadDialog,
     Quit,
     QuitAddGameDialog,
     QuitAddJavaDialog,
@@ -125,6 +135,7 @@ pub struct AppWindow {
     add_game_dialog: Arc<Mutex<Option<slint::Weak<AddGameDialog>>>>,
     add_java_dialog: Arc<Mutex<Option<slint::Weak<AddJavaDialog>>>>,
     edit_game_dialog: Arc<Mutex<Option<slint::Weak<EditGameDialog>>>>,
+    forge_download_dialog: Arc<Mutex<Option<slint::Weak<ForgeDownloadDialog>>>>,
     login_dialog: Arc<Mutex<Option<slint::Weak<LoginDialog>>>>,
 }
 
@@ -136,6 +147,7 @@ impl AppWindow {
         let add_game_dialog = Arc::new(Mutex::new(None));
         let add_java_dialog = Arc::new(Mutex::new(None));
         let edit_game_dialog = Arc::new(Mutex::new(None));
+        let forge_download_dialog = Arc::new(Mutex::new(None));
         let login_dialog = Arc::new(Mutex::new(None));
 
         let ui_weak = ui.as_weak();
@@ -294,11 +306,34 @@ impl AppWindow {
             }
         });
 
+        let tx = cmd_tx.clone();
+        ui.on_pause_taskset(move |id| {
+            if let Err(e) = tx.send(UICommand::PauseTaskSet(id.into())) {
+                error!("{e}");
+            }
+        });
+
+        let tx = cmd_tx.clone();
+        ui.on_resume_taskset(move |id| {
+            if let Err(e) = tx.send(UICommand::ResumeTaskSet(id.into())) {
+                error!("{e}");
+            }
+        });
+
+        let tx = cmd_tx.clone();
+        ui.on_cancel_taskset(move |id| {
+            if let Err(e) = tx.send(UICommand::CancelTaskSet(id.into())) {
+                error!("{e}");
+            }
+        });
+
         let ui_weak_clone = ui_weak.clone();
         let add_game_dialog_clone = add_game_dialog.clone();
         let add_java_dialog_clone = add_java_dialog.clone();
         let edit_game_dialog_clone = edit_game_dialog.clone();
+        let forge_download_dialog_clone = forge_download_dialog.clone();
         let login_dialog_clone = login_dialog.clone();
+        let cmd_tx_clone = cmd_tx.clone();
         tokio::spawn(async move {
             while let Some(update) = update_rx.recv().await {
                 AppWindow::handle(
@@ -307,7 +342,9 @@ impl AppWindow {
                     add_game_dialog_clone.clone(),
                     add_java_dialog_clone.clone(),
                     edit_game_dialog_clone.clone(),
+                    forge_download_dialog_clone.clone(),
                     login_dialog_clone.clone(),
+                    cmd_tx_clone.clone(),
                 )
                 .await;
             }
@@ -320,6 +357,7 @@ impl AppWindow {
             add_game_dialog,
             add_java_dialog,
             edit_game_dialog,
+            forge_download_dialog,
             login_dialog,
         })
     }
@@ -330,7 +368,9 @@ impl AppWindow {
         add_game_dialog: Arc<Mutex<Option<slint::Weak<AddGameDialog>>>>,
         add_java_dialog: Arc<Mutex<Option<slint::Weak<AddJavaDialog>>>>,
         edit_game_dialog: Arc<Mutex<Option<slint::Weak<EditGameDialog>>>>,
+        forge_download_dialog: Arc<Mutex<Option<slint::Weak<ForgeDownloadDialog>>>>,
         login_dialog: Arc<Mutex<Option<slint::Weak<LoginDialog>>>>,
+        cmd_sender: tokio::sync::mpsc::UnboundedSender<UICommand>,
     ) {
         match update {
             UIUpdate::AskBox(id, f) => {
@@ -546,6 +586,32 @@ impl AppWindow {
                     error!("{e}");
                 }
             },
+            UIUpdate::SetTaskSetList(list) => {
+                let unfinished: Vec<crate::downloader::TaskSetInfo> = list
+                    .iter()
+                    .filter(|info| {
+                        info.status != crate::downloader::TaskSetStatus::Completed
+                            && info.status != crate::downloader::TaskSetStatus::Failed
+                            && info.status != crate::downloader::TaskSetStatus::Cancelled
+                    })
+                    .cloned()
+                    .collect();
+                let finished: Vec<crate::downloader::TaskSetInfo> = list
+                    .iter()
+                    .filter(|info| {
+                        info.status == crate::downloader::TaskSetStatus::Completed
+                            || info.status == crate::downloader::TaskSetStatus::Failed
+                            || info.status == crate::downloader::TaskSetStatus::Cancelled
+                    })
+                    .cloned()
+                    .collect();
+                if let Err(e) = ui_weak.upgrade_in_event_loop(move |ui| {
+                    ui.set_unfinished_list(crate::downloader::ui_unfinished_list(&unfinished));
+                    ui.set_finished_list(crate::downloader::ui_finished_list(&finished));
+                }) {
+                    error!("{e}")
+                }
+            }
             UIUpdate::SetVersion(version) => {
                 if let Err(e) = ui_weak.upgrade_in_event_loop(move |ui| {
                     ui.set_version(version.into());
@@ -553,6 +619,78 @@ impl AppWindow {
                     error!("{e}")
                 }
             }
+            UIUpdate::ShowForgeDownloadDialog(message) => {
+                let dialog = forge_download_dialog.clone();
+                let cmd_sender = cmd_sender.clone();
+                if let Err(e) = slint::invoke_from_event_loop(move || {
+                    match game::forge_download_dialog(cmd_sender) {
+                        Ok(w) => match dialog.lock() {
+                            Ok(mut d) => {
+                                if let Some(dialog) = w.upgrade() {
+                                    dialog.set_message(message.into());
+                                }
+                                *d = Some(w);
+                            }
+                            Err(e) => {
+                                error!("{e}");
+                            }
+                        },
+                        Err(e) => {
+                            error!("{e}");
+                        }
+                    }
+                }) {
+                    error!("{e}");
+                }
+            }
+            UIUpdate::SetForgeDownloadMessage(message) => match get(forge_download_dialog) {
+                Ok(w) => {
+                    if let Err(e) = w.upgrade_in_event_loop(move |dialog| {
+                        dialog.set_message(message.into());
+                    }) {
+                        error!("{e}");
+                    }
+                }
+                Err(e) => {
+                    error!("{e}");
+                }
+            },
+            UIUpdate::SetForgeDownloadProgress(progress) => match get(forge_download_dialog) {
+                Ok(w) => {
+                    if let Err(e) = w.upgrade_in_event_loop(move |dialog| {
+                        dialog.set_progress(progress);
+                    }) {
+                        error!("{e}");
+                    }
+                }
+                Err(e) => {
+                    error!("{e}");
+                }
+            },
+            UIUpdate::SetForgeDownloadInstalling(installing) => match get(forge_download_dialog) {
+                Ok(w) => {
+                    if let Err(e) = w.upgrade_in_event_loop(move |dialog| {
+                        dialog.set_installing(installing);
+                    }) {
+                        error!("{e}");
+                    }
+                }
+                Err(e) => {
+                    error!("{e}");
+                }
+            },
+            UIUpdate::QuitForgeDownloadDialog => match get(forge_download_dialog) {
+                Ok(w) => {
+                    if let Err(e) = w.upgrade_in_event_loop(move |dialog| {
+                        dialog.hide().unwrap();
+                    }) {
+                        error!("{e}");
+                    }
+                }
+                Err(e) => {
+                    error!("{e}");
+                }
+            },
             UIUpdate::Quit => {
                 if let Err(e) = ui_weak.upgrade_in_event_loop(|ui| {
                     ui.hide().unwrap();

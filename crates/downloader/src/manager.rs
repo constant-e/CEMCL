@@ -1,11 +1,42 @@
 use dashmap::DashMap;
 use std::{collections::HashMap, sync::Arc};
-use tokio::{sync::Semaphore, task::JoinHandle};
+use tokio::{
+    sync::{Semaphore, broadcast},
+    task::JoinHandle,
+};
 
 use super::{
     task::{DownloadTaskError, TaskInfo},
     taskset::{TaskSet, TaskSetStatus},
 };
+
+/// Status of a task set, broadcast to the upper layer
+#[derive(Clone, Debug)]
+pub struct TaskSetStatusInfo {
+    pub id: String,
+    /// Status based on the total file size
+    pub status: TaskSetStatus,
+    /// Status based on the number of completed tasks
+    pub status_by_number: TaskSetStatus,
+    /// (downloaded_bytes, total_bytes)
+    pub progress: (u64, u64),
+}
+
+impl TaskSetStatusInfo {
+    pub fn new(
+        id: String,
+        status: TaskSetStatus,
+        status_by_number: TaskSetStatus,
+        progress: (u64, u64),
+    ) -> Self {
+        Self {
+            id,
+            status,
+            status_by_number,
+            progress,
+        }
+    }
+}
 
 #[derive(Debug)]
 pub enum DownloadManagerError {
@@ -87,16 +118,57 @@ pub struct DownloadManager {
     semaphore: Arc<Semaphore>,
     tasks: Arc<DashMap<String, TaskSet>>,
     config: Config,
+    broadcast_sender: broadcast::Sender<TaskSetStatusInfo>,
 }
 
 impl DownloadManager {
     pub fn new(config: Config) -> Self {
-        Self {
+        let (broadcast_sender, _) = broadcast::channel(64);
+        let manager = Self {
             client: reqwest::Client::new(),
             semaphore: Arc::new(Semaphore::new(config.concurrency as usize)),
             tasks: Arc::new(DashMap::new()),
             config,
-        }
+            broadcast_sender,
+        };
+        manager.start_broadcast();
+        manager
+    }
+
+    /// Subscribe to the task set status broadcast
+    pub fn subscribe(&self) -> broadcast::Receiver<TaskSetStatusInfo> {
+        self.broadcast_sender.subscribe()
+    }
+
+    /// Broadcast the status of all task sets periodically
+    fn start_broadcast(&self) {
+        let tasks = self.tasks.clone();
+        let sender = self.broadcast_sender.clone();
+        tokio::spawn(async move {
+            let mut interval = tokio::time::interval(std::time::Duration::from_millis(500));
+            loop {
+                interval.tick().await;
+                for entry in tasks.iter() {
+                    let id = entry.key().clone();
+                    let task_set = entry.value();
+                    let status = task_set.get_status();
+                    let status_by_number = task_set.get_status_by_number();
+                    let progress = task_set.get_progress();
+                    if sender
+                        .send(TaskSetStatusInfo::new(
+                            id,
+                            status,
+                            status_by_number,
+                            progress,
+                        ))
+                        .is_err()
+                    {
+                        // No receiver, stop broadcasting
+                        return;
+                    }
+                }
+            }
+        });
     }
 
     pub fn add_taskset(&self, id: String, tasks: Vec<TaskInfo>) {
@@ -167,6 +239,14 @@ impl DownloadManager {
         Ok(taskset.get_status_by_number())
     }
 
+    pub fn get_progress(&self, id: String) -> Result<(u64, u64), DownloadManagerError> {
+        let taskset = self
+            .tasks
+            .get(id.as_str())
+            .ok_or(DownloadManagerError::TaskSetNotFound)?;
+        Ok(taskset.get_progress())
+    }
+
     pub fn set_config(&mut self, config: Config) {
         self.config = config
     }
@@ -186,7 +266,9 @@ impl DownloadManager {
         let tasks = self.tasks.clone();
         tokio::spawn(async move {
             if let Some(task_set) = tasks.get(id.as_str()) {
-                task_set.cancel().await.map_err(DownloadManagerError::from)
+                task_set.cancel().await.map_err(DownloadManagerError::from)?;
+                tasks.remove(id.as_str());
+                Ok(())
             } else {
                 Err(DownloadManagerError::TaskSetNotFound)
             }
@@ -197,7 +279,7 @@ impl DownloadManager {
         let tasks = self.tasks.clone();
         tokio::spawn(async move {
             if let Some(task_set) = tasks.get(id.as_str()) {
-                task_set.start().await.map_err(DownloadManagerError::from)
+                task_set.resume().await.map_err(DownloadManagerError::from)
             } else {
                 Err(DownloadManagerError::TaskSetNotFound)
             }

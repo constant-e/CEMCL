@@ -3,7 +3,7 @@ use log::{error, info, warn};
 use reqwest::Client;
 use std::sync::{
     Arc,
-    atomic::{AtomicU64, Ordering},
+    atomic::{AtomicBool, AtomicU64, Ordering},
 };
 use tokio::{
     io::AsyncWriteExt,
@@ -160,6 +160,8 @@ pub struct DownloadTask {
     pub status: Mutex<DownloadTaskStatus>,
     /// (downloaded_bytes, total_bytes), (0, 0) if never started, (downloaded, 0) if length is unknown
     pub progress: (AtomicU64, AtomicU64),
+    /// Whether the task has ever started downloading
+    started: AtomicBool,
     on_failed: Option<Box<dyn Fn() + Send + Sync>>,
     on_finish: Option<Box<dyn Fn() + Send + Sync>>,
     on_pause: Option<Box<dyn Fn() + Send + Sync>>,
@@ -176,6 +178,7 @@ impl DownloadTask {
             semaphore,
             url,
             save_path,
+            started: AtomicBool::new(false),
             status: Mutex::new(DownloadTaskStatus::Pending),
             progress: (AtomicU64::new(0), AtomicU64::new(0)),
             on_failed: None,
@@ -231,6 +234,7 @@ impl DownloadTask {
             }
         };
 
+        self.started.store(true, Ordering::Relaxed);
         *self.status.try_lock()? = DownloadTaskStatus::Downloading;
 
         self.download(permit).await
@@ -305,6 +309,47 @@ impl DownloadTask {
                     info!("Paused {0}", self.url);
                     if let Some(on_pause) = &self.on_pause {
                         on_pause();
+                    }
+                    // Wait until the task is resumed or cancelled
+                    loop {
+                        match self.receiver.try_write()?.recv().await {
+                            Some(DownloadTaskCommand::Resume) => {
+                                *self.status.try_lock()? = DownloadTaskStatus::Downloading;
+                                info!("Resumed {0}", self.url);
+                                break;
+                            }
+                            Some(DownloadTaskCommand::Cancel) => {
+                                *self.status.try_lock()? = DownloadTaskStatus::Cancelled;
+                                info!("Cancelled downloading {0}", self.url);
+                                drop(file);
+                                if let Err(e) = tokio::fs::remove_file(&self.save_path).await {
+                                    error!(
+                                        "Failed to remove incompleted file {0}. Reason: {e}",
+                                        self.save_path
+                                    );
+                                }
+                                if let Some(on_cancel) = &self.on_cancel {
+                                    on_cancel();
+                                }
+                                return Ok(());
+                            }
+                            Some(DownloadTaskCommand::Pause) => {}
+                            None => {
+                                error!("Command channel closed for {0}", self.url);
+                                *self.status.try_lock()? = DownloadTaskStatus::Failed;
+                                drop(file);
+                                if let Err(e) = tokio::fs::remove_file(&self.save_path).await {
+                                    error!(
+                                        "Failed to remove incompleted file {0}. Reason: {e}",
+                                        self.save_path
+                                    );
+                                }
+                                if let Some(on_failed) = &self.on_failed {
+                                    on_failed();
+                                }
+                                return Err(DownloadTaskError::Disconnected);
+                            }
+                        }
                     }
                 }
                 Ok(DownloadTaskCommand::Cancel) => {
@@ -417,6 +462,14 @@ impl DownloadTask {
     }
 
     pub fn try_cancel(&self) -> Result<(), DownloadTaskError> {
+        if !self.started.load(Ordering::Relaxed) {
+            // The task has never started, cancel it directly
+            *self.status.try_lock()? = DownloadTaskStatus::Cancelled;
+            if let Some(on_cancel) = &self.on_cancel {
+                on_cancel();
+            }
+            return Ok(());
+        }
         if let Err(e) = self.sender.try_send(DownloadTaskCommand::Cancel) {
             error!(
                 "Failed to send cancel command for {0}. Reason: {e}",
@@ -428,6 +481,14 @@ impl DownloadTask {
     }
 
     pub fn try_pause(&self) -> Result<(), DownloadTaskError> {
+        if !self.started.load(Ordering::Relaxed) {
+            // The task has never started, pause it directly
+            *self.status.try_lock()? = DownloadTaskStatus::Paused;
+            if let Some(on_pause) = &self.on_pause {
+                on_pause();
+            }
+            return Ok(());
+        }
         if let Err(e) = self.sender.try_send(DownloadTaskCommand::Pause) {
             error!(
                 "Failed to send pause command for {0}. Reason: {e}",
@@ -436,6 +497,22 @@ impl DownloadTask {
             return Err(e.into());
         }
         Ok(())
+    }
+
+    pub fn try_resume(&self) -> Result<(), DownloadTaskError> {
+        if let Err(e) = self.sender.try_send(DownloadTaskCommand::Resume) {
+            error!(
+                "Failed to send resume command for {0}. Reason: {e}",
+                self.url
+            );
+            return Err(e.into());
+        }
+        Ok(())
+    }
+
+    /// Whether the task has ever started downloading
+    pub fn is_started(&self) -> bool {
+        self.started.load(Ordering::Relaxed)
     }
 
     pub async fn resume(&self) -> Result<(), DownloadTaskError> {
@@ -449,6 +526,7 @@ impl DownloadTask {
             }
         };
 
+        self.started.store(true, Ordering::Relaxed);
         *self.status.try_lock()? = DownloadTaskStatus::Downloading;
 
         self.download(permit).await

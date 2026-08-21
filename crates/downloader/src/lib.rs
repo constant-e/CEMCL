@@ -5,3 +5,4 @@ pub mod taskset;
 pub use manager::Config;
 pub use manager::DownloadManager;
 pub use manager::DownloadManagerError;
+pub use manager::TaskSetStatusInfo;

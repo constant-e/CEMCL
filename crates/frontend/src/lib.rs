@@ -1,5 +1,6 @@
 pub mod account;
 mod app_window;
+pub mod downloader;
 pub mod game;
 pub mod home;
 pub mod java;
