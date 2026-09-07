@@ -64,7 +64,7 @@ pub enum UIUpdate {
     SetEditGameConfig(MCConfig),
     SetEditGameJavaList(Vec<String>),
     SetEditGameVersion(String),
-    SetHomePageProgress(u32, u32),
+    SetHomePageProgress(f32, u32, u32),
     SetHomePageStatus(home::State),
     SetGameIndex(u32),
     SetGameList(Vec<MCInfo>),
@@ -509,9 +509,11 @@ impl AppWindow {
                     error!("{e}");
                 }
             },
-            UIUpdate::SetHomePageProgress(current, total) => {
+            UIUpdate::SetHomePageProgress(progress, current, total) => {
                 if let Err(e) = ui_weak.upgrade_in_event_loop(move |ui| {
-                    ui.set_progress(current as f32 / total as f32);
+                    ui.set_progress(progress);
+                    ui.set_progress_current(current as i32);
+                    ui.set_progress_total(total as i32);
                 }) {
                     error!("{e}")
                 }

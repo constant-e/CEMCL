@@ -4,6 +4,8 @@ import { Title, SectionTitle, VerticalSpacing, SettingsGroup, HorizontalSpacing,
 export struct ConfigGeneral {
     close_after_launch: bool,
     game_path: string,
+    // 0 = BySize, 1 = ByNumber, 2 = Both
+    progress_mode: int,
 }
 
 export struct ConfigDL {
@@ -59,6 +61,17 @@ export component SettingsPage inherits VerticalBox {
                         LineEdit {
                             text <=> config.general.game-path;
                             edited => { set-config(root.config); }
+                        }
+                    }
+                    Row {
+                        MyText { text: @tr("Progress Display"); }
+                        progress-mode-box := ComboBox {
+                            model: [@tr("By Size"), @tr("By Number"), @tr("Both")];
+                            current-index: config.general.progress-mode;
+                            selected => {
+                                config.general.progress-mode = progress-mode-box.current-index;
+                                set-config(root.config);
+                            }
                         }
                     }
                     Row {

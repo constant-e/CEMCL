@@ -2,7 +2,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
-"POT-Creation-Date: 2026-08-16 11:01+0000\n"
+"POT-Creation-Date: 2026-08-24 15:03+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -82,147 +82,167 @@ msgctxt "Account"
 msgid "Other"
 msgstr ""
 
-#: pages/home.slint:27
+#: pages/home.slint:44
 msgctxt "HomePage"
 msgid "Downloading"
 msgstr ""
 
-#: pages/home.slint:31
+#: pages/home.slint:48
 msgctxt "HomePage"
 msgid "Launching"
 msgstr ""
 
-#: pages/home.slint:35
+#: pages/home.slint:52
 msgctxt "HomePage"
 msgid "Logging in"
 msgstr ""
 
-#: pages/home.slint:73
+#: pages/home.slint:95
 msgctxt "HomePage"
 msgid "Start"
 msgstr ""
 
-#: pages/settings.slint:48
+#: pages/settings.slint:50
 msgctxt "SettingsPage"
 msgid "Settings"
 msgstr ""
 
-#: pages/settings.slint:52
+#: pages/settings.slint:54
 msgctxt "SettingsPage"
 msgid "Launcher Settings"
 msgstr ""
 
-#: pages/settings.slint:56
+#: pages/settings.slint:58
 msgctxt "SettingsPage"
 msgid "General"
 msgstr ""
 
-#: pages/settings.slint:58
+#: pages/settings.slint:60
 msgctxt "SettingsPage"
 msgid "Minecraft Path"
 msgstr ""
 
 #: pages/settings.slint:67
 msgctxt "SettingsPage"
+msgid "Progress Display"
+msgstr ""
+
+#: pages/settings.slint:69
+msgctxt "SettingsPage"
+msgid "By Size"
+msgstr ""
+
+#: pages/settings.slint:69
+msgctxt "SettingsPage"
+msgid "By Number"
+msgstr ""
+
+#: pages/settings.slint:69
+msgctxt "SettingsPage"
+msgid "Both"
+msgstr ""
+
+#: pages/settings.slint:80
+msgctxt "SettingsPage"
 msgid "Quit after Launch"
 msgstr ""
 
-#: pages/settings.slint:76
+#: pages/settings.slint:89
 msgctxt "SettingsPage"
 msgid "Downloading Settings"
 msgstr ""
 
-#: pages/settings.slint:79
+#: pages/settings.slint:92
 msgctxt "SettingsPage"
 msgid "Concurrency"
 msgstr ""
 
-#: pages/settings.slint:87
+#: pages/settings.slint:100
 msgctxt "SettingsPage"
 msgid "Assets Source"
 msgstr ""
 
-#: pages/settings.slint:95
+#: pages/settings.slint:108
 msgctxt "SettingsPage"
 msgid "Libraries Source"
 msgstr ""
 
-#: pages/settings.slint:103
+#: pages/settings.slint:116
 msgctxt "SettingsPage"
 msgid "Minecraft Source"
 msgstr ""
 
-#: pages/settings.slint:111
+#: pages/settings.slint:124
 msgctxt "SettingsPage"
 msgid "Fabric Source"
 msgstr ""
 
-#: pages/settings.slint:119
+#: pages/settings.slint:132
 msgctxt "SettingsPage"
 msgid "Forge Source"
 msgstr ""
 
-#: pages/settings.slint:132 pages/settings.slint:136
+#: pages/settings.slint:145 pages/settings.slint:149
 msgctxt "SettingsPage"
 msgid "Default Minecraft Settings"
 msgstr ""
 
-#: pages/settings.slint:139
+#: pages/settings.slint:152
 msgctxt "SettingsPage"
 msgid "Java Path"
 msgstr ""
 
-#: pages/settings.slint:148
+#: pages/settings.slint:161
 msgctxt "SettingsPage"
 msgid "Wrapper"
 msgstr ""
 
-#: pages/settings.slint:156
+#: pages/settings.slint:169
 msgctxt "SettingsPage"
 msgid "Minimum Memory"
 msgstr ""
 
-#: pages/settings.slint:164
+#: pages/settings.slint:177
 msgctxt "SettingsPage"
 msgid "Maximum Memory"
 msgstr ""
 
-#: pages/settings.slint:172
+#: pages/settings.slint:185
 msgctxt "SettingsPage"
 msgid "Window Height"
 msgstr ""
 
-#: pages/settings.slint:180
+#: pages/settings.slint:193
 msgctxt "SettingsPage"
 msgid "Window Width"
 msgstr ""
 
-#: pages/settings.slint:193
+#: pages/settings.slint:206
 msgctxt "SettingsPage"
 msgid "About"
 msgstr ""
 
-#: pages/settings.slint:211
+#: pages/settings.slint:224
 msgctxt "SettingsPage"
 msgid "Version: "
 msgstr ""
 
-#: pages/settings.slint:212
+#: pages/settings.slint:225
 msgctxt "SettingsPage"
 msgid "GitHub Repository: "
 msgstr ""
 
-#: pages/settings.slint:213
+#: pages/settings.slint:226
 msgctxt "SettingsPage"
 msgid "Developers: "
 msgstr ""
 
-#: pages/settings.slint:214
+#: pages/settings.slint:227
 msgctxt "SettingsPage"
 msgid "License: "
 msgstr ""
 
-#: pages/settings.slint:216
+#: pages/settings.slint:229
 msgctxt "SettingsPage"
 msgid "Credits:\n"
 msgstr ""
@@ -282,62 +302,62 @@ msgctxt "GamesPage"
 msgid "Edit"
 msgstr ""
 
-#: pages/downloader.slint:32
+#: pages/downloader.slint:38
 msgctxt "TaskSetItem"
 msgid "Pending"
 msgstr ""
 
-#: pages/downloader.slint:34
+#: pages/downloader.slint:40
 msgctxt "TaskSetItem"
 msgid "Downloading"
 msgstr ""
 
-#: pages/downloader.slint:36
+#: pages/downloader.slint:42
 msgctxt "TaskSetItem"
 msgid "Paused"
 msgstr ""
 
-#: pages/downloader.slint:38
+#: pages/downloader.slint:44
 msgctxt "TaskSetItem"
 msgid "Completed"
 msgstr ""
 
-#: pages/downloader.slint:40
+#: pages/downloader.slint:46
 msgctxt "TaskSetItem"
 msgid "Failed"
 msgstr ""
 
-#: pages/downloader.slint:42
+#: pages/downloader.slint:48
 msgctxt "TaskSetItem"
 msgid "Cancelled"
 msgstr ""
 
-#: pages/downloader.slint:79
+#: pages/downloader.slint:114
 msgctxt "TaskSetItem"
 msgid "Pause"
 msgstr ""
 
-#: pages/downloader.slint:85
+#: pages/downloader.slint:120
 msgctxt "TaskSetItem"
 msgid "Resume"
 msgstr ""
 
-#: pages/downloader.slint:91
+#: pages/downloader.slint:126
 msgctxt "TaskSetItem"
 msgid "Cancel"
 msgstr ""
 
-#: pages/downloader.slint:106
+#: pages/downloader.slint:144
 msgctxt "DownloaderPage"
 msgid "Downloader"
 msgstr ""
 
-#: pages/downloader.slint:110
+#: pages/downloader.slint:148
 msgctxt "DownloaderPage"
 msgid "Unfinished"
 msgstr ""
 
-#: pages/downloader.slint:127
+#: pages/downloader.slint:166
 msgctxt "DownloaderPage"
 msgid "Finished"
 msgstr ""
@@ -690,32 +710,32 @@ msgctxt "MsgDialog"
 msgid "Failed to load OAuth login."
 msgstr ""
 
-#: app-window.slint:57
+#: app-window.slint:59
 msgctxt "AppWindow"
 msgid "Account"
 msgstr ""
 
-#: app-window.slint:57
+#: app-window.slint:59
 msgctxt "AppWindow"
 msgid "Home"
 msgstr ""
 
-#: app-window.slint:57
+#: app-window.slint:59
 msgctxt "AppWindow"
 msgid "Games"
 msgstr ""
 
-#: app-window.slint:57
+#: app-window.slint:59
 msgctxt "AppWindow"
 msgid "Downloader"
 msgstr ""
 
-#: app-window.slint:57
+#: app-window.slint:59
 msgctxt "AppWindow"
 msgid "Java"
 msgstr ""
 
-#: app-window.slint:57
+#: app-window.slint:59
 msgctxt "AppWindow"
 msgid "Settings"
 msgstr ""

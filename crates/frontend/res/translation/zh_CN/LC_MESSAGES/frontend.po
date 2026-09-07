@@ -2,7 +2,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
-"POT-Creation-Date: 2026-08-16 11:01+0000\n"
+"POT-Creation-Date: 2026-08-24 15:03+0000\n"
 "PO-Revision-Date: 2026-04-10 18:06+0800\n"
 "Last-Translator:  <fmn_tzx@outlook.com>\n"
 "Language-Team: Chinese (simplified) <i18n-zh@googlegroups.com>\n"
@@ -82,147 +82,167 @@ msgctxt "Account"
 msgid "Other"
 msgstr "其他账号"
 
-#: pages/home.slint:27
+#: pages/home.slint:44
 msgctxt "HomePage"
 msgid "Downloading"
 msgstr "下载中"
 
-#: pages/home.slint:31
+#: pages/home.slint:48
 msgctxt "HomePage"
 msgid "Launching"
 msgstr "启动中"
 
-#: pages/home.slint:35
+#: pages/home.slint:52
 msgctxt "HomePage"
 msgid "Logging in"
 msgstr "登录中"
 
-#: pages/home.slint:73
+#: pages/home.slint:95
 msgctxt "HomePage"
 msgid "Start"
 msgstr "启动"
 
-#: pages/settings.slint:48
+#: pages/settings.slint:50
 msgctxt "SettingsPage"
 msgid "Settings"
 msgstr "设置"
 
-#: pages/settings.slint:52
+#: pages/settings.slint:54
 msgctxt "SettingsPage"
 msgid "Launcher Settings"
 msgstr "启动器设置"
 
-#: pages/settings.slint:56
+#: pages/settings.slint:58
 msgctxt "SettingsPage"
 msgid "General"
 msgstr "通用"
 
-#: pages/settings.slint:58
+#: pages/settings.slint:60
 msgctxt "SettingsPage"
 msgid "Minecraft Path"
 msgstr "Minecraft路径"
 
 #: pages/settings.slint:67
 msgctxt "SettingsPage"
+msgid "Progress Display"
+msgstr "进度显示方式"
+
+#: pages/settings.slint:69
+msgctxt "SettingsPage"
+msgid "By Size"
+msgstr "按大小"
+
+#: pages/settings.slint:69
+msgctxt "SettingsPage"
+msgid "By Number"
+msgstr "按数量"
+
+#: pages/settings.slint:69
+msgctxt "SettingsPage"
+msgid "Both"
+msgstr "均显示"
+
+#: pages/settings.slint:80
+msgctxt "SettingsPage"
 msgid "Quit after Launch"
 msgstr "启动后关闭启动器"
 
-#: pages/settings.slint:76
+#: pages/settings.slint:89
 msgctxt "SettingsPage"
 msgid "Downloading Settings"
 msgstr "下载设置"
 
-#: pages/settings.slint:79
+#: pages/settings.slint:92
 msgctxt "SettingsPage"
 msgid "Concurrency"
 msgstr "并发数"
 
-#: pages/settings.slint:87
+#: pages/settings.slint:100
 msgctxt "SettingsPage"
 msgid "Assets Source"
 msgstr "Assets下载源"
 
-#: pages/settings.slint:95
+#: pages/settings.slint:108
 msgctxt "SettingsPage"
 msgid "Libraries Source"
 msgstr "Libraries下载源"
 
-#: pages/settings.slint:103
+#: pages/settings.slint:116
 msgctxt "SettingsPage"
 msgid "Minecraft Source"
 msgstr "Minecraft下载源"
 
-#: pages/settings.slint:111
+#: pages/settings.slint:124
 msgctxt "SettingsPage"
 msgid "Fabric Source"
 msgstr "Fabric下载源"
 
-#: pages/settings.slint:119
+#: pages/settings.slint:132
 msgctxt "SettingsPage"
 msgid "Forge Source"
 msgstr "Forge下载源"
 
-#: pages/settings.slint:132 pages/settings.slint:136
+#: pages/settings.slint:145 pages/settings.slint:149
 msgctxt "SettingsPage"
 msgid "Default Minecraft Settings"
 msgstr "Minecraft默认配置"
 
-#: pages/settings.slint:139
+#: pages/settings.slint:152
 msgctxt "SettingsPage"
 msgid "Java Path"
 msgstr "Java路径"
 
-#: pages/settings.slint:148
+#: pages/settings.slint:161
 msgctxt "SettingsPage"
 msgid "Wrapper"
 msgstr "封装器"
 
-#: pages/settings.slint:156
+#: pages/settings.slint:169
 msgctxt "SettingsPage"
 msgid "Minimum Memory"
 msgstr "最小分配内存"
 
-#: pages/settings.slint:164
+#: pages/settings.slint:177
 msgctxt "SettingsPage"
 msgid "Maximum Memory"
 msgstr "最大分配内存"
 
-#: pages/settings.slint:172
+#: pages/settings.slint:185
 msgctxt "SettingsPage"
 msgid "Window Height"
 msgstr "窗口高度"
 
-#: pages/settings.slint:180
+#: pages/settings.slint:193
 msgctxt "SettingsPage"
 msgid "Window Width"
 msgstr "窗口宽度"
 
-#: pages/settings.slint:193
+#: pages/settings.slint:206
 msgctxt "SettingsPage"
 msgid "About"
 msgstr "关于"
 
-#: pages/settings.slint:211
+#: pages/settings.slint:224
 msgctxt "SettingsPage"
 msgid "Version: "
 msgstr "版本："
 
-#: pages/settings.slint:212
+#: pages/settings.slint:225
 msgctxt "SettingsPage"
 msgid "GitHub Repository: "
 msgstr "GitHub仓库："
 
-#: pages/settings.slint:213
+#: pages/settings.slint:226
 msgctxt "SettingsPage"
 msgid "Developers: "
 msgstr "开发者："
 
-#: pages/settings.slint:214
+#: pages/settings.slint:227
 msgctxt "SettingsPage"
 msgid "License: "
 msgstr "许可证："
 
-#: pages/settings.slint:216
+#: pages/settings.slint:229
 msgctxt "SettingsPage"
 msgid "Credits:\n"
 msgstr "鸣谢：\n"
@@ -282,62 +302,62 @@ msgctxt "GamesPage"
 msgid "Edit"
 msgstr "编辑"
 
-#: pages/downloader.slint:32
+#: pages/downloader.slint:38
 msgctxt "TaskSetItem"
 msgid "Pending"
 msgstr "等待中"
 
-#: pages/downloader.slint:34
+#: pages/downloader.slint:40
 msgctxt "TaskSetItem"
 msgid "Downloading"
 msgstr "下载中"
 
-#: pages/downloader.slint:36
+#: pages/downloader.slint:42
 msgctxt "TaskSetItem"
 msgid "Paused"
 msgstr "已暂停"
 
-#: pages/downloader.slint:38
+#: pages/downloader.slint:44
 msgctxt "TaskSetItem"
 msgid "Completed"
 msgstr "已完成"
 
-#: pages/downloader.slint:40
+#: pages/downloader.slint:46
 msgctxt "TaskSetItem"
 msgid "Failed"
 msgstr "失败"
 
-#: pages/downloader.slint:42
+#: pages/downloader.slint:48
 msgctxt "TaskSetItem"
 msgid "Cancelled"
 msgstr "已取消"
 
-#: pages/downloader.slint:79
+#: pages/downloader.slint:114
 msgctxt "TaskSetItem"
 msgid "Pause"
 msgstr "暂停"
 
-#: pages/downloader.slint:85
+#: pages/downloader.slint:120
 msgctxt "TaskSetItem"
 msgid "Resume"
 msgstr "恢复"
 
-#: pages/downloader.slint:91
+#: pages/downloader.slint:126
 msgctxt "TaskSetItem"
 msgid "Cancel"
 msgstr "取消"
 
-#: pages/downloader.slint:106
+#: pages/downloader.slint:144
 msgctxt "DownloaderPage"
 msgid "Downloader"
 msgstr "下载"
 
-#: pages/downloader.slint:110
+#: pages/downloader.slint:148
 msgctxt "DownloaderPage"
 msgid "Unfinished"
 msgstr "未完成"
 
-#: pages/downloader.slint:127
+#: pages/downloader.slint:166
 msgctxt "DownloaderPage"
 msgid "Finished"
 msgstr "已完成"
@@ -690,32 +710,32 @@ msgctxt "MsgDialog"
 msgid "Failed to load OAuth login."
 msgstr "加载OAuth失败"
 
-#: app-window.slint:57
+#: app-window.slint:59
 msgctxt "AppWindow"
 msgid "Account"
 msgstr "账号"
 
-#: app-window.slint:57
+#: app-window.slint:59
 msgctxt "AppWindow"
 msgid "Home"
 msgstr "主页"
 
-#: app-window.slint:57
+#: app-window.slint:59
 msgctxt "AppWindow"
 msgid "Games"
 msgstr "游戏"
 
-#: app-window.slint:57
+#: app-window.slint:59
 msgctxt "AppWindow"
 msgid "Downloader"
 msgstr "下载"
 
-#: app-window.slint:57
+#: app-window.slint:59
 msgctxt "AppWindow"
 msgid "Java"
 msgstr "Java"
 
-#: app-window.slint:57
+#: app-window.slint:59
 msgctxt "AppWindow"
 msgid "Settings"
 msgstr "设置"

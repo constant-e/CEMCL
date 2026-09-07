@@ -13,9 +13,26 @@ export component HomePage inherits VerticalBox {
     in-out property <[string]> model <=> combo-box.model;
     in-out property <State> state;
     in-out property <float> progress;
+    // 0 = BySize, 1 = ByNumber, 2 = Both
+    in-out property <int> progress-mode;
+    in-out property <int> progress-current;
+    in-out property <int> progress-total;
 
     callback current-index-changed(index: int);
     callback start(index: int);
+
+    function progress-text() -> string {
+        if progress-mode == 1 {
+            // 按数量：显示 "完成数/总数"
+            return progress-current + "/" + progress-total;
+        } else if progress-mode == 2 {
+            // 均显示：百分比后显示 " (完成数/总数)"
+            return round(progress * 100) + "% (" + progress-current + "/" + progress-total + ")";
+        } else {
+            // 按大小：原有逻辑
+            return round(progress * 100) + "%";
+        }
+    }
 
     states [
         spare when state == State.Spare: {
@@ -65,7 +82,8 @@ export component HomePage inherits VerticalBox {
     
             Text {
                 vertical-alignment: center;
-                text: round(progress * 100) + "%";
+                horizontal-alignment: right;
+                text: progress-text();
             }
         }
 

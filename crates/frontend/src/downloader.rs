@@ -49,6 +49,8 @@ pub struct TaskSetInfo {
     pub status: TaskSetStatus,
     /// (downloaded_bytes, total_bytes)
     pub progress: (u64, u64),
+    /// (completed_tasks, total_tasks)
+    pub progress_by_number: (u64, u64),
 }
 
 impl From<ui::TaskSetInfo> for TaskSetInfo {
@@ -57,6 +59,7 @@ impl From<ui::TaskSetInfo> for TaskSetInfo {
             id: value.id.into(),
             status: value.status.into(),
             progress: (value.downloaded as u64, value.total as u64),
+            progress_by_number: (value.downloaded_num as u64, value.total_num as u64),
         }
     }
 }
@@ -68,6 +71,8 @@ impl From<TaskSetInfo> for ui::TaskSetInfo {
             status: value.status.into(),
             downloaded: value.progress.0 as f32,
             total: value.progress.1 as f32,
+            downloaded_num: value.progress_by_number.0 as i32,
+            total_num: value.progress_by_number.1 as i32,
         }
     }
 }

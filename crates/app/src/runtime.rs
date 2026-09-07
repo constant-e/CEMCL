@@ -37,6 +37,8 @@ pub struct ConfigGeneral {
     pub close_after_launch: bool,
     /// .minecraft路径
     pub game_path: String,
+    /// 进度显示方式
+    pub progress_mode: frontend::ProgressMode,
 }
 
 #[derive(Clone)]
@@ -101,6 +103,7 @@ impl From<frontend::ConfigGeneral> for ConfigGeneral {
         Self {
             close_after_launch: value.close_after_launch,
             game_path: value.game_path,
+            progress_mode: value.progress_mode,
         }
     }
 }
@@ -136,6 +139,7 @@ impl From<ConfigGeneral> for frontend::ConfigGeneral {
         Self {
             close_after_launch: value.close_after_launch,
             game_path: value.game_path,
+            progress_mode: value.progress_mode,
         }
     }
 }
@@ -158,6 +162,7 @@ impl Default for ConfigGeneral {
         ConfigGeneral {
             close_after_launch: false,
             game_path: String::from(".minecraft"),
+            progress_mode: frontend::ProgressMode::BySize,
         }
     }
 }
@@ -759,7 +764,7 @@ impl AppRuntime {
                     .await?
                 {
                     self.update_sender
-                        .send(UIUpdate::SetHomePageProgress(1 as u32, 5))?;
+                        .send(UIUpdate::SetHomePageProgress(1.0 / 5.0, 1, 5))?;
                     let mut session = self
                         .account_manager
                         .take_auth_session()
@@ -770,11 +775,15 @@ impl AppRuntime {
                         match action {
                             AuthPollAction::Continue(s) => {
                                 self.update_sender
-                                    .send(UIUpdate::SetHomePageProgress(s as u32, 5))?;
+                                    .send(UIUpdate::SetHomePageProgress(
+                                        s as f32 / 5.0,
+                                        s as u32,
+                                        5,
+                                    ))?;
                             }
                             AuthPollAction::Done(account) => {
                                 self.update_sender
-                                    .send(UIUpdate::SetHomePageProgress(5, 5))?;
+                                    .send(UIUpdate::SetHomePageProgress(1.0, 5, 5))?;
                                 self.account_manager.edit(acc_index, account)?;
                                 break;
                             }
@@ -818,7 +827,7 @@ impl AppRuntime {
                     self.downloader.start_taskset(id.clone())?;
 
                     // Wait for the download to complete via broadcast.
-                    // The home page progress is based on the number of completed tasks.
+                    // The progress display depends on the configured progress mode.
                     loop {
                         let info = match self.downloader_broadcast.recv().await {
                             Ok(info) => info,
@@ -835,10 +844,7 @@ impl AppRuntime {
                         }
                         match info.status_by_number {
                             downloader::taskset::TaskSetStatus::Completed(total) => {
-                                self.update_sender.send(UIUpdate::SetHomePageProgress(
-                                    total as u32,
-                                    total as u32,
-                                ))?;
+                                self.send_home_progress(info.progress, (total, total))?;
                                 tokio::task::yield_now().await;
                                 break;
                             }
@@ -850,22 +856,15 @@ impl AppRuntime {
                                 return Err(LauncherError::Interrupted);
                             }
                             downloader::taskset::TaskSetStatus::Downloading(downloaded, total) => {
-                                self.update_sender.send(UIUpdate::SetHomePageProgress(
-                                    downloaded as u32,
-                                    total as u32,
-                                ))?;
+                                self.send_home_progress(info.progress, (downloaded, total))?;
                                 tokio::task::yield_now().await;
                             }
                             downloader::taskset::TaskSetStatus::Paused(downloaded, total) => {
-                                self.update_sender.send(UIUpdate::SetHomePageProgress(
-                                    downloaded as u32,
-                                    total as u32,
-                                ))?;
+                                self.send_home_progress(info.progress, (downloaded, total))?;
                                 tokio::task::yield_now().await;
                             }
                             downloader::taskset::TaskSetStatus::Pending(total) => {
-                                self.update_sender
-                                    .send(UIUpdate::SetHomePageProgress(0, total as u32))?;
+                                self.send_home_progress(info.progress, (0, total))?;
                                 tokio::task::yield_now().await;
                             }
                         }
@@ -877,7 +876,7 @@ impl AppRuntime {
                 ))?;
                 tokio::task::yield_now().await;
                 self.update_sender
-                    .send(UIUpdate::SetHomePageProgress(1, 2))?;
+                    .send(UIUpdate::SetHomePageProgress(0.5, 1, 2))?;
                 tokio::task::yield_now().await;
 
                 let (s, r) = std::sync::mpsc::channel();
@@ -901,7 +900,7 @@ impl AppRuntime {
                 match r.recv().unwrap() {
                     Ok(_) => {
                         self.update_sender
-                            .send(UIUpdate::SetHomePageProgress(2, 2))?;
+                            .send(UIUpdate::SetHomePageProgress(1.0, 2, 2))?;
                         tokio::task::yield_now().await;
                         if self.config.close_after_launch {
                             self.update_sender.send(UIUpdate::Quit)?;
@@ -914,7 +913,7 @@ impl AppRuntime {
                     .send(UIUpdate::SetHomePageStatus(frontend::home::State::Spare))?;
 
                 self.update_sender
-                    .send(UIUpdate::SetHomePageProgress(0, 0))?;
+                    .send(UIUpdate::SetHomePageProgress(0.0, 0, 0))?;
             }
             UICommand::SwitchAccount(index) => {
                 self.account_manager.set_current_index(index)?;
@@ -924,6 +923,57 @@ impl AppRuntime {
             }
         }
 
+        Ok(())
+    }
+
+    /// 根据配置的进度显示方式，向主页发送进度更新。
+    /// `size_progress` 为按字节计算的 (downloaded, total)，
+    /// `number_progress` 为按任务数量计算的 (completed, total)。
+    fn send_home_progress(
+        &self,
+        size_progress: (u64, u64),
+        number_progress: (u64, u64),
+    ) -> Result<(), LauncherError> {
+        let (size_downloaded, size_total) = size_progress;
+        let (number_done, number_total) = number_progress;
+        match self.config.progress_mode {
+            frontend::ProgressMode::BySize => {
+                let progress = if size_total != 0 {
+                    size_downloaded as f32 / size_total as f32
+                } else {
+                    0.0
+                };
+                self.update_sender.send(UIUpdate::SetHomePageProgress(
+                    progress,
+                    size_downloaded as u32,
+                    size_total as u32,
+                ))?;
+            }
+            frontend::ProgressMode::ByNumber => {
+                let progress = if number_total != 0 {
+                    number_done as f32 / number_total as f32
+                } else {
+                    0.0
+                };
+                self.update_sender.send(UIUpdate::SetHomePageProgress(
+                    progress,
+                    number_done as u32,
+                    number_total as u32,
+                ))?;
+            }
+            frontend::ProgressMode::Both => {
+                let progress = if size_total != 0 {
+                    size_downloaded as f32 / size_total as f32
+                } else {
+                    0.0
+                };
+                self.update_sender.send(UIUpdate::SetHomePageProgress(
+                    progress,
+                    number_done as u32,
+                    number_total as u32,
+                ))?;
+            }
+        }
         Ok(())
     }
 
@@ -1086,7 +1136,7 @@ impl AppRuntime {
                     if let Err(e) = self.handle(cmd).await {
                         error!("{e}");
                         self.update_sender.send(UIUpdate::SetHomePageStatus(frontend::home::State::Spare))?;
-                        self.update_sender.send(UIUpdate::SetHomePageProgress(0, 0))?;
+                        self.update_sender.send(UIUpdate::SetHomePageProgress(0.0, 0, 0))?;
                     }
                 },
                 info = self.downloader_broadcast.recv() => {
@@ -1159,6 +1209,20 @@ impl AppRuntime {
             }
         }
 
+        // 从 status_by_number 提取按数量的进度
+        let progress_by_number = match &info.status_by_number {
+            downloader::taskset::TaskSetStatus::Pending(total) => (0, *total),
+            downloader::taskset::TaskSetStatus::Downloading(downloaded, total) => {
+                (*downloaded, *total)
+            }
+            downloader::taskset::TaskSetStatus::Paused(downloaded, total) => {
+                (*downloaded, *total)
+            }
+            downloader::taskset::TaskSetStatus::Completed(total) => (*total, *total),
+            downloader::taskset::TaskSetStatus::Cancelled => (0, 0),
+            downloader::taskset::TaskSetStatus::Failed => (0, 0),
+        };
+
         self.task_set_status.insert(
             info.id.clone(),
             frontend::downloader::TaskSetInfo {
@@ -1184,6 +1248,7 @@ impl AppRuntime {
                     }
                 },
                 progress: info.progress,
+                progress_by_number,
             },
         );
         let list: Vec<frontend::downloader::TaskSetInfo> =
@@ -1227,6 +1292,11 @@ impl AppRuntime {
                     .as_str()
                     .ok_or(LauncherError::LauncherConfigError)?,
             );
+            config_general.progress_mode = match json["progress_mode"].as_str() {
+                Some("ByNumber") => frontend::ProgressMode::ByNumber,
+                Some("Both") => frontend::ProgressMode::Both,
+                _ => frontend::ProgressMode::BySize,
+            };
             config_dl.game_source = String::from(
                 json["game_source"]
                     .as_str()
@@ -1290,6 +1360,11 @@ impl AppRuntime {
                 "game_source": config_dl.game_source,
                 "height": config_mc.height,
                 "libraries_source": config_dl.libraries_source,
+                "progress_mode": match config.progress_mode {
+                    frontend::ProgressMode::BySize => "BySize",
+                    frontend::ProgressMode::ByNumber => "ByNumber",
+                    frontend::ProgressMode::Both => "Both",
+                },
                 "width": config_mc.width,
                 "wrapper": config_mc.wrapper,
                 "xms": config_mc.xms,

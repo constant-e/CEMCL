@@ -25,6 +25,8 @@ export component AppWindow inherits Window {
     in-out property <string> authors;
     in-out property <string> version;
     in-out property <float> progress;
+    in-out property <int> progress-current;
+    in-out property <int> progress-total;
     in-out property <[TaskSetInfo]> unfinished-list;
     in-out property <[TaskSetInfo]> finished-list;
 
@@ -84,6 +86,9 @@ export component AppWindow inherits Window {
                 index <=> game-index;
                 model: combo-box-model;
                 progress: progress;
+                progress-current: root.progress-current;
+                progress-total: root.progress-total;
+                progress-mode: root.config.general.progress-mode;
                 current-index-changed(index) => { switch-ver(index) }
                 start(index) => { start(root.acc-index, index) }
             }
@@ -99,6 +104,7 @@ export component AppWindow inherits Window {
             if (side-bar.current-index == 3): downloader-page := DownloaderPage {
                 unfinished-list: root.unfinished-list;
                 finished-list: root.finished-list;
+                progress-mode: root.config.general.progress-mode;
                 pause(id) => { root.pause-taskset(id) }
                 resume(id) => { root.resume-taskset(id) }
                 cancel-task(id) => { root.cancel-taskset(id) }

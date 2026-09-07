@@ -1,4 +1,4 @@
-import { ProgressIndicator, VerticalBox, HorizontalBox, Button, ScrollView, StyleMetrics } from "std-widgets.slint";
+import { ProgressIndicator, VerticalBox, HorizontalBox, Button, ScrollView, StyleMetrics, Palette } from "std-widgets.slint";
 import { Title, SectionTitle, HorizontalSpacing, VerticalSpacing } from "../components/components.slint";
 
 export enum TaskSetStatus {
@@ -14,14 +14,20 @@ export struct TaskSetInfo {
     id: string,
     status: TaskSetStatus,
     downloaded: float,
-    total: float
+    total: float,
+    downloaded-num: int,
+    total-num: int
 }
 
-component TaskSetItem inherits HorizontalLayout {
-    spacing: StyleMetrics.layout-spacing;
+component TaskSetItem inherits Rectangle {
+    background: Palette.control-background;
+    border-radius: 8px;
+    vertical-stretch: 0;
 
     in property <TaskSetInfo> info;
     in property <bool> finished;
+    // 0 = BySize, 1 = ByNumber, 2 = Both
+    in property <int> progress-mode;
 
     callback pause();
     callback resume();
@@ -44,53 +50,83 @@ component TaskSetItem inherits HorizontalLayout {
     }
 
     function progress-text(info: TaskSetInfo) -> string {
-        if info.total > 0 {
-            return round(info.downloaded * 100 / info.total) + "%";
+        if progress-mode == 1 {
+            // 按数量：显示 "完成数/总数"
+            return info.downloaded-num + "/" + info.total-num;
+        } else if progress-mode == 2 {
+            // 均显示：百分比后显示 " (完成数/总数)"
+            if info.total > 0 {
+                return round(info.downloaded * 100 / info.total) + "% (" + info.downloaded-num + "/" + info.total-num + ")";
+            } else {
+                return "0% (" + info.downloaded-num + "/" + info.total-num + ")";
+            }
         } else {
-            return "0%";
+            // 按大小：原有逻辑
+            if info.total > 0 {
+                return round(info.downloaded * 100 / info.total) + "%";
+            } else {
+                return "0%";
+            }
         }
     }
 
-    id-text := Text {
-        text: info.id;
-        vertical-alignment: center;
-        horizontal-stretch: 1;
+    function progress-value(info: TaskSetInfo) -> float {
+        if progress-mode == 1 {
+            return info.total-num > 0 ? info.downloaded-num * 1.0 / info.total-num : 0;
+        } else {
+            return info.total > 0 ? info.downloaded / info.total : 0;
+        }
     }
 
-    status-label := Text {
-        text: status-text(info.status);
-        vertical-alignment: center;
-        horizontal-stretch: 0;
-    }
+    VerticalBox {
+        HorizontalLayout {
+            id-text := Text {
+                text: info.id;
+                horizontal-alignment: left;
+                vertical-alignment: center;
+            }
 
-    progress-label := Text {
-        text: progress-text(info);
-        vertical-alignment: center;
-        horizontal-stretch: 0;
-    }
-
-    ProgressIndicator {
-        progress: info.total > 0 ? info.downloaded / info.total : 0;
-        horizontal-stretch: 0;
-    }
-
-    if !finished: HorizontalLayout {
-        pause-btn := Button {
-            text: @tr("Pause");
-            enabled: info.status == TaskSetStatus.Downloading || info.status == TaskSetStatus.Pending;
-            clicked => { pause(); }
+            status-label := Text {
+                text: status-text(info.status);
+                horizontal-alignment: right;
+                vertical-alignment: center;
+            }
         }
 
-        resume-btn := Button {
-            text: @tr("Resume");
-            enabled: info.status == TaskSetStatus.Paused;
-            clicked => { resume(); }
+        HorizontalLayout {
+            spacing: StyleMetrics.layout-spacing;
+            ProgressIndicator {
+                progress: progress-value(info);
+            }
+
+            progress-label := Text {
+                text: progress-text(info);
+                vertical-alignment: center;
+            }
         }
 
-        cancel-btn := Button {
-            text: @tr("Cancel");
-            enabled: info.status != TaskSetStatus.Completed && info.status != TaskSetStatus.Failed && info.status != TaskSetStatus.Cancelled;
-            clicked => { cancel(); }
+        if !finished: HorizontalLayout {
+            spacing: StyleMetrics.layout-spacing;
+
+            HorizontalSpacing {}
+
+            pause-btn := Button {
+                text: @tr("Pause");
+                enabled: info.status == TaskSetStatus.Downloading || info.status == TaskSetStatus.Pending;
+                clicked => { pause(); }
+            }
+
+            resume-btn := Button {
+                text: @tr("Resume");
+                enabled: info.status == TaskSetStatus.Paused;
+                clicked => { resume(); }
+            }
+
+            cancel-btn := Button {
+                text: @tr("Cancel");
+                enabled: info.status != TaskSetStatus.Completed && info.status != TaskSetStatus.Failed && info.status != TaskSetStatus.Cancelled;
+                clicked => { cancel(); }
+            }
         }
     }
 }
@@ -98,6 +134,8 @@ component TaskSetItem inherits HorizontalLayout {
 export component DownloaderPage inherits VerticalBox {
     in property <[TaskSetInfo]> unfinished-list;
     in property <[TaskSetInfo]> finished-list;
+    // 0 = BySize, 1 = ByNumber, 2 = Both
+    in property <int> progress-mode;
 
     callback pause(string);
     callback resume(string);
@@ -105,34 +143,40 @@ export component DownloaderPage inherits VerticalBox {
 
     Title { text: @tr("Downloader"); }
 
-    VerticalSpacing {}
-
     SectionTitle { text: @tr("Unfinished"); }
 
     ScrollView {
-        VerticalBox {
+        VerticalLayout {
+            spacing: StyleMetrics.layout-spacing;
+
             for info in unfinished-list:
                 TaskSetItem {
                     info: info;
                     finished: false;
+                    progress-mode: root.progress-mode;
                     pause() => { root.pause(info.id); }
                     resume() => { root.resume(info.id); }
                     cancel() => { root.cancel-task(info.id); }
                 }
+            
+            VerticalSpacing {}
         }
     }
-
-    VerticalSpacing {}
 
     SectionTitle { text: @tr("Finished"); }
 
     ScrollView {
-        VerticalBox {
+        VerticalLayout {
+            spacing: StyleMetrics.layout-spacing;
+
             for info in finished-list:
                 TaskSetItem {
                     info: info;
                     finished: true;
+                    progress-mode: root.progress-mode;
                 }
+            
+            VerticalSpacing {}
         }
     }
 }

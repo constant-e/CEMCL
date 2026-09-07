@@ -4,12 +4,25 @@ use slint::ModelRc;
 use std::rc;
 use crate::ui;
 
+/// 进度显示方式
+#[derive(Clone, Copy, PartialEq, Eq)]
+pub enum ProgressMode {
+    /// 按大小
+    BySize,
+    /// 按数量
+    ByNumber,
+    /// 均显示
+    Both,
+}
+
 #[derive(Clone)]
 pub struct ConfigGeneral {
     /// 启动后关闭启动器
     pub close_after_launch: bool,
     /// .minecraft路径
     pub game_path: String,
+    /// 进度显示方式
+    pub progress_mode: ProgressMode,
 }
 
 #[derive(Clone)]
@@ -73,6 +86,11 @@ impl From<ui::ConfigGeneral> for ConfigGeneral {
         Self {
             close_after_launch: value.close_after_launch,
             game_path: value.game_path.into(),
+            progress_mode: match value.progress_mode {
+                1 => ProgressMode::ByNumber,
+                2 => ProgressMode::Both,
+                _ => ProgressMode::BySize,
+            },
         }
     }
 }
@@ -118,6 +136,11 @@ impl From<ConfigGeneral> for ui::ConfigGeneral {
         Self {
             close_after_launch: value.close_after_launch,
             game_path: value.game_path.into(),
+            progress_mode: match value.progress_mode {
+                ProgressMode::BySize => 0,
+                ProgressMode::ByNumber => 1,
+                ProgressMode::Both => 2,
+            },
         }
     }
 }
