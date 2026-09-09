@@ -44,7 +44,7 @@ impl From<AccountType> for String {
         match value {
             AccountType::Legacy => "Legacy".to_string(),
             AccountType::MSA => "msa".to_string(),
-            AccountType::Other => String::new(),
+            AccountType::Other => "Other".to_string(),
         }
     }
 }

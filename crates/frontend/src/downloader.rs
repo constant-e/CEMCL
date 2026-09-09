@@ -77,17 +77,8 @@ impl From<TaskSetInfo> for ui::TaskSetInfo {
     }
 }
 
-/// 获取ui用的未完成任务集列表
-pub fn ui_unfinished_list(list: &Vec<TaskSetInfo>) -> ModelRc<ui::TaskSetInfo> {
-    ModelRc::from(Rc::from(VecModel::from(
-        list.iter()
-            .map(|info| info.clone().into())
-            .collect::<Vec<ui::TaskSetInfo>>(),
-    )))
-}
-
-/// 获取ui用的已完成任务集列表
-pub fn ui_finished_list(list: &Vec<TaskSetInfo>) -> ModelRc<ui::TaskSetInfo> {
+/// 获取ui用的任务集列表
+pub fn ui_task_set_list(list: &Vec<TaskSetInfo>) -> ModelRc<ui::TaskSetInfo> {
     ModelRc::from(Rc::from(VecModel::from(
         list.iter()
             .map(|info| info.clone().into())

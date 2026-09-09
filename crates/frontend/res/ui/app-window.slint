@@ -4,7 +4,7 @@ import { AccountsPage, HomePage, GamesPage, DownloaderPage, JavaPage, SettingsPa
 import { AccountInner } from "pages/accounts/accounts.slint";
 
 export { Config, ConfigGeneral, ConfigDL, ConfigMC, State }
-export { AddGameDialog, EditGameDialog, AskDialog, MsgDialog, LoginDialog, AddJavaDialog, ForgeDownloadDialog } from "dialogs/dialogs.slint";
+export { AddGameDialog, EditGameDialog, AskDialog, LoginDialog, AddJavaDialog, ForgeDownloadDialog } from "dialogs/dialogs.slint";
 
 export component AppWindow inherits Window {
     preferred-height: 600px;
@@ -29,6 +29,8 @@ export component AppWindow inherits Window {
     in-out property <int> progress-total;
     in-out property <[TaskSetInfo]> unfinished-list;
     in-out property <[TaskSetInfo]> finished-list;
+    // Localized suffix for incompatible Java versions, read from Rust
+    out property <string> not-compatible-text: @tr("not compatible");
 
     // Send command to App
     callback del-acc(int);

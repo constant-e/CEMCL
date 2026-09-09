@@ -82,35 +82,11 @@ pub async fn download(url: String, path: String, max: usize) -> Result<(), DLErr
 
 /// 获取文件所在文件夹
 pub fn get_parent_dir(path: &str) -> String {
-    let mut vec: Vec<&str> = path.split("/").collect();
-    if vec.len() == 1 {
-        return String::new();
-    }
-    vec.pop().unwrap();
-    let mut dir = String::new();
-    for item in vec {
-        dir.push_str(item);
-        dir.push('/');
-    }
-    dir.pop();
-    dir
-}
-
-/// 列出目录下所有文件和文件夹
-pub fn list_all(path: &String) -> std::io::Result<Vec<String>> {
-    let mut result: Vec<String> = Vec::new();
-    for entry in fs::read_dir(&Path::new(path))? {
-        let entry = entry?;
-        let path = entry.path();
-        result.push(
-            path.file_name()
-                .ok_or(ErrorKind::InvalidData)?
-                .to_str()
-                .ok_or(ErrorKind::InvalidData)?
-                .into(),
-        );
-    }
-    Ok(result)
+    Path::new(path)
+        .parent()
+        .and_then(|p| p.to_str())
+        .unwrap_or("")
+        .to_string()
 }
 
 /// 列出目录下所有文件夹
@@ -138,27 +114,6 @@ pub fn list_file(path: &String) -> std::io::Result<Vec<String>> {
     let mut result = Vec::new();
     for entry in fs::read_dir(&Path::new(path))? {
         let entry = entry?;
-        let entry_path = entry.path();
-        let path = path.clone()
-            + "/"
-            + entry_path
-                .file_name()
-                .ok_or(ErrorKind::InvalidData)?
-                .to_str()
-                .ok_or(ErrorKind::InvalidData)?;
-        if entry_path.is_dir() {
-            result.append(&mut list_file(&path)?)
-        } else {
-            result.push(path);
-        }
-    }
-    Ok(result)
-}
-
-pub async fn list_file_async(path: &String) -> tokio::io::Result<Vec<String>> {
-    let mut result = Vec::new();
-    let mut entries = tokio::fs::read_dir(&Path::new(path)).await?;
-    while let Some(entry) = entries.next_entry().await? {
         let entry_path = entry.path();
         let path = path.clone()
             + "/"

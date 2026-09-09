@@ -16,13 +16,7 @@ pub enum TaskSetStatus {
 }
 
 pub struct TaskSet {
-    client: reqwest::Client,
     tasks: Vec<DownloadTask>,
-    semaphore: Arc<Semaphore>,
-    on_failed: Option<Box<dyn Fn() + Send + Sync>>,
-    on_finish: Option<Box<dyn Fn() + Send + Sync>>,
-    on_pause: Option<Box<dyn Fn() + Send + Sync>>,
-    on_cancel: Option<Box<dyn Fn() + Send + Sync>>,
 }
 
 impl TaskSet {
@@ -30,10 +24,6 @@ impl TaskSet {
         client: reqwest::Client,
         tasks_info: Vec<TaskInfo>,
         semaphore: Arc<Semaphore>,
-        on_cancel: Option<Box<dyn Fn() + Send + Sync>>,
-        on_failed: Option<Box<dyn Fn() + Send + Sync>>,
-        on_finish: Option<Box<dyn Fn() + Send + Sync>>,
-        on_pause: Option<Box<dyn Fn() + Send + Sync>>,
     ) -> Self {
         let tasks = tasks_info
             .into_iter()
@@ -55,15 +45,7 @@ impl TaskSet {
                 task
             })
             .collect();
-        Self {
-            client,
-            tasks,
-            semaphore,
-            on_cancel,
-            on_failed,
-            on_finish,
-            on_pause,
-        }
+        Self { tasks }
     }
 
     pub fn get_status(&self) -> TaskSetStatus {
@@ -191,18 +173,12 @@ impl TaskSet {
         for task in &self.tasks {
             task.try_pause()?;
         }
-        if let Some(on_pause) = &self.on_pause {
-            on_pause();
-        }
         Ok(())
     }
 
     pub async fn cancel(&self) -> Result<(), DownloadTaskError> {
         for task in &self.tasks {
             task.try_cancel()?;
-        }
-        if let Some(on_cancel) = &self.on_cancel {
-            on_cancel();
         }
         Ok(())
     }

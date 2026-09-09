@@ -155,16 +155,18 @@ pub fn extract_lib(natives_dir: &str, local_path: &str, id: &str) -> Result<(), 
     }
 
     // 解压用的临时文件夹
-    if exists(&("temp".to_string() + id))? {
-        std::fs::remove_dir_all("temp".to_string() + id)?;
+    let temp_dir = std::env::temp_dir().join(format!("cemcl-{}-{}", id, uuid::Uuid::new_v4()));
+    let temp_dir_str = temp_dir.to_str().ok_or(DownloadError::DataInvalid)?;
+    if exists(temp_dir_str)? {
+        std::fs::remove_dir_all(&temp_dir)?;
     }
-    std::fs::create_dir("temp".to_string() + id)?;
+    std::fs::create_dir(&temp_dir)?;
 
     let mut zip = zip::ZipArchive::new(std::fs::File::open(local_path)?)
         .map_err(|err| std::io::Error::from(err))?;
-    zip.extract("temp".to_string() + &id.to_string())
+    zip.extract(&temp_dir)
         .map_err(|err| std::io::Error::from(err))?;
-    let files = list_file(&("temp".to_string() + &id.to_string()))?;
+    let files = list_file(&temp_dir_str.to_string())?;
     for name in files {
         let format: Vec<&str> = name.split(".").collect();
         let format = *format.last().ok_or(DownloadError::DataInvalid)?;
@@ -179,6 +181,6 @@ pub fn extract_lib(natives_dir: &str, local_path: &str, id: &str) -> Result<(), 
             copy(name, &target_path)?;
         }
     }
-    remove_dir_all("temp".to_string() + &id.to_string())?;
+    remove_dir_all(&temp_dir)?;
     Ok(())
 }

@@ -62,8 +62,6 @@ pub enum LauncherError {
     SemaphoreError(String),
     /// Task Set Not Found
     TaskSetNotFound,
-    /// Weak pointer upgrade error
-    WeakPtrError,
     /// Others
     Unknown,
 }
@@ -223,7 +221,6 @@ impl std::fmt::Display for LauncherError {
             LauncherError::SemaphoreError(s) => write!(f, "Semaphore Error. {s}"),
             LauncherError::SendError => write!(f, "Send error"),
             LauncherError::TaskSetNotFound => write!(f, "Task set not found."),
-            LauncherError::WeakPtrError => write!(f, "Failed to upgrade a weak pointer"),
             LauncherError::Unknown => write!(f, "Unknown error"),
         }
     }

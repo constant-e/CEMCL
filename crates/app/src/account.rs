@@ -1,4 +1,3 @@
-use log::error;
 use serde_json::json;
 use std::fs::{self, exists};
 
@@ -48,10 +47,6 @@ impl AccountManager {
 
     pub fn get(&self, index: u32) -> &Account {
         &self.account_list[index as usize]
-    }
-
-    pub fn get_mut(&mut self, index: u32) -> &mut Account {
-        &mut self.account_list[index as usize]
     }
 
     pub fn get_account_list(&self) -> &Vec<Account> {
@@ -110,13 +105,6 @@ impl AccountManager {
         Ok((account_list, current_index))
     }
 
-    pub fn reload(&mut self) -> Result<(), LauncherError> {
-        let (account_list, current_index) = AccountManager::i_load()?;
-        self.account_list = account_list;
-        self.current_index = current_index;
-        Ok(())
-    }
-
     /// return (uri, code)
     pub async fn request_login(&mut self) -> Result<(String, String), LauncherError> {
         if let Some(session) = self.current_session.take() {
@@ -165,8 +153,6 @@ impl AccountManager {
             );
             if let Some(array) = json["accounts"].as_array_mut() {
                 array.push(node);
-            } else {
-                error!("");
             }
         }
         fs::write("account.json", json.to_string())?;

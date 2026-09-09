@@ -6,7 +6,7 @@ use std::rc;
 use tokio::sync::mpsc::UnboundedSender;
 
 use crate::app_window::UICommand;
-use crate::ui::{self, AddJavaDialog};
+use crate::ui::AddJavaDialog;
 
 /// Java 安装信息，用于前端展示
 #[derive(Clone)]
@@ -59,35 +59,15 @@ pub fn ui_java_list(list: &Vec<JavaInfo>) -> ModelRc<ModelRc<StandardListViewIte
 /// Build a formatted combo box model for JavaVersionSelector.
 /// Compatible versions show just the version string (e.g. "26.0.1").
 /// Incompatible versions show "version (not compatible)" (e.g. "1.8.0_500 (not compatible)").
-/// The tr() function is used for the "(not compatible)" suffix.
-pub fn ui_java_combo_box_list(list: &Vec<JavaInfo>) -> Vec<String> {
+/// The localized suffix is read from the UI via AppWindow's `not-compatible-text` property.
+pub fn ui_java_combo_box_list(list: &Vec<JavaInfo>, not_compatible: &str) -> Vec<String> {
     list.iter()
         .map(|j| {
             if j.compatible {
                 j.version.clone()
             } else {
-                format!("{} ({})", j.version, tr_not_compatible())
+                format!("{} ({})", j.version, not_compatible)
             }
         })
         .collect()
-}
-
-/// Returns the localized "not compatible" string.
-/// This is a function so it can be called from non-Slint Rust code.
-fn tr_not_compatible() -> String {
-    // Use Slint's translation mechanism via a temporary component or just hardcode English
-    // Since we're in Rust, we use the English default. The Slint UI will handle translation
-    // when the string is part of the model — but since we're building the model in Rust,
-    // we need to handle it here. For now, use English as the model strings are displayed
-    // directly in the ComboBox.
-    "not compatible".to_string()
-}
-
-/// Convert a list of JavaInfo to a Slint ModelRc<SharedString> for the ComboBox.
-pub fn ui_java_combo_box_model(list: &Vec<JavaInfo>) -> ModelRc<slint::SharedString> {
-    let items: Vec<slint::SharedString> = ui_java_combo_box_list(list)
-        .into_iter()
-        .map(|s| s.into())
-        .collect();
-    ModelRc::from(rc::Rc::new(VecModel::from(items)))
 }
