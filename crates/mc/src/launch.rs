@@ -104,35 +104,6 @@ fn get_args_new(n: &Value) -> Result<(Vec<String>, Vec<String>), LaunchError> {
     Ok((game_args, jvm_args))
 }
 
-/// 获取MC和JVM参数（1.13-）
-fn get_args_old(n: &Value) -> Result<(Vec<String>, Vec<String>), LaunchError> {
-    let mut game_args: Vec<String> = Vec::new();
-    let mut jvm_args: Vec<String> = vec![
-        "-XX:+UseG1GC".to_string(),
-        "-XX:-UseAdaptiveSizePolicy".to_string(),
-        "-XX:-OmitStackTraceInFastThrow".to_string(),
-        "-Dfml.ignoreInvalidMinecraftCertificates=True".to_string(),
-        "-Dfml.ignorePatchDiscrepancies=True".to_string(),
-        "-Dlog4j2.formatMsgNoLookups=true".to_string(),
-    ];
-
-    let args: Vec<&str> = n["minecraftArguments"]
-        .as_str()
-        .ok_or(LaunchError::DataInvalid)?
-        .split(" ")
-        .collect();
-    for arg in args {
-        game_args.push(arg.into());
-    }
-    jvm_args.append(&mut vec![
-        "-Djava.library.path=${natives_directory}".into(),
-        "-cp".into(),
-        "${classpath}".into(),
-    ]);
-
-    Ok((game_args, jvm_args))
-}
-
 /// 获取MC和JVM参数（原版）
 fn get_args(n: &Value) -> Result<(Vec<String>, Vec<String>), LaunchError> {
     let mut game_args: Vec<String> = Vec::new();

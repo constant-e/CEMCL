@@ -57,13 +57,3 @@ impl std::fmt::Display for JavaVersion {
         }
     }
 }
-
-impl JavaVersion {
-    pub fn check_minimum_version(&self, min_version: &JavaVersion) -> bool {
-        self >= min_version
-    }
-
-    pub fn check_maximum_version(&self, max_version: &JavaVersion) -> bool {
-        self <= max_version
-    }
-}

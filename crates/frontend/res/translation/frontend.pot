@@ -655,61 +655,6 @@ msgid ""
 "Continue?"
 msgstr ""
 
-#: dialogs/dialogs.slint:71
-msgctxt "MsgDialog"
-msgid "Please select an account."
-msgstr ""
-
-#: dialogs/dialogs.slint:74
-msgctxt "MsgDialog"
-msgid "Please select an account and the Minecraft version."
-msgstr ""
-
-#: dialogs/dialogs.slint:77
-msgctxt "MsgDialog"
-msgid "Failed to copy your user code, please enter {0} manually."
-msgstr ""
-
-#: dialogs/dialogs.slint:80
-msgctxt "MsgDialog"
-msgid "Download failed: {0}"
-msgstr ""
-
-#: dialogs/dialogs.slint:83
-msgctxt "MsgDialog"
-msgid "Please select the Minecraft version."
-msgstr ""
-
-#: dialogs/dialogs.slint:86
-msgctxt "MsgDialog"
-msgid "Failed to load account list: {0}"
-msgstr ""
-
-#: dialogs/dialogs.slint:89
-msgctxt "MsgDialog"
-msgid "Failed to load config: {0}"
-msgstr ""
-
-#: dialogs/dialogs.slint:92
-msgctxt "MsgDialog"
-msgid "Failed to load Minecraft installation list: {0}"
-msgstr ""
-
-#: dialogs/dialogs.slint:95
-msgctxt "MsgDialog"
-msgid "Failed to login."
-msgstr ""
-
-#: dialogs/dialogs.slint:98
-msgctxt "MsgDialog"
-msgid "Failed to start."
-msgstr ""
-
-#: dialogs/dialogs.slint:101
-msgctxt "MsgDialog"
-msgid "Failed to load OAuth login."
-msgstr ""
-
 #: app-window.slint:59
 msgctxt "AppWindow"
 msgid "Account"
@@ -738,4 +683,9 @@ msgstr ""
 #: app-window.slint:59
 msgctxt "AppWindow"
 msgid "Settings"
+msgstr ""
+
+#: app-window.slint:33
+msgctxt "AppWindow"
+msgid "not compatible"
 msgstr ""

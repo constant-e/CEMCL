@@ -185,10 +185,6 @@ impl DownloadManager {
                 })
                 .collect(),
             self.semaphore.clone(),
-            None,
-            None,
-            None,
-            None,
         );
         self.tasks.insert(id, task_set);
     }
@@ -223,30 +219,6 @@ impl DownloadManager {
         &self.config
     }
 
-    pub fn get_status(&self, id: String) -> Result<TaskSetStatus, DownloadManagerError> {
-        let taskset = self
-            .tasks
-            .get(id.as_str())
-            .ok_or(DownloadManagerError::TaskSetNotFound)?;
-        Ok(taskset.get_status())
-    }
-
-    pub fn get_status_by_number(&self, id: String) -> Result<TaskSetStatus, DownloadManagerError> {
-        let taskset = self
-            .tasks
-            .get(id.as_str())
-            .ok_or(DownloadManagerError::TaskSetNotFound)?;
-        Ok(taskset.get_status_by_number())
-    }
-
-    pub fn get_progress(&self, id: String) -> Result<(u64, u64), DownloadManagerError> {
-        let taskset = self
-            .tasks
-            .get(id.as_str())
-            .ok_or(DownloadManagerError::TaskSetNotFound)?;
-        Ok(taskset.get_progress())
-    }
-
     pub fn set_config(&mut self, config: Config) {
         self.config = config
     }
@@ -256,19 +228,6 @@ impl DownloadManager {
         tokio::spawn(async move {
             if let Some(task_set) = tasks.get(id.as_str()) {
                 task_set.pause().await.map_err(DownloadManagerError::from)
-            } else {
-                Err(DownloadManagerError::TaskSetNotFound)
-            }
-        })
-    }
-
-    pub fn remove_taskset(&self, id: String) -> JoinHandle<Result<(), DownloadManagerError>> {
-        let tasks = self.tasks.clone();
-        tokio::spawn(async move {
-            if let Some(task_set) = tasks.get(id.as_str()) {
-                task_set.cancel().await.map_err(DownloadManagerError::from)?;
-                tasks.remove(id.as_str());
-                Ok(())
             } else {
                 Err(DownloadManagerError::TaskSetNotFound)
             }
@@ -293,11 +252,5 @@ impl Default for Config {
             concurrency: 10,
             mirrors: HashMap::new(),
         }
-    }
-}
-
-impl Default for DownloadManager {
-    fn default() -> Self {
-        Self::new(Config::default())
     }
 }

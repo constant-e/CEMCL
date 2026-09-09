@@ -514,21 +514,4 @@ impl DownloadTask {
     pub fn is_started(&self) -> bool {
         self.started.load(Ordering::Relaxed)
     }
-
-    pub async fn resume(&self) -> Result<(), DownloadTaskError> {
-        let semaphore = self.semaphore.clone();
-        let permit = match semaphore.acquire().await {
-            Ok(p) => p,
-            Err(e) => {
-                error!("Failed to acquire semaphore for {0}. Reason: {e}", self.url);
-                *self.status.try_lock()? = DownloadTaskStatus::Failed;
-                return Err(e.into());
-            }
-        };
-
-        self.started.store(true, Ordering::Relaxed);
-        *self.status.try_lock()? = DownloadTaskStatus::Downloading;
-
-        self.download(permit).await
-    }
 }

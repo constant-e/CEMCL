@@ -655,61 +655,6 @@ msgid ""
 "Continue?"
 msgstr "此游戏目录下的所有文件将被删除。确认继续？"
 
-#: dialogs/dialogs.slint:71
-msgctxt "MsgDialog"
-msgid "Please select an account."
-msgstr "请先选择一个账号"
-
-#: dialogs/dialogs.slint:74
-msgctxt "MsgDialog"
-msgid "Please select an account and the Minecraft version."
-msgstr "请先选择一个账号和一个游戏"
-
-#: dialogs/dialogs.slint:77
-msgctxt "MsgDialog"
-msgid "Failed to copy your user code, please enter {0} manually."
-msgstr "代码复制失败，请手动输入{0}"
-
-#: dialogs/dialogs.slint:80
-msgctxt "MsgDialog"
-msgid "Download failed: {0}"
-msgstr "下载失败：{0}"
-
-#: dialogs/dialogs.slint:83
-msgctxt "MsgDialog"
-msgid "Please select the Minecraft version."
-msgstr "请先选择一个游戏"
-
-#: dialogs/dialogs.slint:86
-msgctxt "MsgDialog"
-msgid "Failed to load account list: {0}"
-msgstr "加载账号列表失败。原因：{0}"
-
-#: dialogs/dialogs.slint:89
-msgctxt "MsgDialog"
-msgid "Failed to load config: {0}"
-msgstr "加载配置失败。原因：{0}"
-
-#: dialogs/dialogs.slint:92
-msgctxt "MsgDialog"
-msgid "Failed to load Minecraft installation list: {0}"
-msgstr "加载账号列表失败。原因：{0}"
-
-#: dialogs/dialogs.slint:95
-msgctxt "MsgDialog"
-msgid "Failed to login."
-msgstr "登录失败。"
-
-#: dialogs/dialogs.slint:98
-msgctxt "MsgDialog"
-msgid "Failed to start."
-msgstr "启动失败。"
-
-#: dialogs/dialogs.slint:101
-msgctxt "MsgDialog"
-msgid "Failed to load OAuth login."
-msgstr "加载OAuth失败"
-
 #: app-window.slint:59
 msgctxt "AppWindow"
 msgid "Account"
@@ -739,3 +684,8 @@ msgstr "Java"
 msgctxt "AppWindow"
 msgid "Settings"
 msgstr "设置"
+
+#: app-window.slint:33
+msgctxt "AppWindow"
+msgid "not compatible"
+msgstr "不兼容"

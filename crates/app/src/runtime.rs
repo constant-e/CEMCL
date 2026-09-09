@@ -26,7 +26,6 @@ use frontend::{
     UICommand,
     UIUpdate,
     game::ModType,
-    java,
 };
 
 use crate::{account::AccountManager, errors::LauncherError};
@@ -560,7 +559,6 @@ impl AppRuntime {
             UICommand::GetAddGameDefault => {
                 let config = self.version_manager.get_config();
                 let java_list = self.build_java_info_list(None);
-                let java_model: Vec<String> = java::ui_java_combo_box_list(&java_list);
                 let java_index = self.java_manager.get_default().map(|i| i as i32).unwrap_or(-1);
                 self.update_sender
                     .send(UIUpdate::SetAddGameDefault(frontend::game::MCConfig {
@@ -576,7 +574,7 @@ impl AppRuntime {
                         xmx: config.xmx.clone(),
                     }))?;
                 self.update_sender
-                    .send(UIUpdate::SetAddGameJavaList(java_model))?;
+                    .send(UIUpdate::SetAddGameJavaList(java_list.clone()))?;
                 // Also send the Java list for the Java page table
                 self.update_sender.send(UIUpdate::SetJavaList(java_list))?;
             }
@@ -599,9 +597,8 @@ impl AppRuntime {
                 if (mc_index as usize) < list.len() {
                     let mc = &list[mc_index as usize];
                     let java_list = self.build_java_info_list(Some(&mc.version));
-                    let java_model: Vec<String> = java::ui_java_combo_box_list(&java_list);
                     self.update_sender
-                        .send(UIUpdate::SetAddGameJavaList(java_model))?;
+                        .send(UIUpdate::SetAddGameJavaList(java_list))?;
                 }
             }
             UICommand::GetAddGameList(filter) => {
@@ -689,23 +686,19 @@ impl AppRuntime {
             UICommand::GetEditGameConfig(index) => {
                 let version = self.version_manager.get(index).clone();
                 let java_list = self.build_java_info_list(Some(&version.version));
-                let java_model: Vec<String> = java::ui_java_combo_box_list(&java_list);
                 self.update_sender
                     .send(UIUpdate::SetEditGameConfig(frontend::game::MCConfig {
                         java_index: version.java_index.map(|i| i as i32).unwrap_or(-1),
                         ..frontend_mc_config(version.clone())
                     }))?;
                 self.update_sender
-                    .send(UIUpdate::SetEditGameJavaList(java_model))?;
+                    .send(UIUpdate::SetEditGameJavaList(java_list.clone()))?;
                 self.update_sender.send(UIUpdate::SetJavaList(java_list))?;
             }
             UICommand::GetEditGameVersion(index) => {
                 self.update_sender.send(UIUpdate::SetEditGameVersion(
                     self.version_manager.get(index).version.clone(),
                 ))?;
-            }
-            UICommand::GetJavaList => {
-                self.refresh_ui_java_list()?;
             }
             UICommand::SetConfig(config) => {
                 self.config = config.general.into();
@@ -996,7 +989,6 @@ impl AppRuntime {
         let config_dl: ConfigDL = self.downloader.get_config().clone().into();
         let config_mc = self.version_manager.get_config();
         let java_list = self.build_java_info_list(None);
-        let java_model: Vec<String> = java::ui_java_combo_box_list(&java_list);
         let java_index = self.java_manager.get_default().map(|i| i as i32).unwrap_or(-1);
 
         self.update_sender
@@ -1006,7 +998,7 @@ impl AppRuntime {
                 mc: config_mc.clone().into(),
             }))?;
         self.update_sender
-            .send(UIUpdate::SetJavaModel(java_model))?;
+            .send(UIUpdate::SetJavaModel(java_list))?;
         self.update_sender
             .send(UIUpdate::SetJavaIndex(java_index))?;
 

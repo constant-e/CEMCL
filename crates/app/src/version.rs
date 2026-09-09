@@ -84,10 +84,6 @@ impl VersionManager {
         &self.version_list[index as usize]
     }
 
-    pub fn get_mut(&mut self, index: u32) -> &mut MCInstallation {
-        &mut self.version_list[index as usize]
-    }
-
     pub fn get_config(&self) -> &ConfigMC {
         &self.config
     }
@@ -261,13 +257,6 @@ impl VersionManager {
         }
 
         Ok((version_list, index))
-    }
-
-    pub fn reload(&mut self) -> Result<(), LauncherError> {
-        let (version_list, current_index) = VersionManager::i_load(self.config.clone())?;
-        self.version_list = version_list;
-        self.current_index = current_index;
-        Ok(())
     }
 
     /// 保存（CEMCL格式）

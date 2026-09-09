@@ -3,7 +3,7 @@ use log::error;
 use slint::ComponentHandle;
 use std::sync::{Arc, Mutex};
 
-use crate::game::{MCInfo, ui_combo_box_list, ui_game_dl_list, ui_game_list};
+use crate::game::{MCInfo, ui_combo_box_list, ui_game_list};
 use crate::java::{self, JavaInfo};
 use crate::settings::Config;
 use crate::ui::{self, AddGameDialog, AddJavaDialog, EditGameDialog, ForgeDownloadDialog, LoginDialog};
@@ -33,7 +33,6 @@ pub enum UICommand {
     GetAddModListForge(Option<MCType>, u32),
     GetEditGameConfig(u32),
     GetEditGameVersion(u32),
-    GetJavaList,
     GetOfflineAccount,
     HideForgeDownloadDialog,
     CancelForgeDownload,
@@ -50,19 +49,17 @@ pub enum UICommand {
 
 // App -> UI
 pub enum UIUpdate {
-    AskBox(msg_box::AskID, Box<dyn Fn() + Send + 'static>),
-    MsgBox(msg_box::MsgID),
     SetAccountIndex(u32),
     SetAccountList(Vec<Account>),
     SetAddGameDefault(MCConfig),
-    SetAddGameJavaList(Vec<String>),
+    SetAddGameJavaList(Vec<JavaInfo>),
     SetAddGameList(Vec<MCDL>),
     SetAddModListFabric(Vec<Fabric>),
     SetAddModListForge(Vec<Forge>),
     SetAuthors(String),
     SetConfig(Config),
     SetEditGameConfig(MCConfig),
-    SetEditGameJavaList(Vec<String>),
+    SetEditGameJavaList(Vec<JavaInfo>),
     SetEditGameVersion(String),
     SetHomePageProgress(f32, u32, u32),
     SetHomePageStatus(home::State),
@@ -70,13 +67,12 @@ pub enum UIUpdate {
     SetGameList(Vec<MCInfo>),
     SetJavaIndex(i32),
     SetJavaList(Vec<JavaInfo>),
-    SetJavaModel(Vec<String>),
+    SetJavaModel(Vec<JavaInfo>),
     SetJavaCheckResult(ui::JavaCheckResult, String),
     SetOfflineAccount(Account),
     SetTaskSetList(Vec<crate::downloader::TaskSetInfo>),
     SetVersion(String),
     ShowForgeDownloadDialog(String),
-    SetForgeDownloadMessage(String),
     SetForgeDownloadProgress(f32),
     SetForgeDownloadInstalling(bool),
     QuitForgeDownloadDialog,
@@ -373,16 +369,6 @@ impl AppWindow {
         cmd_sender: tokio::sync::mpsc::UnboundedSender<UICommand>,
     ) {
         match update {
-            UIUpdate::AskBox(id, f) => {
-                if let Err(e) = msg_box::ask_box(id, f) {
-                    error!("{e}");
-                }
-            }
-            UIUpdate::MsgBox(id) => {
-                if let Err(e) = msg_box::msg_box(id) {
-                    error!("{e}");
-                }
-            }
             UIUpdate::SetAccountIndex(index) => {
                 if let Err(e) = ui_weak.upgrade_in_event_loop(move |ui| {
                     ui.set_acc_index(index as i32);
@@ -411,9 +397,19 @@ impl AppWindow {
             },
             UIUpdate::SetAddGameJavaList(list) => match get(add_game_dialog) {
                 Ok(w) => {
+                    let suffix = ui_weak
+                        .upgrade()
+                        .map(|ui| ui.get_not_compatible_text().to_string())
+                        .unwrap_or_default();
                     if let Err(e) = w.upgrade_in_event_loop(move |dialog| {
-                        let items: Vec<slint::SharedString> = list.iter().map(|s| s.as_str().into()).collect();
-                        dialog.set_java_combo_model(slint::ModelRc::from(std::rc::Rc::new(slint::VecModel::from(items))));
+                        let items: Vec<slint::SharedString> =
+                            java::ui_java_combo_box_list(&list, &suffix)
+                                .iter()
+                                .map(|s| s.as_str().into())
+                                .collect();
+                        dialog.set_java_combo_model(slint::ModelRc::from(std::rc::Rc::new(
+                            slint::VecModel::from(items),
+                        )));
                     }) {
                         error!("{e}");
                     }
@@ -486,9 +482,19 @@ impl AppWindow {
             },
             UIUpdate::SetEditGameJavaList(list) => match get(edit_game_dialog) {
                 Ok(w) => {
+                    let suffix = ui_weak
+                        .upgrade()
+                        .map(|ui| ui.get_not_compatible_text().to_string())
+                        .unwrap_or_default();
                     if let Err(e) = w.upgrade_in_event_loop(move |dialog| {
-                        let items: Vec<slint::SharedString> = list.iter().map(|s| s.as_str().into()).collect();
-                        dialog.set_java_combo_model(slint::ModelRc::from(std::rc::Rc::new(slint::VecModel::from(items))));
+                        let items: Vec<slint::SharedString> =
+                            java::ui_java_combo_box_list(&list, &suffix)
+                                .iter()
+                                .map(|s| s.as_str().into())
+                                .collect();
+                        dialog.set_java_combo_model(slint::ModelRc::from(std::rc::Rc::new(
+                            slint::VecModel::from(items),
+                        )));
                     }) {
                         error!("{e}");
                     }
@@ -549,8 +555,15 @@ impl AppWindow {
             }
             UIUpdate::SetJavaModel(list) => {
                 if let Err(e) = ui_weak.upgrade_in_event_loop(move |ui| {
-                    let items: Vec<slint::SharedString> = list.iter().map(|s| s.as_str().into()).collect();
-                    ui.set_java_combo_model(slint::ModelRc::from(std::rc::Rc::new(slint::VecModel::from(items))));
+                    let suffix = ui.get_not_compatible_text();
+                    let items: Vec<slint::SharedString> =
+                        java::ui_java_combo_box_list(&list, &suffix)
+                            .iter()
+                            .map(|s| s.as_str().into())
+                            .collect();
+                    ui.set_java_combo_model(slint::ModelRc::from(std::rc::Rc::new(
+                        slint::VecModel::from(items),
+                    )));
                 }) {
                     error!("{e}")
                 }
@@ -608,8 +621,8 @@ impl AppWindow {
                     .cloned()
                     .collect();
                 if let Err(e) = ui_weak.upgrade_in_event_loop(move |ui| {
-                    ui.set_unfinished_list(crate::downloader::ui_unfinished_list(&unfinished));
-                    ui.set_finished_list(crate::downloader::ui_finished_list(&finished));
+                    ui.set_unfinished_list(crate::downloader::ui_task_set_list(&unfinished));
+                    ui.set_finished_list(crate::downloader::ui_task_set_list(&finished));
                 }) {
                     error!("{e}")
                 }
@@ -645,18 +658,6 @@ impl AppWindow {
                     error!("{e}");
                 }
             }
-            UIUpdate::SetForgeDownloadMessage(message) => match get(forge_download_dialog) {
-                Ok(w) => {
-                    if let Err(e) = w.upgrade_in_event_loop(move |dialog| {
-                        dialog.set_message(message.into());
-                    }) {
-                        error!("{e}");
-                    }
-                }
-                Err(e) => {
-                    error!("{e}");
-                }
-            },
             UIUpdate::SetForgeDownloadProgress(progress) => match get(forge_download_dialog) {
                 Ok(w) => {
                     if let Err(e) = w.upgrade_in_event_loop(move |dialog| {
