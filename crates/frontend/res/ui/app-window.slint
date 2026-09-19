@@ -1,5 +1,5 @@
 import { Button, StandardTableView, VerticalBox, HorizontalBox, ProgressIndicator } from "std-widgets.slint";
-import { Title, SubTitle, SideBar } from "components/components.slint";
+import { TitleBar, SideBar } from "components/components.slint";
 import { AccountsPage, HomePage, GamesPage, DownloaderPage, JavaPage, SettingsPage, State, Config, ConfigGeneral, ConfigDL, ConfigMC, TaskSetInfo } from "pages/pages.slint";
 import { AccountInner } from "pages/accounts/accounts.slint";
 
@@ -11,6 +11,9 @@ export component AppWindow inherits Window {
     preferred-width: 800px;
     title: "CE Minecraft Launcher";
     icon: @image-url("../pic/icon.png");
+    // The title bar is drawn by the app itself
+    no-frame: true;
+    resize-border-width: 5px;
 
     in-out property <int> acc-index: 0;
     in-out property <int> game-index: 0;
@@ -31,6 +34,15 @@ export component AppWindow inherits Window {
     in-out property <[TaskSetInfo]> finished-list;
     // Localized suffix for incompatible Java versions, read from Rust
     out property <string> not-compatible-text: @tr("not compatible");
+    // Titles shown in the title bar, indexed like the side bar model
+    property <[string]> page-titles: [
+        @tr("Account"),
+        "CE Minecraft Launcher",
+        @tr("Minecraft Version"),
+        @tr("Downloader"),
+        @tr("Java Installations"),
+        @tr("Settings")
+    ];
 
     // Send command to App
     callback del-acc(int);
@@ -52,11 +64,13 @@ export component AppWindow inherits Window {
     callback open-edit-game-dialog(int);
     callback open-edit-java-dialog(int);
     callback open-login-dialog();
+    callback drag-window();
     
     HorizontalBox {
         padding: 0px;
 
         side-bar := SideBar {
+            header-height: title-bar.height;
             title: "CEMCL";
             model: [@tr("Account"), @tr("Home"), @tr("Games"), @tr("Downloader"), @tr("Java"), @tr("Settings")];
             current-index: 1;
@@ -71,62 +85,76 @@ export component AppWindow inherits Window {
             }
         }
 
-        Rectangle {
-            preferred-width: 100%;
+        VerticalBox {
+            padding: 0px;
 
-            if (side-bar.current-index == 0): acc-page := AccountsPage {
-                current-index <=> acc-index;
-                accounts <=> acc-list;
-                del-acc(index) => { del-acc(index) }
-                edit-acc(index, account) => { edit-acc(index, account) }
-                open-login-dialog() => { root.open-login-dialog() }
-                switch-acc(index) => { root.switch-acc(index) }
+            title-bar := TitleBar {
+                title-text: root.page-titles[side-bar.current-index];
+                maximized: root.maximized;
+                minimize => { root.minimized = true; }
+                maximize => { root.maximized = !root.maximized; }
+                close => { root.close(); }
+                drag => { root.drag-window(); }
             }
 
-            if (side-bar.current-index == 1): home-page := HomePage {
-                state: state;
-                index <=> game-index;
-                model: combo-box-model;
-                progress: progress;
-                progress-current: root.progress-current;
-                progress-total: root.progress-total;
-                progress-mode: root.config.general.progress-mode;
-                current-index-changed(index) => { switch-ver(index) }
-                start(index) => { start(root.acc-index, index) }
-            }
+            Rectangle {
+                preferred-width: 100%;
+                vertical-stretch: 1;
 
-            if (side-bar.current-index == 2): games-page := GamesPage {
-                current-index <=> game-index;
-                model: game-model;
-                open-add-game-dialog => { open-add-game-dialog() }
-                open-edit-game-dialog(index) => { open-edit-game-dialog(index) }
-                current-index-changed(current-index) => { switch-ver(current-index) }
-            }
+                if (side-bar.current-index == 0): acc-page := AccountsPage {
+                    current-index <=> acc-index;
+                    accounts <=> acc-list;
+                    del-acc(index) => { del-acc(index) }
+                    edit-acc(index, account) => { edit-acc(index, account) }
+                    open-login-dialog() => { root.open-login-dialog() }
+                    switch-acc(index) => { root.switch-acc(index) }
+                }
 
-            if (side-bar.current-index == 3): downloader-page := DownloaderPage {
-                unfinished-list: root.unfinished-list;
-                finished-list: root.finished-list;
-                progress-mode: root.config.general.progress-mode;
-                pause(id) => { root.pause-taskset(id) }
-                resume(id) => { root.resume-taskset(id) }
-                cancel-task(id) => { root.cancel-taskset(id) }
-            }
+                if (side-bar.current-index == 1): home-page := HomePage {
+                    state: state;
+                    index <=> game-index;
+                    model: combo-box-model;
+                    progress: progress;
+                    progress-current: root.progress-current;
+                    progress-total: root.progress-total;
+                    progress-mode: root.config.general.progress-mode;
+                    current-index-changed(index) => { switch-ver(index) }
+                    start(index) => { start(root.acc-index, index) }
+                }
 
-            if (side-bar.current-index == 4): java-page := JavaPage {
-                model: java-model;
-                open-add-java-dialog => { open-add-java-dialog() }
-                del-java(index) => { del-java(index) }
-                current-index-changed(current-index) => {}
-            }
+                if (side-bar.current-index == 2): games-page := GamesPage {
+                    current-index <=> game-index;
+                    model: game-model;
+                    open-add-game-dialog => { open-add-game-dialog() }
+                    open-edit-game-dialog(index) => { open-edit-game-dialog(index) }
+                    current-index-changed(current-index) => { switch-ver(current-index) }
+                }
 
-            if (side-bar.current-index == 5): settings-page := SettingsPage {
-                authors: authors;
-                version: version;
-                config <=> config;
-                java-combo-model <=> root.java-combo-model;
-                java-index <=> root.java-index;
-                set-config(config) => { root.set-config(config) }
-                java-selected(index) => { root.java-selected(index) }
+                if (side-bar.current-index == 3): downloader-page := DownloaderPage {
+                    unfinished-list: root.unfinished-list;
+                    finished-list: root.finished-list;
+                    progress-mode: root.config.general.progress-mode;
+                    pause(id) => { root.pause-taskset(id) }
+                    resume(id) => { root.resume-taskset(id) }
+                    cancel-task(id) => { root.cancel-taskset(id) }
+                }
+
+                if (side-bar.current-index == 4): java-page := JavaPage {
+                    model: java-model;
+                    open-add-java-dialog => { open-add-java-dialog() }
+                    del-java(index) => { del-java(index) }
+                    current-index-changed(current-index) => {}
+                }
+
+                if (side-bar.current-index == 5): settings-page := SettingsPage {
+                    authors: authors;
+                    version: version;
+                    config <=> config;
+                    java-combo-model <=> root.java-combo-model;
+                    java-index <=> root.java-index;
+                    set-config(config) => { root.set-config(config) }
+                    java-selected(index) => { root.java-selected(index) }
+                }
             }
         }
     }

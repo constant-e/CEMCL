@@ -301,6 +301,13 @@ pub fn add_game_dialog(
         }
     });
 
+    let ui_weak_clone = ui_weak.clone();
+    ui.on_drag_window(move || {
+        if let Some(ui) = ui_weak_clone.upgrade() {
+            ui::drag_window(&ui);
+        }
+    });
+
     ui.show()?;
     tx.send(UICommand::GetAddGameDefault).unwrap();
     tx.send(UICommand::GetAddGameList(None)).unwrap();

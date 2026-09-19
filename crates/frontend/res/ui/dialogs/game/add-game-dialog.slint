@@ -1,4 +1,4 @@
-import { Title, SettingsGroup, SubTitle, VerticalSpacing, MyText, MySpinBox, JavaVersionSelector } from "../../components/components.slint";
+import { TitleBar, SettingsGroup, SubTitle, VerticalSpacing, MyText, MySpinBox, JavaVersionSelector } from "../../components/components.slint";
 import { ComboBox, StandardButton, StandardTableView, Switch, LineEdit, VerticalBox, HorizontalBox, GridBox } from "std-widgets.slint";
 
 import { MCConfig } from "game.slint";
@@ -7,6 +7,9 @@ export component AddGameDialog inherits Dialog {
     title: @tr("Add a Game");
     preferred-height: 600px;
     preferred-width: 800px;
+    // The title bar is drawn by the dialog itself
+    no-frame: true;
+    resize-border-width: 5px;
 
     in-out property <int> game-index <=> game-table.current-row;
     in-out property <[[StandardListViewItem]]> game-list <=> game-table.rows;
@@ -31,10 +34,19 @@ export component AddGameDialog inherits Dialog {
     // Called when game selection changes, to refresh Java compatibility
     callback game-selected(int, int);
 
+    // Call UI (Rust)
+    callback drag-window();
+
     VerticalBox {
         padding: 0px;
 
-        Title { text: @tr("Add a Game"); }
+        title-bar := TitleBar {
+            title-text: @tr("Add a Game");
+            show-minimize: false;
+            show-maximize: false;
+            close => { root.close(); }
+            drag => { root.drag-window(); }
+        }
         HorizontalBox {
             padding: 0px;
 

@@ -267,6 +267,13 @@ impl AppWindow {
             }
         });
 
+        let ui_weak_clone = ui_weak.clone();
+        ui.on_drag_window(move || {
+            if let Some(ui) = ui_weak_clone.upgrade() {
+                ui::drag_window(&ui);
+            }
+        });
+
         let tx = cmd_tx.clone();
         ui.on_set_config(move |config| {
             if let Err(e) = tx.send(UICommand::SetConfig(config.into())) {

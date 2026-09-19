@@ -6,6 +6,8 @@ export component SideBar inherits Rectangle {
     in-out property <[string]> model: [];
     in-out property <string> title <=> label.text;
     in-out property <int> current-index;
+    // Height of the header row; the window keeps it in sync with the title bar
+    in property <length> header-height: 40px;
     property <int> last-index: current-index;
 
     callback index-changed(from: int, to: int);
@@ -19,11 +21,20 @@ export component SideBar inherits Rectangle {
     VerticalBox {
         padding-left: 0px;
         padding-right: 0px;
+        padding-top: 0px;
+        padding-bottom: 0px;
         alignment: start;
 
-        label := SubTitle {
-            horizontal-alignment: center;
-            vertical-alignment: center;
+        header := Rectangle {
+            height: root.header-height;
+
+            label := SubTitle {
+                width: 100%;
+                height: 100%;
+                font-weight: 700;
+                horizontal-alignment: center;
+                vertical-alignment: center;
+            }
         }
 
         VerticalLayout {

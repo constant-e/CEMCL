@@ -1,5 +1,5 @@
 import { Button, HorizontalBox, StandardTableView, VerticalBox } from "std-widgets.slint";
-import { HorizontalSpacing, Title } from "../components/components.slint";
+import { HorizontalSpacing } from "../components/components.slint";
 
 export component JavaPage inherits VerticalBox {
     in-out property <[[StandardListViewItem]]> model <=> table.rows;
@@ -7,8 +7,6 @@ export component JavaPage inherits VerticalBox {
     callback open-add-java-dialog();
     callback del-java(index: int);
     callback current-index-changed(current-index: int);
-
-    Title { text: @tr("Java Installations"); }
 
     table := StandardTableView {
         min-width: 250px;

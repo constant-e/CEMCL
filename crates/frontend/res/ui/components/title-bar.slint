@@ -1,0 +1,167 @@
+import { Palette, StyleMetrics } from "std-widgets.slint";
+import { Title } from "general/general.slint";
+
+// Windows 10 UWP style title bar: page title on the left, caption buttons
+// (minimize / maximize / close) in the top right corner. The bar itself has no
+// background distinction from the content; only the buttons highlight on hover.
+// The enclosing window interprets the callbacks, because only the root window
+// item can minimize / maximize / close / move its window.
+export component TitleBar inherits Rectangle {
+    in property <string> title-text;
+    in property <bool> show-minimize: true;
+    in property <bool> show-maximize: true;
+    // Current window state, used to pick the maximize / restore glyph.
+    in property <bool> maximized: false;
+
+    callback minimize();
+    callback maximize();
+    callback close();
+    // Ask the root window to move the window (implemented by Rust).
+    callback drag();
+
+    // Caption colors of Windows 10 UWP apps. Deliberate exception to the
+    // Palette-only rule: no palette entry provides a "destructive" color.
+    property <color> close-hover-background: #e81123;
+    property <color> close-hover-foreground: #ffffff;
+
+    height: 40px;
+    background: Palette.background;
+
+    HorizontalLayout {
+        padding-left: 0px;
+        padding-right: 0px;
+        padding-top: 0px;
+        padding-bottom: 0px;
+        spacing: 0px;
+
+        // Dragging the window: the touch area is a sibling of the buttons and only
+        // covers the part of the bar left of them, so a press can never hit both
+        // (overlapping touch areas would both get the event and steal the grab).
+        drag-area := TouchArea {
+            horizontal-stretch: 1;
+            pointer-event(event) => {
+                // Only a fresh press inside the area starts a window move. While the
+                // window manager moves the window it swallows the release, so Slint may
+                // still deliver later presses to this touch area (with out-of-range
+                // coordinates); those must not start another move.
+                if (event.button == PointerEventButton.left && event.kind == PointerEventKind.down
+                    && drag-area.mouse-x >= 0 && drag-area.mouse-x <= drag-area.width
+                    && drag-area.mouse-y >= 0 && drag-area.mouse-y <= drag-area.height) {
+                    root.drag();
+                }
+            }
+
+            // Text keeps the same padding as the page content below the bar
+            title := Title {
+                x: StyleMetrics.layout-padding;
+                width: max(0px, parent.width - StyleMetrics.layout-padding);
+                text: root.title-text;
+                vertical-alignment: center;
+                overflow: elide;
+            }
+        }
+
+        if root.show-minimize: Rectangle {
+            width: 46px;
+            height: 100%;
+            background: minimize-area.has-hover ? Palette.alternate-background : transparent;
+            accessible-role: button;
+            accessible-label: @tr("Minimize");
+            accessible-action-default => { minimize-area.clicked(); }
+
+            minimize-area := TouchArea {
+                width: 100%;
+                height: 100%;
+                clicked => { root.minimize(); }
+            }
+
+            // 10x10 glyph box, centered in the button like the other glyphs
+            Rectangle {
+                width: 10px;
+                height: 10px;
+                x: (parent.width - self.width) / 2;
+                y: (parent.height - self.height) / 2;
+
+                Rectangle {
+                    y: 5px;
+                    width: 10px;
+                    height: 1px;
+                    background: Palette.foreground;
+                }
+            }
+        }
+
+        if root.show-maximize: Rectangle {
+            width: 46px;
+            height: 100%;
+            background: maximize-area.has-hover ? Palette.alternate-background : transparent;
+            accessible-role: button;
+            accessible-label: root.maximized ? @tr("Restore") : @tr("Maximize");
+            accessible-action-default => { maximize-area.clicked(); }
+
+            maximize-area := TouchArea {
+                width: 100%;
+                height: 100%;
+                clicked => { root.maximize(); }
+            }
+
+            Rectangle {
+                width: 10px;
+                height: 10px;
+                x: (parent.width - self.width) / 2;
+                y: (parent.height - self.height) / 2;
+
+                if !root.maximized: Rectangle {
+                    width: 10px;
+                    height: 10px;
+                    border-width: 1px;
+                    border-color: Palette.foreground;
+                }
+
+                // Restore glyph: front square knocked out of the back square
+                if root.maximized: Rectangle {
+                    x: 3px;
+                    y: 0px;
+                    width: 7px;
+                    height: 7px;
+                    border-width: 1px;
+                    border-color: Palette.foreground;
+                }
+                if root.maximized: Rectangle {
+                    x: 0px;
+                    y: 3px;
+                    width: 7px;
+                    height: 7px;
+                    border-width: 1px;
+                    border-color: Palette.foreground;
+                    background: maximize-area.has-hover ? Palette.alternate-background : Palette.background;
+                }
+            }
+        }
+
+        Rectangle {
+            width: 46px;
+            height: 100%;
+            background: close-area.has-hover ? root.close-hover-background : transparent;
+            accessible-role: button;
+            accessible-label: @tr("Close");
+            accessible-action-default => { close-area.clicked(); }
+
+            close-area := TouchArea {
+                width: 100%;
+                height: 100%;
+                clicked => { root.close(); }
+            }
+
+            Path {
+                width: 10px;
+                height: 10px;
+                x: (parent.width - self.width) / 2;
+                y: (parent.height - self.height) / 2;
+                stroke-width: 1px;
+                stroke: close-area.has-hover ? root.close-hover-foreground : Palette.foreground;
+                commands: "M 0 0 L 10 10 M 10 0 L 0 10";
+            }
+        }
+    }
+}

@@ -1,5 +1,5 @@
 import { VerticalBox, StandardTableView, HorizontalBox, Button } from "std-widgets.slint";
-import { HorizontalSpacing, Title } from "../components/components.slint";
+import { HorizontalSpacing } from "../components/components.slint";
 
 export component GamesPage inherits VerticalBox {
     in-out property <int> current-index <=> table.current-row;
@@ -8,8 +8,6 @@ export component GamesPage inherits VerticalBox {
     callback open-add-game-dialog();
     callback open-edit-game-dialog(index: int);
     callback current-index-changed(current-index: int);
-
-    Title { text: @tr("Minecraft Version"); }
 
     table := StandardTableView {
         min-width: 250px;

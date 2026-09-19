@@ -1,5 +1,5 @@
 import { TabWidget, ScrollView, StandardButton, Switch, SpinBox, LineEdit, GroupBox, VerticalBox, GridBox, HorizontalBox, ComboBox } from "std-widgets.slint";
-import { Title, SectionTitle, VerticalSpacing, SettingsGroup, HorizontalSpacing, MyText, MySpinBox, JavaVersionSelector } from "../components/components.slint";
+import { SectionTitle, VerticalSpacing, SettingsGroup, HorizontalSpacing, MyText, MySpinBox, JavaVersionSelector } from "../components/components.slint";
 
 export struct ConfigGeneral {
     close_after_launch: bool,
@@ -47,8 +47,6 @@ export component SettingsPage inherits VerticalBox {
     callback set-config(Config);
     callback java-selected(int);
 
-    Title { text: @tr("Settings"); }
-    
     TabWidget {
         Tab {
             title: @tr("Launcher Settings");

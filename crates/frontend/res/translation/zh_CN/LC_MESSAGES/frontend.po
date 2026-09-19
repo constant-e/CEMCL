@@ -2,7 +2,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
-"POT-Creation-Date: 2026-08-24 15:03+0000\n"
+"POT-Creation-Date: 2026-09-19 10:02+0000\n"
 "PO-Revision-Date: 2026-04-10 18:06+0800\n"
 "Last-Translator:  <fmn_tzx@outlook.com>\n"
 "Language-Team: Chinese (simplified) <i18n-zh@googlegroups.com>\n"
@@ -12,47 +12,62 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
 
-#: pages/accounts/accounts.slint:21
-msgctxt "AccountsPage"
-msgid "Account"
-msgstr "账号"
+#: components/title-bar.slint:59
+msgctxt "TitleBar"
+msgid "Minimize"
+msgstr "最小化"
 
-#: pages/accounts/accounts.slint:41
+#: components/title-bar.slint:89
+msgctxt "TitleBar"
+msgid "Restore"
+msgstr "还原"
+
+#: components/title-bar.slint:89
+msgctxt "TitleBar"
+msgid "Maximize"
+msgstr "最大化"
+
+#: components/title-bar.slint:137
+msgctxt "TitleBar"
+msgid "Close"
+msgstr "关闭"
+
+#: pages/accounts/accounts.slint:39
 msgctxt "AccountsPage"
 msgid "Edit"
 msgstr "编辑"
 
-#: pages/accounts/accounts.slint:49
+#: pages/accounts/accounts.slint:47
 msgctxt "AccountsPage"
 msgid "Switch"
 msgstr "切换"
 
-#: pages/accounts/accounts.slint:62
+#: pages/accounts/accounts.slint:60
 msgctxt "AccountsPage"
 msgid "Edit {}"
 msgstr "编辑"
 
-#: pages/accounts/accounts.slint:65
+#: pages/accounts/accounts.slint:63
 msgctxt "AccountsPage"
 msgid "Name"
 msgstr "用户名"
 
-#: pages/accounts/accounts.slint:77
+#: pages/accounts/accounts.slint:75
 msgctxt "AccountsPage"
 msgid "UUID"
 msgstr "UUID"
 
-#: pages/accounts/accounts.slint:89
+#: pages/accounts/accounts.slint:87
 msgctxt "AccountsPage"
 msgid "Token"
 msgstr "Token"
 
-#: pages/accounts/accounts.slint:104
+#: pages/accounts/accounts.slint:102
 msgctxt "AccountsPage"
 msgid "Delete"
 msgstr "删除"
 
-#: pages/accounts/accounts.slint:122
+#: pages/accounts/accounts.slint:120
 msgctxt "AccountsPage"
 msgid "Add"
 msgstr "添加"
@@ -97,207 +112,192 @@ msgctxt "HomePage"
 msgid "Logging in"
 msgstr "登录中"
 
-#: pages/home.slint:95
+#: pages/home.slint:89
 msgctxt "HomePage"
 msgid "Start"
 msgstr "启动"
 
-#: pages/settings.slint:50
-msgctxt "SettingsPage"
-msgid "Settings"
-msgstr "设置"
-
-#: pages/settings.slint:54
+#: pages/settings.slint:52
 msgctxt "SettingsPage"
 msgid "Launcher Settings"
 msgstr "启动器设置"
 
-#: pages/settings.slint:58
+#: pages/settings.slint:56
 msgctxt "SettingsPage"
 msgid "General"
 msgstr "通用"
 
-#: pages/settings.slint:60
+#: pages/settings.slint:58
 msgctxt "SettingsPage"
 msgid "Minecraft Path"
 msgstr "Minecraft路径"
 
-#: pages/settings.slint:67
+#: pages/settings.slint:65
 msgctxt "SettingsPage"
 msgid "Progress Display"
 msgstr "进度显示方式"
 
-#: pages/settings.slint:69
+#: pages/settings.slint:67
 msgctxt "SettingsPage"
 msgid "By Size"
 msgstr "按大小"
 
-#: pages/settings.slint:69
+#: pages/settings.slint:67
 msgctxt "SettingsPage"
 msgid "By Number"
 msgstr "按数量"
 
-#: pages/settings.slint:69
+#: pages/settings.slint:67
 msgctxt "SettingsPage"
 msgid "Both"
 msgstr "均显示"
 
-#: pages/settings.slint:80
+#: pages/settings.slint:78
 msgctxt "SettingsPage"
 msgid "Quit after Launch"
 msgstr "启动后关闭启动器"
 
-#: pages/settings.slint:89
+#: pages/settings.slint:87
 msgctxt "SettingsPage"
 msgid "Downloading Settings"
 msgstr "下载设置"
 
-#: pages/settings.slint:92
+#: pages/settings.slint:90
 msgctxt "SettingsPage"
 msgid "Concurrency"
 msgstr "并发数"
 
-#: pages/settings.slint:100
+#: pages/settings.slint:98
 msgctxt "SettingsPage"
 msgid "Assets Source"
 msgstr "Assets下载源"
 
-#: pages/settings.slint:108
+#: pages/settings.slint:106
 msgctxt "SettingsPage"
 msgid "Libraries Source"
 msgstr "Libraries下载源"
 
-#: pages/settings.slint:116
+#: pages/settings.slint:114
 msgctxt "SettingsPage"
 msgid "Minecraft Source"
 msgstr "Minecraft下载源"
 
-#: pages/settings.slint:124
+#: pages/settings.slint:122
 msgctxt "SettingsPage"
 msgid "Fabric Source"
 msgstr "Fabric下载源"
 
-#: pages/settings.slint:132
+#: pages/settings.slint:130
 msgctxt "SettingsPage"
 msgid "Forge Source"
 msgstr "Forge下载源"
 
-#: pages/settings.slint:145 pages/settings.slint:149
+#: pages/settings.slint:143 pages/settings.slint:147
 msgctxt "SettingsPage"
 msgid "Default Minecraft Settings"
 msgstr "Minecraft默认配置"
 
-#: pages/settings.slint:152
+#: pages/settings.slint:150
 msgctxt "SettingsPage"
 msgid "Java Path"
 msgstr "Java路径"
 
-#: pages/settings.slint:161
+#: pages/settings.slint:159
 msgctxt "SettingsPage"
 msgid "Wrapper"
 msgstr "封装器"
 
-#: pages/settings.slint:169
+#: pages/settings.slint:167
 msgctxt "SettingsPage"
 msgid "Minimum Memory"
 msgstr "最小分配内存"
 
-#: pages/settings.slint:177
+#: pages/settings.slint:175
 msgctxt "SettingsPage"
 msgid "Maximum Memory"
 msgstr "最大分配内存"
 
-#: pages/settings.slint:185
+#: pages/settings.slint:183
 msgctxt "SettingsPage"
 msgid "Window Height"
 msgstr "窗口高度"
 
-#: pages/settings.slint:193
+#: pages/settings.slint:191
 msgctxt "SettingsPage"
 msgid "Window Width"
 msgstr "窗口宽度"
 
-#: pages/settings.slint:206
+#: pages/settings.slint:204
 msgctxt "SettingsPage"
 msgid "About"
 msgstr "关于"
 
-#: pages/settings.slint:224
+#: pages/settings.slint:222
 msgctxt "SettingsPage"
 msgid "Version: "
 msgstr "版本："
 
-#: pages/settings.slint:225
+#: pages/settings.slint:223
 msgctxt "SettingsPage"
 msgid "GitHub Repository: "
 msgstr "GitHub仓库："
 
-#: pages/settings.slint:226
+#: pages/settings.slint:224
 msgctxt "SettingsPage"
 msgid "Developers: "
 msgstr "开发者："
 
-#: pages/settings.slint:227
+#: pages/settings.slint:225
 msgctxt "SettingsPage"
 msgid "License: "
 msgstr "许可证："
 
-#: pages/settings.slint:229
+#: pages/settings.slint:227
 msgctxt "SettingsPage"
 msgid "Credits:\n"
 msgstr "鸣谢：\n"
 
-#: pages/java.slint:11
-msgctxt "JavaPage"
-msgid "Java Installations"
-msgstr "Java版本"
-
-#: pages/java.slint:16
+#: pages/java.slint:14
 msgctxt "JavaPage"
 msgid "Version"
 msgstr "版本"
 
-#: pages/java.slint:17
+#: pages/java.slint:15
 msgctxt "JavaPage"
 msgid "Path"
 msgstr "路径"
 
-#: pages/java.slint:28
+#: pages/java.slint:26
 msgctxt "JavaPage"
 msgid "Add"
 msgstr "添加"
 
-#: pages/java.slint:33
+#: pages/java.slint:31
 msgctxt "JavaPage"
 msgid "Delete"
 msgstr "删除"
 
-#: pages/games.slint:12
-msgctxt "GamesPage"
-msgid "Minecraft Version"
-msgstr "Minecraft版本"
-
-#: pages/games.slint:17
+#: pages/games.slint:15
 msgctxt "GamesPage"
 msgid "Version"
 msgstr "版本"
 
-#: pages/games.slint:18
+#: pages/games.slint:16
 msgctxt "GamesPage"
 msgid "Type"
 msgstr "类型"
 
-#: pages/games.slint:19
+#: pages/games.slint:17
 msgctxt "GamesPage"
 msgid "Description"
 msgstr "备注"
 
-#: pages/games.slint:30
+#: pages/games.slint:28
 msgctxt "GamesPage"
 msgid "Add"
 msgstr "添加"
 
-#: pages/games.slint:35
+#: pages/games.slint:33
 msgctxt "GamesPage"
 msgid "Edit"
 msgstr "编辑"
@@ -349,130 +349,125 @@ msgstr "取消"
 
 #: pages/downloader.slint:144
 msgctxt "DownloaderPage"
-msgid "Downloader"
-msgstr "下载"
-
-#: pages/downloader.slint:148
-msgctxt "DownloaderPage"
 msgid "Unfinished"
 msgstr "未完成"
 
-#: pages/downloader.slint:166
+#: pages/downloader.slint:164
 msgctxt "DownloaderPage"
 msgid "Finished"
 msgstr "已完成"
 
-#: dialogs/game/add-game-dialog.slint:7 dialogs/game/add-game-dialog.slint:37
+#: dialogs/game/add-game-dialog.slint:7 dialogs/game/add-game-dialog.slint:44
 msgctxt "AddGameDialog"
 msgid "Add a Game"
 msgstr "添加游戏"
 
-#: dialogs/game/add-game-dialog.slint:44
+#: dialogs/game/add-game-dialog.slint:56
 msgctxt "AddGameDialog"
 msgid "Minecraft Version"
 msgstr "Minecraft版本"
 
-#: dialogs/game/add-game-dialog.slint:46
+#: dialogs/game/add-game-dialog.slint:58
 msgctxt "AddGameDialog"
 msgid "All"
 msgstr "全部"
 
-#: dialogs/game/add-game-dialog.slint:46
+#: dialogs/game/add-game-dialog.slint:58
 msgctxt "AddGameDialog"
 msgid "Release"
 msgstr "稳定版"
 
-#: dialogs/game/add-game-dialog.slint:46
+#: dialogs/game/add-game-dialog.slint:58
 msgctxt "AddGameDialog"
 msgid "Snapshot"
 msgstr "快照版"
 
-#: dialogs/game/add-game-dialog.slint:46
+#: dialogs/game/add-game-dialog.slint:58
 msgctxt "AddGameDialog"
 msgid "Old Alpha"
 msgstr "远古版Alpha"
 
-#: dialogs/game/add-game-dialog.slint:46
+#: dialogs/game/add-game-dialog.slint:58
 msgctxt "AddGameDialog"
 msgid "Old Beta"
 msgstr "远古版Beta"
 
-#: dialogs/game/add-game-dialog.slint:51 dialogs/game/add-game-dialog.slint:85
+#: dialogs/game/add-game-dialog.slint:63 dialogs/game/add-game-dialog.slint:97
 msgctxt "AddGameDialog"
 msgid "Version"
 msgstr "版本"
 
-#: dialogs/game/add-game-dialog.slint:52
+#: dialogs/game/add-game-dialog.slint:64
 msgctxt "AddGameDialog"
 msgid "Type"
 msgstr "类型"
 
-#: dialogs/game/add-game-dialog.slint:68
+#: dialogs/game/add-game-dialog.slint:80
 msgctxt "AddGameDialog"
 msgid "Mod Loader"
 msgstr "Mod加载器"
 
-#: dialogs/game/add-game-dialog.slint:70
+#: dialogs/game/add-game-dialog.slint:82
 msgctxt "AddGameDialog"
 msgid "None"
 msgstr "无"
 
-#: dialogs/game/add-game-dialog.slint:86
+#: dialogs/game/add-game-dialog.slint:98
 msgctxt "AddGameDialog"
 msgid "Modified"
 msgstr "修改日期"
 
-#: dialogs/game/add-game-dialog.slint:93
+#: dialogs/game/add-game-dialog.slint:105
 msgctxt "AddGameDialog"
 msgid "Customize"
 msgstr "自定义"
 
-#: dialogs/game/add-game-dialog.slint:97
+#: dialogs/game/add-game-dialog.slint:109
 msgctxt "AddGameDialog"
 msgid "Window height"
 msgstr "窗口高度"
 
-#: dialogs/game/add-game-dialog.slint:104
+#: dialogs/game/add-game-dialog.slint:116
 msgctxt "AddGameDialog"
 msgid "Window width"
 msgstr "窗口宽度"
 
-#: dialogs/game/add-game-dialog.slint:111
+#: dialogs/game/add-game-dialog.slint:123
 msgctxt "AddGameDialog"
 msgid "Description"
 msgstr "备注"
 
-#: dialogs/game/add-game-dialog.slint:118
+#: dialogs/game/add-game-dialog.slint:130
 msgctxt "AddGameDialog"
 msgid "Game args"
 msgstr "Minecraft参数"
 
-#: dialogs/game/add-game-dialog.slint:125
+#: dialogs/game/add-game-dialog.slint:137
 msgctxt "AddGameDialog"
 msgid "Java path"
 msgstr "Java路径"
 
-#: dialogs/game/add-game-dialog.slint:133
+#: dialogs/game/add-game-dialog.slint:145
 msgctxt "AddGameDialog"
 msgid "JVM args"
 msgstr "JVM参数"
 
-#: dialogs/game/add-game-dialog.slint:140
+#: dialogs/game/add-game-dialog.slint:152
 msgctxt "AddGameDialog"
 msgid "Wrapper"
 msgstr "封装器"
 
-#: dialogs/game/add-game-dialog.slint:147
+#: dialogs/game/add-game-dialog.slint:159
 msgctxt "AddGameDialog"
 msgid "Minimum memory"
 msgstr "最小分配内存"
 
-#: dialogs/game/add-game-dialog.slint:154
+#: dialogs/game/add-game-dialog.slint:166
 msgctxt "AddGameDialog"
 msgid "Maximum memory"
 msgstr "最大分配内存"
 
-#: dialogs/game/add-game-dialog.slint:163
+#: dialogs/game/add-game-dialog.slint:175
 msgctxt "AddGameDialog"
 msgid "Separated"
 msgstr "版本隔离"
@@ -643,49 +638,72 @@ msgctxt "AddJavaDialog"
 msgid "Failed to read Java information"
 msgstr ""
 
-#: dialogs/dialogs.slint:41
+#: dialogs/dialogs.slint:25
 msgctxt "AskDialog"
 msgid "Are you sure to delete this account?"
 msgstr "你确定要删除这个账号吗？"
 
-#: dialogs/dialogs.slint:44
+#: dialogs/dialogs.slint:28
 msgctxt "AskDialog"
 msgid ""
 "All the files under this Minecraft installation's folder will be deleted. "
 "Continue?"
 msgstr "此游戏目录下的所有文件将被删除。确认继续？"
 
-#: app-window.slint:59
+#. Localized suffix for incompatible Java versions, read from Rust
+#: app-window.slint:36
+msgctxt "AppWindow"
+msgid "not compatible"
+msgstr "不兼容"
+
+#: app-window.slint:39 app-window.slint:75
 msgctxt "AppWindow"
 msgid "Account"
 msgstr "账号"
 
-#: app-window.slint:59
+#: app-window.slint:41
 msgctxt "AppWindow"
-msgid "Home"
-msgstr "主页"
+msgid "Minecraft Version"
+msgstr "Minecraft版本"
 
-#: app-window.slint:59
-msgctxt "AppWindow"
-msgid "Games"
-msgstr "游戏"
-
-#: app-window.slint:59
+#: app-window.slint:42 app-window.slint:75
 msgctxt "AppWindow"
 msgid "Downloader"
 msgstr "下载"
 
-#: app-window.slint:59
+#: app-window.slint:43
 msgctxt "AppWindow"
-msgid "Java"
-msgstr "Java"
+msgid "Java Installations"
+msgstr "Java版本"
 
-#: app-window.slint:59
+#: app-window.slint:44 app-window.slint:75
 msgctxt "AppWindow"
 msgid "Settings"
 msgstr "设置"
 
-#: app-window.slint:33
+#: app-window.slint:75
 msgctxt "AppWindow"
-msgid "not compatible"
-msgstr "不兼容"
+msgid "Home"
+msgstr "主页"
+
+#: app-window.slint:75
+msgctxt "AppWindow"
+msgid "Games"
+msgstr "游戏"
+
+#: app-window.slint:75
+msgctxt "AppWindow"
+msgid "Java"
+msgstr "Java"
+
+#~ msgctxt "AccountsPage"
+#~ msgid "Account"
+#~ msgstr "账号"
+
+#~ msgctxt "SettingsPage"
+#~ msgid "Settings"
+#~ msgstr "设置"
+
+#~ msgctxt "DownloaderPage"
+#~ msgid "Downloader"
+#~ msgstr "下载"

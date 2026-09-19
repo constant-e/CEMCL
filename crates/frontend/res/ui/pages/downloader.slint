@@ -1,5 +1,5 @@
 import { ProgressIndicator, VerticalBox, HorizontalBox, Button, ScrollView, StyleMetrics, Palette } from "std-widgets.slint";
-import { Title, SectionTitle, HorizontalSpacing, VerticalSpacing } from "../components/components.slint";
+import { SectionTitle, HorizontalSpacing, VerticalSpacing } from "../components/components.slint";
 
 export enum TaskSetStatus {
     Pending,
@@ -140,8 +140,6 @@ export component DownloaderPage inherits VerticalBox {
     callback pause(string);
     callback resume(string);
     callback cancel-task(string);
-
-    Title { text: @tr("Downloader"); }
 
     SectionTitle { text: @tr("Unfinished"); }
 
