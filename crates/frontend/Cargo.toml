@@ -12,4 +12,4 @@ slint = { workspace = true, features = ["unstable-winit-030"] }
 tokio = { workspace = true }
 
 [build-dependencies]
-slint-build = "1.17.1"
+slint-build = "1.18.0"
