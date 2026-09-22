@@ -385,7 +385,11 @@ impl AppWindow {
             }
             UIUpdate::SetAccountList(list) => {
                 if let Err(e) = ui_weak.upgrade_in_event_loop(move |ui| {
-                    ui.set_acc_list(account::ui_acc_list(&list));
+                    let icon_size = account::ui_avatar_size(
+                        ui.get_account_icon_size(),
+                        ui.window().scale_factor(),
+                    );
+                    ui.set_acc_list(account::ui_acc_list(&list, icon_size));
                 }) {
                     error!("{e}")
                 }

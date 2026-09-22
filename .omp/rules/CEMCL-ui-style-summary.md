@@ -5,7 +5,7 @@ globs: crates/frontend/res/ui/**/*.slint
 
 # CEMCL UI 设计风格与布局规范
 
-> 依 `crates/frontend/res/ui/` 全部 28 个 `.slint` 文件核对于 2026-09-19（Slint 1.17.1）。来源 `.github/instructions/CEMCL-ui-style-summary.instructions.md`（已迁至 `.omp/rules/`），已修正若干偏差。
+> 依 `crates/frontend/res/ui/` 全部 28 个 `.slint` 文件核对于 2026-09-19（Slint 1.17.1）；§7 的账号头像位图 2026-09-22 复核（Slint 1.18.1）。来源 `.github/instructions/CEMCL-ui-style-summary.instructions.md`（已迁至 `.omp/rules/`），已修正若干偏差。
 > 配套：`rule://CEMCL-project-summary`。
 
 ## 1. 文件组织（28 个文件）
@@ -33,7 +33,7 @@ res/ui/
     └── game/{add-game-dialog.slint, edit-game-dialog.slint, forge-download-dialog.slint, game.slint(MCConfig)}
 ```
 
-**约定**：每个目录一个"总出口"（`components.slint` / `pages.slint` / `dialogs.slint`），新组件必须 export 进对应总出口；`components.slint` 经 `general/general.slint` 二层转发。现存例外：`app-window.slint` 直接 `import { AccountInner } from "pages/accounts/accounts.slint"`（该类型未经 pages.slint 导出）。
+**约定**：每个目录一个"总出口"（`components.slint` / `pages.slint` / `dialogs.slint`），新组件必须 export 进对应总出口；`components.slint` 经 `general/general.slint` 二层转发。现存例外：`app-window.slint` 直接 `import { AccountIconSpec, AccountInner } from "pages/accounts/accounts.slint"`（这些类型未经 pages.slint 导出）。
 
 ## 2. 整体布局骨架
 
@@ -100,12 +100,13 @@ res/ui/
 
 - **UI→App**：`UICommand`（tokio mpsc unbounded）；**App→UI**：`UIUpdate`（`upgrade_in_event_loop`），详见 `rule://CEMCL-project-summary`。
 - **模型构建**：Rust 侧 `ui_*` 函数：表格 `ModelRc<ModelRc<StandardListViewItem>>`（`ui_game_list`、`ui_fabric_list`、`ui_forge_list`、`ui_game_dl_list`、`ui_java_list`）；`ui_combo_box_list` → `ModelRc<SharedString>`；`ui_java_combo_box_list` → `Vec<String>`；另有 `ui_acc_list`、`ui_task_set_list`。
+- **账号头像位图**：`AccountInner.avatar`（`image`）由 Rust 生成 —— `mc` 给出皮肤头部正面 8×8（第二层已合成），frontend 按 `AccountIconSpec.size × window.scale_factor()`（`account::ui_avatar_size`）最近邻放大到设备像素后再 `Image::from_rgba8`，避免 Slint 放大位图导致模糊（`ui_acc_list(&list, icon_size)`）；显示尺寸只在 `account-item.slint` 的 `export global AccountIconSpec { out property <length> size: 48px; }` 里定义一次，Rust 经 AppWindow 的 `out property <length> account-icon-size: AccountIconSpec.size` 读取（同 §6 的 Rust 取译文桥接）。账号头像的加载/缓存见 `rule://CEMCL-project-summary` §5。
 - **ComboBox 模型只能 `[string]`**（fluent 风格不支持 struct 模型）：Java "版本 + (不兼容)" 后缀在 Rust 侧格式化后传入。
 - **Config 结构**：`Config`/`ConfigGeneral`/`ConfigDL`/`ConfigMC` 在 settings.slint 定义为 struct，与 Rust `frontend::Config*` 一一对应；settings 页用 `<=>` 绑定，每次编辑调 `set-config(root.config)` 保存。
 
 ## 8. 新增 UI 检查单
 
-1. 新组件/页面/对话框必须在对应总出口 export，并只从总出口 import（现存唯一例外：AccountInner）。
+1. 新组件/页面/对话框必须在对应总出口 export，并只从总出口 import（现存唯一例外：AppWindow 直接从 accounts.slint import `AccountIconSpec` / `AccountInner`）。
 2. 文本必须 `@tr()`，并同步 frontend.pot 与 zh_CN/LC_MESSAGES/frontend.po（跑 update_translations.sh）。注意 msgmerge 会把换了 context 的条目标成 `#, fuzzy`，fuzzy 条目不生效，必须手工去掉。
 3. 颜色用 `Palette`；布局 `spacing` 用 `StyleMetrics.layout-spacing`；圆角统一 8px。
 4. 页面切换沿用 `if (side-bar.current-index == N)` 模式，不要引入新的导航机制；新页面的标题写进 AppWindow 的 `page-titles`（索引与 SideBar `model` 对齐），页面内部不要再放 `Title`。
@@ -114,3 +115,4 @@ res/ui/
 7. 对话框用 `StandardButton`，自定义动作按钮加 `dialog-button-role: action`。
 8. 进度相关统一走 `progress-mode`（0/1/2）约定。
 9. 自绘标题栏改动后确认：按钮点击区不被拖动区吞掉、关闭按钮悬停变红、`page-titles` 与侧栏索引一致、无边框窗口仍可用边缘拖动缩放。
+10. 像素位图（如账号头像）：按「显示尺寸 × 窗口缩放因子」在 Rust 侧最近邻放大后再交给 `Image`，显示尺寸用 `out property` 桥接给 Rust（见 §7），不要直接把小位图丢给 Slint 缩放。

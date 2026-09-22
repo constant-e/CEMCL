@@ -5,6 +5,7 @@ use crate::errors::LauncherError;
 use mc::account::{
     Account, AccountType,
     auth::{AuthSession, request_oauth, request_refresh_account},
+    skin,
 };
 
 pub struct AccountManager {
@@ -185,9 +186,17 @@ pub fn frontend_account_type(account_type: AccountType) -> frontend::account::Ac
     }
 }
 
-pub fn frontend_account(account: Account) -> frontend::account::Account {
+pub fn frontend_account(
+    account: Account,
+    avatar: Option<skin::Avatar>,
+) -> frontend::account::Account {
     frontend::account::Account {
         account_type: frontend_account_type(account.account_type),
+        avatar: avatar.map(|avatar| frontend::account::Avatar {
+            height: skin::Avatar::SIZE,
+            rgba: avatar.into_rgba(),
+            width: skin::Avatar::SIZE,
+        }),
         token: account.refresh_token,
         user_name: account.user_name,
         uuid: account.uuid,

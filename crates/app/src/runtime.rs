@@ -28,7 +28,7 @@ use frontend::{
     game::ModType,
 };
 
-use crate::{account::AccountManager, errors::LauncherError};
+use crate::{account::AccountManager, avatar::AvatarManager, errors::LauncherError};
 
 #[derive(Clone)]
 pub struct ConfigGeneral {
@@ -218,6 +218,8 @@ struct PendingForge {
 
 pub struct AppRuntime {
     account_manager: AccountManager,
+    /// 账号头像（皮肤头部正面）
+    avatars: AvatarManager,
     cache: CacheData,
     config: ConfigGeneral,
     cmd_receiver: Option<tokio::sync::mpsc::UnboundedReceiver<UICommand>>,
@@ -248,6 +250,7 @@ impl AppRuntime {
 
         Ok(Self {
             account_manager,
+            avatars: AvatarManager::new(),
             cache: CacheData::new(),
             config: config_general,
             cmd_receiver: Some(cmd_receiver),
@@ -261,7 +264,9 @@ impl AppRuntime {
         })
     }
 
-    fn init(&self) -> Result<(), LauncherError> {
+    fn init(&mut self) -> Result<(), LauncherError> {
+        // 先给出缓存或默认头像，正版账号的皮肤在后台更新
+        self.avatars.load(self.account_manager.get_account_list());
         self.refresh_ui_info()?;
         self.refresh_ui_acc_list()?;
         self.refresh_ui_config()?;
@@ -270,16 +275,26 @@ impl AppRuntime {
         Ok(())
     }
 
+    /// 账号编辑（可能改了 uuid）后刷新头像
+    fn reload_avatar(&mut self, old_uuid: &str, account: &Account) {
+        if old_uuid != account.uuid {
+            self.avatars.remove(old_uuid);
+        }
+        self.avatars.load_account(account);
+    }
+
     async fn handle(&mut self, cmd: UICommand) -> Result<(), LauncherError> {
         match cmd {
             UICommand::AddOfflineAccount(user_name, uuid) => {
-                self.account_manager.add(Account {
+                let account = Account {
                     access_token: String::new(),
                     account_type: mc::account::AccountType::Legacy,
                     refresh_token: String::new(),
                     uuid,
                     user_name,
-                })?;
+                };
+                self.account_manager.add(account.clone())?;
+                self.avatars.load_account(&account);
                 self.refresh_ui_acc_list()?;
                 self.update_sender.send(UIUpdate::QuitLoginDialog)?;
             }
@@ -500,7 +515,9 @@ impl AppRuntime {
                     .send(UIUpdate::SetJavaCheckResult(result, version))?;
             }
             UICommand::DelAccount(index) => {
+                let uuid = self.account_manager.get(index).uuid.clone();
                 self.account_manager.del(index)?;
+                self.avatars.remove(&uuid);
                 self.refresh_ui_acc_list()?;
             }
             UICommand::DelGame(index) => {
@@ -515,11 +532,13 @@ impl AppRuntime {
             }
             UICommand::EditAccount(index, account) => {
                 let mut i_account = self.account_manager.get(index).clone();
+                let old_uuid = i_account.uuid.clone();
                 i_account.account_type = to_account_type(account.account_type);
                 i_account.refresh_token = account.token;
                 i_account.user_name = account.user_name;
                 i_account.uuid = account.uuid;
-                self.account_manager.edit(index, i_account)?;
+                self.account_manager.edit(index, i_account.clone())?;
+                self.reload_avatar(&old_uuid, &i_account);
                 self.refresh_ui_acc_list()?;
             }
             UICommand::EditGame(index, installation) => {
@@ -548,7 +567,8 @@ impl AppRuntime {
                         AuthPollAction::Continue(step) => info!("Step {step} / 5"),
                         AuthPollAction::Done(account) => {
                             info!("Step 5 / 5");
-                            self.account_manager.add(account)?;
+                            self.account_manager.add(account.clone())?;
+                            self.avatars.load_account(&account);
                             self.refresh_ui_acc_list()?;
                             self.update_sender.send(UIUpdate::QuitLoginDialog)?;
                             break;
@@ -714,6 +734,7 @@ impl AppRuntime {
                 self.update_sender
                     .send(UIUpdate::SetOfflineAccount(frontend_account(
                         Account::default(),
+                        None,
                     )))?;
             }
             UICommand::HideForgeDownloadDialog => {
@@ -777,7 +798,10 @@ impl AppRuntime {
                             AuthPollAction::Done(account) => {
                                 self.update_sender
                                     .send(UIUpdate::SetHomePageProgress(1.0, 5, 5))?;
+                                let old_uuid = self.account_manager.get(acc_index).uuid.clone();
+                                self.reload_avatar(&old_uuid, &account);
                                 self.account_manager.edit(acc_index, account)?;
+                                self.refresh_ui_acc_list()?;
                                 break;
                             }
                         }
@@ -976,7 +1000,7 @@ impl AppRuntime {
         self.update_sender.send(UIUpdate::SetAccountList(
             acc_list
                 .iter()
-                .map(|v| frontend_account(v.clone()))
+                .map(|v| frontend_account(v.clone(), Some(self.avatars.get(v))))
                 .collect(),
         ))?;
         self.update_sender
@@ -1122,6 +1146,10 @@ impl AppRuntime {
             .cmd_receiver
             .take()
             .ok_or(LauncherError::ChannelNotFound)?;
+        let mut avatar_receiver = self
+            .avatars
+            .take_update_receiver()
+            .ok_or(LauncherError::ChannelNotFound)?;
         loop {
             tokio::select! {
                 Some(cmd) = cmd_receiver.recv() => {
@@ -1130,6 +1158,11 @@ impl AppRuntime {
                         self.update_sender.send(UIUpdate::SetHomePageStatus(frontend::home::State::Spare))?;
                         self.update_sender.send(UIUpdate::SetHomePageProgress(0.0, 0, 0))?;
                     }
+                },
+                Some((uuid, avatar)) = avatar_receiver.recv() => {
+                    // 后台更新完成的正版账号皮肤
+                    self.avatars.insert(uuid, avatar);
+                    self.refresh_ui_acc_list()?;
                 },
                 info = self.downloader_broadcast.recv() => {
                     match info {

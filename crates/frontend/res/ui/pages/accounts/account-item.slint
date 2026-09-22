@@ -2,11 +2,17 @@ import { SubTitle } from "../../components/components.slint";
 import { AccountInner, AccountType } from "account-inner.slint";
 import { StyleMetrics } from "std-widgets.slint";
 
+// Icon size of an account avatar: Rust generates the bitmap for this size
+// multiplied by the window scale factor, so that it is not scaled up and blurred
+export global AccountIconSpec {
+    out property <length> size: 48px;
+}
+
 export component Account inherits HorizontalLayout {
     spacing: StyleMetrics.layout-spacing;
 
     in-out property <AccountInner> account;
-    in-out property <length> size: 48px;
+    in-out property <length> size: AccountIconSpec.size;
 
     function to-string(type: AccountType) -> string {
         if type == AccountType.Legacy {
@@ -18,11 +24,11 @@ export component Account inherits HorizontalLayout {
         }
     }
 
-    // TODO: User avatar
-    icon := Image {
-        source: @image-url("../../../pic/icon.png");
-        max-height: max(size, id.font-size + StyleMetrics.layout-spacing + type.font-size);
-        max-width: max(size, id.font-size + StyleMetrics.layout-spacing + type.font-size);
+    // User avatar: front face of the account's skin
+    avatar := Image {
+        source: account.avatar;
+        width: size;
+        height: size;
     }
 
     // User ID and type

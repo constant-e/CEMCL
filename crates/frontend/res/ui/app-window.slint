@@ -1,7 +1,7 @@
 import { Button, StandardTableView, VerticalBox, HorizontalBox, ProgressIndicator } from "std-widgets.slint";
 import { TitleBar, SideBar } from "components/components.slint";
 import { AccountsPage, HomePage, GamesPage, DownloaderPage, JavaPage, SettingsPage, State, Config, ConfigGeneral, ConfigDL, ConfigMC, TaskSetInfo } from "pages/pages.slint";
-import { AccountInner } from "pages/accounts/accounts.slint";
+import { AccountIconSpec, AccountInner } from "pages/accounts/accounts.slint";
 
 export { Config, ConfigGeneral, ConfigDL, ConfigMC, State }
 export { AddGameDialog, EditGameDialog, AskDialog, LoginDialog, AddJavaDialog, ForgeDownloadDialog } from "dialogs/dialogs.slint";
@@ -34,6 +34,8 @@ export component AppWindow inherits Window {
     in-out property <[TaskSetInfo]> finished-list;
     // Localized suffix for incompatible Java versions, read from Rust
     out property <string> not-compatible-text: @tr("not compatible");
+    // Avatar icon size, read from Rust to generate the avatar bitmaps for the display scale
+    out property <length> account-icon-size: AccountIconSpec.size;
     // Titles shown in the title bar, indexed like the side bar model
     property <[string]> page-titles: [
         @tr("Account"),
