@@ -66,20 +66,22 @@ mc::download_*（返回 mc::TaskInfo 列表）──▶ Runtime 转成 downloade
 - **无边框窗口**：主窗口与 AddGameDialog 自绘标题栏（`no-frame`）。移动窗口走 `.slint` 回调 `drag-window` → `frontend/src/ui.rs` 的 `drag_window()` → `slint::winit_030::WinitWindowAccessor` + `winit::Window::drag_window()`（`crates/frontend/Cargo.toml` 启用 slint 的 `unstable-winit-030` feature）；因为在 WM 交互移动期间应用收不到抬起事件，`drag_window()` 还会在事件循环里补发一次窗口外的 `PointerReleased` 复位 Slint 输入状态（细节见 `rule://CEMCL-ui-style-summary` §4）。最小化/最大化/关闭直接在根元素上改 `root.minimized` / `root.maximized` / `root.close()`。
 - **翻译更新**：`crates/frontend/update_translations.sh`（`slint-tr-extractor` 生成 frontend.pot，`msgmerge` 更新 zh_CN po）。
 
-## 5. 已修复怪癖（2026-09-09 修复；2026-09-18 复核仍成立）
+## 5. 已修复怪癖（2026-09-09 修复；2026-09-22 复核仍成立）
 
 - `utils::get_parent_dir` 改用 `Path::parent()`。
-- `extract_lib` 改用 `std::env::temp_dir()/cemcl-{id}-{uuid}` 唯一目录。
+- `mc::download::libraries::extract_lib` 重写：直接按平台/架构匹配从 jar 中读出 natives（`.dll`/`.dylib`/`.so`），目标已存在则跳过；不再整包解压到 `temp_dir`（旧实现在每次启动时会写/删约 3.7 万个临时文件，占启动准备阶段 90% 以上耗时，并在解压失败时泄漏临时目录）。调用点统一走 `extract_lib_logged`（失败记日志、不阻断启动）。
+- `utils::download` 改用共享 `reqwest::Client`（连接 10s / 整体 60s 超时 + 退避重试），此前 `reqwest::get` 无超时，网络黑洞时可在「启动中 0%」卡到 TCP 超时。
 - Java 不兼容后缀翻译：AppWindow `out property <string> not-compatible-text: @tr("not compatible")` 桥接，Rust 读取后格式化。
 - `AccountType::Other` 序列化为 `"Other"`。
 - `account.rs` 的 `save()` 中无空 `error!` 日志。
 - `open-edit-java-dialog` 回调已声明但未实现（JavaPage 无 Edit 按钮，当前不可触发）。
 
-## 6. 剩余 TODO（行号截至 2026-09-18，共 6 条；grep 全仓无其它 TODO/FIXME）
+## 6. 剩余 TODO（行号截至 2026-09-22，共 7 条）
 
-1. `crates/mc/src/download/libraries.rs:78` — `// TODO: check hash`（natives 库已存在时校验哈希）
-2. `crates/mc/src/download/libraries.rs:139` — `// TODO: check hash`（fabric 库已存在时校验哈希）
-3. `crates/mc/src/download/assets.rs:34` — `// TODO: check hash`（资源已存在时校验哈希）
-4. `crates/frontend/src/app_window.rs:248` — `// TODO: implement edit java dialog`
-5. `crates/mc/src/account/account.rs:7` — `Other, // TODO: implement other account type`
-6. `crates/frontend/res/ui/pages/accounts/account-item.slint:21` — `// TODO: User avatar`（当前用 icon.png 占位）
+1. `crates/mc/src/download/libraries.rs:79` — `// TODO: check hash`（老版本 natives classifier 已存在时校验哈希）
+2. `crates/mc/src/download/libraries.rs:100` — `// TODO: check hash`（artifact 已存在时校验哈希）
+3. `crates/mc/src/download/libraries.rs:124` — `// TODO: check hash`（fabric 库已存在时校验哈希）
+4. `crates/mc/src/download/assets.rs:34` — `// TODO: check hash`（资源已存在时校验哈希）
+5. `crates/frontend/src/app_window.rs:248` — `// TODO: implement edit java dialog`
+6. `crates/mc/src/account/account.rs:7` — `Other, // TODO: implement other account type`
+7. `crates/frontend/res/ui/pages/accounts/account-item.slint:21` — `// TODO: User avatar`（当前用 icon.png 占位）

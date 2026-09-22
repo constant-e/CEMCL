@@ -63,16 +63,27 @@ impl From<tokio::io::Error> for DLError {
     }
 }
 
+/// 复用的http客户端，带连接/整体超时，避免网络卡死时无限等待
+static CLIENT: std::sync::LazyLock<reqwest::Client> = std::sync::LazyLock::new(|| {
+    reqwest::Client::builder()
+        .connect_timeout(std::time::Duration::from_secs(10))
+        .timeout(std::time::Duration::from_secs(60))
+        .build()
+        .unwrap_or_default()
+});
+
 /// 下载单个文件，用于下载json
 pub async fn download(url: String, path: String, max: usize) -> Result<(), DLError> {
     info!("Start downloading {url}");
-    let mut response = reqwest::get(&url).await;
+    let mut response = CLIENT.get(&url).send().await;
     let mut c = 0; // retry times
     while let Err(e) = response {
         if c >= max {
             return Err(e.into());
         }
-        response = reqwest::get(&url).await;
+        warn!("Failed to download {url}. Reason: {e}. Retrying.");
+        tokio::time::sleep(std::time::Duration::from_millis(500 * (c as u64 + 1))).await;
+        response = CLIENT.get(&url).send().await;
         c += 1;
     }
     tokio::fs::write(path, response?.bytes().await?).await?;
@@ -105,28 +116,6 @@ pub fn list_dir(path: &String) -> std::io::Result<Vec<String>> {
                 .ok_or(ErrorKind::InvalidData)?
                 .into(),
         );
-    }
-    Ok(result)
-}
-
-/// 递归列出目录下所有文件
-pub fn list_file(path: &String) -> std::io::Result<Vec<String>> {
-    let mut result = Vec::new();
-    for entry in fs::read_dir(&Path::new(path))? {
-        let entry = entry?;
-        let entry_path = entry.path();
-        let path = path.clone()
-            + "/"
-            + entry_path
-                .file_name()
-                .ok_or(ErrorKind::InvalidData)?
-                .to_str()
-                .ok_or(ErrorKind::InvalidData)?;
-        if entry_path.is_dir() {
-            result.append(&mut list_file(&path)?)
-        } else {
-            result.push(path);
-        }
     }
     Ok(result)
 }

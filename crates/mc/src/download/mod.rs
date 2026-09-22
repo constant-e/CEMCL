@@ -39,6 +39,17 @@ pub enum DownloadError {
     ReqwestError(reqwest::Error),
 }
 
+impl std::fmt::Display for DownloadError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            DownloadError::DataInvalid => write!(f, "Invalid data"),
+            DownloadError::DeserializeError(e) => write!(f, "{e}"),
+            DownloadError::IOError(e) => write!(f, "{e}"),
+            DownloadError::ReqwestError(e) => write!(f, "{e}"),
+        }
+    }
+}
+
 impl From<std::io::Error> for DownloadError {
     fn from(value: std::io::Error) -> Self {
         IOError(value)
