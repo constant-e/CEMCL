@@ -26,5 +26,12 @@ where
     }
     dialog.on_yes_clicked(on_yes);
 
+    let ui_weak = dialog.as_weak();
+    dialog.on_drag_window(move || {
+        if let Some(dialog) = ui_weak.upgrade() {
+            ui::drag_window(&dialog);
+        }
+    });
+
     dialog.show()
 }

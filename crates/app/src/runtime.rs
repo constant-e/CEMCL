@@ -416,6 +416,8 @@ impl AppRuntime {
                                 task_info.url,
                                 task_info.save_path,
                                 None,
+                                None,
+                                None,
                                 Some(Box::new(f)),
                                 None,
                                 None,
@@ -831,6 +833,8 @@ impl AppRuntime {
                             downloader::task::TaskInfo::new(
                                 i.url,
                                 i.save_path,
+                                i.sha1,
+                                i.sha1_url,
                                 None,
                                 i.on_finish,
                                 None,

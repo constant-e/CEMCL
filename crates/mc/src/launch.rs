@@ -10,7 +10,10 @@ use utils::{check_rules, download};
 
 use crate::MCInstallation;
 use crate::account::Account;
-use crate::download::{DownloadError, DownloadTask, download_assets, download_libraries};
+use crate::download::{
+    DownloadError, DownloadTask, download_assets, download_libraries, needs_redownload,
+    remove_file_if_exists,
+};
 use crate::launch::LaunchError::{DeserializeError, IOError};
 
 pub enum LaunchError {
@@ -203,8 +206,10 @@ pub async fn get_launch_command(
 
     // mod继承的参数
     let asset_index: String;
+    let asset_index_sha1: Option<String>;
     let asset_index_url: String;
     let mc_url: String;
+    let mc_sha1: Option<String>;
 
     // mod需要额外写入的参数
     let mut game_args: Vec<String> = game.game_args.clone();
@@ -226,10 +231,14 @@ pub async fn get_launch_command(
                 .as_str()
                 .ok_or(std::io::Error::other("Failed to get asset url."))?
                 .to_string();
+            asset_index_sha1 = parent["assetIndex"]["sha1"].as_str().map(String::from);
             mc_url = parent["downloads"]["client"]["url"]
                 .as_str()
                 .ok_or(std::io::Error::other("Failed to get mc url."))?
                 .to_string();
+            mc_sha1 = parent["downloads"]["client"]["sha1"]
+                .as_str()
+                .map(String::from);
             libraries_json
                 .as_array_mut()
                 .ok_or(std::io::Error::other("Failed to library list."))?
@@ -268,10 +277,14 @@ pub async fn get_launch_command(
             .as_str()
             .ok_or(std::io::Error::other("Failed to get asset url."))?
             .to_string();
+        asset_index_sha1 = json["assetIndex"]["sha1"].as_str().map(String::from);
         mc_url = json["downloads"]["client"]["url"]
             .as_str()
             .ok_or(std::io::Error::other("Failed to get mc url."))?
             .to_string();
+        mc_sha1 = json["downloads"]["client"]["sha1"]
+            .as_str()
+            .map(String::from);
         let (mut temp_game_args, mut temp_jvm_args) = get_args(&json)?;
         asset_index = json["assetIndex"]["id"]
             .as_str()
@@ -358,12 +371,19 @@ pub async fn get_launch_command(
     // 处理依赖
     let mut tasks = Vec::new();
     let jar_path = dir.clone() + "/" + game.version.as_str() + ".jar";
-    if !exists(&jar_path)? {
+    if needs_redownload(&jar_path, mc_sha1.as_deref()).await? {
+        remove_file_if_exists(&jar_path)?;
         // 本体
         let url = mc_url
             .clone()
             .replace("https://piston-meta.mojang.com", "{game_source}");
-        tasks.push(DownloadTask::new(url, jar_path, None));
+        tasks.push(DownloadTask::new(
+            url,
+            jar_path,
+            mc_sha1.clone(),
+            None,
+            None,
+        ));
     }
 
     // 处理依赖
@@ -371,28 +391,34 @@ pub async fn get_launch_command(
     // json first
     let index_dir = game_path.to_string() + "/assets/indexes/";
     let index_path = index_dir.clone() + &asset_index + ".json";
-    if !exists(&index_path)? {
+    if needs_redownload(&index_path, asset_index_sha1.as_deref()).await? {
+        remove_file_if_exists(&index_path)?;
         if !exists(&index_dir)? {
             fs::create_dir_all(&index_dir)?;
         }
-        download(asset_index_url.clone(), index_path, 3).await?;
+        download(
+            asset_index_url.clone(),
+            index_path,
+            3,
+            asset_index_sha1.as_deref(),
+        )
+        .await?;
     }
 
     // assets
-    tasks.append(&mut download_assets(
-        game_path,
-        &asset_index,
-        "{assets_source}",
-    )?);
+    tasks.append(&mut download_assets(game_path, &asset_index, "{assets_source}").await?);
 
     // download libraries
-    tasks.append(&mut download_libraries(
-        &libraries_json,
-        game_path,
-        &dir,
-        "{libraries_source}",
-        "{fabric_source}",
-    )?);
+    tasks.append(
+        &mut download_libraries(
+            &libraries_json,
+            game_path,
+            &dir,
+            "{libraries_source}",
+            "{fabric_source}",
+        )
+        .await?,
+    );
 
     Ok((result, tasks))
 }

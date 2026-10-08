@@ -6,7 +6,7 @@ use std::rc;
 use tokio::sync::mpsc::UnboundedSender;
 
 use crate::app_window::UICommand;
-use crate::ui::AddJavaDialog;
+use crate::ui::{self, AddJavaDialog};
 
 /// Java 安装信息，用于前端展示
 #[derive(Clone)]
@@ -35,6 +35,13 @@ pub fn add_java_dialog(
     ui.on_check_java(move |path| {
         if let Err(e) = tx_clone.send(UICommand::CheckJava(path.into())) {
             error!("{e}");
+        }
+    });
+
+    let ui_weak_clone = ui_weak.clone();
+    ui.on_drag_window(move || {
+        if let Some(ui) = ui_weak_clone.upgrade() {
+            ui::drag_window(&ui);
         }
     });
 

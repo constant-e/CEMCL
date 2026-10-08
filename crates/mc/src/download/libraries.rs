@@ -9,7 +9,10 @@ use std::io::copy;
 
 use utils::{check_rules, get_parent_dir};
 
-use super::{DownloadError, DownloadTask, TaskInfo};
+use super::{
+    DownloadError, DownloadTask, TaskInfo, needs_redownload, read_cached_sha1,
+    remove_file_if_exists,
+};
 
 /// 下载library
 fn download_lib(save_path: &str, node: &Value, mirror: &str) -> Result<TaskInfo, DownloadError> {
@@ -25,11 +28,12 @@ fn download_lib(save_path: &str, node: &Value, mirror: &str) -> Result<TaskInfo,
     Ok(TaskInfo {
         url,
         save_path: save_path.to_string(),
+        sha1: node["sha1"].as_str().map(String::from),
     })
 }
 
 /// 下载libraries，node: mc json["libraries"]，返回Tasks
-pub fn download_libraries(
+pub async fn download_libraries(
     node: &Value,
     path: &str,
     game_dir: &str,
@@ -65,18 +69,21 @@ pub fn download_libraries(
             let node = &node["downloads"]["classifiers"][&key];
             let save_path =
                 lib_dir.clone() + "/" + node["path"].as_str().ok_or(DownloadError::DataInvalid)?; // 储存位置
-            if !exists(&save_path)? {
+            let sha1 = node["sha1"].as_str().map(String::from);
+            if needs_redownload(&save_path, sha1.as_deref()).await? {
+                remove_file_if_exists(&save_path)?;
                 let task_info = download_lib(&save_path, node, &mirror)?;
                 let natives_dir_clone = natives_dir.clone();
                 tasks.push(DownloadTask {
                     url: task_info.url,
                     save_path: task_info.save_path,
+                    sha1: task_info.sha1,
+                    sha1_url: None,
                     on_finish: Some(Box::new(move || {
                         extract_lib_logged(&natives_dir_clone, &save_path);
                     })),
                 });
             } else {
-                // TODO: check hash
                 extract_lib_logged(&natives_dir, &save_path);
             }
         }
@@ -86,18 +93,23 @@ pub fn download_libraries(
                 + node["downloads"]["artifact"]["path"]
                     .as_str()
                     .ok_or(DownloadError::DataInvalid)?;
-            if !exists(&save_path)? {
+            let sha1 = node["downloads"]["artifact"]["sha1"]
+                .as_str()
+                .map(String::from);
+            if needs_redownload(&save_path, sha1.as_deref()).await? {
+                remove_file_if_exists(&save_path)?;
                 let task_info = download_lib(&save_path, &node["downloads"]["artifact"], &mirror)?;
                 let natives_dir_clone = natives_dir.clone();
                 tasks.push(DownloadTask {
                     url: task_info.url,
                     save_path: task_info.save_path,
+                    sha1: task_info.sha1,
+                    sha1_url: None,
                     on_finish: Some(Box::new(move || {
                         extract_lib_logged(&natives_dir_clone, &save_path);
                     })),
                 });
             } else {
-                // TODO: check hash
                 extract_lib_logged(&natives_dir, &save_path);
             }
         } else {
@@ -117,11 +129,24 @@ pub fn download_libraries(
                     }
                     path = path + split_1[1] + "-" + split_1[2] + ".jar";
                     let local_path = lib_dir.clone() + "/" + &path;
-                    if !exists(&local_path)? {
+                    // fabric的profile json不带哈希，首次下载时从maven的<path>.sha1校验，
+                    // 校验得到的哈希缓存在<jar>.sha1，之后按缓存离线校验
+                    let cached_sha1 = read_cached_sha1(&(local_path.clone() + ".sha1"));
+                    if needs_redownload(&local_path, cached_sha1.as_deref()).await? {
+                        remove_file_if_exists(&local_path)?;
+                        let dir = get_parent_dir(&local_path);
+                        if !exists(&dir)? {
+                            create_dir_all(&dir)?;
+                        }
                         let url = fabric_mirror.to_string() + "/" + &path;
-                        tasks.push(DownloadTask::new(url, local_path, None));
-                    } else {
-                        // TODO: check hash
+                        let sha1_url = url.clone() + ".sha1";
+                        tasks.push(DownloadTask::new(
+                            url,
+                            local_path,
+                            None,
+                            Some(sha1_url),
+                            None,
+                        ));
                     }
                 }
             }
@@ -284,4 +309,107 @@ pub fn extract_lib(natives_dir: &str, local_path: &str) -> Result<(), DownloadEr
         }
     }
     Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::download::temp_dir;
+    use crate::download::tests::{HELLO, HELLO_SHA1};
+    use serde_json::json;
+
+    /// 已存在的库文件按json中的sha1校验：一致时跳过，不一致时删除并重新下载
+    #[tokio::test]
+    async fn existing_artifact_is_checked_against_sha1() {
+        let dir = temp_dir("libraries");
+        let save_path = format!("{dir}/libraries/com/example/lib/1.0/lib-1.0.jar");
+        let node = json!([{
+            "downloads": {"artifact": {
+                "path": "com/example/lib/1.0/lib-1.0.jar",
+                "sha1": HELLO_SHA1,
+                "url": "https://libraries.minecraft.net/com/example/lib/1.0/lib-1.0.jar",
+            }},
+        }]);
+
+        // 缺失时下载，并带上预期sha1
+        let tasks = download_libraries(&node, &dir, &dir, "{libraries_source}", "{fabric_source}")
+            .await
+            .unwrap();
+        assert_eq!(tasks.len(), 1);
+        assert_eq!(tasks[0].sha1.as_deref(), Some(HELLO_SHA1));
+        assert_eq!(
+            tasks[0].url,
+            "{libraries_source}/com/example/lib/1.0/lib-1.0.jar"
+        );
+
+        // 一致：跳过
+        create_dir_all(get_parent_dir(&save_path)).unwrap();
+        std::fs::write(&save_path, HELLO).unwrap();
+        let tasks = download_libraries(&node, &dir, &dir, "{libraries_source}", "{fabric_source}")
+            .await
+            .unwrap();
+        assert!(tasks.is_empty());
+
+        // 不一致：删除文件并重新下载
+        std::fs::write(&save_path, "hello").unwrap();
+        let tasks = download_libraries(&node, &dir, &dir, "{libraries_source}", "{fabric_source}")
+            .await
+            .unwrap();
+        assert_eq!(tasks.len(), 1);
+        assert_eq!(tasks[0].save_path, save_path);
+        assert!(!exists(&save_path).unwrap());
+    }
+
+    /// fabric库没有json哈希：缺失时下载并从maven的.sha1校验，之后按本地缓存离线校验
+    #[tokio::test]
+    async fn fabric_library_uses_cached_sha1() {
+        let dir = temp_dir("fabric");
+        let node = json!([{
+            "name": "net.fabricmc:intermediary:1.21.5",
+            "url": "https://maven.fabricmc.net/",
+        }]);
+        let save_path =
+            format!("{dir}/libraries/net/fabricmc/intermediary/1.21.5/intermediary-1.21.5.jar");
+        let url =
+            "{fabric_source}/net/fabricmc/intermediary/1.21.5/intermediary-1.21.5.jar".to_string();
+
+        // 缺失：下载库文件，并从同路径的.sha1获取哈希校验
+        let tasks = download_libraries(&node, &dir, &dir, "{libraries_source}", "{fabric_source}")
+            .await
+            .unwrap();
+        assert_eq!(tasks.len(), 1);
+        assert_eq!(tasks[0].url, url);
+        assert_eq!(
+            tasks[0].sha1_url.as_deref(),
+            Some(&format!("{url}.sha1")[..])
+        );
+        assert_eq!(tasks[0].sha1, None);
+        // 下载目录已建好
+        assert!(exists(get_parent_dir(&save_path)).unwrap());
+
+        // 有缓存且一致：跳过
+        std::fs::write(&save_path, HELLO).unwrap();
+        std::fs::write(format!("{save_path}.sha1"), HELLO_SHA1).unwrap();
+        let tasks = download_libraries(&node, &dir, &dir, "{libraries_source}", "{fabric_source}")
+            .await
+            .unwrap();
+        assert!(tasks.is_empty());
+
+        // 有缓存但不一致：删除并重新下载，缓存保留
+        std::fs::write(&save_path, "hello").unwrap();
+        let tasks = download_libraries(&node, &dir, &dir, "{libraries_source}", "{fabric_source}")
+            .await
+            .unwrap();
+        assert_eq!(tasks.len(), 1);
+        assert!(!exists(&save_path).unwrap());
+        assert!(exists(format!("{save_path}.sha1")).unwrap());
+
+        // 无缓存：没有可用的哈希，保留文件
+        std::fs::write(&save_path, "hello").unwrap();
+        std::fs::remove_file(format!("{save_path}.sha1")).unwrap();
+        let tasks = download_libraries(&node, &dir, &dir, "{libraries_source}", "{fabric_source}")
+            .await
+            .unwrap();
+        assert!(tasks.is_empty());
+    }
 }

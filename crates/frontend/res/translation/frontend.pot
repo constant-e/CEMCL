@@ -2,7 +2,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
-"POT-Creation-Date: 2026-09-19 10:02+0000\n"
+"POT-Creation-Date: 2026-10-08 15:30+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -12,64 +12,24 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: \n"
 
-#: components/title-bar.slint:59
+#: components/title-bar.slint:69
 msgctxt "TitleBar"
 msgid "Minimize"
 msgstr ""
 
-#: components/title-bar.slint:89
+#: components/title-bar.slint:99
 msgctxt "TitleBar"
 msgid "Restore"
 msgstr ""
 
-#: components/title-bar.slint:89
+#: components/title-bar.slint:99
 msgctxt "TitleBar"
 msgid "Maximize"
 msgstr ""
 
-#: components/title-bar.slint:137
+#: components/title-bar.slint:147
 msgctxt "TitleBar"
 msgid "Close"
-msgstr ""
-
-#: pages/accounts/accounts.slint:39
-msgctxt "AccountsPage"
-msgid "Edit"
-msgstr ""
-
-#: pages/accounts/accounts.slint:47
-msgctxt "AccountsPage"
-msgid "Switch"
-msgstr ""
-
-#: pages/accounts/accounts.slint:60
-msgctxt "AccountsPage"
-msgid "Edit {}"
-msgstr ""
-
-#: pages/accounts/accounts.slint:63
-msgctxt "AccountsPage"
-msgid "Name"
-msgstr ""
-
-#: pages/accounts/accounts.slint:75
-msgctxt "AccountsPage"
-msgid "UUID"
-msgstr ""
-
-#: pages/accounts/accounts.slint:87
-msgctxt "AccountsPage"
-msgid "Token"
-msgstr ""
-
-#: pages/accounts/accounts.slint:102
-msgctxt "AccountsPage"
-msgid "Delete"
-msgstr ""
-
-#: pages/accounts/accounts.slint:120
-msgctxt "AccountsPage"
-msgid "Add"
 msgstr ""
 
 #: pages/accounts/accounts-list.slint:12
@@ -82,19 +42,59 @@ msgctxt "AccountsList"
 msgid "Select"
 msgstr ""
 
-#: pages/accounts/account-item.slint:13
+#: pages/accounts/account-item.slint:19
 msgctxt "Account"
 msgid "Offline"
 msgstr ""
 
-#: pages/accounts/account-item.slint:15
+#: pages/accounts/account-item.slint:21
 msgctxt "Account"
 msgid "Microsoft"
 msgstr ""
 
-#: pages/accounts/account-item.slint:17
+#: pages/accounts/account-item.slint:23
 msgctxt "Account"
 msgid "Other"
+msgstr ""
+
+#: pages/accounts/accounts.slint:40
+msgctxt "AccountsPage"
+msgid "Edit"
+msgstr ""
+
+#: pages/accounts/accounts.slint:48
+msgctxt "AccountsPage"
+msgid "Switch"
+msgstr ""
+
+#: pages/accounts/accounts.slint:61
+msgctxt "AccountsPage"
+msgid "Edit {}"
+msgstr ""
+
+#: pages/accounts/accounts.slint:64
+msgctxt "AccountsPage"
+msgid "Name"
+msgstr ""
+
+#: pages/accounts/accounts.slint:76
+msgctxt "AccountsPage"
+msgid "UUID"
+msgstr ""
+
+#: pages/accounts/accounts.slint:88
+msgctxt "AccountsPage"
+msgid "Token"
+msgstr ""
+
+#: pages/accounts/accounts.slint:103
+msgctxt "AccountsPage"
+msgid "Delete"
+msgstr ""
+
+#: pages/accounts/accounts.slint:121
+msgctxt "AccountsPage"
+msgid "Add"
 msgstr ""
 
 #: pages/home.slint:44
@@ -357,297 +357,310 @@ msgctxt "DownloaderPage"
 msgid "Finished"
 msgstr ""
 
-#: dialogs/game/add-game-dialog.slint:7 dialogs/game/add-game-dialog.slint:44
+#: dialogs/game/add-game-dialog.slint:7 dialogs/game/add-game-dialog.slint:53
 msgctxt "AddGameDialog"
 msgid "Add a Game"
 msgstr ""
 
-#: dialogs/game/add-game-dialog.slint:56
+#: dialogs/game/add-game-dialog.slint:67
 msgctxt "AddGameDialog"
 msgid "Minecraft Version"
 msgstr ""
 
-#: dialogs/game/add-game-dialog.slint:58
+#: dialogs/game/add-game-dialog.slint:69
 msgctxt "AddGameDialog"
 msgid "All"
 msgstr ""
 
-#: dialogs/game/add-game-dialog.slint:58
+#: dialogs/game/add-game-dialog.slint:69
 msgctxt "AddGameDialog"
 msgid "Release"
 msgstr ""
 
-#: dialogs/game/add-game-dialog.slint:58
+#: dialogs/game/add-game-dialog.slint:69
 msgctxt "AddGameDialog"
 msgid "Snapshot"
 msgstr ""
 
-#: dialogs/game/add-game-dialog.slint:58
+#: dialogs/game/add-game-dialog.slint:69
 msgctxt "AddGameDialog"
 msgid "Old Alpha"
 msgstr ""
 
-#: dialogs/game/add-game-dialog.slint:58
+#: dialogs/game/add-game-dialog.slint:69
 msgctxt "AddGameDialog"
 msgid "Old Beta"
 msgstr ""
 
-#: dialogs/game/add-game-dialog.slint:63 dialogs/game/add-game-dialog.slint:97
+#: dialogs/game/add-game-dialog.slint:74
+#: dialogs/game/add-game-dialog.slint:74
 msgctxt "AddGameDialog"
 msgid "Version"
 msgstr ""
 
-#: dialogs/game/add-game-dialog.slint:64
+#: dialogs/game/add-game-dialog.slint:75
 msgctxt "AddGameDialog"
 msgid "Type"
 msgstr ""
 
-#: dialogs/game/add-game-dialog.slint:80
+#: dialogs/game/add-game-dialog.slint:91
 msgctxt "AddGameDialog"
 msgid "Mod Loader"
 msgstr ""
 
-#: dialogs/game/add-game-dialog.slint:82
+#: dialogs/game/add-game-dialog.slint:93
 msgctxt "AddGameDialog"
 msgid "None"
 msgstr ""
 
-#: dialogs/game/add-game-dialog.slint:98
+#: dialogs/game/add-game-dialog.slint:109
 msgctxt "AddGameDialog"
 msgid "Modified"
 msgstr ""
 
-#: dialogs/game/add-game-dialog.slint:105
+#: dialogs/game/add-game-dialog.slint:116
 msgctxt "AddGameDialog"
 msgid "Customize"
 msgstr ""
 
-#: dialogs/game/add-game-dialog.slint:109
+#: dialogs/game/add-game-dialog.slint:120
 msgctxt "AddGameDialog"
 msgid "Window height"
 msgstr ""
 
-#: dialogs/game/add-game-dialog.slint:116
+#: dialogs/game/add-game-dialog.slint:127
 msgctxt "AddGameDialog"
 msgid "Window width"
 msgstr ""
 
-#: dialogs/game/add-game-dialog.slint:123
+#: dialogs/game/add-game-dialog.slint:134
 msgctxt "AddGameDialog"
 msgid "Description"
 msgstr ""
 
-#: dialogs/game/add-game-dialog.slint:130
+#: dialogs/game/add-game-dialog.slint:141
 msgctxt "AddGameDialog"
 msgid "Game args"
 msgstr ""
 
-#: dialogs/game/add-game-dialog.slint:137
+#: dialogs/game/add-game-dialog.slint:148
 msgctxt "AddGameDialog"
 msgid "Java path"
 msgstr ""
 
-#: dialogs/game/add-game-dialog.slint:145
+#: dialogs/game/add-game-dialog.slint:156
 msgctxt "AddGameDialog"
 msgid "JVM args"
 msgstr ""
 
-#: dialogs/game/add-game-dialog.slint:152
+#: dialogs/game/add-game-dialog.slint:163
 msgctxt "AddGameDialog"
 msgid "Wrapper"
 msgstr ""
 
-#: dialogs/game/add-game-dialog.slint:159
+#: dialogs/game/add-game-dialog.slint:170
 msgctxt "AddGameDialog"
 msgid "Minimum memory"
 msgstr ""
 
-#: dialogs/game/add-game-dialog.slint:166
+#: dialogs/game/add-game-dialog.slint:177
 msgctxt "AddGameDialog"
 msgid "Maximum memory"
 msgstr ""
 
-#: dialogs/game/add-game-dialog.slint:175
+#: dialogs/game/add-game-dialog.slint:186
 msgctxt "AddGameDialog"
 msgid "Separated"
 msgstr ""
 
 #: dialogs/game/edit-game-dialog.slint:7
+#: dialogs/game/edit-game-dialog.slint:7
 msgctxt "EditGameDialog"
 msgid "Edit a Game"
 msgstr ""
 
-#: dialogs/game/edit-game-dialog.slint:23
+#: dialogs/game/edit-game-dialog.slint:49
 msgctxt "EditGameDialog"
 msgid "Edit {}"
 msgstr ""
 
-#: dialogs/game/edit-game-dialog.slint:26
+#: dialogs/game/edit-game-dialog.slint:53
 msgctxt "EditGameDialog"
 msgid "Window height"
 msgstr ""
 
-#: dialogs/game/edit-game-dialog.slint:33
+#: dialogs/game/edit-game-dialog.slint:60
 msgctxt "EditGameDialog"
 msgid "Window width"
 msgstr ""
 
-#: dialogs/game/edit-game-dialog.slint:40
+#: dialogs/game/edit-game-dialog.slint:67
 msgctxt "EditGameDialog"
 msgid "Description"
 msgstr ""
 
-#: dialogs/game/edit-game-dialog.slint:47
+#: dialogs/game/edit-game-dialog.slint:74
 msgctxt "EditGameDialog"
 msgid "Game args"
 msgstr ""
 
-#: dialogs/game/edit-game-dialog.slint:54
+#: dialogs/game/edit-game-dialog.slint:81
 msgctxt "EditGameDialog"
 msgid "Java path"
 msgstr ""
 
-#: dialogs/game/edit-game-dialog.slint:62
+#: dialogs/game/edit-game-dialog.slint:89
 msgctxt "EditGameDialog"
 msgid "JVM args"
 msgstr ""
 
-#: dialogs/game/edit-game-dialog.slint:69
+#: dialogs/game/edit-game-dialog.slint:96
 msgctxt "EditGameDialog"
 msgid "Wrapper"
 msgstr ""
 
-#: dialogs/game/edit-game-dialog.slint:76
+#: dialogs/game/edit-game-dialog.slint:103
 msgctxt "EditGameDialog"
 msgid "Minimum memory"
 msgstr ""
 
-#: dialogs/game/edit-game-dialog.slint:83
+#: dialogs/game/edit-game-dialog.slint:110
 msgctxt "EditGameDialog"
 msgid "Maximum memory"
 msgstr ""
 
-#: dialogs/game/edit-game-dialog.slint:92
+#: dialogs/game/edit-game-dialog.slint:119
 msgctxt "EditGameDialog"
 msgid "Separated"
 msgstr ""
 
-#: dialogs/game/edit-game-dialog.slint:101
+#: dialogs/game/edit-game-dialog.slint:131
 msgctxt "EditGameDialog"
 msgid "Delete"
 msgstr ""
 
-#: dialogs/game/forge-download-dialog.slint:4
-#: dialogs/game/forge-download-dialog.slint:4
+#: dialogs/game/forge-download-dialog.slint:5
+#: dialogs/game/forge-download-dialog.slint:5
+#: dialogs/game/forge-download-dialog.slint:5
 msgctxt "ForgeDownloadDialog"
 msgid "Installing Forge"
 msgstr ""
 
-#: dialogs/game/forge-download-dialog.slint:36
+#: dialogs/game/forge-download-dialog.slint:60
 msgctxt "ForgeDownloadDialog"
 msgid "Hide"
 msgstr ""
 
-#: dialogs/game/forge-download-dialog.slint:41
+#: dialogs/game/forge-download-dialog.slint:65
 msgctxt "ForgeDownloadDialog"
 msgid "Cancel"
 msgstr ""
 
-#: dialogs/login-dialog.slint:5 dialogs/login-dialog.slint:15
+#: dialogs/login-dialog.slint:5 dialogs/login-dialog.slint:32
 msgctxt "LoginDialog"
-msgid "Add a Account"
+msgid "Add an Account"
 msgstr ""
 
-#: dialogs/login-dialog.slint:20
+#: dialogs/login-dialog.slint:43
 msgctxt "LoginDialog"
 msgid "Offline Account"
 msgstr ""
 
-#: dialogs/login-dialog.slint:23
+#: dialogs/login-dialog.slint:46
 msgctxt "LoginDialog"
 msgid "Name"
 msgstr ""
 
-#: dialogs/login-dialog.slint:30
+#: dialogs/login-dialog.slint:53
 msgctxt "LoginDialog"
 msgid "UUID"
 msgstr ""
 
-#: dialogs/login-dialog.slint:40 dialogs/login-dialog.slint:72
+#: dialogs/login-dialog.slint:63 dialogs/login-dialog.slint:95
 msgctxt "LoginDialog"
 msgid "OK"
 msgstr ""
 
-#: dialogs/login-dialog.slint:52
+#: dialogs/login-dialog.slint:75
 msgctxt "LoginDialog"
 msgid "Microsoft Account"
 msgstr ""
 
-#: dialogs/login-dialog.slint:57
+#: dialogs/login-dialog.slint:80
 msgctxt "LoginDialog"
 msgid "Your user code will be automatically copied."
 msgstr ""
 
-#: dialogs/login-dialog.slint:57
+#: dialogs/login-dialog.slint:80
 msgctxt "LoginDialog"
 msgid "Press OK after you finish logging in."
 msgstr ""
 
-#: dialogs/login-dialog.slint:64
+#: dialogs/login-dialog.slint:87
 msgctxt "LoginDialog"
 msgid "Open in Web Browser"
 msgstr ""
 
-#: dialogs/add-java-dialog.slint:14 dialogs/add-java-dialog.slint:29
+#: dialogs/add-java-dialog.slint:14 dialogs/add-java-dialog.slint:43
 msgctxt "AddJavaDialog"
 msgid "Add a Java Installation"
 msgstr ""
 
-#: dialogs/add-java-dialog.slint:35
+#: dialogs/add-java-dialog.slint:56
 msgctxt "AddJavaDialog"
 msgid "Java Home"
 msgstr ""
 
-#: dialogs/add-java-dialog.slint:43
+#: dialogs/add-java-dialog.slint:64
 msgctxt "AddJavaDialog"
 msgid "Detect"
 msgstr ""
 
-#: dialogs/add-java-dialog.slint:61
+#: dialogs/add-java-dialog.slint:82
 msgctxt "AddJavaDialog"
 msgid "Java {0} detected"
 msgstr ""
 
-#: dialogs/add-java-dialog.slint:64
+#: dialogs/add-java-dialog.slint:85
 msgctxt "AddJavaDialog"
 msgid "Path is empty"
 msgstr ""
 
-#: dialogs/add-java-dialog.slint:67
+#: dialogs/add-java-dialog.slint:88
 msgctxt "AddJavaDialog"
 msgid "Java executable not found in this path"
 msgstr ""
 
-#: dialogs/add-java-dialog.slint:70
+#: dialogs/add-java-dialog.slint:91
 msgctxt "AddJavaDialog"
 msgid "Release file is invalid"
 msgstr ""
 
-#: dialogs/add-java-dialog.slint:73
+#: dialogs/add-java-dialog.slint:94
 msgctxt "AddJavaDialog"
 msgid "Failed to read Java information"
 msgstr ""
 
-#: dialogs/dialogs.slint:25
+#: dialogs/dialogs.slint:76
 msgctxt "AskDialog"
 msgid "Are you sure to delete this account?"
 msgstr ""
 
-#: dialogs/dialogs.slint:28
+#: dialogs/dialogs.slint:77
+msgctxt "AskDialog"
+msgid "Delete Account"
+msgstr ""
+
+#: dialogs/dialogs.slint:80
 msgctxt "AskDialog"
 msgid ""
 "All the files under this Minecraft installation's folder will be deleted. "
 "Continue?"
+msgstr ""
+
+#: dialogs/dialogs.slint:81
+msgctxt "AskDialog"
+msgid "Delete Game"
 msgstr ""
 
 #. Localized suffix for incompatible Java versions, read from Rust
@@ -656,42 +669,42 @@ msgctxt "AppWindow"
 msgid "not compatible"
 msgstr ""
 
-#: app-window.slint:39 app-window.slint:75
+#: app-window.slint:41 app-window.slint:81
 msgctxt "AppWindow"
 msgid "Account"
 msgstr ""
 
-#: app-window.slint:41
+#: app-window.slint:43
 msgctxt "AppWindow"
 msgid "Minecraft Version"
 msgstr ""
 
-#: app-window.slint:42 app-window.slint:75
+#: app-window.slint:44 app-window.slint:81
 msgctxt "AppWindow"
 msgid "Downloader"
 msgstr ""
 
-#: app-window.slint:43
+#: app-window.slint:45
 msgctxt "AppWindow"
 msgid "Java Installations"
 msgstr ""
 
-#: app-window.slint:44 app-window.slint:75
+#: app-window.slint:46 app-window.slint:81
 msgctxt "AppWindow"
 msgid "Settings"
 msgstr ""
 
-#: app-window.slint:75
+#: app-window.slint:81
 msgctxt "AppWindow"
 msgid "Home"
 msgstr ""
 
-#: app-window.slint:75
+#: app-window.slint:81
 msgctxt "AppWindow"
 msgid "Games"
 msgstr ""
 
-#: app-window.slint:75
+#: app-window.slint:81
 msgctxt "AppWindow"
 msgid "Java"
 msgstr ""

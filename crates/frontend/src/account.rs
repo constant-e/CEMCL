@@ -140,6 +140,13 @@ pub fn login_dialog(
         tx_clone.send(UICommand::AddOfflineAccount(user_name.into(), uuid.into()));
     });
 
+    let ui_weak_clone = ui_weak.clone();
+    ui.on_drag_window(move || {
+        if let Some(ui) = ui_weak_clone.upgrade() {
+            ui::drag_window(&ui);
+        }
+    });
+
     ui.show()?;
     tx.send(UICommand::GetOfflineAccount).unwrap();
     Ok(ui_weak)

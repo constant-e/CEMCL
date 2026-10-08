@@ -1,5 +1,5 @@
-import { StandardButton, Button, Switch, LineEdit, GridBox, ComboBox, HorizontalBox } from "std-widgets.slint";
-import { SubTitle, SettingsGroup, MyText, MySpinBox, JavaVersionSelector } from "../../components/components.slint";
+import { StandardButton, Button, Switch, LineEdit, VerticalBox, StyleMetrics } from "std-widgets.slint";
+import { TitleBar, SettingsGroup, MyText, MySpinBox, JavaVersionSelector, WindowFrame } from "../../components/components.slint";
 
 import { MCConfig } from "game.slint";
 
@@ -7,6 +7,12 @@ export component EditGameDialog inherits Dialog {
     title: @tr("Edit a Game");
     preferred-height: 200px;
     preferred-width: 400px;
+    // The title bar is drawn by the dialog itself
+    no-frame: true;
+    resize-border-width: 5px;
+    // The dialog lays out its own buttons, so the built-in dialog grid must not
+    // add padding: the title bar and the window border reach the window edges.
+    padding: 0px;
 
     in-out property <MCConfig> game-config;
     in-out property <string> version;
@@ -17,94 +23,124 @@ export component EditGameDialog inherits Dialog {
 
     callback del-game();
     callback edit-game(MCConfig);
+    callback cancel-clicked();
 
-    VerticalLayout {
-        SettingsGroup {
-            title: @tr("Edit {}", version);
+    // Call UI (Rust)
+    callback drag-window();
 
-            Row {
-                MyText { text: @tr("Window height"); }
-                MySpinBox {
-                    value <=> game-config.height;
-                }
+    WindowFrame {
+        width: 100%;
+        height: 100%;
+
+        VerticalBox {
+            padding: 0px;
+            spacing: 0px;
+
+            title-bar := TitleBar {
+                title-text: @tr("Edit a Game");
+                show-minimize: false;
+                show-maximize: false;
+                close => { root.close(); }
+                drag => { root.drag-window(); }
             }
 
-            Row {
-                MyText { text: @tr("Window width"); }
-                MySpinBox {
-                    value <=> game-config.width;
-                }
-            }
+            VerticalBox {
+                SettingsGroup {
+                    title: @tr("Edit {}", version);
+                    vertical-stretch: 0;
 
-            Row {
-                MyText { text: @tr("Description"); }
-                LineEdit {
-                    text <=> game-config.description;
-                }
-            }
+                    Row {
+                        MyText { text: @tr("Window height"); }
+                        MySpinBox {
+                            value <=> game-config.height;
+                        }
+                    }
 
-            Row {
-                MyText { text: @tr("Game args"); }
-                LineEdit {
-                    text <=> game-config.game-args;
-                }
-            }
+                    Row {
+                        MyText { text: @tr("Window width"); }
+                        MySpinBox {
+                            value <=> game-config.width;
+                        }
+                    }
 
-            Row {
-                MyText { text: @tr("Java path"); }
-                JavaVersionSelector {
-                    model <=> root.java-combo-model;
-                    current-index <=> root.java-index;
-                }
-            }
+                    Row {
+                        MyText { text: @tr("Description"); }
+                        LineEdit {
+                            text <=> game-config.description;
+                        }
+                    }
 
-            Row {
-                MyText { text: @tr("JVM args"); }
-                LineEdit {
-                    text <=> game-config.jvm-args;
-                }
-            }
+                    Row {
+                        MyText { text: @tr("Game args"); }
+                        LineEdit {
+                            text <=> game-config.game-args;
+                        }
+                    }
 
-            Row {
-                MyText { text: @tr("Wrapper"); }
-                LineEdit {
-                    text <=> game-config.wrapper;
-                }
-            }
+                    Row {
+                        MyText { text: @tr("Java path"); }
+                        JavaVersionSelector {
+                            model <=> root.java-combo-model;
+                            current-index <=> root.java-index;
+                        }
+                    }
 
-            Row {
-                MyText { text: @tr("Minimum memory"); }
-                LineEdit {
-                    text <=> game-config.xms;
-                }
-            }
+                    Row {
+                        MyText { text: @tr("JVM args"); }
+                        LineEdit {
+                            text <=> game-config.jvm-args;
+                        }
+                    }
 
-            Row {
-                MyText { text: @tr("Maximum memory"); }
-                LineEdit {
-                    text <=> game-config.xmx;
-                }
-            }
+                    Row {
+                        MyText { text: @tr("Wrapper"); }
+                        LineEdit {
+                            text <=> game-config.wrapper;
+                        }
+                    }
 
-            Row {
-                Switch {
-                    colspan: 2;
-                    text: @tr("Separated");
-                    horizontal-stretch: 1;
-                    checked <=> game-config.separated;
-                }    
+                    Row {
+                        MyText { text: @tr("Minimum memory"); }
+                        LineEdit {
+                            text <=> game-config.xms;
+                        }
+                    }
+
+                    Row {
+                        MyText { text: @tr("Maximum memory"); }
+                        LineEdit {
+                            text <=> game-config.xmx;
+                        }
+                    }
+
+                    Row {
+                        Switch {
+                            colspan: 2;
+                            text: @tr("Separated");
+                            horizontal-stretch: 1;
+                            checked <=> game-config.separated;
+                        }    
+                    }
+                }
+
+                HorizontalLayout {
+                    alignment: end;
+                    spacing: StyleMetrics.layout-spacing;
+
+                    Button {
+                        text: @tr("Delete");
+                        clicked => { root.del-game() }
+                    }
+                    StandardButton {
+                        kind: ok;
+                        clicked => { root.edit-game(game-config) }
+                    }
+                    StandardButton {
+                        kind: cancel;
+                        clicked => { root.cancel-clicked(); }
+                    }
+                }
             }
         }
-    }
-
-    Button {
-        text: @tr("Delete");
-        dialog-button-role: action;
-        clicked => { root.del-game() }
-    }
-    StandardButton { kind: cancel; }
-    StandardButton {
-        kind: ok;
-        clicked => { root.edit-game(game-config) }
     }
 }

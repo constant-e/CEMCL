@@ -1,0 +1,17 @@
+import { Palette } from "std-widgets.slint";
+
+// 无边框窗口（主窗口与所有对话框）的窗口框：填充整个窗口，内容通过 @children 填入，
+// 最后在窗口最外圈绘制 1px 描边。描边覆盖在内容之上（Rectangle 不拦截输入事件），
+// 因此内容无需为描边留出内边距。
+export component WindowFrame inherits Rectangle {
+    background: Palette.background;
+
+    @children
+
+    Rectangle {
+        width: 100%;
+        height: 100%;
+        border-width: 1px;
+        border-color: Palette.border;
+    }
+}

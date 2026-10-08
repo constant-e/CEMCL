@@ -30,6 +30,8 @@ impl TaskSet {
             .map(|info| {
                 let mut task =
                     DownloadTask::new(info.url, info.save_path, client.clone(), semaphore.clone());
+                task.sha1 = info.sha1;
+                task.sha1_url = info.sha1_url;
                 if let Some(f) = info.on_cancel {
                     task.set_on_cancel(f);
                 }

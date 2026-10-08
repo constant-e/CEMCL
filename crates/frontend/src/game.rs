@@ -349,6 +349,13 @@ pub fn edit_game_dialog(
         }
     });
 
+    let ui_weak_clone = ui_weak.clone();
+    ui.on_drag_window(move || {
+        if let Some(ui) = ui_weak_clone.upgrade() {
+            ui::drag_window(&ui);
+        }
+    });
+
     ui.show()?;
     tx.send(UICommand::GetEditGameConfig(index)).unwrap();
     tx.send(UICommand::GetEditGameVersion(index)).unwrap();
@@ -373,6 +380,13 @@ pub fn forge_download_dialog(
     ui.on_cancel_clicked(move || {
         if let Err(e) = tx_clone.send(UICommand::CancelForgeDownload) {
             error!("{e}");
+        }
+    });
+
+    let ui_weak_clone = ui_weak.clone();
+    ui.on_drag_window(move || {
+        if let Some(ui) = ui_weak_clone.upgrade() {
+            ui::drag_window(&ui);
         }
     });
 

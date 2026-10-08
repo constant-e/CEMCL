@@ -2,7 +2,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
-"POT-Creation-Date: 2026-09-19 10:02+0000\n"
+"POT-Creation-Date: 2026-10-08 15:30+0000\n"
 "PO-Revision-Date: 2026-04-10 18:06+0800\n"
 "Last-Translator:  <fmn_tzx@outlook.com>\n"
 "Language-Team: Chinese (simplified) <i18n-zh@googlegroups.com>\n"
@@ -12,65 +12,25 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
 
-#: components/title-bar.slint:59
+#: components/title-bar.slint:69
 msgctxt "TitleBar"
 msgid "Minimize"
 msgstr "最小化"
 
-#: components/title-bar.slint:89
+#: components/title-bar.slint:99
 msgctxt "TitleBar"
 msgid "Restore"
 msgstr "还原"
 
-#: components/title-bar.slint:89
+#: components/title-bar.slint:99
 msgctxt "TitleBar"
 msgid "Maximize"
 msgstr "最大化"
 
-#: components/title-bar.slint:137
+#: components/title-bar.slint:147
 msgctxt "TitleBar"
 msgid "Close"
 msgstr "关闭"
-
-#: pages/accounts/accounts.slint:39
-msgctxt "AccountsPage"
-msgid "Edit"
-msgstr "编辑"
-
-#: pages/accounts/accounts.slint:47
-msgctxt "AccountsPage"
-msgid "Switch"
-msgstr "切换"
-
-#: pages/accounts/accounts.slint:60
-msgctxt "AccountsPage"
-msgid "Edit {}"
-msgstr "编辑"
-
-#: pages/accounts/accounts.slint:63
-msgctxt "AccountsPage"
-msgid "Name"
-msgstr "用户名"
-
-#: pages/accounts/accounts.slint:75
-msgctxt "AccountsPage"
-msgid "UUID"
-msgstr "UUID"
-
-#: pages/accounts/accounts.slint:87
-msgctxt "AccountsPage"
-msgid "Token"
-msgstr "Token"
-
-#: pages/accounts/accounts.slint:102
-msgctxt "AccountsPage"
-msgid "Delete"
-msgstr "删除"
-
-#: pages/accounts/accounts.slint:120
-msgctxt "AccountsPage"
-msgid "Add"
-msgstr "添加"
 
 #: pages/accounts/accounts-list.slint:12
 msgctxt "AccountsList"
@@ -82,20 +42,60 @@ msgctxt "AccountsList"
 msgid "Select"
 msgstr "选择"
 
-#: pages/accounts/account-item.slint:13
+#: pages/accounts/account-item.slint:19
 msgctxt "Account"
 msgid "Offline"
 msgstr "离线账号"
 
-#: pages/accounts/account-item.slint:15
+#: pages/accounts/account-item.slint:21
 msgctxt "Account"
 msgid "Microsoft"
 msgstr "微软账号"
 
-#: pages/accounts/account-item.slint:17
+#: pages/accounts/account-item.slint:23
 msgctxt "Account"
 msgid "Other"
 msgstr "其他账号"
+
+#: pages/accounts/accounts.slint:40
+msgctxt "AccountsPage"
+msgid "Edit"
+msgstr "编辑"
+
+#: pages/accounts/accounts.slint:48
+msgctxt "AccountsPage"
+msgid "Switch"
+msgstr "切换"
+
+#: pages/accounts/accounts.slint:61
+msgctxt "AccountsPage"
+msgid "Edit {}"
+msgstr "编辑"
+
+#: pages/accounts/accounts.slint:64
+msgctxt "AccountsPage"
+msgid "Name"
+msgstr "用户名"
+
+#: pages/accounts/accounts.slint:76
+msgctxt "AccountsPage"
+msgid "UUID"
+msgstr "UUID"
+
+#: pages/accounts/accounts.slint:88
+msgctxt "AccountsPage"
+msgid "Token"
+msgstr "Token"
+
+#: pages/accounts/accounts.slint:103
+msgctxt "AccountsPage"
+msgid "Delete"
+msgstr "删除"
+
+#: pages/accounts/accounts.slint:121
+msgctxt "AccountsPage"
+msgid "Add"
+msgstr "添加"
 
 #: pages/home.slint:44
 msgctxt "HomePage"
@@ -357,117 +357,117 @@ msgctxt "DownloaderPage"
 msgid "Finished"
 msgstr "已完成"
 
-#: dialogs/game/add-game-dialog.slint:7 dialogs/game/add-game-dialog.slint:44
+#: dialogs/game/add-game-dialog.slint:7 dialogs/game/add-game-dialog.slint:53
 msgctxt "AddGameDialog"
 msgid "Add a Game"
 msgstr "添加游戏"
 
-#: dialogs/game/add-game-dialog.slint:56
+#: dialogs/game/add-game-dialog.slint:67
 msgctxt "AddGameDialog"
 msgid "Minecraft Version"
 msgstr "Minecraft版本"
 
-#: dialogs/game/add-game-dialog.slint:58
+#: dialogs/game/add-game-dialog.slint:69
 msgctxt "AddGameDialog"
 msgid "All"
 msgstr "全部"
 
-#: dialogs/game/add-game-dialog.slint:58
+#: dialogs/game/add-game-dialog.slint:69
 msgctxt "AddGameDialog"
 msgid "Release"
 msgstr "稳定版"
 
-#: dialogs/game/add-game-dialog.slint:58
+#: dialogs/game/add-game-dialog.slint:69
 msgctxt "AddGameDialog"
 msgid "Snapshot"
 msgstr "快照版"
 
-#: dialogs/game/add-game-dialog.slint:58
+#: dialogs/game/add-game-dialog.slint:69
 msgctxt "AddGameDialog"
 msgid "Old Alpha"
 msgstr "远古版Alpha"
 
-#: dialogs/game/add-game-dialog.slint:58
+#: dialogs/game/add-game-dialog.slint:69
 msgctxt "AddGameDialog"
 msgid "Old Beta"
 msgstr "远古版Beta"
 
-#: dialogs/game/add-game-dialog.slint:63 dialogs/game/add-game-dialog.slint:97
+#: dialogs/game/add-game-dialog.slint:74
 msgctxt "AddGameDialog"
 msgid "Version"
 msgstr "版本"
 
-#: dialogs/game/add-game-dialog.slint:64
+#: dialogs/game/add-game-dialog.slint:75
 msgctxt "AddGameDialog"
 msgid "Type"
 msgstr "类型"
 
-#: dialogs/game/add-game-dialog.slint:80
+#: dialogs/game/add-game-dialog.slint:91
 msgctxt "AddGameDialog"
 msgid "Mod Loader"
 msgstr "Mod加载器"
 
-#: dialogs/game/add-game-dialog.slint:82
+#: dialogs/game/add-game-dialog.slint:93
 msgctxt "AddGameDialog"
 msgid "None"
 msgstr "无"
 
-#: dialogs/game/add-game-dialog.slint:98
+#: dialogs/game/add-game-dialog.slint:109
 msgctxt "AddGameDialog"
 msgid "Modified"
 msgstr "修改日期"
 
-#: dialogs/game/add-game-dialog.slint:105
+#: dialogs/game/add-game-dialog.slint:116
 msgctxt "AddGameDialog"
 msgid "Customize"
 msgstr "自定义"
 
-#: dialogs/game/add-game-dialog.slint:109
+#: dialogs/game/add-game-dialog.slint:120
 msgctxt "AddGameDialog"
 msgid "Window height"
 msgstr "窗口高度"
 
-#: dialogs/game/add-game-dialog.slint:116
+#: dialogs/game/add-game-dialog.slint:127
 msgctxt "AddGameDialog"
 msgid "Window width"
 msgstr "窗口宽度"
 
-#: dialogs/game/add-game-dialog.slint:123
+#: dialogs/game/add-game-dialog.slint:134
 msgctxt "AddGameDialog"
 msgid "Description"
 msgstr "备注"
 
-#: dialogs/game/add-game-dialog.slint:130
+#: dialogs/game/add-game-dialog.slint:141
 msgctxt "AddGameDialog"
 msgid "Game args"
 msgstr "Minecraft参数"
 
-#: dialogs/game/add-game-dialog.slint:137
+#: dialogs/game/add-game-dialog.slint:148
 msgctxt "AddGameDialog"
 msgid "Java path"
 msgstr "Java路径"
 
-#: dialogs/game/add-game-dialog.slint:145
+#: dialogs/game/add-game-dialog.slint:156
 msgctxt "AddGameDialog"
 msgid "JVM args"
 msgstr "JVM参数"
 
-#: dialogs/game/add-game-dialog.slint:152
+#: dialogs/game/add-game-dialog.slint:163
 msgctxt "AddGameDialog"
 msgid "Wrapper"
 msgstr "封装器"
 
-#: dialogs/game/add-game-dialog.slint:159
+#: dialogs/game/add-game-dialog.slint:170
 msgctxt "AddGameDialog"
 msgid "Minimum memory"
 msgstr "最小分配内存"
 
-#: dialogs/game/add-game-dialog.slint:166
+#: dialogs/game/add-game-dialog.slint:177
 msgctxt "AddGameDialog"
 msgid "Maximum memory"
 msgstr "最大分配内存"
 
-#: dialogs/game/add-game-dialog.slint:175
+#: dialogs/game/add-game-dialog.slint:186
 msgctxt "AddGameDialog"
 msgid "Separated"
 msgstr "版本隔离"
@@ -477,178 +477,187 @@ msgctxt "EditGameDialog"
 msgid "Edit a Game"
 msgstr "编辑游戏"
 
-#: dialogs/game/edit-game-dialog.slint:23
+#: dialogs/game/edit-game-dialog.slint:49
 msgctxt "EditGameDialog"
 msgid "Edit {}"
 msgstr "编辑{}"
 
-#: dialogs/game/edit-game-dialog.slint:26
+#: dialogs/game/edit-game-dialog.slint:53
 msgctxt "EditGameDialog"
 msgid "Window height"
 msgstr "窗口高度"
 
-#: dialogs/game/edit-game-dialog.slint:33
+#: dialogs/game/edit-game-dialog.slint:60
 msgctxt "EditGameDialog"
 msgid "Window width"
 msgstr "窗口宽度"
 
-#: dialogs/game/edit-game-dialog.slint:40
+#: dialogs/game/edit-game-dialog.slint:67
 msgctxt "EditGameDialog"
 msgid "Description"
 msgstr "备注"
 
-#: dialogs/game/edit-game-dialog.slint:47
+#: dialogs/game/edit-game-dialog.slint:74
 msgctxt "EditGameDialog"
 msgid "Game args"
 msgstr "Minecraft参数"
 
-#: dialogs/game/edit-game-dialog.slint:54
+#: dialogs/game/edit-game-dialog.slint:81
 msgctxt "EditGameDialog"
 msgid "Java path"
 msgstr "Java路径"
 
-#: dialogs/game/edit-game-dialog.slint:62
+#: dialogs/game/edit-game-dialog.slint:89
 msgctxt "EditGameDialog"
 msgid "JVM args"
 msgstr "JVM参数"
 
-#: dialogs/game/edit-game-dialog.slint:69
+#: dialogs/game/edit-game-dialog.slint:96
 msgctxt "EditGameDialog"
 msgid "Wrapper"
 msgstr "封装器"
 
-#: dialogs/game/edit-game-dialog.slint:76
+#: dialogs/game/edit-game-dialog.slint:103
 msgctxt "EditGameDialog"
 msgid "Minimum memory"
 msgstr "最小分配内存"
 
-#: dialogs/game/edit-game-dialog.slint:83
+#: dialogs/game/edit-game-dialog.slint:110
 msgctxt "EditGameDialog"
 msgid "Maximum memory"
 msgstr "最大分配内存"
 
-#: dialogs/game/edit-game-dialog.slint:92
+#: dialogs/game/edit-game-dialog.slint:119
 msgctxt "EditGameDialog"
 msgid "Separated"
 msgstr "版本隔离"
 
-#: dialogs/game/edit-game-dialog.slint:101
+#: dialogs/game/edit-game-dialog.slint:131
 msgctxt "EditGameDialog"
 msgid "Delete"
 msgstr "删除"
 
-#: dialogs/game/forge-download-dialog.slint:4
+#: dialogs/game/forge-download-dialog.slint:5
 msgctxt "ForgeDownloadDialog"
 msgid "Installing Forge"
 msgstr "正在安装Forge"
 
-#: dialogs/game/forge-download-dialog.slint:36
+#: dialogs/game/forge-download-dialog.slint:60
 msgctxt "ForgeDownloadDialog"
 msgid "Hide"
 msgstr "隐藏"
 
-#: dialogs/game/forge-download-dialog.slint:41
+#: dialogs/game/forge-download-dialog.slint:65
 msgctxt "ForgeDownloadDialog"
 msgid "Cancel"
 msgstr "取消"
 
-#: dialogs/login-dialog.slint:5 dialogs/login-dialog.slint:15
+#: dialogs/login-dialog.slint:5 dialogs/login-dialog.slint:32
 msgctxt "LoginDialog"
-msgid "Add a Account"
+msgid "Add an Account"
 msgstr "添加账号"
 
-#: dialogs/login-dialog.slint:20
+#: dialogs/login-dialog.slint:43
 msgctxt "LoginDialog"
 msgid "Offline Account"
 msgstr "离线账号"
 
-#: dialogs/login-dialog.slint:23
+#: dialogs/login-dialog.slint:46
 msgctxt "LoginDialog"
 msgid "Name"
 msgstr "用户名"
 
-#: dialogs/login-dialog.slint:30
+#: dialogs/login-dialog.slint:53
 msgctxt "LoginDialog"
 msgid "UUID"
 msgstr "UUID"
 
-#: dialogs/login-dialog.slint:40 dialogs/login-dialog.slint:72
+#: dialogs/login-dialog.slint:63 dialogs/login-dialog.slint:95
 msgctxt "LoginDialog"
 msgid "OK"
 msgstr "OK"
 
-#: dialogs/login-dialog.slint:52
+#: dialogs/login-dialog.slint:75
 msgctxt "LoginDialog"
 msgid "Microsoft Account"
 msgstr "微软账号"
 
-#: dialogs/login-dialog.slint:57
+#: dialogs/login-dialog.slint:80
 msgctxt "LoginDialog"
 msgid "Your user code will be automatically copied."
 msgstr "您的代码将被自动复制。"
 
-#: dialogs/login-dialog.slint:57
+#: dialogs/login-dialog.slint:80
 msgctxt "LoginDialog"
 msgid "Press OK after you finish logging in."
 msgstr "在完成登录后点击OK"
 
-#: dialogs/login-dialog.slint:64
+#: dialogs/login-dialog.slint:87
 msgctxt "LoginDialog"
 msgid "Open in Web Browser"
 msgstr "在浏览器中打开"
 
-#: dialogs/add-java-dialog.slint:14 dialogs/add-java-dialog.slint:29
+#: dialogs/add-java-dialog.slint:14 dialogs/add-java-dialog.slint:43
 msgctxt "AddJavaDialog"
 msgid "Add a Java Installation"
 msgstr "添加Java版本"
 
-#: dialogs/add-java-dialog.slint:35
-#, fuzzy
+#: dialogs/add-java-dialog.slint:56
 msgctxt "AddJavaDialog"
 msgid "Java Home"
-msgstr "主页"
-
-#: dialogs/add-java-dialog.slint:43
-msgctxt "AddJavaDialog"
-msgid "Detect"
-msgstr ""
-
-#: dialogs/add-java-dialog.slint:61
-msgctxt "AddJavaDialog"
-msgid "Java {0} detected"
-msgstr ""
+msgstr "Java 主目录"
 
 #: dialogs/add-java-dialog.slint:64
 msgctxt "AddJavaDialog"
-msgid "Path is empty"
-msgstr ""
+msgid "Detect"
+msgstr "检测"
 
-#: dialogs/add-java-dialog.slint:67
+#: dialogs/add-java-dialog.slint:82
+msgctxt "AddJavaDialog"
+msgid "Java {0} detected"
+msgstr "检测到 Java {0}"
+
+#: dialogs/add-java-dialog.slint:85
+msgctxt "AddJavaDialog"
+msgid "Path is empty"
+msgstr "路径为空"
+
+#: dialogs/add-java-dialog.slint:88
 msgctxt "AddJavaDialog"
 msgid "Java executable not found in this path"
-msgstr ""
+msgstr "在此路径中找不到 Java 可执行文件"
 
-#: dialogs/add-java-dialog.slint:70
+#: dialogs/add-java-dialog.slint:91
 msgctxt "AddJavaDialog"
 msgid "Release file is invalid"
-msgstr ""
+msgstr "release 文件无效"
 
-#: dialogs/add-java-dialog.slint:73
+#: dialogs/add-java-dialog.slint:94
 msgctxt "AddJavaDialog"
 msgid "Failed to read Java information"
-msgstr ""
+msgstr "读取 Java 信息失败"
 
-#: dialogs/dialogs.slint:25
+#: dialogs/dialogs.slint:76
 msgctxt "AskDialog"
 msgid "Are you sure to delete this account?"
 msgstr "你确定要删除这个账号吗？"
 
-#: dialogs/dialogs.slint:28
+#: dialogs/dialogs.slint:77
+msgctxt "AskDialog"
+msgid "Delete Account"
+msgstr "删除账号"
+
+#: dialogs/dialogs.slint:80
 msgctxt "AskDialog"
 msgid ""
 "All the files under this Minecraft installation's folder will be deleted. "
 "Continue?"
 msgstr "此游戏目录下的所有文件将被删除。确认继续？"
+
+#: dialogs/dialogs.slint:81
+msgctxt "AskDialog"
+msgid "Delete Game"
+msgstr "删除游戏"
 
 #. Localized suffix for incompatible Java versions, read from Rust
 #: app-window.slint:36
@@ -656,42 +665,42 @@ msgctxt "AppWindow"
 msgid "not compatible"
 msgstr "不兼容"
 
-#: app-window.slint:39 app-window.slint:75
+#: app-window.slint:41 app-window.slint:81
 msgctxt "AppWindow"
 msgid "Account"
 msgstr "账号"
 
-#: app-window.slint:41
+#: app-window.slint:43
 msgctxt "AppWindow"
 msgid "Minecraft Version"
 msgstr "Minecraft版本"
 
-#: app-window.slint:42 app-window.slint:75
+#: app-window.slint:44 app-window.slint:81
 msgctxt "AppWindow"
 msgid "Downloader"
 msgstr "下载"
 
-#: app-window.slint:43
+#: app-window.slint:45
 msgctxt "AppWindow"
 msgid "Java Installations"
 msgstr "Java版本"
 
-#: app-window.slint:44 app-window.slint:75
+#: app-window.slint:46 app-window.slint:81
 msgctxt "AppWindow"
 msgid "Settings"
 msgstr "设置"
 
-#: app-window.slint:75
+#: app-window.slint:81
 msgctxt "AppWindow"
 msgid "Home"
 msgstr "主页"
 
-#: app-window.slint:75
+#: app-window.slint:81
 msgctxt "AppWindow"
 msgid "Games"
 msgstr "游戏"
 
-#: app-window.slint:75
+#: app-window.slint:81
 msgctxt "AppWindow"
 msgid "Java"
 msgstr "Java"

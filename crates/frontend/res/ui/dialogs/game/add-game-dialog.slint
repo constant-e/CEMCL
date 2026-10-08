@@ -1,5 +1,5 @@
-import { TitleBar, SettingsGroup, SubTitle, VerticalSpacing, MyText, MySpinBox, JavaVersionSelector } from "../../components/components.slint";
-import { ComboBox, StandardButton, StandardTableView, Switch, LineEdit, VerticalBox, HorizontalBox, GridBox } from "std-widgets.slint";
+import { TitleBar, SettingsGroup, SubTitle, VerticalSpacing, MyText, MySpinBox, JavaVersionSelector, WindowFrame } from "../../components/components.slint";
+import { ComboBox, StandardButton, StandardTableView, Switch, LineEdit, VerticalBox, HorizontalBox, StyleMetrics } from "std-widgets.slint";
 
 import { MCConfig } from "game.slint";
 
@@ -10,6 +10,9 @@ export component AddGameDialog inherits Dialog {
     // The title bar is drawn by the dialog itself
     no-frame: true;
     resize-border-width: 5px;
+    // The dialog lays out its own buttons, so the built-in dialog grid must not
+    // add padding: the title bar and the window border reach the window edges.
+    padding: 0px;
 
     in-out property <int> game-index <=> game-table.current-row;
     in-out property <[[StandardListViewItem]]> game-list <=> game-table.rows;
@@ -33,161 +36,179 @@ export component AddGameDialog inherits Dialog {
     callback add-game(int, int, int, int, MCConfig);
     // Called when game selection changes, to refresh Java compatibility
     callback game-selected(int, int);
+    callback cancel-clicked();
 
     // Call UI (Rust)
     callback drag-window();
 
-    VerticalBox {
-        padding: 0px;
+    WindowFrame {
+        width: 100%;
+        height: 100%;
 
-        title-bar := TitleBar {
-            title-text: @tr("Add a Game");
-            show-minimize: false;
-            show-maximize: false;
-            close => { root.close(); }
-            drag => { root.drag-window(); }
-        }
-        HorizontalBox {
+        VerticalBox {
             padding: 0px;
+            spacing: 0px;
 
-            VerticalBox {
-                padding: 0px;
-
-                SubTitle { text: @tr("Minecraft Version"); }
-                game-combo-box := ComboBox {
-                    model: [@tr("All"), @tr("Release"), @tr("Snapshot"), @tr("Old Alpha"), @tr("Old Beta")];
-                    selected => { root.get-game-list(self.current-index); }
-                }
-                game-table := StandardTableView {
-                    columns: [
-                        { title: @tr("Version") },
-                        { title: @tr("Type") }
-                    ];
-                    min-width: 200px;
-
-                    current-row-changed(row) => {
-                        root.game-selected(game-combo-box.current-index, row);
-                        if mod-combo-box.current-index != 0 {
-                            root.get-mod-list(game-combo-box.current-index, row, mod-combo-box.current-index);
-                        }
-                    }
-                }
+            title-bar := TitleBar {
+                title-text: @tr("Add a Game");
+                show-minimize: false;
+                show-maximize: false;
+                close => { root.close(); }
+                drag => { root.drag-window(); }
             }
-    
-            VerticalBox {
-                padding: 0px;
 
-                SubTitle { text: @tr("Mod Loader"); }
-                mod-combo-box := ComboBox {
-                    model: [@tr("None"), "Forge", "Fabric"];
-                    selected => {
-                        if self.current-index != 0 {
-                            if game-table.current-row >= 0 && game-table.current-row < game-list.length {
-                                root.get-mod-list(game-combo-box.current-index, game-table.current-row, self.current-index);
+            VerticalBox {
+                HorizontalBox {
+                    padding: 0px;
+
+                    VerticalBox {
+                        padding: 0px;
+
+                        SubTitle { text: @tr("Minecraft Version"); }
+                        game-combo-box := ComboBox {
+                            model: [@tr("All"), @tr("Release"), @tr("Snapshot"), @tr("Old Alpha"), @tr("Old Beta")];
+                            selected => { root.get-game-list(self.current-index); }
+                        }
+                        game-table := StandardTableView {
+                            columns: [
+                                { title: @tr("Version") },
+                                { title: @tr("Type") }
+                            ];
+                            min-width: 200px;
+
+                            current-row-changed(row) => {
+                                root.game-selected(game-combo-box.current-index, row);
+                                if mod-combo-box.current-index != 0 {
+                                    root.get-mod-list(game-combo-box.current-index, row, mod-combo-box.current-index);
+                                }
                             }
-                        } else {
-                            root.mod-list = [];
                         }
-                        
+                    }
+
+                    VerticalBox {
+                        padding: 0px;
+
+                        SubTitle { text: @tr("Mod Loader"); }
+                        mod-combo-box := ComboBox {
+                            model: [@tr("None"), "Forge", "Fabric"];
+                            selected => {
+                                if self.current-index != 0 {
+                                    if game-table.current-row >= 0 && game-table.current-row < game-list.length {
+                                        root.get-mod-list(game-combo-box.current-index, game-table.current-row, self.current-index);
+                                    }
+                                } else {
+                                    root.mod-list = [];
+                                }
+                                
+                            }
+                        }
+                        mod-table := StandardTableView {
+                            min-width: 200px;
+                            columns: [
+                                { title: @tr("Version") },
+                                { title: @tr("Modified") }
+                            ];
+                        }
+                    }
+
+                    VerticalLayout {
+                        SettingsGroup {
+                            title: @tr("Customize");
+                            vertical-stretch: 0;
+
+                            Row {
+                                MyText { text: @tr("Window height"); }
+                                MySpinBox {
+                                    value <=> game-config.height;
+                                }
+                            }
+
+                            Row {
+                                MyText { text: @tr("Window width"); }
+                                MySpinBox {
+                                    value <=> game-config.width;
+                                }
+                            }
+
+                            Row {
+                                MyText { text: @tr("Description"); }
+                                LineEdit {
+                                    text <=> game-config.description;
+                                }
+                            }
+
+                            Row {
+                                MyText { text: @tr("Game args"); }
+                                LineEdit {
+                                    text <=> game-config.game-args;
+                                }
+                            }
+
+                            Row {
+                                MyText { text: @tr("Java path"); }
+                                JavaVersionSelector {
+                                    model <=> root.java-combo-model;
+                                    current-index <=> root.java-index;
+                                }
+                            }
+
+                            Row {
+                                MyText { text: @tr("JVM args"); }
+                                LineEdit {
+                                    text <=> game-config.jvm-args;
+                                }
+                            }
+
+                            Row {
+                                MyText { text: @tr("Wrapper"); }
+                                LineEdit {
+                                    text <=> game-config.wrapper;
+                                }
+                            }
+
+                            Row {
+                                MyText { text: @tr("Minimum memory"); }
+                                LineEdit {
+                                    text <=> game-config.xms;
+                                }
+                            }
+
+                            Row {
+                                MyText { text: @tr("Maximum memory"); }
+                                LineEdit {
+                                    text <=> game-config.xmx;
+                                }
+                            }
+
+                            Row {
+                                Switch {
+                                    colspan: 2;
+                                    text: @tr("Separated");
+                                    checked <=> game-config.separated;
+                                }
+                            }
+                        }
+
+                        VerticalSpacing {}
                     }
                 }
-                mod-table := StandardTableView {
-                    min-width: 200px;
-                    columns: [
-                        { title: @tr("Version") },
-                        { title: @tr("Modified") }
-                    ];
+
+                HorizontalLayout {
+                    alignment: end;
+                    spacing: StyleMetrics.layout-spacing;
+
+                    StandardButton {
+                        kind: ok;
+                        clicked => {
+                            root.add-game(game-combo-box.current-index, game-table.current-row, mod-combo-box.current-index, mod-table.current-row, game-config);
+                        }
+                    }
+                    StandardButton {
+                        kind: cancel;
+                        clicked => { root.cancel-clicked(); }
+                    }
                 }
             }
-
-            VerticalLayout {
-                SettingsGroup {
-                    title: @tr("Customize");
-                    vertical-stretch: 0;
-
-                    Row {
-                        MyText { text: @tr("Window height"); }
-                        MySpinBox {
-                            value <=> game-config.height;
-                        }
-                    }
-
-                    Row {
-                        MyText { text: @tr("Window width"); }
-                        MySpinBox {
-                            value <=> game-config.width;
-                        }
-                    }
-
-                    Row {
-                        MyText { text: @tr("Description"); }
-                        LineEdit {
-                            text <=> game-config.description;
-                        }
-                    }
-
-                    Row {
-                        MyText { text: @tr("Game args"); }
-                        LineEdit {
-                            text <=> game-config.game-args;
-                        }
-                    }
-
-                    Row {
-                        MyText { text: @tr("Java path"); }
-                        JavaVersionSelector {
-                            model <=> root.java-combo-model;
-                            current-index <=> root.java-index;
-                        }
-                    }
-
-                    Row {
-                        MyText { text: @tr("JVM args"); }
-                        LineEdit {
-                            text <=> game-config.jvm-args;
-                        }
-                    }
-
-                    Row {
-                        MyText { text: @tr("Wrapper"); }
-                        LineEdit {
-                            text <=> game-config.wrapper;
-                        }
-                    }
-
-                    Row {
-                        MyText { text: @tr("Minimum memory"); }
-                        LineEdit {
-                            text <=> game-config.xms;
-                        }
-                    }
-
-                    Row {
-                        MyText { text: @tr("Maximum memory"); }
-                        LineEdit {
-                            text <=> game-config.xmx;
-                        }
-                    }
-
-                    Row {
-                        Switch {
-                            colspan: 2;
-                            text: @tr("Separated");
-                            checked <=> game-config.separated;
-                        }
-                    }
-                }
-
-                VerticalSpacing {}
-            }
-        }
-    }
-
-    StandardButton { kind: cancel; }
-    StandardButton {
-        kind: ok;
-        clicked => {
-            root.add-game(game-combo-box.current-index, game-table.current-row, mod-combo-box.current-index, mod-table.current-row, game-config);
         }
     }
 }

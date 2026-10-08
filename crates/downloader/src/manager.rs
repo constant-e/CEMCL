@@ -180,6 +180,9 @@ impl DownloadManager {
                     for (k, mirror) in self.config.mirrors.clone() {
                         let k = format!("{{{k}}}");
                         v.url = v.url.replace(&k, &mirror);
+                        if let Some(url) = &mut v.sha1_url {
+                            *url = url.replace(&k, &mirror);
+                        }
                     }
                     v
                 })

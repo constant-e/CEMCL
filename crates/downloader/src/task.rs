@@ -1,16 +1,18 @@
 use futures::StreamExt;
 use log::{error, info, warn};
 use reqwest::Client;
+use sha1::{Digest, Sha1};
 use std::sync::{
     Arc,
     atomic::{AtomicBool, AtomicU64, Ordering},
 };
 use tokio::{
-    io::AsyncWriteExt,
+    io::{AsyncReadExt, AsyncWriteExt},
     sync::{Mutex, RwLock, Semaphore, mpsc::error::TryRecvError},
     time::Duration,
 };
 
+#[derive(Debug)]
 pub enum DownloadTaskError {
     Cancelled,
     ClientError(Option<String>),
@@ -125,6 +127,11 @@ pub enum DownloadTaskCommand {
 pub struct TaskInfo {
     pub url: String,
     pub save_path: String,
+    /// 下载后的预期sha1；与`sha1_url`二选一，同时给出时以`sha1`为准
+    pub sha1: Option<String>,
+    /// 获取预期sha1的地址（maven风格的`<url>.sha1`），下载成功后获取并校验，
+    /// 同时缓存到`<save_path>.sha1`，供之后的离线校验
+    pub sha1_url: Option<String>,
     pub on_failed: Option<Box<dyn Fn() + Send + Sync>>,
     pub on_finish: Option<Box<dyn Fn() + Send + Sync>>,
     pub on_pause: Option<Box<dyn Fn() + Send + Sync>>,
@@ -135,6 +142,8 @@ impl TaskInfo {
     pub fn new(
         url: String,
         save_path: String,
+        sha1: Option<String>,
+        sha1_url: Option<String>,
         on_failed: Option<Box<dyn Fn() + Send + Sync>>,
         on_finish: Option<Box<dyn Fn() + Send + Sync>>,
         on_pause: Option<Box<dyn Fn() + Send + Sync>>,
@@ -143,6 +152,8 @@ impl TaskInfo {
         Self {
             url,
             save_path,
+            sha1,
+            sha1_url,
             on_failed,
             on_finish,
             on_pause,
@@ -157,6 +168,10 @@ pub struct DownloadTask {
     semaphore: Arc<Semaphore>,
     pub url: String,
     pub save_path: String,
+    /// 下载后的预期sha1；与`sha1_url`二选一，同时给出时以`sha1`为准
+    pub sha1: Option<String>,
+    /// 获取预期sha1的地址（maven风格的`<url>.sha1`），下载成功后获取并校验
+    pub sha1_url: Option<String>,
     pub status: Mutex<DownloadTaskStatus>,
     /// (downloaded_bytes, total_bytes), (0, 0) if never started, (downloaded, 0) if length is unknown
     pub progress: (AtomicU64, AtomicU64),
@@ -178,6 +193,8 @@ impl DownloadTask {
             semaphore,
             url,
             save_path,
+            sha1: None,
+            sha1_url: None,
             started: AtomicBool::new(false),
             status: Mutex::new(DownloadTaskStatus::Pending),
             progress: (AtomicU64::new(0), AtomicU64::new(0)),
@@ -452,6 +469,12 @@ impl DownloadTask {
                 .store(self.progress.0.load(Ordering::Relaxed), Ordering::Relaxed);
         }
 
+        drop(file);
+        if let Err(e) = self.verify().await {
+            *self.status.try_lock()? = DownloadTaskStatus::Failed;
+            return Err(e);
+        }
+
         if let Some(on_finish) = &self.on_finish {
             on_finish();
         }
@@ -459,6 +482,71 @@ impl DownloadTask {
         *self.status.try_lock()? = DownloadTaskStatus::Completed;
         info!("Finish downloading {0}", self.url);
         Ok(())
+    }
+
+    /// 校验下载完成的文件内容，不一致时删除文件并报错（磁盘上不留下坏文件）
+    ///
+    /// 预期sha1优先取`sha1`；只有`sha1_url`时从该地址获取（获取失败则跳过校验），
+    /// 并把获取到的sha1缓存到`<save_path>.sha1`，供之后的离线校验。
+    async fn verify(&self) -> Result<(), DownloadTaskError> {
+        let expected = if let Some(sha1) = &self.sha1 {
+            sha1.clone()
+        } else if let Some(url) = &self.sha1_url {
+            match fetch_sha1(&self.client, url).await {
+                Some(sha1) => {
+                    if let Err(e) =
+                        tokio::fs::write(format!("{}.sha1", &self.save_path), &sha1).await
+                    {
+                        warn!("Failed to cache sha1 of {0}. Reason: {e}", self.save_path);
+                    }
+                    sha1
+                }
+                None => {
+                    warn!(
+                        "Failed to get sha1 of {0} from {1}, skip verification",
+                        self.save_path, url
+                    );
+                    return Ok(());
+                }
+            }
+        } else {
+            return Ok(());
+        };
+
+        let actual = match sha1_file(&self.save_path).await {
+            Ok(actual) => actual,
+            Err(e) => {
+                error!("Failed to hash {0}. Reason: {e}", self.save_path);
+                self.remove_invalid().await;
+                return Err(DownloadTaskError::Failed(Some(format!(
+                    "Failed to hash {}: {e}",
+                    self.save_path
+                ))));
+            }
+        };
+        if actual.eq_ignore_ascii_case(&expected) {
+            return Ok(());
+        }
+
+        error!(
+            "sha1 mismatch for {0}: expected {expected}, got {actual}",
+            self.save_path
+        );
+        self.remove_invalid().await;
+        Err(DownloadTaskError::Failed(Some(format!(
+            "sha1 mismatch for {}: expected {expected}, got {actual}",
+            self.save_path
+        ))))
+    }
+
+    /// 删除校验失败的文件，删除失败只记录日志
+    async fn remove_invalid(&self) {
+        if let Err(e) = tokio::fs::remove_file(&self.save_path).await {
+            warn!(
+                "Failed to remove the invalid file {0}. Reason: {e}",
+                self.save_path
+            );
+        }
     }
 
     pub fn try_cancel(&self) -> Result<(), DownloadTaskError> {
@@ -513,5 +601,237 @@ impl DownloadTask {
     /// Whether the task has ever started downloading
     pub fn is_started(&self) -> bool {
         self.started.load(Ordering::Relaxed)
+    }
+}
+
+/// 从maven风格的`<url>.sha1`获取哈希，网络错误时重试
+async fn fetch_sha1(client: &Client, url: &str) -> Option<String> {
+    let mut attempts = 0;
+    loop {
+        match client.get(url).send().await {
+            Ok(res) => match res.text().await {
+                Ok(text) => return parse_sha1(&text),
+                Err(e) => {
+                    warn!("Failed to read sha1 file {url}. Reason: {e}");
+                    return None;
+                }
+            },
+            Err(e) => {
+                if attempts >= 3 {
+                    warn!("Failed to get sha1 file {url}. Reason: {e}");
+                    return None;
+                }
+                attempts += 1;
+                tokio::time::sleep(Duration::from_secs(1)).await;
+            }
+        }
+    }
+}
+
+/// 解析sha1文件内容，取第一个合法的40位十六进制串（maven的sha1文件有时带文件名）
+fn parse_sha1(text: &str) -> Option<String> {
+    text.split_whitespace()
+        .find(|t| t.len() == 40 && t.bytes().all(|b| b.is_ascii_hexdigit()))
+        .map(str::to_lowercase)
+}
+
+/// 计算文件的sha1（小写十六进制）
+async fn sha1_file(path: &str) -> std::io::Result<String> {
+    let mut file = tokio::fs::File::open(path).await?;
+    let mut hasher = Sha1::new();
+    let mut buf = vec![0u8; 64 * 1024];
+    loop {
+        let n = file.read(&mut buf).await?;
+        if n == 0 {
+            break;
+        }
+        hasher.update(&buf[..n]);
+    }
+    Ok(to_hex(&hasher.finalize()))
+}
+
+/// 字节序列转小写十六进制
+fn to_hex(bytes: &[u8]) -> String {
+    bytes.iter().map(|b| format!("{b:02x}")).collect()
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::io::{Read, Write};
+    use std::net::TcpListener;
+
+    const HELLO: &str = "hello world";
+    const HELLO_SHA1: &str = "2aae6c35c94fcfb415dbe95f408b9ce91ee846ed";
+
+    /// 建一个空的临时目录，返回路径
+    fn temp_dir(name: &str) -> String {
+        let dir = std::env::temp_dir().join(format!("cemcl-test-{}-{name}", std::process::id()));
+        let _ = std::fs::remove_dir_all(&dir);
+        std::fs::create_dir_all(&dir).unwrap();
+        dir.to_str().unwrap().to_string()
+    }
+
+    /// 起一个本地HTTP服务，按路径返回内容，返回地址
+    fn serve(responses: Vec<(&'static str, String)>) -> String {
+        let listener = TcpListener::bind("127.0.0.1:0").unwrap();
+        let addr = listener.local_addr().unwrap();
+        std::thread::spawn(move || {
+            for stream in listener.incoming() {
+                let Ok(mut stream) = stream else {
+                    continue;
+                };
+                let mut buf = [0u8; 4096];
+                let n = stream.read(&mut buf).unwrap_or(0);
+                let request = String::from_utf8_lossy(&buf[..n]).into_owned();
+                let path = request.split_whitespace().nth(1).unwrap_or("/").to_string();
+                let body = responses
+                    .iter()
+                    .find(|(p, _)| *p == path)
+                    .map(|(_, b)| b.clone());
+                let response = match body {
+                    Some(body) => format!(
+                        "HTTP/1.1 200 OK\r\nContent-Length: {}\r\nConnection: close\r\n\r\n{body}",
+                        body.len()
+                    ),
+                    None => {
+                        "HTTP/1.1 404 Not Found\r\nContent-Length: 0\r\nConnection: close\r\n\r\n"
+                            .to_string()
+                    }
+                };
+                let _ = stream.write_all(response.as_bytes());
+            }
+        });
+        format!("http://{addr}")
+    }
+
+    /// 建一个下载任务
+    fn new_task(url: String, save_path: String) -> DownloadTask {
+        DownloadTask::new(
+            url,
+            save_path,
+            reqwest::Client::new(),
+            Arc::new(Semaphore::new(1)),
+        )
+    }
+
+    /// 文件哈希与已知向量一致（大文件跨读取缓冲区）
+    #[tokio::test]
+    async fn file_sha1_matches_vectors() {
+        let dir = temp_dir("hash");
+        let big = "a".repeat(100_000);
+        for (name, content, expect) in [
+            ("empty", "", "da39a3ee5e6b4b0d3255bfef95601890afd80709"),
+            ("abc", "abc", "a9993e364706816aba3e25717850c26c9cd0d89d"),
+            (
+                "big",
+                big.as_str(),
+                "c4d4b30851182fc4eb8675494d42fd7f17e29c93",
+            ),
+        ] {
+            let path = format!("{dir}/{name}");
+            std::fs::write(&path, content).unwrap();
+            assert_eq!(sha1_file(&path).await.unwrap(), expect, "{name}");
+        }
+    }
+
+    /// sha1 文件按maven格式解析（允许大写、附带文件名，其它内容忽略）
+    #[test]
+    fn sha1_files_are_parsed() {
+        assert_eq!(parse_sha1(HELLO_SHA1).as_deref(), Some(HELLO_SHA1));
+        assert_eq!(
+            parse_sha1(&HELLO_SHA1.to_uppercase()).as_deref(),
+            Some(HELLO_SHA1)
+        );
+        assert_eq!(
+            parse_sha1(&format!("{HELLO_SHA1}  f.jar\n")).as_deref(),
+            Some(HELLO_SHA1)
+        );
+        assert_eq!(parse_sha1("not a sha1"), None);
+        assert_eq!(parse_sha1(""), None);
+    }
+
+    /// 下载完成后按sha1校验：一致时保留文件，不一致时删除文件并失败
+    #[tokio::test]
+    async fn task_verifies_sha1() {
+        let dir = temp_dir("sha1");
+        let server = serve(vec![("/f", HELLO.to_string())]);
+
+        let path = format!("{dir}/ok");
+        let mut task = new_task(format!("{server}/f"), path.clone());
+        task.sha1 = Some(HELLO_SHA1.to_string());
+        task.start().await.unwrap();
+        assert_eq!(std::fs::read_to_string(&path).unwrap(), HELLO);
+        assert!(matches!(
+            *task.status.try_lock().unwrap(),
+            DownloadTaskStatus::Completed
+        ));
+
+        let path = format!("{dir}/bad");
+        let mut task = new_task(format!("{server}/f"), path.clone());
+        task.sha1 = Some("0".repeat(40));
+        let e = task.start().await.unwrap_err();
+        assert!(e.to_string().contains("sha1 mismatch"), "{e}");
+        assert!(!std::fs::exists(&path).unwrap());
+        assert!(matches!(
+            *task.status.try_lock().unwrap(),
+            DownloadTaskStatus::Failed
+        ));
+    }
+
+    /// 只有sha1_url时从该地址获取哈希，校验后缓存到<save_path>.sha1
+    #[tokio::test]
+    async fn task_verifies_sha1_from_url() {
+        let dir = temp_dir("sha1-url");
+        let server = serve(vec![
+            ("/f.jar", HELLO.to_string()),
+            ("/f.jar.sha1", HELLO_SHA1.to_string()),
+        ]);
+
+        let path = format!("{dir}/f.jar");
+        let mut task = new_task(format!("{server}/f.jar"), path.clone());
+        task.sha1_url = Some(format!("{server}/f.jar.sha1"));
+        task.start().await.unwrap();
+        assert_eq!(std::fs::read_to_string(&path).unwrap(), HELLO);
+        assert_eq!(
+            std::fs::read_to_string(format!("{path}.sha1")).unwrap(),
+            HELLO_SHA1
+        );
+    }
+
+    /// sha1_url 上的哈希与文件不符时任务失败、文件删除，但缓存的哈希保留
+    #[tokio::test]
+    async fn task_fails_on_remote_sha1_mismatch() {
+        let dir = temp_dir("sha1-url-bad");
+        let bad_sha1 = "0".repeat(40);
+        let server = serve(vec![
+            ("/f.jar", HELLO.to_string()),
+            ("/f.jar.sha1", bad_sha1.clone()),
+        ]);
+
+        let path = format!("{dir}/f.jar");
+        let mut task = new_task(format!("{server}/f.jar"), path.clone());
+        task.sha1_url = Some(format!("{server}/f.jar.sha1"));
+        let e = task.start().await.unwrap_err();
+        assert!(e.to_string().contains("sha1 mismatch"), "{e}");
+        assert!(!std::fs::exists(&path).unwrap());
+        assert_eq!(
+            std::fs::read_to_string(format!("{path}.sha1")).unwrap(),
+            bad_sha1
+        );
+    }
+
+    /// sha1_url 获取失败时跳过校验（镜像可能不提供sha1文件）
+    #[tokio::test]
+    async fn task_skips_verification_without_remote_sha1() {
+        let dir = temp_dir("sha1-url-404");
+        let server = serve(vec![("/f.jar", HELLO.to_string())]);
+
+        let path = format!("{dir}/f.jar");
+        let mut task = new_task(format!("{server}/f.jar"), path.clone());
+        task.sha1_url = Some(format!("{server}/f.jar.sha1"));
+        task.start().await.unwrap();
+        assert_eq!(std::fs::read_to_string(&path).unwrap(), HELLO);
+        assert!(!std::fs::exists(format!("{path}.sha1")).unwrap());
     }
 }

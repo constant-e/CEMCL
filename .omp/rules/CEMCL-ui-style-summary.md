@@ -1,14 +1,14 @@
 ---
-description: "CEMCL Slint UI 约定（改 crates/frontend/res/ui 前必读）：28 个 .slint 文件组织、无边框窗口与自绘标题栏、侧栏/页面切换骨架、组件规格、Palette/间距/交互/对话框/i18n 模式"
+description: "CEMCL Slint UI 约定（改 crates/frontend/res/ui 前必读）：29 个 .slint 文件组织、无边框窗口（自绘标题栏 + 1px 窗口描边）、侧栏/页面切换骨架、组件规格、Palette/间距/交互/对话框/i18n 模式"
 globs: crates/frontend/res/ui/**/*.slint
 ---
 
 # CEMCL UI 设计风格与布局规范
 
-> 依 `crates/frontend/res/ui/` 全部 28 个 `.slint` 文件核对于 2026-09-19（Slint 1.17.1）；§7 的账号头像位图 2026-09-22 复核（Slint 1.18.1）。来源 `.github/instructions/CEMCL-ui-style-summary.instructions.md`（已迁至 `.omp/rules/`），已修正若干偏差。
+> 依 `crates/frontend/res/ui/` 全部 29 个 `.slint` 文件核对于 2026-10-08（Slint 1.18.1）；§7 的账号头像位图 2026-09-22 复核。来源 `.github/instructions/CEMCL-ui-style-summary.instructions.md`（已迁至 `.omp/rules/`），已修正若干偏差。
 > 配套：`rule://CEMCL-project-summary`。
 
-## 1. 文件组织（28 个文件）
+## 1. 文件组织（29 个文件）
 
 ```
 res/ui/
@@ -22,6 +22,7 @@ res/ui/
 │   ├── settings-group.slint          # SettingsGroup / MyText / MySpinBox
 │   ├── java-version-selector.slint   # JavaVersionSelector（继承 ComboBox）
 │   ├── title-bar.slint               # TitleBar（页面标题 + 最小化/最大化/关闭）
+│   ├── window-frame.slint            # WindowFrame（窗口背景 + 1px 描边，内容走 @children）
 │   └── sidebar/{sidebar.slint, sidebar-item.slint}
 ├── pages/
 │   ├── pages.slint                   # 总出口
@@ -37,8 +38,9 @@ res/ui/
 
 ## 2. 整体布局骨架
 
-- **无边框窗口**：`AppWindow` 与 `AddGameDialog` 都设 `no-frame: true` + `resize-border-width: 5px`（winit 后端在窗口边缘 5px 内做缩放命中测试，其余后端忽略）。窗口装饰完全自绘，其余对话框仍用系统装饰。
-- **主窗口** `AppWindow`（preferred 800×600，title "CE Minecraft Launcher"）：`HorizontalBox { padding: 0px; }`，左侧 `side-bar := SideBar`（`min-width: 150px`，`header-height: title-bar.height`），右侧 `VerticalBox { padding: 0px; }` = `title-bar := TitleBar` + 页面容器 `Rectangle { preferred-width: 100%; vertical-stretch: 1; }`。
+- **无边框窗口**：**所有窗口**（`AppWindow` 与 6 个对话框）都设 `no-frame: true` + `resize-border-width: 5px`（winit 后端在窗口边缘 5px 内做缩放命中测试，其余后端忽略）。窗口装饰（标题栏、描边）完全自绘。
+- **窗口描边（WindowFrame）**：每个窗口的最外层是 `WindowFrame { width: 100%; height: 100%; ... }`（`components/window-frame.slint`）：`background: Palette.background` + `@children` + 末尾一个 `Rectangle { width/height: 100%; border-width: 1px; border-color: Palette.border; }` 覆盖层。描边画在最外层 1px 且**最后绘制**（Rectangle 不拦截输入），所以内容不需要为描边留内边距。主窗口里 WindowFrame 是 Window 的直接子元素；对话框里它是唯一的主子元素（见 §5）。
+- **主窗口** `AppWindow`（preferred 800×600，title "CE Minecraft Launcher"）：`WindowFrame` 内是 `HorizontalBox { padding: 0px; }`，左侧 `side-bar := SideBar`（`min-width: 150px`，`header-height: title-bar.height`），右侧 `VerticalBox { padding: 0px; }` = `title-bar := TitleBar` + 页面容器 `Rectangle { preferred-width: 100%; vertical-stretch: 1; }`。
 - **标题栏（TitleBar）**：`title-text: root.page-titles[side-bar.current-index]`；右上角三个按钮在同一行。窗口控制只在根元素里生效：`minimize => { root.minimized = true; }`、`maximize => { root.maximized = !root.maximized; }`、`close => { root.close(); }`、`drag => { root.drag-window(); }`（`drag-window` 是 Rust 回调，见 §4）。
 - **页面标题**：不再放在页面里（页面顶部已无 `Title`），统一由 AppWindow 的私有属性 `page-titles: [@tr("Account"), "CE Minecraft Launcher", @tr("Minecraft Version"), @tr("Downloader"), @tr("Java Installations"), @tr("Settings")]` 按侧栏索引提供，顺序必须与 SideBar `model` 一致。
 - **SideBar**：`model: [@tr("Account"), @tr("Home"), @tr("Games"), @tr("Downloader"), @tr("Java"), @tr("Settings")]`，初始 `current-index: 1`；`index-changed(from, to)` 在点击切换前触发（from=旧索引）；app-window 里用 `from == 5`（离开设置页）触发 `set-config` 保存。顶部 `header := Rectangle { height: root.header-height; }` 内含居中加粗的 `label := SubTitle`（`title <=> label.text`），高度与标题栏一致以保证 CEMCL 与页面标题对齐。
@@ -53,7 +55,8 @@ res/ui/
 | `Title` | 24px / 700 | 标题栏标题（旧页面标题样式） |
 | `SubTitle` | 16px | 对话框、区块标题、侧栏 CEMCL（实例加 700 加粗） |
 | `SectionTitle` | 12px / 700 | 小节标题 |
-| `TitleBar` | 高 40px，背景 `Palette.background`（不区分背景色），左侧 `Title`（左内边距 `StyleMetrics.layout-padding`、`overflow: elide`）；按钮 46×40 | 自绘标题栏：`title-text` + `show-minimize` / `show-maximize` / `maximized`，回调 `minimize` / `maximize` / `close` / `drag` |
+| `TitleBar` | 高 40px，背景 `Palette.background`（不区分背景色），左侧 `Title`（左内边距 `StyleMetrics.layout-padding`、`overflow: elide`）；按钮 46×40 | 自绘标题栏：`title-text` + `show-minimize` / `show-maximize` / `maximized`，回调 `minimize` / `maximize` / `close` / `drag`（对话框只用 close/drag） |
+| `WindowFrame` | `Palette.background` + 末尾 1px `Palette.border` 覆盖层（无圆角） | 无边框窗口的窗口框：填充整个窗口、画描边，内容走 `@children` |
 | `RoundedBackground` | `Palette.control-background` + 圆角 8px（无 vertical-stretch） | 卡片容器 |
 | `HorizontalSpacing` / `VerticalSpacing` | 100% 拉伸、透明 | 弹性占位，推按钮到右侧/底部 |
 | `SettingsGroup` | `GroupBox` + `GridLayout { spacing: StyleMetrics.layout-spacing; @children }` | 表单分组 |
@@ -70,7 +73,7 @@ res/ui/
 ## 4. 状态与交互模式
 
 - **标题栏按钮（Win10 UWP 风格）**：无背景色，`hover` 时最小化/最大化用 `Palette.alternate-background` 高亮、关闭按钮为红底白图标；图标用 1px `Rectangle` / `Path` 自绘（10×10，含最大化后的“还原”双框，前框用标题栏底色挖空）。a11y 上每个按钮是 `accessible-role: button` + `accessible-label`（`@tr("Minimize"/"Maximize"/"Restore"/"Close")`）。
-- **窗口拖动**：标题栏左侧空白带的 `TouchArea.pointer-event`（按下）→ `drag()` → 根元素 `root.drag-window()` → frontend `ui::drag_window()` → winit `Window::drag_window()`（需要 slint 的 `unstable-winit-030` feature；非 winit 后端为空操作）。两个必须遵守的细节：
+- **窗口拖动**：标题栏左侧空白带的 `TouchArea.pointer-event`（按下）→ `drag()` → 根元素 `root.drag-window()` → frontend `ui::drag_window()` → winit `Window::drag_window()`（需要 slint 的 `unstable-winit-030` feature；非 winit 后端为空操作）。**每个窗口都要在 Rust 侧接上这个回调**（`ui.on_drag_window(move || { if let Some(ui) = ui_weak.upgrade() { ui::drag_window(&ui); } })`，见 `app_window.rs` / `game.rs` / `java.rs` / `account.rs` / `msg_box.rs`），否则该窗口的标题栏无法拖动。两个必须遵守的细节：
   1. **拖动区不能与按钮重叠**。重叠的 `TouchArea` 会*同时*收到 `pointer-event`，而且下层的会抢走指针 grab（表现为"按标题栏按钮也在拖窗口"）。所以拖动区是布局里的兄弟节点（`horizontal-stretch: 1`），只覆盖按钮左侧，标题 `Title` 放在它内部并用 `x: StyleMetrics.layout-padding` 对齐页面内容。
   2. **WM 交互移动会吞掉抬起事件**。窗口管理器接管指针后 release 不会送达应用，Slint 会一直以为指针按下，把后续点击都路由给拖动区（表现为"点什么都在拖窗口"）。因此 `ui::drag_window()` 在事件循环里补发一次窗口外（`(-1,-1)`）的 `PointerReleased` 复位输入状态，拖动区的 `pointer-event` 再额外用 `mouse-x/mouse-y` 是否落在自身范围内做守卫（残留 grab 期间收到的事件坐标会越界）。
 - **SideBarItem**：`states [ pressed / hover / selected ]` 控制背景 `opacity`（0.8 / 0.6 / 1），背景默认 `opacity: 0`，`animate opacity { duration: 150ms; }` 淡入淡出。
@@ -83,10 +86,13 @@ res/ui/
 
 ## 5. 对话框规范
 
-- 全部 `inherits Dialog`，以 `StandardButton { kind: ok/cancel }` 或 `yes/no` 收尾；自定义动作按钮加 `dialog-button-role: action`（EditGameDialog 的 Delete）。
-- 尺寸：AddGameDialog 800×600；AddJavaDialog 450×200；EditGameDialog / ForgeDownloadDialog 400×200；LoginDialog 自适应。
-- 容器：AddGameDialog / ForgeDownloadDialog 用 `VerticalBox { padding: 0px; }`，AddJavaDialog 用 `GridBox { padding: 0px; }`（跨列 `colspan: 3`）；EditGameDialog 用 `VerticalLayout`、LoginDialog 用 `VerticalBox`（均未设 padding: 0）。
-- **AddGameDialog 例外**：与主窗口一样 `no-frame: true` + `resize-border-width: 5px`，首行改为 `TitleBar { title-text: @tr("Add a Game"); show-minimize: false; show-maximize: false; }`（只有关闭按钮，`close => { root.close(); }`，`drag => { root.drag-window(); }`）；其余对话框保持系统装饰、内容里仍用 `Title`/`SubTitle`。Dialog 自带 `StyleMetrics.layout-padding` 内边距，标题栏因此内缩 8px。
+- **所有对话框都是自绘标题栏的无边框窗口**：`no-frame: true` + `resize-border-width: 5px` + `padding: 0px`（Dialog 内置布局的 `StyleMetrics.layout-padding` 必须关掉，否则标题栏与描边无法贴到窗口边缘）。Dialog 只允许一个非按钮子元素，且该子元素在关闭内边距后即整窗大小 —— 因此唯一子元素固定为
+  `WindowFrame { width: 100%; height: 100%; VerticalBox { padding: 0px; spacing: 0px; title-bar := TitleBar { show-minimize: false; show-maximize: false; ... }; <内容 VerticalBox（默认 8px padding/spacing）> } }`
+- **标题栏内容一致**：所有对话框用同一个 `TitleBar`，只显示右上角关闭按钮（`show-minimize/show-maximize: false`，46×40、悬停变红，与主窗口一致，贴窗口右上角）。`title-text` 与窗口 `title` 用同一条 `@tr()` 文案；正文里不再重复放同名的 `Title`/`SubTitle`。
+- **按钮不再交给 Dialog 自动布局**：`StandardButton`/动作按钮写进内容底部自己的 `HorizontalLayout { alignment: end; spacing: StyleMetrics.layout-spacing; ... }`，不能再用 `dialog-button-role`（非 Dialog 直接子元素会报错），也**不会**再生成 `<kind>-clicked` 自动回调 —— 需要 Rust 接的回调（如 `cancel-clicked`）在组件里显式声明，Rust 侧 `on_cancel_clicked` 调用方式不变。平台相关按钮顺序因此固定为声明顺序（ok → cancel；EditGameDialog 为 Delete → OK → Cancel）。
+- 尺寸：AddGameDialog 800×600；AddJavaDialog 450×200；EditGameDialog / ForgeDownloadDialog 400×200；LoginDialog、AskDialog 自适应（AskDialog 无 preferred-*，靠内容撑开）。
+- 内容容器：AddGameDialog 用 `VerticalBox` 包 `HorizontalBox { padding: 0px; }` + 设置区；AddJavaDialog 用 `GridBox { padding: 0px; }`（跨列 `colspan: 3`，末尾 `VerticalSpacing { colspan: 3; }` 把内容顶到上方）；EditGameDialog 是 `SettingsGroup`（`title: @tr("Edit {}", version)`）+ 底部按钮行；ForgeDownloadDialog / LoginDialog 用默认 8px 的 `VerticalBox`。
+- AskDialog：`title: root.title-text`，标题栏文案由 `states [ DelAccConfirm / DelGameConfirm ]` 与正文一起设置（`@tr("Delete Account")` / `@tr("Delete Game")`）。
 - 数据流：`XxxDialog::new()` → 设属性/绑定回调 → `show()`，`Weak` 存 `Arc<Mutex<Option<slint::Weak<...>>>>`；Rust 经 `UIUpdate` + `upgrade_in_event_loop` 设置属性；用户操作 → 回调 → `UICommand`。
 
 ## 6. 翻译（i18n）约定
@@ -112,7 +118,7 @@ res/ui/
 4. 页面切换沿用 `if (side-bar.current-index == N)` 模式，不要引入新的导航机制；新页面的标题写进 AppWindow 的 `page-titles`（索引与 SideBar `model` 对齐），页面内部不要再放 `Title`。
 5. 需要 Rust 侧翻译的字符串，走 `out property <string> ...-text: @tr(...)` 桥接。
 6. 按钮行用 `HorizontalSpacing {}` 右对齐；表单用 `SettingsGroup` + `Row` + `MyText`。
-7. 对话框用 `StandardButton`，自定义动作按钮加 `dialog-button-role: action`。
+7. 对话框按钮写进内容自己的按钮行（`HorizontalLayout { alignment: end; }`），需要 Rust 处理的回调显式声明（如 `callback cancel-clicked();`）；不要再给对话框里的按钮加 `dialog-button-role`。
 8. 进度相关统一走 `progress-mode`（0/1/2）约定。
-9. 自绘标题栏改动后确认：按钮点击区不被拖动区吞掉、关闭按钮悬停变红、`page-titles` 与侧栏索引一致、无边框窗口仍可用边缘拖动缩放。
+9. 自绘标题栏/窗口框改动后确认：按钮点击区不被拖动区吞掉、关闭按钮悬停变红、描边在最外圈 1px 且四个角都在、标题栏与关闭按钮贴窗口右上角（对话框与主窗口一致）、`page-titles` 与侧栏索引一致、无边框窗口仍可用边缘拖动缩放。
 10. 像素位图（如账号头像）：按「显示尺寸 × 窗口缩放因子」在 Rust 侧最近邻放大后再交给 `Image`，显示尺寸用 `out property` 桥接给 Rust（见 §7），不要直接把小位图丢给 Slint 缩放。

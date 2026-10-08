@@ -6,7 +6,7 @@ use utils::download;
 
 use crate::{
     MCType,
-    download::{DownloadError, TaskInfo},
+    download::{DownloadError, TaskInfo, needs_redownload, remove_file_if_exists},
 };
 
 #[derive(Clone)]
@@ -14,6 +14,8 @@ pub struct MCDL {
     pub game_type: MCType,
     pub url: String,
     pub version: String,
+    /// 版本json的sha1（来自版本清单）
+    pub sha1: Option<String>,
 }
 
 #[derive(Clone)]
@@ -140,6 +142,7 @@ pub async fn list_game(path: String) -> Result<Vec<MCDL>, DownloadError> {
                 .as_str()
                 .ok_or(DownloadError::DataInvalid)?
                 .to_string(),
+            sha1: version["sha1"].as_str().map(str::to_string),
         };
         game_list.push(game);
     }
@@ -169,7 +172,7 @@ pub async fn download_fabric(
     );
     let save_path = format!("{dir}/{name}.json");
 
-    download(url, save_path, 3).await?;
+    download(url, save_path, 3, None).await?;
     Ok(())
 }
 
@@ -187,20 +190,22 @@ pub fn download_forge(mcversion: &str, forge: Forge, mirror: &str) -> TaskInfo {
     TaskInfo {
         url: forge_url,
         save_path: forge_path,
+        sha1: None,
     }
 }
 
 pub async fn download_mc(mc_path: &str, mcdl: MCDL) -> Result<(), DownloadError> {
     let dir = mc_path.to_string() + "/versions/" + &mcdl.version;
     let path = dir.clone() + "/" + &mcdl.version + ".json";
-    if exists(&path)? {
+    if !needs_redownload(&path, mcdl.sha1.as_deref()).await? {
         return Ok(());
     }
+    remove_file_if_exists(&path)?;
     if !exists(&dir)? {
         create_dir_all(&dir)?;
     }
 
-    download(mcdl.url, path, 3).await?;
+    download(mcdl.url, path, 3, mcdl.sha1.as_deref()).await?;
 
     Ok(())
 }
