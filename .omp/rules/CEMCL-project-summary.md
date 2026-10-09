@@ -5,7 +5,7 @@ description: "CEMCL 项目结构与规范：6 个 crate 与依赖图、UICommand
 # CEMCL 项目总结（结构、规范、风格）
 
 > 依源码核对于 2026-09-22。来源 `.github/instructions/CEMCL-project-summary.instructions.md`，其中依赖图已修正。
-> 仓库 constant-e/CEMCL，版本 0.3.0，Rust edition 2024。
+> 仓库 constant-e/CEMCL，版本 0.3.1，Rust edition 2024。
 
 ## 1. 项目概览
 
@@ -64,6 +64,7 @@ mc::download_*（返回 mc::TaskInfo 列表）──▶ Runtime 转成 downloade
 - **注释**：中文 `///` 文档注释与英文混用；行内注释英文为主。
 - **格式化**：标准 `cargo fmt` 风格；`use` 按 crate 分组。
 - **异步**：tokio full features；下载任务内部用 mpsc channel 做命令控制（Pause/Resume/Cancel），`try_lock` 保护状态。
+- **测试**：集成测试在各 crate 的 `tests/` 目录（`cargo test --workspace`）；`app` 为 lib + bin 双 target（`src/lib.rs` 声明模块、`src/main.rs` 只留入口），因此 `VersionManager` 等可直接用 `app::version::…` 在 `tests/` 中测试。
 - **Slint**：入口 `res/ui/app-window.slint`，页面/对话框/组件见 `rule://CEMCL-ui-style-summary`；`build.rs` 用 `slint_build::compile_with_config` + `with_bundled_translations("res/translation")` + `with_style("fluent")`。
 - **无边框窗口**：全部窗口（主窗口 + 6 个对话框）自绘标题栏（`no-frame`），最外层统一包 `components/window-frame.slint` 的 `WindowFrame`（窗口背景 + 1px `Palette.border` 描边），对话框只显示右上角关闭按钮（与主窗口同款 46×40、悬停变红）。移动窗口走 `.slint` 回调 `drag-window` → `frontend/src/ui.rs` 的 `drag_window()` → `slint::winit_030::WinitWindowAccessor` + `winit::Window::drag_window()`（`crates/frontend/Cargo.toml` 启用 slint 的 `unstable-winit-030` feature；每个窗口的 Rust 构造函数都要接 `on_drag_window`）；因为在 WM 交互移动期间应用收不到抬起事件，`drag_window()` 还会在事件循环里补发一次窗口外的 `PointerReleased` 复位 Slint 输入状态（细节见 `rule://CEMCL-ui-style-summary` §4–§5）。最小化/最大化/关闭直接在根元素上改 `root.minimized` / `root.maximized` / `root.close()`。
 - **翻译更新**：`crates/frontend/update_translations.sh`（`slint-tr-extractor` 生成 frontend.pot，`msgmerge` 更新 zh_CN po）。
@@ -92,12 +93,12 @@ mc::download_*（返回 mc::TaskInfo 列表）──▶ Runtime 转成 downloade
 
 - **utils**：`sha1_file`（流式读取，小写十六进制）、`to_hex`；`download(url, path, max, sha1)` 在写入后校验，失配时删除文件并按 `max` 重试；`DLError` 补了 `Display`/`Debug`。依赖 `sha1 = "0.11.0"`（与 zip 已用的同版本）。
 - **downloader**：`task::TaskInfo`/`DownloadTask` 增 `sha1`（预期哈希）与 `sha1_url`（maven 风格的 `<url>.sha1`，二者择一，`sha1` 优先）；任务流写完后 `verify()`：有 `sha1` 直接比对，只有 `sha1_url` 时先取回哈希（网络错误重试 3 次；取不到只 `warn` 并跳过校验，兼容不提供 .sha1 的镜像）并缓存到 `<save_path>.sha1` 供之后离线校验；不一致时删除文件、状态置 `Failed` 并返回 `DownloadTaskError::Failed`。`DownloadManager::add_taskset` 的镜像占位符替换同时作用于 `sha1_url`。
-- **mc**：`download::needs_redownload`（缺失或哈希不符）、`remove_file_if_exists`、`read_cached_sha1`（解析 maven 格式，允许大写与文件名）。
+- **mc**：`download::needs_redownload`（缺失或哈希不符，`pub`，供测试与调用方使用）、`remove_file_if_exists`、`read_cached_sha1`（解析 maven 格式，允许大写与文件名）。
   - `download_libraries`：natives classifier 与 artifact 按 json 中的 `sha1`；fabric 库的 profile json 不带哈希，下载时从 `{fabric_source}/<path>.sha1` 校验，之后按 `<jar>.sha1` 缓存离线校验（无缓存视为无法校验，保留文件）；fabric 分支现在会先建下载目录（此前缺失，首个 fabric 库会因父目录不存在而下载失败）。两个函数及 `download_assets` 因在校验时读文件改为 `async`。
   - `download_assets`：按资源索引中 `objects.<name>.hash` 校验。
   - `launch.rs`：客户端 jar 用 `downloads.client.sha1`、资源索引用 `assetIndex.sha1`（mod 继承时取父版本 json）。
   - `manifest.rs`：`MCDL` 增 `sha1`（版本清单 `versions[].sha1`），`download_mc` 下载/校验版本 json；fabric profile json 与 forge 安装器无哈希来源，不校验。
-- **测试**：`cargo test -p utils -p downloader -p mc`（sha1 已知向量、maven sha1 解析、本地 HTTP 服务下的下载校验/重试/缓存，以及各处“缺失/一致/不一致”的决策用例）。
+- **测试**：`cargo test --workspace`（各 crate 的 `tests/`：sha1 已知向量、本地 HTTP 服务下的下载校验/重试/缓存，以及各处“缺失/一致/不一致”的决策用例；maven 格式的 `.sha1` 解析由 fabric 缓存与 sha1_url 用例覆盖）。
 
 ## 8. 剩余 TODO（截至 2026-10-08，共 2 条）
 

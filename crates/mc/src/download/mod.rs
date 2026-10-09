@@ -51,10 +51,7 @@ impl DownloadTask {
 /// 已存在的文件是否需要重新下载：文件缺失，或与预期sha1不一致时为`true`
 ///
 /// 下载器以追加方式写入文件，返回`true`时调用方必须先删除旧文件
-pub(crate) async fn needs_redownload(
-    path: &str,
-    sha1: Option<&str>,
-) -> Result<bool, DownloadError> {
+pub async fn needs_redownload(path: &str, sha1: Option<&str>) -> Result<bool, DownloadError> {
     if !exists(path)? {
         return Ok(true);
     }
@@ -90,78 +87,6 @@ pub(crate) fn read_cached_sha1(path: &str) -> Option<String> {
     let token = text.split_whitespace().next()?;
     (token.len() == 40 && token.bytes().all(|b| b.is_ascii_hexdigit()))
         .then(|| token.to_lowercase())
-}
-
-/// 建的临时测试目录（<temp>/cemcl-test-<pid>-<name>）
-#[cfg(test)]
-pub(crate) fn temp_dir(name: &str) -> String {
-    let dir = std::env::temp_dir().join(format!("cemcl-test-{}-{name}", std::process::id()));
-    let _ = std::fs::remove_dir_all(&dir);
-    std::fs::create_dir_all(&dir).unwrap();
-    dir.to_str().unwrap().to_string()
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    pub(crate) const HELLO: &str = "hello world";
-    pub(crate) const HELLO_SHA1: &str = "2aae6c35c94fcfb415dbe95f408b9ce91ee846ed";
-
-    /// 缺失的文件、哈希不一致的文件需要重新下载；一致的跳过，无哈希信息时只按存在性判断
-    #[tokio::test]
-    async fn files_are_rechecked_against_sha1() {
-        let dir = temp_dir("needs-redownload");
-        let path = format!("{dir}/f.jar");
-        assert!(needs_redownload(&path, Some(HELLO_SHA1)).await.unwrap());
-        assert!(needs_redownload(&path, None).await.unwrap());
-
-        std::fs::write(&path, HELLO).unwrap();
-        assert!(!needs_redownload(&path, Some(HELLO_SHA1)).await.unwrap());
-        assert!(!needs_redownload(&path, None).await.unwrap());
-        // 大小写不同的sha1是同一个
-        assert!(
-            !needs_redownload(&path, Some(&HELLO_SHA1.to_uppercase()))
-                .await
-                .unwrap()
-        );
-        assert!(
-            needs_redownload(&path, Some(&"0".repeat(40)))
-                .await
-                .unwrap()
-        );
-    }
-
-    /// 本地缓存的sha1按maven格式读取（允许大写、附带文件名，其它内容忽略）
-    #[test]
-    fn cached_sha1_is_read() {
-        let dir = temp_dir("cached-sha1");
-        let path = format!("{dir}/f.jar.sha1");
-        assert_eq!(read_cached_sha1(&path), None);
-
-        std::fs::write(&path, HELLO_SHA1).unwrap();
-        assert_eq!(read_cached_sha1(&path).as_deref(), Some(HELLO_SHA1));
-
-        std::fs::write(&path, format!("{HELLO_SHA1}  f.jar\n")).unwrap();
-        assert_eq!(read_cached_sha1(&path).as_deref(), Some(HELLO_SHA1));
-
-        std::fs::write(&path, &HELLO_SHA1.to_uppercase()).unwrap();
-        assert_eq!(read_cached_sha1(&path).as_deref(), Some(HELLO_SHA1));
-
-        std::fs::write(&path, "invalid").unwrap();
-        assert_eq!(read_cached_sha1(&path), None);
-    }
-
-    /// 删除失效文件：存在时删除，不存在时视为已删除
-    #[test]
-    fn invalid_files_are_removed() {
-        let dir = temp_dir("remove-file");
-        let path = format!("{dir}/f.jar");
-        remove_file_if_exists(&path).unwrap();
-        std::fs::write(&path, HELLO).unwrap();
-        remove_file_if_exists(&path).unwrap();
-        assert!(!exists(&path).unwrap());
-    }
 }
 
 #[derive(Debug)]

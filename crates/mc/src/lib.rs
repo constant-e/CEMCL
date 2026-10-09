@@ -1,5 +1,5 @@
 pub mod account;
-mod download;
+pub mod download;
 pub mod launch;
 mod version;
 

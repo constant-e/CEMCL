@@ -1,17 +1,8 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
-mod account;
-mod avatar;
-mod errors;
-mod java;
-mod runtime;
-mod version;
-
-use log::error;
-
-pub use errors::LauncherError;
+use app::runtime::AppRuntime;
 use frontend::AppWindow;
-use runtime::AppRuntime;
+use log::error;
 
 #[tokio::main]
 async fn main() {

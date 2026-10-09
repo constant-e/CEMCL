@@ -49,21 +49,3 @@ impl From<AccountType> for String {
         }
     }
 }
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    /// 默认离线账号的名字取自 uuid 对应的默认皮肤
-    #[test]
-    fn default_account_name_matches_uuid() {
-        for _ in 0..16 {
-            let account = Account::default();
-            assert_eq!(account.account_type, AccountType::Legacy);
-            assert_eq!(
-                account.user_name,
-                crate::account::skin::default_skin_name(&account.uuid)
-            );
-        }
-    }
-}

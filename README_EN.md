@@ -47,17 +47,20 @@ Run `crates/frontend/update_tranlations.sh` to update the .po files.
 
 ## Credits
 1. [BMCLAPI2](https://bmclapidoc.bangbang93.com/): Forge downloading
-2. [clipboard](https://crates.io/crates/clipboard): clipboard
-3. [env_logger](https://crates.io/crates/env_logger): logs
-4. [futures](https://crates.io/crates/futures): async
-5. [log](https://crates.io/crates/log): logs
-6. [reqwest](https://crates.io/crates/reqwest): downloading
-7. [serde_json](https://crates.io/crates/serde_json): JSON parsing
-8. [slint](https://crates.io/crates/slint): GUI framework
-9. [tokio](https://crates.io/crates/tokio): async
-10. [uuid](https://crates.io/crates/uuid): UUID generating
-11. [webbrowser](https://crates.io/crates/webbrowser): opening web browser
-12. [zip](https://crates.io/crates/zip): decompressing
+2. [base64](https://crates.io/crates/base64): skin data decoding
+3. [clipboard](https://crates.io/crates/clipboard): clipboard
+4. [env_logger](https://crates.io/crates/env_logger): logs
+5. [futures](https://crates.io/crates/futures): async
+6. [log](https://crates.io/crates/log): logs
+7. [png](https://crates.io/crates/png): skin texture decoding
+8. [reqwest](https://crates.io/crates/reqwest): downloading
+9. [serde_json](https://crates.io/crates/serde_json): JSON parsing
+10. [sha1](https://crates.io/crates/sha1): file hash verification
+11. [slint](https://crates.io/crates/slint): GUI framework
+12. [tokio](https://crates.io/crates/tokio): async
+13. [uuid](https://crates.io/crates/uuid): UUID generating
+14. [webbrowser](https://crates.io/crates/webbrowser): opening web browser
+15. [zip](https://crates.io/crates/zip): decompressing
 
 ## License
 Apache License 2.0
