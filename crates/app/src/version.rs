@@ -37,13 +37,25 @@ pub struct VersionManager {
 
 impl VersionManager {
     pub fn new(config: ConfigMC) -> Result<Self, LauncherError> {
-        let (version_list, current_index) = VersionManager::i_load(config.clone())?;
+        let (version_list, current_index, cleaned) = VersionManager::i_load(config.clone())?;
 
-        Ok(Self {
+        let manager = Self {
             config,
             version_list,
             current_index,
-        })
+        };
+
+        if cleaned {
+            // 启动时删除了 versions.json 中的无效项，写回文件
+            if let Err(e) = manager.save() {
+                error!("{e}");
+            }
+            if let Err(e) = manager.save_launcher_profiles() {
+                error!("{e}");
+            }
+        }
+
+        Ok(manager)
     }
 
     pub fn add(&mut self, version: &MCInstallation) -> Result<(), LauncherError> {
@@ -97,6 +109,25 @@ impl VersionManager {
     }
 
     pub fn set_config(&mut self, config: ConfigMC) {
+        // 未自定义的配置项跟随 config.json 的默认值（与保存时的省略规则一致）
+        let old = &self.config;
+        for version in &mut self.version_list {
+            if version.height == old.height {
+                version.height = config.height;
+            }
+            if version.width == old.width {
+                version.width = config.width;
+            }
+            if version.xms == old.xms {
+                version.xms = config.xms.clone();
+            }
+            if version.xmx == old.xmx {
+                version.xmx = config.xmx.clone();
+            }
+            if version.wrapper == old.wrapper {
+                version.wrapper = config.wrapper.clone();
+            }
+        }
         self.config = config
     }
 
@@ -131,92 +162,65 @@ impl VersionManager {
         }
     }
 
-    fn i_load(config: ConfigMC) -> Result<(Vec<MCInstallation>, u32), LauncherError> {
+    /// 加载版本列表：读取 versions.json 并与 .minecraft 核对（缺版本 json 的项会被删除，第三个
+    /// 返回值表示是否有过删除），再加入 .minecraft 中未列出的版本。
+    ///
+    /// 配置项缺省、为 null 或留空（0/空串/空列表）时使用 config 中的默认值。
+    fn i_load(config: ConfigMC) -> Result<(Vec<MCInstallation>, u32, bool), LauncherError> {
         let mut version_name_set = HashSet::new();
         let mut version_list = Vec::new();
-        let mut index = 0;
+        let mut current_name = None;
+        let mut index = 0usize;
+        let mut cleaned = false;
         let dir = config.path + "/versions";
 
         if !exists(&dir)? {
             // 空目录
             warn!("{dir} is empty.");
-            return Ok((Vec::new(), 0));
+            return Ok((Vec::new(), 0, false));
         }
 
         if exists("versions.json")? {
             let json =
                 serde_json::from_str::<serde_json::Value>(&read_to_string("versions.json")?)?;
 
-            index = json["current"]
-                .as_i64()
-                .ok_or(LauncherError::GameConfigError)? as u32;
+            index = json["current"].as_u64().unwrap_or(0) as usize;
 
-            for (k, v) in json["versions"]
-                .as_object()
-                .ok_or(LauncherError::GameConfigError)?
-            {
-                if !exists(dir.clone() + "/" + k + "/" + k + ".json")? {
-                    warn!("{k} is empty");
+            let empty = serde_json::Map::new();
+            let versions = json["versions"].as_object().unwrap_or(&empty);
+            // 用版本名锚定当前版本，以便在删除无效项后重新定位
+            current_name = versions.keys().nth(index).cloned();
+
+            for (name, node) in versions {
+                let path = dir.clone() + "/" + name + "/" + name + ".json";
+                if !exists(&path)? {
+                    warn!("Invalid version {name}: {path} not exists, removing it.");
+                    cleaned = true;
                     continue;
                 }
-                let node = v.as_object().ok_or(LauncherError::GameConfigError)?;
+
+                let empty_node = serde_json::Map::new();
+                // null 等非对象值视为留空
+                let node = node.as_object().unwrap_or(&empty_node);
+
                 let value = MCInstallation {
-                    description: node["description"]
-                        .as_str()
-                        .ok_or(LauncherError::GameConfigError)?
-                        .to_string(),
-                    game_args: node["game_args"]
-                        .as_array()
-                        .ok_or(LauncherError::GameConfigError)?
-                        .iter()
-                        .map(|arg| {
-                            arg.as_str()
-                                .ok_or(LauncherError::GameConfigError)
-                                .map(|s| s.to_string())
-                        })
-                        .collect::<Result<Vec<String>, LauncherError>>()?,
-                    game_type: to_mc_type(
-                        node["game_type"]
-                            .as_str()
-                            .ok_or(LauncherError::GameConfigError)?,
-                    )?,
-                    height: node["height"]
-                        .as_i64()
-                        .ok_or(LauncherError::GameConfigError)? as u32,
-                    java_index: node["java_index"]
-                        .as_u64()
-                        .map(|v| v as u32),
-                    jvm_args: node["jvm_args"]
-                        .as_array()
-                        .ok_or(LauncherError::GameConfigError)?
-                        .iter()
-                        .map(|arg| {
-                            arg.as_str()
-                                .ok_or(LauncherError::GameConfigError)
-                                .map(|s| s.to_string())
-                        })
-                        .collect::<Result<Vec<String>, LauncherError>>()?,
-                    separated: node["separated"]
-                        .as_bool()
-                        .ok_or(LauncherError::GameConfigError)?,
-                    version: k.clone(),
-                    width: node["width"]
-                        .as_i64()
-                        .ok_or(LauncherError::GameConfigError)? as u32,
-                    wrapper: node["wrapper"]
-                        .as_str()
-                        .ok_or(LauncherError::GameConfigError)?
-                        .to_string(),
-                    xms: node["xms"]
-                        .as_str()
-                        .ok_or(LauncherError::GameConfigError)?
-                        .to_string(),
-                    xmx: node["xmx"]
-                        .as_str()
-                        .ok_or(LauncherError::GameConfigError)?
-                        .to_string(),
+                    description: i_get_str(node, "description")?.unwrap_or_default(),
+                    game_args: i_get_list(node, "game_args")?,
+                    game_type: match i_get_str(node, "game_type")? {
+                        Some(mc_type) => to_mc_type(&mc_type)?,
+                        None => i_type_from_json(&path)?,
+                    },
+                    height: i_get_u32(node, "height")?.unwrap_or(config.height),
+                    java_index: i_get_index(node)?,
+                    jvm_args: i_get_list(node, "jvm_args")?,
+                    separated: i_get_bool(node, "separated")?,
+                    version: name.clone(),
+                    width: i_get_u32(node, "width")?.unwrap_or(config.width),
+                    wrapper: i_get_str(node, "wrapper")?.unwrap_or_else(|| config.wrapper.clone()),
+                    xms: i_get_str(node, "xms")?.unwrap_or_else(|| config.xms.clone()),
+                    xmx: i_get_str(node, "xmx")?.unwrap_or_else(|| config.xmx.clone()),
                 };
-                version_name_set.insert(k.clone());
+                version_name_set.insert(name.clone());
                 version_list.push(value);
             }
         }
@@ -233,7 +237,6 @@ impl VersionManager {
                 continue;
             }
 
-            let json = serde_json::from_str::<serde_json::Value>(&read_to_string(&path)?.as_str())?;
             let value = MCInstallation {
                 description: String::new(),
                 game_args: Vec::new(),
@@ -241,14 +244,10 @@ impl VersionManager {
                 java_index: None, // 未选择，等待用户配置
                 jvm_args: Vec::new(),
                 separated: false,
-                game_type: to_mc_type(
-                    json["type"]
-                        .as_str()
-                        .ok_or(LauncherError::GameConfigError)?,
-                )?,
-                version: version,
+                game_type: i_type_from_json(&path)?,
+                version,
                 width: config.width,
-                wrapper: String::new(),
+                wrapper: config.wrapper.clone(),
                 xms: config.xms.clone(),
                 xmx: config.xmx.clone(),
             };
@@ -256,10 +255,21 @@ impl VersionManager {
             version_list.push(value);
         }
 
-        Ok((version_list, index))
+        // 保持有序（add 也按此排序，current 索引依赖该顺序）
+        version_list.sort_by(|a, b| a.version.cmp(&b.version));
+
+        let index = match current_name
+            .and_then(|name| version_list.iter().position(|v| v.version == name))
+        {
+            Some(index) => index as u32,
+            // 当前版本不存在时钳制到列表内
+            None => index.min(version_list.len().saturating_sub(1)) as u32,
+        };
+
+        Ok((version_list, index, cleaned))
     }
 
-    /// 保存（CEMCL格式）
+    /// 保存（CEMCL格式）。与 config 默认值相同的配置项会省略，以继续跟随 config.json
     pub fn save(&self) -> Result<(), LauncherError> {
         let mut json = json!(
             {
@@ -274,7 +284,7 @@ impl VersionManager {
                     .as_object_mut()
                     .ok_or(LauncherError::GameConfigError)?,
                 version.version.clone(),
-                to_json_value(version),
+                to_json_value(version, &self.config),
             );
         }
 
@@ -310,21 +320,130 @@ impl VersionManager {
     }
 }
 
-fn to_json_value(version: &MCInstallation) -> serde_json::Value {
-    json!({
-        "description": version.description,
-        "game_args": version.game_args,
-        "game_type": version.game_type.as_str(),
-        "height": version.height,
-        "java_index": version.java_index,
-        "jvm_args": version.jvm_args,
-        "separated": version.separated,
-        "version": version.version,
-        "width": version.width,
-        "wrapper": version.wrapper,
-        "xms": version.xms,
-        "xmx": version.xmx,
-    })
+/// 将版本转换为 versions.json 中的节点
+///
+/// 与默认值相同的配置项会省略（缺省即跟随 config.json 的默认值）
+fn to_json_value(version: &MCInstallation, config: &ConfigMC) -> serde_json::Value {
+    let mut node = serde_json::Map::new();
+
+    node.insert("version".to_string(), version.version.clone().into());
+    node.insert("game_type".to_string(), version.game_type.as_str().into());
+
+    if !version.description.is_empty() {
+        node.insert(
+            "description".to_string(),
+            version.description.clone().into(),
+        );
+    }
+    if !version.game_args.is_empty() {
+        node.insert("game_args".to_string(), version.game_args.clone().into());
+    }
+    if version.height != 0 && version.height != config.height {
+        node.insert("height".to_string(), version.height.into());
+    }
+    if let Some(index) = version.java_index {
+        node.insert("java_index".to_string(), index.into());
+    }
+    if !version.jvm_args.is_empty() {
+        node.insert("jvm_args".to_string(), version.jvm_args.clone().into());
+    }
+    if version.separated {
+        node.insert("separated".to_string(), true.into());
+    }
+    if version.width != 0 && version.width != config.width {
+        node.insert("width".to_string(), version.width.into());
+    }
+    if !version.wrapper.is_empty() && version.wrapper != config.wrapper {
+        node.insert("wrapper".to_string(), version.wrapper.clone().into());
+    }
+    if !version.xms.is_empty() && version.xms != config.xms {
+        node.insert("xms".to_string(), version.xms.clone().into());
+    }
+    if !version.xmx.is_empty() && version.xmx != config.xmx {
+        node.insert("xmx".to_string(), version.xmx.clone().into());
+    }
+
+    node.into()
+}
+
+/// 读取可留空的字符串配置项：缺省、null、空串返回 None
+fn i_get_str(
+    node: &serde_json::Map<String, serde_json::Value>,
+    key: &str,
+) -> Result<Option<String>, LauncherError> {
+    match node.get(key) {
+        None | Some(serde_json::Value::Null) => Ok(None),
+        Some(serde_json::Value::String(s)) if !s.is_empty() => Ok(Some(s.clone())),
+        Some(serde_json::Value::String(_)) => Ok(None),
+        Some(_) => Err(LauncherError::GameConfigError),
+    }
+}
+
+/// 读取可留空的整数配置项：缺省、null、0 返回 None
+fn i_get_u32(
+    node: &serde_json::Map<String, serde_json::Value>,
+    key: &str,
+) -> Result<Option<u32>, LauncherError> {
+    match node.get(key) {
+        None | Some(serde_json::Value::Null) => Ok(None),
+        Some(v) => {
+            let value = v.as_u64().ok_or(LauncherError::GameConfigError)?;
+            Ok(if value == 0 { None } else { Some(value as u32) })
+        }
+    }
+}
+
+/// 读取可留空的列表配置项：缺省、null、空列表返回空列表
+fn i_get_list(
+    node: &serde_json::Map<String, serde_json::Value>,
+    key: &str,
+) -> Result<Vec<String>, LauncherError> {
+    match node.get(key) {
+        None | Some(serde_json::Value::Null) => Ok(Vec::new()),
+        Some(v) => v
+            .as_array()
+            .ok_or(LauncherError::GameConfigError)?
+            .iter()
+            .map(|arg| {
+                arg.as_str()
+                    .ok_or(LauncherError::GameConfigError)
+                    .map(|s| s.to_string())
+            })
+            .collect(),
+    }
+}
+
+/// 读取可留空的布尔配置项：缺省、null 返回 false
+fn i_get_bool(
+    node: &serde_json::Map<String, serde_json::Value>,
+    key: &str,
+) -> Result<bool, LauncherError> {
+    match node.get(key) {
+        None | Some(serde_json::Value::Null) => Ok(false),
+        Some(v) => v.as_bool().ok_or(LauncherError::GameConfigError),
+    }
+}
+
+/// 读取 java 索引：缺省、null 返回 None（0 是合法索引）
+fn i_get_index(
+    node: &serde_json::Map<String, serde_json::Value>,
+) -> Result<Option<u32>, LauncherError> {
+    match node.get("java_index") {
+        None | Some(serde_json::Value::Null) => Ok(None),
+        Some(v) => Ok(Some(
+            v.as_u64().ok_or(LauncherError::GameConfigError)? as u32
+        )),
+    }
+}
+
+/// 读取 .minecraft 版本 json 中的游戏类型
+fn i_type_from_json(path: &str) -> Result<mc::MCType, LauncherError> {
+    let json = serde_json::from_str::<serde_json::Value>(&read_to_string(path)?)?;
+    to_mc_type(
+        json["type"]
+            .as_str()
+            .ok_or(LauncherError::GameConfigError)?,
+    )
 }
 
 fn to_mc_type(s: &str) -> Result<mc::MCType, LauncherError> {
@@ -389,5 +508,125 @@ pub fn frontend_forge(forge: mc::manifest::Forge) -> frontend::game::Forge {
         version: forge.version,
         branch: forge.branch,
         modified: forge.modified,
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::fs::create_dir_all;
+    use std::path::PathBuf;
+
+    fn write_file(path: &str, content: &str) {
+        if let Some(parent) = PathBuf::from(path).parent() {
+            create_dir_all(parent).unwrap();
+        }
+        write(path, content).unwrap();
+    }
+
+    fn read_json(path: &str) -> serde_json::Value {
+        serde_json::from_str(&read_to_string(path).unwrap()).unwrap()
+    }
+
+    /// 启动时与 .minecraft 核对删除无效项；配置项留空/缺省时使用默认值，保存时省略默认值
+    #[test]
+    fn load_clean_and_save() {
+        // VersionManager 使用相对路径，测试在独立临时目录中进行
+        let root =
+            std::env::temp_dir().join(format!("cemcl-version-manager-{}", std::process::id()));
+        let _ = remove_dir_all(&root);
+        create_dir_all(&root).unwrap();
+        std::env::set_current_dir(&root).unwrap();
+
+        // .minecraft 中已有的版本
+        write_file(
+            ".minecraft/versions/1.19.2/1.19.2.json",
+            "{\"type\": \"release\"}",
+        );
+        write_file(
+            ".minecraft/versions/1.20.1/1.20.1.json",
+            "{\"type\": \"snapshot\"}",
+        );
+        write_file(
+            ".minecraft/versions/a_scanned/a_scanned.json",
+            "{\"type\": \"old_beta\"}",
+        );
+
+        // 1.20.1 带留空与自定义配置，z_invalid 在 .minecraft 中不存在
+        write_file(
+            "versions.json",
+            "{\n  \"current\": 1,\n  \"versions\": {\n    \"1.19.2\": {},\n    \"1.20.1\": { \"game_type\": \"release\", \"xmx\": \"4G\", \"height\": 0, \"width\": null, \"wrapper\": \"\", \"separated\": true },\n    \"z_invalid\": {}\n  }\n}",
+        );
+
+        let config = ConfigMC {
+            height: 600,
+            path: ".minecraft".to_string(),
+            width: 800,
+            wrapper: "wrap".to_string(),
+            xms: "1G".to_string(),
+            xmx: "2G".to_string(),
+        };
+
+        let mut manager = VersionManager::new(config).unwrap();
+
+        // 无效项删除、.minecraft 中的新版本加入、列表按名字排序；current 仍指向 1.20.1
+        let names: Vec<&str> = manager
+            .get_version_list()
+            .iter()
+            .map(|v| v.version.as_str())
+            .collect();
+        assert_eq!(names, vec!["1.19.2", "1.20.1", "a_scanned"]);
+        assert_eq!(manager.get_current_index(), 1);
+        assert_eq!(manager.get(1).version, "1.20.1");
+
+        // 留空/缺省的配置项使用 config.json 的默认值
+        let version = manager.get(0);
+        assert_eq!((version.height, version.width), (600, 800));
+        assert_eq!((version.xms.as_str(), version.xmx.as_str()), ("1G", "2G"));
+        assert_eq!(version.wrapper, "wrap");
+        assert!(!version.separated);
+        assert!(matches!(version.game_type, mc::MCType::Release));
+
+        let version = manager.get(1);
+        assert_eq!((version.height, version.width), (600, 800));
+        assert_eq!(version.xms, "1G");
+        assert_eq!(version.xmx, "4G");
+        assert_eq!(version.wrapper, "wrap");
+        assert!(version.separated);
+        assert!(matches!(version.game_type, mc::MCType::Release));
+
+        // 扫描出的版本也使用默认配置，类型来自版本 json
+        let version = manager.get(2);
+        assert_eq!((version.xms.as_str(), version.xmx.as_str()), ("1G", "2G"));
+        assert_eq!(version.wrapper, "wrap");
+        assert!(matches!(version.game_type, mc::MCType::OldBeta));
+
+        // 写回的 versions.json：无效项被删除，与默认值相同的配置项缺省
+        let json = read_json("versions.json");
+        let versions = json["versions"].as_object().unwrap();
+        assert_eq!(versions.len(), 3);
+        assert!(!versions.contains_key("z_invalid"));
+        let node = versions["1.19.2"].as_object().unwrap();
+        assert!(!node.contains_key("height"));
+        assert!(!node.contains_key("width"));
+        assert!(!node.contains_key("xms"));
+        assert!(!node.contains_key("xmx"));
+        assert!(!node.contains_key("wrapper"));
+        let node = versions["1.20.1"].as_object().unwrap();
+        assert_eq!(node["xmx"], "4G");
+        assert_eq!(node["separated"], true);
+        assert!(!node.contains_key("height"));
+        assert!(!node.contains_key("width"));
+        assert!(!node.contains_key("wrapper"));
+        assert!(!node.contains_key("xms"));
+
+        // 保存后重新加载，current 仍指向同一个版本
+        manager.set_current_index(2).unwrap();
+        let manager = VersionManager::new(manager.get_config().clone()).unwrap();
+        assert_eq!(manager.get_current_index(), 2);
+        assert_eq!(manager.get(2).version, "a_scanned");
+
+        std::env::set_current_dir(std::env::temp_dir()).unwrap();
+        let _ = remove_dir_all(&root);
     }
 }

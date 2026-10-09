@@ -51,7 +51,7 @@ mc::download_*（返回 mc::TaskInfo 列表）──▶ Runtime 转成 downloade
 - `config.json` — 全局配置（通用/下载/游戏）；`frontend::Config*` ↔ `app::Config*` ↔ `downloader::Config` 三层结构重复，靠手写 `From` 转换（结构性重复，有意保留）。
 - `account.json` — 账号列表 + `current` 索引。
 - `avatar/<uuid>.png` — 账号头像缓存（皮肤头部正面，8×8 PNG；uuid 小写去连字符，见 §5）。
-- `versions.json` — MC 安装列表（CEMCL 格式）；另存 `<游戏路径>/launcher_profiles.json` 兼容原版启动器。
+- `versions.json` — MC 安装列表（CEMCL 格式）；另存 `<游戏路径>/launcher_profiles.json` 兼容原版启动器。2026-10-09 起：启动时与 `<游戏路径>/versions` 核对，删除无效项（缺版本 json）并写回，`current` 以版本名锚定、列表按名字排序；版本配置项缺省、为 null 或留空（0/空串/空列表）时使用 `config.json` 的默认值，与默认值相同的配置保存时省略（`app/src/version.rs`，测试 `cargo test -p app`）。
 - `java.json` — Java 安装列表 + `default` 索引。
 
 **镜像系统**：下载 URL 含 `{assets_source}`、`{fabric_source}`、`{game_source}`、`{libraries_source}`、`{forge_source}` 占位符（mc 生成，app 写入 `mirrors` 映射），`DownloadManager::add_taskset` 对每个键 `format!("{{{k}}}")` 后 `url.replace`。
