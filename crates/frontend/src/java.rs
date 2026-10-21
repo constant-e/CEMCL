@@ -6,7 +6,7 @@ use std::rc;
 use tokio::sync::mpsc::UnboundedSender;
 
 use crate::app_window::UICommand;
-use crate::ui::{self, AddJavaDialog};
+use crate::ui::{self, AddJavaDialog, AppWindow};
 
 /// Java 安装信息，用于前端展示
 #[derive(Clone)]
@@ -66,8 +66,10 @@ pub fn ui_java_list(list: &Vec<JavaInfo>) -> ModelRc<ModelRc<StandardListViewIte
 /// Build a formatted combo box model for JavaVersionSelector.
 /// Compatible versions show just the version string (e.g. "26.0.1").
 /// Incompatible versions show "version (not compatible)" (e.g. "1.8.0_500 (not compatible)").
-/// The localized suffix is read from the UI via AppWindow's `not-compatible-text` property.
-pub fn ui_java_combo_box_list(list: &Vec<JavaInfo>, not_compatible: &str) -> Vec<String> {
+/// The localized suffix is read here from AppWindow's `not-compatible-text` property,
+/// so this must be called on the UI thread (e.g. inside `upgrade_in_event_loop`).
+pub fn ui_java_combo_box_list(list: &Vec<JavaInfo>, ui: &AppWindow) -> Vec<String> {
+    let not_compatible = ui.get_not_compatible_text();
     list.iter()
         .map(|j| {
             if j.compatible {

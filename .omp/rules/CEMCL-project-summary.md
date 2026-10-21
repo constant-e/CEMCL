@@ -82,7 +82,7 @@ mc::download_*（返回 mc::TaskInfo 列表）──▶ Runtime 转成 downloade
 - `utils::get_parent_dir` 改用 `Path::parent()`。
 - `mc::download::libraries::extract_lib` 重写：直接按平台/架构匹配从 jar 中读出 natives（`.dll`/`.dylib`/`.so`），目标已存在则跳过；不再整包解压到 `temp_dir`（旧实现在每次启动时会写/删约 3.7 万个临时文件，占启动准备阶段 90% 以上耗时，并在解压失败时泄漏临时目录）。调用点统一走 `extract_lib_logged`（失败记日志、不阻断启动）。
 - `utils::download` 改用共享 `reqwest::Client`（连接 10s / 整体 60s 超时 + 退避重试），此前 `reqwest::get` 无超时，网络黑洞时可在「启动中 0%」卡到 TCP 超时。
-- Java 不兼容后缀翻译：AppWindow `out property <string> not-compatible-text: @tr("not compatible")` 桥接，Rust 读取后格式化。
+- Java 不兼容后缀翻译：AppWindow `out property <string> not-compatible-text: @tr("not compatible")` 桥接；`frontend/src/java.rs` 的 `ui_java_combo_box_list(list, &AppWindow)` 在 UI 线程读取该属性后格式化（对话框路径在 `upgrade_in_event_loop` 内 `upgrade()`，异步线程直接 `upgrade()` 会返回 `None`）。
 - `AccountType::Other` 序列化为 `"Other"`。
 - `account.rs` 的 `save()` 中无空 `error!` 日志。
 - `open-edit-java-dialog` 回调已声明但未实现（JavaPage 无 Edit 按钮，当前不可触发）。

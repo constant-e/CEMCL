@@ -408,13 +408,12 @@ impl AppWindow {
             },
             UIUpdate::SetAddGameJavaList(list) => match get(add_game_dialog) {
                 Ok(w) => {
-                    let suffix = ui_weak
-                        .upgrade()
-                        .map(|ui| ui.get_not_compatible_text().to_string())
-                        .unwrap_or_default();
                     if let Err(e) = w.upgrade_in_event_loop(move |dialog| {
+                        let Some(ui) = ui_weak.upgrade() else {
+                            return;
+                        };
                         let items: Vec<slint::SharedString> =
-                            java::ui_java_combo_box_list(&list, &suffix)
+                            java::ui_java_combo_box_list(&list, &ui)
                                 .iter()
                                 .map(|s| s.as_str().into())
                                 .collect();
@@ -493,13 +492,12 @@ impl AppWindow {
             },
             UIUpdate::SetEditGameJavaList(list) => match get(edit_game_dialog) {
                 Ok(w) => {
-                    let suffix = ui_weak
-                        .upgrade()
-                        .map(|ui| ui.get_not_compatible_text().to_string())
-                        .unwrap_or_default();
                     if let Err(e) = w.upgrade_in_event_loop(move |dialog| {
+                        let Some(ui) = ui_weak.upgrade() else {
+                            return;
+                        };
                         let items: Vec<slint::SharedString> =
-                            java::ui_java_combo_box_list(&list, &suffix)
+                            java::ui_java_combo_box_list(&list, &ui)
                                 .iter()
                                 .map(|s| s.as_str().into())
                                 .collect();
@@ -566,9 +564,8 @@ impl AppWindow {
             }
             UIUpdate::SetJavaModel(list) => {
                 if let Err(e) = ui_weak.upgrade_in_event_loop(move |ui| {
-                    let suffix = ui.get_not_compatible_text();
                     let items: Vec<slint::SharedString> =
-                        java::ui_java_combo_box_list(&list, &suffix)
+                        java::ui_java_combo_box_list(&list, &ui)
                             .iter()
                             .map(|s| s.as_str().into())
                             .collect();

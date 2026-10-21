@@ -99,13 +99,13 @@ res/ui/
 
 - 所有用户可见文本用 `@tr("...")`；带参数 `@tr("Edit {}", name)` 或 `@tr("Java {0} detected", version)`。
 - 文件：`res/translation/frontend.pot`（模板）+ `zh_CN/LC_MESSAGES/frontend.po`（中文）；build.rs `with_bundled_translations("res/translation")` + `with_style("fluent")`，按系统 locale 选择。
-- **Rust 侧取译文**必须走 `.slint` 桥：`out property <string> xxx-text: @tr("...");`（普通 `property` 的 getter 对 Rust 不可见），Rust 用 `ui.get_xxx_text()` 读取。实例：AppWindow `not-compatible-text`。
+- **Rust 侧取译文**必须走 `.slint` 桥：`out property <string> xxx-text: @tr("...");`（普通 `property` 的 getter 对 Rust 不可见），Rust 用 `ui.get_xxx_text()` 读取。读取必须在 UI 线程（如 `upgrade_in_event_loop` 内）进行，其他线程 `slint::Weak::upgrade()` 返回 `None`。实例：`frontend/src/java.rs` 的 `ui_java_combo_box_list` 读取 AppWindow `not-compatible-text`。
 - 更新翻译：`crates/frontend/update_translations.sh`（依赖 `slint-tr-extractor` + `msgmerge`）。
 
 ## 7. 数据流与模型约定
 
 - **UI→App**：`UICommand`（tokio mpsc unbounded）；**App→UI**：`UIUpdate`（`upgrade_in_event_loop`），详见 `rule://CEMCL-project-summary`。
-- **模型构建**：Rust 侧 `ui_*` 函数：表格 `ModelRc<ModelRc<StandardListViewItem>>`（`ui_game_list`、`ui_fabric_list`、`ui_forge_list`、`ui_game_dl_list`、`ui_java_list`）；`ui_combo_box_list` → `ModelRc<SharedString>`；`ui_java_combo_box_list` → `Vec<String>`；另有 `ui_acc_list`、`ui_task_set_list`。
+- **模型构建**：Rust 侧 `ui_*` 函数：表格 `ModelRc<ModelRc<StandardListViewItem>>`（`ui_game_list`、`ui_fabric_list`、`ui_forge_list`、`ui_game_dl_list`、`ui_java_list`）；`ui_combo_box_list` → `ModelRc<SharedString>`；`ui_java_combo_box_list(list, &AppWindow)` → `Vec<String>`（读取 `not-compatible-text` 后格式化）；另有 `ui_acc_list`、`ui_task_set_list`。
 - **账号头像位图**：`AccountInner.avatar`（`image`）由 Rust 生成 —— `mc` 给出皮肤头部正面 8×8（第二层已合成），frontend 按 `AccountIconSpec.size × window.scale_factor()`（`account::ui_avatar_size`）最近邻放大到设备像素后再 `Image::from_rgba8`，避免 Slint 放大位图导致模糊（`ui_acc_list(&list, icon_size)`）；显示尺寸只在 `account-item.slint` 的 `export global AccountIconSpec { out property <length> size: 48px; }` 里定义一次，Rust 经 AppWindow 的 `out property <length> account-icon-size: AccountIconSpec.size` 读取（同 §6 的 Rust 取译文桥接）。账号头像的加载/缓存见 `rule://CEMCL-project-summary` §5。
 - **ComboBox 模型只能 `[string]`**（fluent 风格不支持 struct 模型）：Java "版本 + (不兼容)" 后缀在 Rust 侧格式化后传入。
 - **Config 结构**：`Config`/`ConfigGeneral`/`ConfigDL`/`ConfigMC` 在 settings.slint 定义为 struct，与 Rust `frontend::Config*` 一一对应；settings 页用 `<=>` 绑定，每次编辑调 `set-config(root.config)` 保存。
