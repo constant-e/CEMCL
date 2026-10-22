@@ -225,7 +225,7 @@ pub fn add_game_dialog(
             _ => None,
         };
 
-        if let Err(e) = tx_clone.send(UICommand::GetAddGameList(filter)) {
+        if let Err(e) = tx_clone.send(UICommand::GetAddGameList(filter, index)) {
             error!("{e}");
         }
     });
@@ -240,8 +240,8 @@ pub fn add_game_dialog(
             _ => None,
         };
         let msg = match filter {
-            1 => UICommand::GetAddModListForge(t, index as u32),
-            2 => UICommand::GetAddModListFabric(t, index as u32),
+            1 => UICommand::GetAddModListForge(t, index as u32, mc_type, filter),
+            2 => UICommand::GetAddModListFabric(t, index as u32, mc_type, filter),
             _ => {
                 error!("Unexpected mod type {filter}");
                 return;
@@ -310,7 +310,7 @@ pub fn add_game_dialog(
 
     ui.show()?;
     tx.send(UICommand::GetAddGameDefault).unwrap();
-    tx.send(UICommand::GetAddGameList(None)).unwrap();
+    tx.send(UICommand::GetAddGameList(None, 0)).unwrap();
     Ok(ui_weak)
 }
 

@@ -1,5 +1,5 @@
 import { TitleBar, SettingsGroup, SubTitle, VerticalSpacing, MyText, MySpinBox, JavaVersionSelector, WindowFrame } from "../../components/components.slint";
-import { ComboBox, StandardButton, StandardTableView, Switch, LineEdit, VerticalBox, HorizontalBox, StyleMetrics } from "std-widgets.slint";
+import { ComboBox, StandardButton, StandardTableView, Switch, LineEdit, VerticalBox, HorizontalBox, StyleMetrics, Palette } from "std-widgets.slint";
 
 import { MCConfig } from "game.slint";
 
@@ -21,6 +21,9 @@ export component AddGameDialog inherits Dialog {
     in-out property <int> mod-index <=> mod-table.current-row;
     in-out property <[[StandardListViewItem]]> mod-list <=> mod-table.rows;
     in-out property <int> mod-type <=> mod-combo-box.current-index;
+
+    in-out property <bool> game-loading: true;
+    in-out property <bool> mod-loading: false;
 
     in-out property <MCConfig> game-config;
 
@@ -67,19 +70,58 @@ export component AddGameDialog inherits Dialog {
                         SubTitle { text: @tr("Minecraft Version"); }
                         game-combo-box := ComboBox {
                             model: [@tr("All"), @tr("Release"), @tr("Snapshot"), @tr("Old Alpha"), @tr("Old Beta")];
-                            selected => { root.get-game-list(self.current-index); }
+                            selected => {
+                                root.game-list = [];
+                                root.game-loading = true;
+                                game-table.current-row = -1;
+                                root.mod-list = [];
+                                root.mod-loading = false;
+                                mod-table.current-row = -1;
+                                root.get-game-list(self.current-index);
+                            }
                         }
-                        game-table := StandardTableView {
-                            columns: [
-                                { title: @tr("Version") },
-                                { title: @tr("Type") }
-                            ];
+                        Rectangle {
+                            horizontal-stretch: 1;
+                            vertical-stretch: 1;
                             min-width: 200px;
 
-                            current-row-changed(row) => {
-                                root.game-selected(game-combo-box.current-index, row);
-                                if mod-combo-box.current-index != 0 {
-                                    root.get-mod-list(game-combo-box.current-index, row, mod-combo-box.current-index);
+                            VerticalBox {
+                                width: 100%;
+                                height: 100%;
+                                padding: 0px;
+
+                                game-table := StandardTableView {
+                                    columns: [
+                                        { title: @tr("Version") },
+                                        { title: @tr("Type") }
+                                    ];
+                                    min-width: 200px;
+
+                                    current-row-changed(row) => {
+                                        if row >= 0 {
+                                            root.game-selected(game-combo-box.current-index, row);
+                                            root.mod-list = [];
+                                            root.mod-loading = false;
+                                            mod-table.current-row = -1;
+                                            if mod-combo-box.current-index != 0 {
+                                                root.mod-loading = true;
+                                                root.get-mod-list(game-combo-box.current-index, row, mod-combo-box.current-index);
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+
+                            if root.game-loading: Rectangle {
+                                width: 100%;
+                                height: 100%;
+                                background: Palette.background;
+
+                                Text {
+                                    text: @tr("Loading...");
+                                    horizontal-alignment: center;
+                                    vertical-alignment: center;
+                                    color: Palette.foreground;
                                 }
                             }
                         }
@@ -92,22 +134,46 @@ export component AddGameDialog inherits Dialog {
                         mod-combo-box := ComboBox {
                             model: [@tr("None"), "Forge", "Fabric"];
                             selected => {
-                                if self.current-index != 0 {
-                                    if game-table.current-row >= 0 && game-table.current-row < game-list.length {
-                                        root.get-mod-list(game-combo-box.current-index, game-table.current-row, self.current-index);
-                                    }
-                                } else {
-                                    root.mod-list = [];
+                                root.mod-list = [];
+                                root.mod-loading = false;
+                                mod-table.current-row = -1;
+                                if self.current-index != 0 && game-table.current-row >= 0 && game-table.current-row < game-list.length {
+                                    root.mod-loading = true;
+                                    root.get-mod-list(game-combo-box.current-index, game-table.current-row, self.current-index);
                                 }
-                                
                             }
                         }
-                        mod-table := StandardTableView {
+                        Rectangle {
+                            horizontal-stretch: 1;
+                            vertical-stretch: 1;
                             min-width: 200px;
-                            columns: [
-                                { title: @tr("Version") },
-                                { title: @tr("Modified") }
-                            ];
+
+                            VerticalBox {
+                                width: 100%;
+                                height: 100%;
+                                padding: 0px;
+
+                                mod-table := StandardTableView {
+                                    min-width: 200px;
+                                    columns: [
+                                        { title: @tr("Version") },
+                                        { title: @tr("Modified") }
+                                    ];
+                                }
+                            }
+
+                            if root.mod-loading: Rectangle {
+                                width: 100%;
+                                height: 100%;
+                                background: Palette.background;
+
+                                Text {
+                                    text: @tr("Loading...");
+                                    horizontal-alignment: center;
+                                    vertical-alignment: center;
+                                    color: Palette.foreground;
+                                }
+                            }
                         }
                     }
 
@@ -199,6 +265,7 @@ export component AddGameDialog inherits Dialog {
 
                     StandardButton {
                         kind: ok;
+                        enabled: !root.game-loading && !root.mod-loading && game-table.current-row >= 0 && (mod-combo-box.current-index == 0 || mod-table.current-row >= 0);
                         clicked => {
                             root.add-game(game-combo-box.current-index, game-table.current-row, mod-combo-box.current-index, mod-table.current-row, game-config);
                         }

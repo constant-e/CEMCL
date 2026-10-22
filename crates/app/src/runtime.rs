@@ -194,8 +194,10 @@ impl Default for ConfigMC {
 
 struct CacheData {
     dl_mc_list: Option<Vec<MCDL>>,
-    dl_fabric_list: Option<Vec<Fabric>>,
-    dl_forge_list: Option<Vec<Forge>>,
+    /// MC 版本 -> Fabric 列表
+    dl_fabric_list: Option<(String, Vec<Fabric>)>,
+    /// MC 版本 -> Forge 列表
+    dl_forge_list: Option<(String, Vec<Forge>)>,
 }
 
 impl CacheData {
@@ -328,10 +330,13 @@ impl AppRuntime {
                 if let Some(filter) = mod_type {
                     match filter {
                         ModType::Fabric => {
-                            let mod_list = if let Some(list) = self.cache.dl_fabric_list.take() {
-                                list
-                            } else {
-                                mc::manifest::list_fabric(&version.version).await?
+                            let mod_list = match self.cache.dl_fabric_list.take() {
+                                Some((cached_version, list))
+                                    if cached_version == version.version =>
+                                {
+                                    list
+                                }
+                                _ => mc::manifest::list_fabric(&version.version).await?,
                             };
 
                             let fabric = &mod_list[mod_index as usize];
@@ -372,10 +377,13 @@ impl AppRuntime {
                             self.update_sender.send(UIUpdate::QuitAddGameDialog)?;
                         }
                         ModType::Forge => {
-                            let mod_list = if let Some(list) = self.cache.dl_forge_list.take() {
-                                list
-                            } else {
-                                mc::manifest::list_forge(&version.version).await?
+                            let mod_list = match self.cache.dl_forge_list.take() {
+                                Some((cached_version, list))
+                                    if cached_version == version.version =>
+                                {
+                                    list
+                                }
+                                _ => mc::manifest::list_forge(&version.version).await?,
                             };
 
                             let forge = &mod_list[mod_index as usize];
@@ -623,7 +631,7 @@ impl AppRuntime {
                         .send(UIUpdate::SetAddGameJavaList(java_list))?;
                 }
             }
-            UICommand::GetAddGameList(filter) => {
+            UICommand::GetAddGameList(filter, combo_index) => {
                 let mut list = if let Some(list) = &self.cache.dl_mc_list {
                     list.clone()
                 } else {
@@ -641,9 +649,10 @@ impl AppRuntime {
 
                 let dl_list = list.into_iter().map(|v| frontend_mc_dl(v)).collect();
 
-                self.update_sender.send(UIUpdate::SetAddGameList(dl_list))?;
+                self.update_sender
+                    .send(UIUpdate::SetAddGameList(dl_list, combo_index))?;
             }
-            UICommand::GetAddModListFabric(mc_type, index) => {
+            UICommand::GetAddModListFabric(mc_type, index, mc_combo, mod_combo) => {
                 let mut list = if let Some(list) = &self.cache.dl_mc_list {
                     list.clone()
                 } else {
@@ -661,20 +670,25 @@ impl AppRuntime {
 
                 let mc = list[index as usize].clone();
 
-                let fabric_list = if let Some(list) = self.cache.dl_fabric_list.take() {
-                    list
-                } else {
-                    let list = mc::manifest::list_fabric(&mc.version).await?;
-                    self.cache.dl_fabric_list = Some(list.clone());
-                    list
+                let fabric_list = match &self.cache.dl_fabric_list {
+                    Some((cached_version, list)) if cached_version == &mc.version => list.clone(),
+                    _ => {
+                        let list = mc::manifest::list_fabric(&mc.version).await?;
+                        self.cache.dl_fabric_list = Some((mc.version.clone(), list.clone()));
+                        list
+                    }
                 }
                 .into_iter()
                 .map(|v| frontend_fabric(v))
                 .collect();
-                self.update_sender
-                    .send(UIUpdate::SetAddModListFabric(fabric_list))?;
+                self.update_sender.send(UIUpdate::SetAddModListFabric(
+                    fabric_list,
+                    mc_combo,
+                    index,
+                    mod_combo,
+                ))?;
             }
-            UICommand::GetAddModListForge(mc_type, index) => {
+            UICommand::GetAddModListForge(mc_type, index, mc_combo, mod_combo) => {
                 let mut list = if let Some(list) = &self.cache.dl_mc_list {
                     list.clone()
                 } else {
@@ -692,18 +706,20 @@ impl AppRuntime {
 
                 let mc = list[index as usize].clone();
 
-                let forge_list = if let Some(list) = self.cache.dl_forge_list.take() {
-                    list
-                } else {
-                    let list = mc::manifest::list_forge(&mc.version).await?;
-                    self.cache.dl_forge_list = Some(list.clone());
-                    list
+                let forge_list = match &self.cache.dl_forge_list {
+                    Some((cached_version, list)) if cached_version == &mc.version => list.clone(),
+                    _ => {
+                        let list = mc::manifest::list_forge(&mc.version).await?;
+                        self.cache.dl_forge_list = Some((mc.version.clone(), list.clone()));
+                        list
+                    }
                 }
                 .into_iter()
                 .map(|v| frontend_forge(v))
                 .collect();
-                self.update_sender
-                    .send(UIUpdate::SetAddModListForge(forge_list))?;
+                self.update_sender.send(UIUpdate::SetAddModListForge(
+                    forge_list, mc_combo, index, mod_combo,
+                ))?;
             }
             UICommand::GetEditGameConfig(index) => {
                 let version = self.version_manager.get(index).clone();

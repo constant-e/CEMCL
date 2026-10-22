@@ -28,9 +28,11 @@ pub enum UICommand {
     FinishLogin,
     GetAddGameDefault,
     GetAddGameJavaList(Option<MCType>, u32),
-    GetAddGameList(Option<MCType>),
-    GetAddModListFabric(Option<MCType>, u32),
-    GetAddModListForge(Option<MCType>, u32),
+    /// Filter and MC version type combo index
+    GetAddGameList(Option<MCType>, i32),
+    /// Filter, MC version index, MC version type combo index, mod loader combo index
+    GetAddModListFabric(Option<MCType>, u32, i32, i32),
+    GetAddModListForge(Option<MCType>, u32, i32, i32),
     GetEditGameConfig(u32),
     GetEditGameVersion(u32),
     GetOfflineAccount,
@@ -53,9 +55,11 @@ pub enum UIUpdate {
     SetAccountList(Vec<Account>),
     SetAddGameDefault(MCConfig),
     SetAddGameJavaList(Vec<JavaInfo>),
-    SetAddGameList(Vec<MCDL>),
-    SetAddModListFabric(Vec<Fabric>),
-    SetAddModListForge(Vec<Forge>),
+    /// List and MC version type combo index
+    SetAddGameList(Vec<MCDL>, i32),
+    /// List, MC version type combo index, MC version index, mod loader combo index
+    SetAddModListFabric(Vec<Fabric>, i32, u32, i32),
+    SetAddModListForge(Vec<Forge>, i32, u32, i32),
     SetAuthors(String),
     SetConfig(Config),
     SetEditGameConfig(MCConfig),
@@ -428,10 +432,15 @@ impl AppWindow {
                     error!("{e}");
                 }
             },
-            UIUpdate::SetAddGameList(list) => match get(add_game_dialog) {
+            UIUpdate::SetAddGameList(list, combo_index) => match get(add_game_dialog) {
                 Ok(w) => {
                     if let Err(e) = w.upgrade_in_event_loop(move |dialog| {
+                        // Ignore responses for a version type the user already switched away from.
+                        if dialog.get_game_type() != combo_index {
+                            return;
+                        }
                         dialog.set_game_list(game::ui_game_dl_list(&list));
+                        dialog.set_game_loading(false);
                     }) {
                         error!("{e}");
                     }
@@ -440,30 +449,50 @@ impl AppWindow {
                     error!("{e}");
                 }
             },
-            UIUpdate::SetAddModListFabric(list) => match get(add_game_dialog) {
-                Ok(w) => {
-                    if let Err(e) = w.upgrade_in_event_loop(move |dialog| {
-                        dialog.set_mod_list(game::ui_fabric_list(&list));
-                    }) {
+            UIUpdate::SetAddModListFabric(list, mc_combo, mc_index, mod_combo) => {
+                match get(add_game_dialog) {
+                    Ok(w) => {
+                        if let Err(e) = w.upgrade_in_event_loop(move |dialog| {
+                            // Ignore responses for a selection the user already switched away from.
+                            if dialog.get_game_type() != mc_combo
+                                || dialog.get_game_index() != mc_index as i32
+                                || dialog.get_mod_type() != mod_combo
+                            {
+                                return;
+                            }
+                            dialog.set_mod_list(game::ui_fabric_list(&list));
+                            dialog.set_mod_loading(false);
+                        }) {
+                            error!("{e}");
+                        }
+                    }
+                    Err(e) => {
                         error!("{e}");
                     }
                 }
-                Err(e) => {
-                    error!("{e}");
-                }
-            },
-            UIUpdate::SetAddModListForge(list) => match get(add_game_dialog) {
-                Ok(w) => {
-                    if let Err(e) = w.upgrade_in_event_loop(move |dialog| {
-                        dialog.set_mod_list(game::ui_forge_list(&list));
-                    }) {
+            }
+            UIUpdate::SetAddModListForge(list, mc_combo, mc_index, mod_combo) => {
+                match get(add_game_dialog) {
+                    Ok(w) => {
+                        if let Err(e) = w.upgrade_in_event_loop(move |dialog| {
+                            // Ignore responses for a selection the user already switched away from.
+                            if dialog.get_game_type() != mc_combo
+                                || dialog.get_game_index() != mc_index as i32
+                                || dialog.get_mod_type() != mod_combo
+                            {
+                                return;
+                            }
+                            dialog.set_mod_list(game::ui_forge_list(&list));
+                            dialog.set_mod_loading(false);
+                        }) {
+                            error!("{e}");
+                        }
+                    }
+                    Err(e) => {
                         error!("{e}");
                     }
                 }
-                Err(e) => {
-                    error!("{e}");
-                }
-            },
+            }
             UIUpdate::SetAuthors(authors) => {
                 if let Err(e) = ui_weak.upgrade_in_event_loop(move |ui| {
                     ui.set_authors(authors.into());

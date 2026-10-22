@@ -80,6 +80,7 @@ res/ui/
 - **互斥区块**用 `if (cond):`（非 `visible`）：AccountsPage 的 `edit` / `switch` 两个 bool 互斥；TaskSetItem 的 `if !finished:` 隐藏按钮行。
 - **状态文本**用 `states [ xxx when cond: {...} ]` 驱动：HomePage `State`（spare/downloading/launching/logging-in 改 state-text）、AskDialog `AskID`、AddJavaDialog `JavaCheckResult`（6 状态）。
 - **按钮可用性**：`enabled: 条件表达式`，如 `enabled: state == State.Spare && combo-box.model.length != 0`；列表项 `enabled: index != current-index`。
+- **AddGame 列表加载态**：game/mod 两张 `StandardTableView` 各包在 `Rectangle` 里，`game-loading` / `mod-loading` 为 true 时用铺满整表的 `Rectangle { background: Palette.background; Text { @tr("Loading...") } }` 覆盖层代替空表（`visible: false` 不会释放布局空间）。切换 MC 版本种类会清空 game 列表并将 `game-table.current-row` 置 -1（同时清空 mod 列表）；切换 MC 版本行或 mod loader 种类会立刻清空 mod 列表并进入加载。列表响应携带请求时的 combo/row 索引，Rust 端丢弃与当前选择不符的过期响应。OK 在加载中或未选中版本/mod 时为 disabled。
 - **表格**：`StandardTableView`，列 `{ title: @tr(...) }`；页面表格 `min-width: 250px`，AddGameDialog 内两张表 `min-width: 200px`。
 - **账号列表**：`ListView`（AccountsList，GroupBox + ListView）；`preferred-height: accounts.length * (48px + StyleMetrics.layout-spacing)`，`max-height` 限 3 行。
 - **进度**：`progress-mode` 约定 `0 = BySize, 1 = ByNumber, 2 = Both`（home.slint / downloader.slint / settings.slint 三处注释重复）。downloader.slint 有 `progress-text(info)` + `progress-value(info)`（含 total>0 防零除）；home.slint 只有 `progress-text()`，进度条直接绑 float `progress`。
