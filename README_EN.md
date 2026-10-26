@@ -6,19 +6,6 @@ Language: [简体中文](README.md) | English
 ## Introduction
 A Minecraft: Java Edition launcher using Rust and Slint.
 
-## Downloads
-**It is strongly recommended to build CEMCL from the latest source code.**
-
-### Release
-Release versions are stable versions which are recommended for most of the users.
-
-Download from [Github](https://github.com/constant-e/CEMCL/releases)
-
-### CI
-CI (Continuous Integration) versions are automatically built by GitHub Actions after committing. They are updated more frequently and sometimes unstable.
-
-Download from [GitHub Actions](https://github.com/constant-e/CEMCL/actions)
-
 ## Build
 1. Install Rust
 2. Clone this repository
@@ -32,7 +19,6 @@ Download from [GitHub Actions](https://github.com/constant-e/CEMCL/actions)
    # Build Release
    cargo build --release
    ```
-
 
 ## Documents
 [Documents](https://constant-e.github.io/CEMCL/en/docs)

@@ -5,7 +5,7 @@ globs: crates/frontend/res/ui/**/*.slint
 
 # CEMCL UI 设计风格与布局规范
 
-> 依 `crates/frontend/res/ui/` 全部 29 个 `.slint` 文件核对于 2026-10-08（Slint 1.18.1）；§7 的账号头像位图 2026-09-22 复核。来源 `.github/instructions/CEMCL-ui-style-summary.instructions.md`（已迁至 `.omp/rules/`），已修正若干偏差。
+> 依 `crates/frontend/res/ui/` 全部 29 个 `.slint` 文件核对于 2026-10-08（Slint 1.18.1）；§7 的账号头像位图 2026-09-22 复核。
 > 配套：`rule://CEMCL-project-summary`。
 
 ## 1. 文件组织（29 个文件）
