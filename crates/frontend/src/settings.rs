@@ -1,8 +1,8 @@
 //! Settings Page
 
+use crate::ui;
 use slint::ModelRc;
 use std::rc;
-use crate::ui;
 
 /// 进度显示方式
 #[derive(Clone, Copy, PartialEq, Eq)]

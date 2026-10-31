@@ -179,3 +179,75 @@ async fn existing_asset_is_checked_against_hash() {
     assert_eq!(tasks[0].save_path, save_path);
     assert!(!std::fs::exists(&save_path).unwrap());
 }
+
+/// 多个资产名引用同一对象时只建一个任务
+#[tokio::test]
+async fn duplicate_asset_hashes_produce_one_task() {
+    let dir = temp_dir("assets-duplicate");
+    std::fs::create_dir_all(format!("{dir}/assets/indexes")).unwrap();
+    std::fs::write(
+        format!("{dir}/assets/indexes/test.json"),
+        json!({"objects": {
+            "minecraft/a": {"hash": HELLO_SHA1, "size": 11},
+            "minecraft/b": {"hash": HELLO_SHA1, "size": 11},
+        }})
+        .to_string(),
+    )
+    .unwrap();
+
+    let tasks = download_assets(&dir, "test", "{assets_source}")
+        .await
+        .unwrap();
+    assert_eq!(tasks.len(), 1);
+    assert_eq!(tasks[0].sha1.as_deref(), Some(HELLO_SHA1));
+}
+
+/// 重复的library条目只下载一次jar，但各自的natives仍保留
+#[tokio::test]
+async fn duplicate_library_entries_produce_one_task_per_file() {
+    let dir = temp_dir("libraries-duplicate");
+    let mut natives = serde_json::Map::new();
+    natives.insert(
+        std::env::consts::OS.to_string(),
+        serde_json::Value::String("natives-test".to_string()),
+    );
+    let node = json!([
+        {
+            "name": "com.example:lib:1.0",
+            "downloads": {"artifact": {
+                "path": "com/example/lib/1.0/lib-1.0.jar",
+                "sha1": HELLO_SHA1,
+                "url": "https://libraries.minecraft.net/com/example/lib/1.0/lib-1.0.jar",
+            }},
+        },
+        {
+            "name": "com.example:lib:1.0",
+            "natives": natives,
+            "downloads": {
+                "artifact": {
+                    "path": "com/example/lib/1.0/lib-1.0.jar",
+                    "sha1": HELLO_SHA1,
+                    "url": "https://libraries.minecraft.net/com/example/lib/1.0/lib-1.0.jar",
+                },
+                "classifiers": {
+                    "natives-test": {
+                        "path": "com/example/lib/1.0/lib-1.0-natives-test.jar",
+                        "sha1": HELLO_SHA1,
+                        "url": "https://libraries.minecraft.net/com/example/lib/1.0/lib-1.0-natives-test.jar",
+                    },
+                },
+            },
+        },
+    ]);
+
+    let tasks = download_libraries(&node, &dir, &dir, "{libraries_source}", "{fabric_source}")
+        .await
+        .unwrap();
+    assert_eq!(tasks.len(), 2);
+    assert!(tasks.iter().any(|t| t.save_path.ends_with("lib-1.0.jar")));
+    assert!(
+        tasks
+            .iter()
+            .any(|t| t.save_path.ends_with("lib-1.0-natives-test.jar"))
+    );
+}

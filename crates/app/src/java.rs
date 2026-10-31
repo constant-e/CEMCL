@@ -119,9 +119,7 @@ impl JavaManager {
 
         // Try to detect JAVA_HOME from environment
         if let Ok(java_home) = std::env::var("JAVA_HOME") {
-            if !java_home.is_empty()
-                && !self.java_list.iter().any(|j| j.get_path() == java_home)
-            {
+            if !java_home.is_empty() && !self.java_list.iter().any(|j| j.get_path() == java_home) {
                 if let Ok(installation) = JavaInstallation::new(java_home) {
                     self.java_list.push(installation);
                 }
@@ -129,14 +127,16 @@ impl JavaManager {
         }
 
         // Try to detect java from PATH
-        if let Ok(output) = Command::new("java").arg("-XshowSettings:properties").arg("-version").output() {
+        if let Ok(output) = Command::new("java")
+            .arg("-XshowSettings:properties")
+            .arg("-version")
+            .output()
+        {
             let stderr = String::from_utf8_lossy(&output.stderr);
             for line in stderr.lines() {
                 if line.trim().starts_with("java.home") {
                     let home = line.trim().trim_start_matches("java.home = ");
-                    if !home.is_empty()
-                        && !self.java_list.iter().any(|j| j.get_path() == home)
-                    {
+                    if !home.is_empty() && !self.java_list.iter().any(|j| j.get_path() == home) {
                         if let Ok(installation) = JavaInstallation::new(home.to_string()) {
                             self.java_list.push(installation);
                         }
@@ -168,9 +168,7 @@ impl JavaManager {
             return Ok((None, Vec::new()));
         }
 
-        let json = serde_json::from_str::<serde_json::Value>(
-            &fs::read_to_string("java.json")?,
-        )?;
+        let json = serde_json::from_str::<serde_json::Value>(&fs::read_to_string("java.json")?)?;
 
         let default = json["default"].as_u64().map(|v| v as u32);
 

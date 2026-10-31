@@ -74,7 +74,7 @@ impl JavaInstallation {
                 }
             }
 
-            return Err(JavaInstallationError::ReleaseFileInvalid)
+            return Err(JavaInstallationError::ReleaseFileInvalid);
         }
 
         // get the result of java -version

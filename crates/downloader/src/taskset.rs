@@ -1,5 +1,6 @@
 use futures::future::join_all;
-use log::error;
+use log::{error, warn};
+use std::collections::HashSet;
 use std::sync::{Arc, atomic::Ordering};
 use tokio::sync::Semaphore;
 
@@ -25,8 +26,19 @@ impl TaskSet {
         tasks_info: Vec<TaskInfo>,
         semaphore: Arc<Semaphore>,
     ) -> Self {
+        let mut seen = HashSet::new();
         let tasks = tasks_info
             .into_iter()
+            .filter(|info| {
+                let unique = seen.insert(info.save_path.clone());
+                if !unique {
+                    warn!(
+                        "Duplicate download target {}, skipping {}",
+                        info.save_path, info.url
+                    );
+                }
+                unique
+            })
             .map(|info| {
                 let mut task =
                     DownloadTask::new(info.url, info.save_path, client.clone(), semaphore.clone());

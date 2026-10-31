@@ -6,7 +6,9 @@ use std::sync::{Arc, Mutex};
 use crate::game::{MCInfo, ui_combo_box_list, ui_game_list};
 use crate::java::{self, JavaInfo};
 use crate::settings::Config;
-use crate::ui::{self, AddGameDialog, AddJavaDialog, EditGameDialog, ForgeDownloadDialog, LoginDialog};
+use crate::ui::{
+    self, AddGameDialog, AddJavaDialog, EditGameDialog, ForgeDownloadDialog, LoginDialog,
+};
 use crate::{
     account::{self, Account},
     game::{self, Fabric, Forge, MCConfig, MCDL, MCType, ModType},
@@ -593,11 +595,10 @@ impl AppWindow {
             }
             UIUpdate::SetJavaModel(list) => {
                 if let Err(e) = ui_weak.upgrade_in_event_loop(move |ui| {
-                    let items: Vec<slint::SharedString> =
-                        java::ui_java_combo_box_list(&list, &ui)
-                            .iter()
-                            .map(|s| s.as_str().into())
-                            .collect();
+                    let items: Vec<slint::SharedString> = java::ui_java_combo_box_list(&list, &ui)
+                        .iter()
+                        .map(|s| s.as_str().into())
+                        .collect();
                     ui.set_java_combo_model(slint::ModelRc::from(std::rc::Rc::new(
                         slint::VecModel::from(items),
                     )));

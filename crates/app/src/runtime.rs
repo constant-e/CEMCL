@@ -5,13 +5,15 @@ use log::{error, info};
 use mc::{
     MCInstallation,
     account::{Account, auth::AuthPollAction},
-    manifest::{
-        Fabric, Forge, MCDL, download_fabric, download_forge, download_mc,
-    },
+    manifest::{Fabric, Forge, MCDL, download_fabric, download_forge, download_mc},
 };
 use serde_json::json;
+use std::{
+    collections::HashMap,
+    fs::{self, create_dir_all, exists, remove_dir_all},
+    process::Command,
+};
 use utils::get_parent_dir;
-use std::{collections::HashMap, fs::{self, create_dir_all, exists, remove_dir_all}, process::Command};
 
 use crate::{
     account::{frontend_account, to_account_type},
@@ -22,11 +24,7 @@ use crate::{
     },
 };
 use downloader::{Config as DownloaderConfig, DownloadManager, task::TaskInfo};
-use frontend::{
-    UICommand,
-    UIUpdate,
-    game::ModType,
-};
+use frontend::{UICommand, UIUpdate, game::ModType};
 
 use crate::{account::AccountManager, avatar::AvatarManager, errors::LauncherError};
 
@@ -397,27 +395,26 @@ impl AppRuntime {
                             }
 
                             let java_path = if config.java_index >= 0 {
-                                self.java_manager.get_java_path_by_index(config.java_index as u32)?
+                                self.java_manager
+                                    .get_java_path_by_index(config.java_index as u32)?
                             } else {
                                 "java".to_string()
                             };
                             let forge_path = task_info.save_path.clone();
-                            let f = move || {
-                                match Command::new(&java_path)
-                                    .arg("-jar")
-                                    .arg(&forge_path)
-                                    .spawn()
-                                {
-                                    Ok(mut child) => {
-                                        if let Err(e) = child.wait() {
-                                            error!("{e}");
-                                            if exists(&dir).unwrap() {
-                                                remove_dir_all(&dir).unwrap();
-                                            }
+                            let f = move || match Command::new(&java_path)
+                                .arg("-jar")
+                                .arg(&forge_path)
+                                .spawn()
+                            {
+                                Ok(mut child) => {
+                                    if let Err(e) = child.wait() {
+                                        error!("{e}");
+                                        if exists(&dir).unwrap() {
+                                            remove_dir_all(&dir).unwrap();
                                         }
                                     }
-                                    Err(e) => error!("Failed to run forge installer. Reason: {e}."),
                                 }
+                                Err(e) => error!("Failed to run forge installer. Reason: {e}."),
                             };
 
                             let task = TaskInfo::new(
@@ -463,13 +460,12 @@ impl AppRuntime {
                             });
 
                             // 显示 Forge 下载弹窗
-                            self.update_sender.send(UIUpdate::ShowForgeDownloadDialog(
-                                format!(
+                            self.update_sender
+                                .send(UIUpdate::ShowForgeDownloadDialog(format!(
                                     "Downloading Forge {forge_version} for Minecraft {mc_version}",
                                     forge_version = forge.version,
                                     mc_version = version.version,
-                                ),
-                            ))?;
+                                )))?;
                             // 关闭添加游戏弹窗
                             self.update_sender.send(UIUpdate::QuitAddGameDialog)?;
                         }
@@ -508,15 +504,24 @@ impl AppRuntime {
             UICommand::CheckJava(java_path) => {
                 use ::java::java::JavaInstallationError;
                 let (result, version) = match ::java::java::JavaInstallation::new(java_path) {
-                    Ok(installation) => {
-                        (frontend::ui::JavaCheckResult::Detected, installation.get_version().to_string())
-                    }
+                    Ok(installation) => (
+                        frontend::ui::JavaCheckResult::Detected,
+                        installation.get_version().to_string(),
+                    ),
                     Err(e) => {
                         let result = match e {
-                            JavaInstallationError::PathIsEmpty => frontend::ui::JavaCheckResult::PathIsEmpty,
-                            JavaInstallationError::JavaExecutableNotFound => frontend::ui::JavaCheckResult::JavaExecutableNotFound,
-                            JavaInstallationError::ReleaseFileInvalid => frontend::ui::JavaCheckResult::ReleaseFileInvalid,
-                            JavaInstallationError::IOError(_) => frontend::ui::JavaCheckResult::IOError,
+                            JavaInstallationError::PathIsEmpty => {
+                                frontend::ui::JavaCheckResult::PathIsEmpty
+                            }
+                            JavaInstallationError::JavaExecutableNotFound => {
+                                frontend::ui::JavaCheckResult::JavaExecutableNotFound
+                            }
+                            JavaInstallationError::ReleaseFileInvalid => {
+                                frontend::ui::JavaCheckResult::ReleaseFileInvalid
+                            }
+                            JavaInstallationError::IOError(_) => {
+                                frontend::ui::JavaCheckResult::IOError
+                            }
                         };
                         (result, String::new())
                     }
@@ -556,7 +561,11 @@ impl AppRuntime {
                 version.description = installation.description;
                 version.game_args = installation.game_args;
                 version.height = installation.height;
-                version.java_index = if installation.java_index >= 0 { Some(installation.java_index as u32) } else { None };
+                version.java_index = if installation.java_index >= 0 {
+                    Some(installation.java_index as u32)
+                } else {
+                    None
+                };
                 version.jvm_args = installation.jvm_args;
                 version.separated = installation.separated;
                 version.width = installation.width;
@@ -589,7 +598,11 @@ impl AppRuntime {
             UICommand::GetAddGameDefault => {
                 let config = self.version_manager.get_config();
                 let java_list = self.build_java_info_list(None);
-                let java_index = self.java_manager.get_default().map(|i| i as i32).unwrap_or(-1);
+                let java_index = self
+                    .java_manager
+                    .get_default()
+                    .map(|i| i as i32)
+                    .unwrap_or(-1);
                 self.update_sender
                     .send(UIUpdate::SetAddGameDefault(frontend::game::MCConfig {
                         description: String::new(),
@@ -806,12 +819,11 @@ impl AppRuntime {
                     loop {
                         match action {
                             AuthPollAction::Continue(s) => {
-                                self.update_sender
-                                    .send(UIUpdate::SetHomePageProgress(
-                                        s as f32 / 5.0,
-                                        s as u32,
-                                        5,
-                                    ))?;
+                                self.update_sender.send(UIUpdate::SetHomePageProgress(
+                                    s as f32 / 5.0,
+                                    s as u32,
+                                    5,
+                                ))?;
                             }
                             AuthPollAction::Done(account) => {
                                 self.update_sender
@@ -1033,7 +1045,11 @@ impl AppRuntime {
         let config_dl: ConfigDL = self.downloader.get_config().clone().into();
         let config_mc = self.version_manager.get_config();
         let java_list = self.build_java_info_list(None);
-        let java_index = self.java_manager.get_default().map(|i| i as i32).unwrap_or(-1);
+        let java_index = self
+            .java_manager
+            .get_default()
+            .map(|i| i as i32)
+            .unwrap_or(-1);
 
         self.update_sender
             .send(UIUpdate::SetConfig(frontend::Config {
@@ -1041,8 +1057,7 @@ impl AppRuntime {
                 general: config_general.clone().into(),
                 mc: config_mc.clone().into(),
             }))?;
-        self.update_sender
-            .send(UIUpdate::SetJavaModel(java_list))?;
+        self.update_sender.send(UIUpdate::SetJavaModel(java_list))?;
         self.update_sender
             .send(UIUpdate::SetJavaIndex(java_index))?;
 
@@ -1104,16 +1119,24 @@ impl AppRuntime {
 /// Determine the minimum Java version required for a given Minecraft version.
 /// Reads the MC version JSON file to get the `javaVersion.majorVersion` field.
 /// Falls back to hardcoded rules if the JSON cannot be read.
-fn min_java_version_for_mc(mc_version: &str, game_path: &str) -> Option<::java::java_version::JavaVersion> {
+fn min_java_version_for_mc(
+    mc_version: &str,
+    game_path: &str,
+) -> Option<::java::java_version::JavaVersion> {
     // Extract the base MC version from modded version strings like "fabric-loader-0.16.10-1.21.5"
     let base_version = extract_mc_version(mc_version);
 
     // Try to read from the MC version JSON file
-    let json_path = format!("{}/versions/{}/{}.json", game_path, base_version, base_version);
+    let json_path = format!(
+        "{}/versions/{}/{}.json",
+        game_path, base_version, base_version
+    );
     if let Ok(content) = std::fs::read_to_string(&json_path) {
         if let Ok(json) = serde_json::from_str::<serde_json::Value>(&content) {
             if let Some(major) = json["javaVersion"]["majorVersion"].as_u64() {
-                return Some(::java::java_version::JavaVersion::from(major.to_string().as_str()));
+                return Some(::java::java_version::JavaVersion::from(
+                    major.to_string().as_str(),
+                ));
             }
         }
     }
@@ -1260,9 +1283,7 @@ impl AppRuntime {
             downloader::taskset::TaskSetStatus::Downloading(downloaded, total) => {
                 (*downloaded, *total)
             }
-            downloader::taskset::TaskSetStatus::Paused(downloaded, total) => {
-                (*downloaded, *total)
-            }
+            downloader::taskset::TaskSetStatus::Paused(downloaded, total) => (*downloaded, *total),
             downloader::taskset::TaskSetStatus::Completed(total) => (*total, *total),
             downloader::taskset::TaskSetStatus::Cancelled => (0, 0),
             downloader::taskset::TaskSetStatus::Failed => (0, 0),

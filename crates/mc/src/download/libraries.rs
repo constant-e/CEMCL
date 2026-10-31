@@ -2,7 +2,7 @@
 
 use log::error;
 use serde_json::Value;
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 use std::env::consts as env;
 use std::fs::{File, create_dir_all, exists};
 use std::io::copy;
@@ -41,6 +41,9 @@ pub async fn download_libraries(
     fabric_mirror: &str,
 ) -> Result<Vec<DownloadTask>, DownloadError> {
     let mut tasks = Vec::new();
+    // 同一个 jar 可能被多个 library 条目引用（如 1.12.2 的 text2speech），
+    // 按最终路径去重，避免重复任务并发写同一文件
+    let mut scheduled: HashSet<String> = HashSet::new();
     for item in node.as_array().ok_or(DownloadError::DataInvalid)? {
         let (node, path, game_dir, mirror) = (
             item.clone(),
@@ -70,21 +73,23 @@ pub async fn download_libraries(
             let save_path =
                 lib_dir.clone() + "/" + node["path"].as_str().ok_or(DownloadError::DataInvalid)?; // 储存位置
             let sha1 = node["sha1"].as_str().map(String::from);
-            if needs_redownload(&save_path, sha1.as_deref()).await? {
-                remove_file_if_exists(&save_path)?;
-                let task_info = download_lib(&save_path, node, &mirror)?;
-                let natives_dir_clone = natives_dir.clone();
-                tasks.push(DownloadTask {
-                    url: task_info.url,
-                    save_path: task_info.save_path,
-                    sha1: task_info.sha1,
-                    sha1_url: None,
-                    on_finish: Some(Box::new(move || {
-                        extract_lib_logged(&natives_dir_clone, &save_path);
-                    })),
-                });
-            } else {
-                extract_lib_logged(&natives_dir, &save_path);
+            if scheduled.insert(save_path.clone()) {
+                if needs_redownload(&save_path, sha1.as_deref()).await? {
+                    remove_file_if_exists(&save_path)?;
+                    let task_info = download_lib(&save_path, node, &mirror)?;
+                    let natives_dir_clone = natives_dir.clone();
+                    tasks.push(DownloadTask {
+                        url: task_info.url,
+                        save_path: task_info.save_path,
+                        sha1: task_info.sha1,
+                        sha1_url: None,
+                        on_finish: Some(Box::new(move || {
+                            extract_lib_logged(&natives_dir_clone, &save_path);
+                        })),
+                    });
+                } else {
+                    extract_lib_logged(&natives_dir, &save_path);
+                }
             }
         }
         if node["downloads"]["artifact"].is_object() {
@@ -96,21 +101,24 @@ pub async fn download_libraries(
             let sha1 = node["downloads"]["artifact"]["sha1"]
                 .as_str()
                 .map(String::from);
-            if needs_redownload(&save_path, sha1.as_deref()).await? {
-                remove_file_if_exists(&save_path)?;
-                let task_info = download_lib(&save_path, &node["downloads"]["artifact"], &mirror)?;
-                let natives_dir_clone = natives_dir.clone();
-                tasks.push(DownloadTask {
-                    url: task_info.url,
-                    save_path: task_info.save_path,
-                    sha1: task_info.sha1,
-                    sha1_url: None,
-                    on_finish: Some(Box::new(move || {
-                        extract_lib_logged(&natives_dir_clone, &save_path);
-                    })),
-                });
-            } else {
-                extract_lib_logged(&natives_dir, &save_path);
+            if scheduled.insert(save_path.clone()) {
+                if needs_redownload(&save_path, sha1.as_deref()).await? {
+                    remove_file_if_exists(&save_path)?;
+                    let task_info =
+                        download_lib(&save_path, &node["downloads"]["artifact"], &mirror)?;
+                    let natives_dir_clone = natives_dir.clone();
+                    tasks.push(DownloadTask {
+                        url: task_info.url,
+                        save_path: task_info.save_path,
+                        sha1: task_info.sha1,
+                        sha1_url: None,
+                        on_finish: Some(Box::new(move || {
+                            extract_lib_logged(&natives_dir_clone, &save_path);
+                        })),
+                    });
+                } else {
+                    extract_lib_logged(&natives_dir, &save_path);
+                }
             }
         } else {
             if let Some(url) = node["url"].as_str() {
@@ -132,21 +140,23 @@ pub async fn download_libraries(
                     // fabric的profile json不带哈希，首次下载时从maven的<path>.sha1校验，
                     // 校验得到的哈希缓存在<jar>.sha1，之后按缓存离线校验
                     let cached_sha1 = read_cached_sha1(&(local_path.clone() + ".sha1"));
-                    if needs_redownload(&local_path, cached_sha1.as_deref()).await? {
-                        remove_file_if_exists(&local_path)?;
-                        let dir = get_parent_dir(&local_path);
-                        if !exists(&dir)? {
-                            create_dir_all(&dir)?;
+                    if scheduled.insert(local_path.clone()) {
+                        if needs_redownload(&local_path, cached_sha1.as_deref()).await? {
+                            remove_file_if_exists(&local_path)?;
+                            let dir = get_parent_dir(&local_path);
+                            if !exists(&dir)? {
+                                create_dir_all(&dir)?;
+                            }
+                            let url = fabric_mirror.to_string() + "/" + &path;
+                            let sha1_url = url.clone() + ".sha1";
+                            tasks.push(DownloadTask::new(
+                                url,
+                                local_path,
+                                None,
+                                Some(sha1_url),
+                                None,
+                            ));
                         }
-                        let url = fabric_mirror.to_string() + "/" + &path;
-                        let sha1_url = url.clone() + ".sha1";
-                        tasks.push(DownloadTask::new(
-                            url,
-                            local_path,
-                            None,
-                            Some(sha1_url),
-                            None,
-                        ));
                     }
                 }
             }
