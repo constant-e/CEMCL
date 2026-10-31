@@ -2,6 +2,7 @@
 
 use std::io::{Read, Write};
 use std::net::TcpListener;
+use std::path::PathBuf;
 use std::sync::{
     Arc,
     atomic::{AtomicUsize, Ordering},
@@ -10,11 +11,11 @@ use std::sync::{
 use utils::{DLError, download, sha1_file};
 
 /// 建一个空的临时目录，返回路径
-fn temp_dir(name: &str) -> String {
+fn temp_dir(name: &str) -> PathBuf {
     let dir = std::env::temp_dir().join(format!("cemcl-test-{}-{name}", std::process::id()));
     let _ = std::fs::remove_dir_all(&dir);
     std::fs::create_dir_all(&dir).unwrap();
-    dir.to_str().unwrap().to_string()
+    dir
 }
 
 /// 起一个本地HTTP服务，按路径返回内容，返回（地址，收到的请求数）
@@ -68,7 +69,7 @@ async fn sha1_file_matches_vectors() {
         ),
     ];
     for (name, content, expect) in cases {
-        let path = format!("{dir}/{name}");
+        let path = dir.join(name);
         std::fs::write(&path, content).unwrap();
         assert_eq!(sha1_file(&path).await.unwrap(), expect, "{name}");
     }
@@ -80,10 +81,10 @@ async fn download_verifies_sha1() {
     let dir = temp_dir("download");
     let (server, count) = serve(vec![("/ok", "hello world"), ("/bad", "hello worlD")]);
 
-    let path = format!("{dir}/ok");
+    let path = dir.join("ok");
     download(
         format!("{server}/ok"),
-        path.clone(),
+        &path,
         0,
         Some("2aae6c35c94fcfb415dbe95f408b9ce91ee846ed"),
     )
@@ -92,10 +93,10 @@ async fn download_verifies_sha1() {
     assert_eq!(std::fs::read_to_string(&path).unwrap(), "hello world");
 
     // 内容不一致：报错、删除文件，且按max参数重试
-    let path = format!("{dir}/bad");
+    let path = dir.join("bad");
     let e = download(
         format!("{server}/bad"),
-        path.clone(),
+        &path,
         1,
         Some("2aae6c35c94fcfb415dbe95f408b9ce91ee846ed"),
     )

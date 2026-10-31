@@ -1,7 +1,8 @@
 //! Get Manifests
 
 use serde_json::Value;
-use std::fs::{create_dir_all, exists, write};
+use std::fs::{create_dir_all, write};
+use std::path::{Path, PathBuf};
 use utils::download;
 
 use crate::{
@@ -108,7 +109,7 @@ pub async fn list_forge(mcversion: &String) -> Result<Vec<Forge>, DownloadError>
 }
 
 /// 获取下载列表
-pub async fn list_game(path: String) -> Result<Vec<MCDL>, DownloadError> {
+pub async fn list_game(path: &Path) -> Result<Vec<MCDL>, DownloadError> {
     let mut game_list = Vec::new();
 
     // 下载列表
@@ -118,11 +119,9 @@ pub async fn list_game(path: String) -> Result<Vec<MCDL>, DownloadError> {
         .await?;
 
     // 储存json，与官启一致
-    let path = path + "/versions";
-    if !exists(&path)? {
-        create_dir_all(&path)?;
-    }
-    write(String::from(path) + "/version_manifest_v2.json", &text)?;
+    let versions_dir = path.join("versions");
+    create_dir_all(&versions_dir)?;
+    write(versions_dir.join("version_manifest_v2.json"), &text)?;
 
     // 开始解析
     let json = serde_json::from_str::<Value>(&text)?;
@@ -151,7 +150,7 @@ pub async fn list_game(path: String) -> Result<Vec<MCDL>, DownloadError> {
 }
 
 pub async fn download_fabric(
-    mc_path: &str,
+    mc_path: &Path,
     mc_version: &str,
     fabric: Fabric,
 ) -> Result<(), DownloadError> {
@@ -160,19 +159,16 @@ pub async fn download_fabric(
         fabric_version = fabric.loader_version,
     );
 
-    let dir = format!("{mc_path}/versions/{name}");
-
-    if !exists(&dir)? {
-        create_dir_all(&dir)?;
-    }
+    let dir = mc_path.join("versions").join(&name);
+    create_dir_all(&dir)?;
 
     let url = format!(
         "https://meta.fabricmc.net/v2/versions/loader/{mc_version}/{fabric_version}/profile/json",
         fabric_version = fabric.loader_version,
     );
-    let save_path = format!("{dir}/{name}.json");
+    let save_path = dir.join(format!("{name}.json"));
 
-    download(url, save_path, 3, None).await?;
+    download(url, &save_path, 3, None).await?;
     Ok(())
 }
 
@@ -182,10 +178,14 @@ pub fn download_forge(mcversion: &str, forge: Forge, mirror: &str) -> TaskInfo {
         version = forge.version
     );
 
-    let forge_path = format!(
-        "temp-forge-{mcversion}-{version}/forge-{mcversion}-{version}-installer.jar",
+    let forge_path = PathBuf::from(format!(
+        "temp-forge-{mcversion}-{version}",
         version = forge.version
-    );
+    ))
+    .join(format!(
+        "forge-{mcversion}-{version}-installer.jar",
+        version = forge.version
+    ));
 
     TaskInfo {
         url: forge_url,
@@ -195,18 +195,16 @@ pub fn download_forge(mcversion: &str, forge: Forge, mirror: &str) -> TaskInfo {
     }
 }
 
-pub async fn download_mc(mc_path: &str, mcdl: MCDL) -> Result<(), DownloadError> {
-    let dir = mc_path.to_string() + "/versions/" + &mcdl.version;
-    let path = dir.clone() + "/" + &mcdl.version + ".json";
+pub async fn download_mc(mc_path: &Path, mcdl: MCDL) -> Result<(), DownloadError> {
+    let dir = mc_path.join("versions").join(&mcdl.version);
+    let path = dir.join(format!("{}.json", mcdl.version));
     if !needs_redownload(&path, mcdl.sha1.as_deref()).await? {
         return Ok(());
     }
     remove_file_if_exists(&path)?;
-    if !exists(&dir)? {
-        create_dir_all(&dir)?;
-    }
+    create_dir_all(&dir)?;
 
-    download(mcdl.url, path, 3, mcdl.sha1.as_deref()).await?;
+    download(mcdl.url, &path, 3, mcdl.sha1.as_deref()).await?;
 
     Ok(())
 }

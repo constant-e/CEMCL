@@ -2,24 +2,25 @@
 
 use mc::download::{download_assets, download_libraries, needs_redownload};
 use serde_json::json;
-use utils::get_parent_dir;
+use std::path::PathBuf;
+use utils::{append_suffix, get_parent_dir};
 
 const HELLO: &str = "hello world";
 const HELLO_SHA1: &str = "2aae6c35c94fcfb415dbe95f408b9ce91ee846ed";
 
 /// 建一个空的临时目录，返回路径
-fn temp_dir(name: &str) -> String {
+fn temp_dir(name: &str) -> PathBuf {
     let dir = std::env::temp_dir().join(format!("cemcl-test-{}-{name}", std::process::id()));
     let _ = std::fs::remove_dir_all(&dir);
     std::fs::create_dir_all(&dir).unwrap();
-    dir.to_str().unwrap().to_string()
+    dir
 }
 
 /// 缺失的文件、哈希不一致的文件需要重新下载；一致的跳过，无哈希信息时只按存在性判断
 #[tokio::test]
 async fn files_are_rechecked_against_sha1() {
     let dir = temp_dir("needs-redownload");
-    let path = format!("{dir}/f.jar");
+    let path = dir.join("f.jar");
     assert!(needs_redownload(&path, Some(HELLO_SHA1)).await.unwrap());
     assert!(needs_redownload(&path, None).await.unwrap());
 
@@ -43,7 +44,9 @@ async fn files_are_rechecked_against_sha1() {
 #[tokio::test]
 async fn existing_artifact_is_checked_against_sha1() {
     let dir = temp_dir("libraries");
-    let save_path = format!("{dir}/libraries/com/example/lib/1.0/lib-1.0.jar");
+    let save_path = dir
+        .join("libraries")
+        .join("com/example/lib/1.0/lib-1.0.jar");
     let node = json!([{
         "downloads": {"artifact": {
             "path": "com/example/lib/1.0/lib-1.0.jar",
@@ -91,8 +94,10 @@ async fn fabric_library_uses_cached_sha1() {
         "name": "net.fabricmc:intermediary:1.21.5",
         "url": "https://maven.fabricmc.net/",
     }]);
-    let save_path =
-        format!("{dir}/libraries/net/fabricmc/intermediary/1.21.5/intermediary-1.21.5.jar");
+    let save_path = dir
+        .join("libraries")
+        .join("net/fabricmc/intermediary/1.21.5/intermediary-1.21.5.jar");
+    let cache_path = append_suffix(&save_path, ".sha1");
     let url =
         "{fabric_source}/net/fabricmc/intermediary/1.21.5/intermediary-1.21.5.jar".to_string();
 
@@ -113,7 +118,7 @@ async fn fabric_library_uses_cached_sha1() {
     // 有缓存且一致：跳过（缓存的sha1允许maven格式的附加文件名与大小写差异）
     std::fs::write(&save_path, HELLO).unwrap();
     std::fs::write(
-        format!("{save_path}.sha1"),
+        &cache_path,
         format!("{HELLO_SHA1}  intermediary-1.21.5.jar\n"),
     )
     .unwrap();
@@ -122,7 +127,7 @@ async fn fabric_library_uses_cached_sha1() {
         .unwrap();
     assert!(tasks.is_empty());
 
-    std::fs::write(format!("{save_path}.sha1"), HELLO_SHA1.to_uppercase()).unwrap();
+    std::fs::write(&cache_path, HELLO_SHA1.to_uppercase()).unwrap();
     let tasks = download_libraries(&node, &dir, &dir, "{libraries_source}", "{fabric_source}")
         .await
         .unwrap();
@@ -135,11 +140,11 @@ async fn fabric_library_uses_cached_sha1() {
         .unwrap();
     assert_eq!(tasks.len(), 1);
     assert!(!std::fs::exists(&save_path).unwrap());
-    assert!(std::fs::exists(format!("{save_path}.sha1")).unwrap());
+    assert!(std::fs::exists(&cache_path).unwrap());
 
     // 无缓存：没有可用的哈希，保留文件
     std::fs::write(&save_path, "hello").unwrap();
-    std::fs::remove_file(format!("{save_path}.sha1")).unwrap();
+    std::fs::remove_file(&cache_path).unwrap();
     let tasks = download_libraries(&node, &dir, &dir, "{libraries_source}", "{fabric_source}")
         .await
         .unwrap();
@@ -150,13 +155,17 @@ async fn fabric_library_uses_cached_sha1() {
 #[tokio::test]
 async fn existing_asset_is_checked_against_hash() {
     let dir = temp_dir("assets");
-    std::fs::create_dir_all(format!("{dir}/assets/indexes")).unwrap();
+    std::fs::create_dir_all(dir.join("assets").join("indexes")).unwrap();
     std::fs::write(
-        format!("{dir}/assets/indexes/test.json"),
+        dir.join("assets/indexes/test.json"),
         json!({"objects": {"minecraft/test": {"hash": HELLO_SHA1, "size": 11}}}).to_string(),
     )
     .unwrap();
-    let save_path = format!("{dir}/assets/objects/{}/{HELLO_SHA1}", &HELLO_SHA1[0..2]);
+    let save_path = dir
+        .join("assets")
+        .join("objects")
+        .join(&HELLO_SHA1[0..2])
+        .join(HELLO_SHA1);
 
     // 缺失：下载并带上预期hash
     let tasks = download_assets(&dir, "test", "{assets_source}")
@@ -187,9 +196,9 @@ async fn existing_asset_is_checked_against_hash() {
 #[tokio::test]
 async fn duplicate_asset_hashes_produce_one_task() {
     let dir = temp_dir("assets-duplicate");
-    std::fs::create_dir_all(format!("{dir}/assets/indexes")).unwrap();
+    std::fs::create_dir_all(dir.join("assets").join("indexes")).unwrap();
     std::fs::write(
-        format!("{dir}/assets/indexes/test.json"),
+        dir.join("assets/indexes/test.json"),
         json!({"objects": {
             "minecraft/a": {"hash": HELLO_SHA1, "size": 11},
             "minecraft/b": {"hash": HELLO_SHA1, "size": 11},

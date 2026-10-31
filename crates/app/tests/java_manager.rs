@@ -13,27 +13,24 @@ use std::{
 #[cfg(unix)]
 use std::{
     fs::{read_to_string, write},
-    path::Path,
+    path::{Path, PathBuf},
 };
 
 /// 测试会切换进程工作目录，同一测试二进制中的用例串行执行
 static CWD_LOCK: Mutex<()> = Mutex::new(());
 
 #[cfg(unix)]
-fn write_jdk(root: &Path, name: &str, version: &str) -> String {
+fn write_jdk(root: &Path, name: &str, version: &str) -> PathBuf {
     let dir = root.join(name);
     create_dir_all(&dir).unwrap();
     write(dir.join("release"), format!("JAVA_VERSION=\"{version}\"\n")).unwrap();
-    fs::canonicalize(&dir)
-        .unwrap()
-        .to_string_lossy()
-        .into_owned()
+    fs::canonicalize(&dir).unwrap()
 }
 
 #[cfg(unix)]
-fn make_alias(target: &str, link: &Path) -> String {
+fn make_alias(target: &Path, link: &Path) -> PathBuf {
     std::os::unix::fs::symlink(target, link).unwrap();
-    link.to_string_lossy().into_owned()
+    link.to_path_buf()
 }
 
 #[cfg(unix)]
@@ -49,7 +46,7 @@ fn startup_validates_dedupes_merges_and_remaps() {
     let jdk8 = write_jdk(&root, "jdk8", "1.8.0_402");
     let jdk17 = write_jdk(&root, "jdk17", "17.0.11");
     let jdk24 = write_jdk(&root, "jdk24", "24.0.1");
-    let invalid = root.join("removed-jdk").to_string_lossy().into_owned();
+    let invalid = root.join("removed-jdk");
 
     // 软链接别名：只能以实际安装路径添加一次
     let jdk17_alias = make_alias(&jdk17, &root.join("jdk17-link"));
@@ -60,10 +57,10 @@ fn startup_validates_dedupes_merges_and_remaps() {
         serde_json::json!({
             "default": 2,
             "java_list": [
-                invalid.clone(),
-                jdk8.clone(),
-                jdk17_alias.clone(),
-                jdk17.clone(),
+                invalid.to_string_lossy(),
+                jdk8.to_string_lossy(),
+                jdk17_alias.to_string_lossy(),
+                jdk17.to_string_lossy(),
             ],
         })
         .to_string(),
@@ -78,10 +75,10 @@ fn startup_validates_dedupes_merges_and_remaps() {
     let (tx, _rx) = tokio::sync::mpsc::unbounded_channel();
     let mut manager = JavaManager::new_with_detected(tx, detected).unwrap();
 
-    let paths: Vec<String> = manager
+    let paths: Vec<PathBuf> = manager
         .get_java_list()
         .iter()
-        .map(|java| java.get_path().to_string())
+        .map(|java| java.get_path().to_path_buf())
         .collect();
     assert!(!paths.contains(&invalid));
     assert!(!paths.contains(&jdk17_alias));
@@ -97,13 +94,16 @@ fn startup_validates_dedupes_merges_and_remaps() {
 
     // 默认项（软链接）仍指向实际安装位置
     let default = manager.get_default().unwrap();
-    assert_eq!(manager.get_java_list()[default as usize].get_path(), jdk17);
+    assert_eq!(
+        manager.get_java_list()[default as usize].get_path(),
+        jdk17.as_path()
+    );
 
     // 旧索引 -> 新索引：失效项为 None，软链接与真实路径都映射到同一项
     let index_map = manager.take_index_map();
     assert_eq!(index_map.len(), 4);
     assert_eq!(index_map[0], None);
-    let new_index = |path: &str| paths.iter().position(|p| p == path).unwrap() as u32;
+    let new_index = |path: &Path| paths.iter().position(|p| p == path).unwrap() as u32;
     assert_eq!(index_map[1], Some(new_index(&jdk8)));
     assert_eq!(index_map[2], Some(new_index(&jdk17)));
     assert_eq!(index_map[3], Some(new_index(&jdk17)));
@@ -117,24 +117,30 @@ fn startup_validates_dedupes_merges_and_remaps() {
         .iter()
         .map(|path| path.as_str().unwrap())
         .collect();
-    assert!(!saved_paths.contains(&invalid.as_str()));
-    assert!(!saved_paths.contains(&jdk17_alias.as_str()));
-    assert!(!saved_paths.contains(&jdk24_alias.as_str()));
+    let invalid_str = invalid.to_string_lossy();
+    let jdk17_alias_str = jdk17_alias.to_string_lossy();
+    let jdk24_alias_str = jdk24_alias.to_string_lossy();
+    let jdk8_str = jdk8.to_string_lossy();
+    let jdk17_str = jdk17.to_string_lossy();
+    let jdk24_str = jdk24.to_string_lossy();
+    assert!(!saved_paths.contains(&invalid_str.as_ref()));
+    assert!(!saved_paths.contains(&jdk17_alias_str.as_ref()));
+    assert!(!saved_paths.contains(&jdk24_alias_str.as_ref()));
     assert_eq!(
         saved_paths
             .iter()
-            .filter(|path| **path == jdk17.as_str())
+            .filter(|path| **path == jdk17_str.as_ref())
             .count(),
         1
     );
     assert_eq!(
         saved_paths
             .iter()
-            .filter(|path| **path == jdk24.as_str())
+            .filter(|path| **path == jdk24_str.as_ref())
             .count(),
         1
     );
-    assert!(saved_paths.contains(&jdk8.as_str()));
+    assert!(saved_paths.contains(&jdk8_str.as_ref()));
     assert_eq!(saved["default"].as_u64(), Some(default as u64));
 
     // 运行时添加软链接别名时视为已存在，不产生重复项
@@ -149,7 +155,7 @@ fn startup_validates_dedupes_merges_and_remaps() {
     let default_after = manager.get_default().unwrap();
     assert_eq!(
         manager.get_java_list()[default_after as usize].get_path(),
-        jdk17
+        jdk17.as_path()
     );
     let index_map = manager.take_index_map();
     assert_eq!(index_map[jdk8_index as usize], None);
@@ -162,7 +168,7 @@ fn startup_validates_dedupes_merges_and_remaps() {
     let default_after = manager.get_default().unwrap();
     assert_eq!(
         manager.get_java_list()[default_after as usize].get_path(),
-        jdk17
+        jdk17.as_path()
     );
     let index_map = manager.take_index_map();
     assert_eq!(index_map[default_before as usize], Some(default_after));
@@ -170,7 +176,7 @@ fn startup_validates_dedupes_merges_and_remaps() {
         manager
             .get_java_list()
             .iter()
-            .any(|java| java.get_path() == jdk11)
+            .any(|java| java.get_path() == jdk11.as_path())
     );
 
     std::env::set_current_dir(old_cwd).unwrap();

@@ -2,10 +2,11 @@
 
 use downloader::task::TaskInfo;
 use downloader::taskset::{TaskSet, TaskSetStatus};
+use std::path::PathBuf;
 use std::sync::Arc;
 use tokio::sync::Semaphore;
 
-fn info(path: String) -> TaskInfo {
+fn info(path: PathBuf) -> TaskInfo {
     TaskInfo::new(
         "http://127.0.0.1:1/obj".to_string(),
         path,
@@ -22,7 +23,7 @@ fn info(path: String) -> TaskInfo {
 #[tokio::test]
 async fn taskset_deduplicates_same_save_path() {
     let dir = std::env::temp_dir().join(format!("cemcl-test-dedup-{}", std::process::id()));
-    let path = dir.join("obj").to_str().unwrap().to_string();
+    let path = dir.join("obj");
     let set = TaskSet::new(
         reqwest::Client::new(),
         vec![info(path.clone()), info(path)],

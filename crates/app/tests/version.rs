@@ -49,7 +49,7 @@ fn load_clean_and_save() {
 
     let config = ConfigMC {
         height: 600,
-        path: ".minecraft".to_string(),
+        path: PathBuf::from(".minecraft"),
         width: 800,
         wrapper: "wrap".to_string(),
         xms: "1G".to_string(),

@@ -4,6 +4,7 @@ use downloader::task::{DownloadTask, DownloadTaskStatus};
 use reqwest::Client;
 use std::io::{Read, Write};
 use std::net::TcpListener;
+use std::path::{Path, PathBuf};
 use std::sync::Arc;
 use tokio::sync::Semaphore;
 
@@ -11,11 +12,18 @@ const HELLO: &str = "hello world";
 const HELLO_SHA1: &str = "2aae6c35c94fcfb415dbe95f408b9ce91ee846ed";
 
 /// 建一个空的临时目录，返回路径
-fn temp_dir(name: &str) -> String {
+fn temp_dir(name: &str) -> PathBuf {
     let dir = std::env::temp_dir().join(format!("cemcl-test-{}-{name}", std::process::id()));
     let _ = std::fs::remove_dir_all(&dir);
     std::fs::create_dir_all(&dir).unwrap();
-    dir.to_str().unwrap().to_string()
+    dir
+}
+
+/// `<文件>.sha1` 缓存路径
+fn sha1_cache(path: &Path) -> PathBuf {
+    let mut cache = path.as_os_str().to_os_string();
+    cache.push(".sha1");
+    PathBuf::from(cache)
 }
 
 /// 起一个本地HTTP服务，按路径返回内容，返回地址
@@ -50,7 +58,7 @@ fn serve(responses: Vec<(&'static str, String)>) -> String {
 }
 
 /// 建一个下载任务
-fn new_task(url: String, save_path: String) -> DownloadTask {
+fn new_task(url: String, save_path: PathBuf) -> DownloadTask {
     DownloadTask::new(url, save_path, Client::new(), Arc::new(Semaphore::new(1)))
 }
 
@@ -60,7 +68,7 @@ async fn task_verifies_sha1() {
     let dir = temp_dir("sha1");
     let server = serve(vec![("/f", HELLO.to_string())]);
 
-    let path = format!("{dir}/ok");
+    let path = dir.join("ok");
     let mut task = new_task(format!("{server}/f"), path.clone());
     task.sha1 = Some(HELLO_SHA1.to_string());
     task.start().await.unwrap();
@@ -70,7 +78,7 @@ async fn task_verifies_sha1() {
         DownloadTaskStatus::Completed
     ));
 
-    let path = format!("{dir}/bad");
+    let path = dir.join("bad");
     let mut task = new_task(format!("{server}/f"), path.clone());
     task.sha1 = Some("0".repeat(40));
     let e = task.start().await.unwrap_err();
@@ -88,13 +96,13 @@ async fn task_prefers_sha1_over_sha1_url() {
     let dir = temp_dir("sha1-priority");
     let server = serve(vec![("/f.jar", HELLO.to_string())]);
 
-    let path = format!("{dir}/f.jar");
+    let path = dir.join("f.jar");
     let mut task = new_task(format!("{server}/f.jar"), path.clone());
     task.sha1 = Some(HELLO_SHA1.to_string());
     task.sha1_url = Some(format!("{server}/f.jar.sha1"));
     task.start().await.unwrap();
     assert_eq!(std::fs::read_to_string(&path).unwrap(), HELLO);
-    assert!(!std::fs::exists(format!("{path}.sha1")).unwrap());
+    assert!(!std::fs::exists(sha1_cache(&path)).unwrap());
 }
 
 /// 只有sha1_url时从该地址获取哈希，校验后缓存到<save_path>.sha1（maven格式的文件名不影响解析）
@@ -106,13 +114,13 @@ async fn task_verifies_sha1_from_url() {
         ("/f.jar.sha1", format!("{HELLO_SHA1}  f.jar\n")),
     ]);
 
-    let path = format!("{dir}/f.jar");
+    let path = dir.join("f.jar");
     let mut task = new_task(format!("{server}/f.jar"), path.clone());
     task.sha1_url = Some(format!("{server}/f.jar.sha1"));
     task.start().await.unwrap();
     assert_eq!(std::fs::read_to_string(&path).unwrap(), HELLO);
     assert_eq!(
-        std::fs::read_to_string(format!("{path}.sha1")).unwrap(),
+        std::fs::read_to_string(sha1_cache(&path)).unwrap(),
         HELLO_SHA1
     );
 }
@@ -127,14 +135,14 @@ async fn task_fails_on_remote_sha1_mismatch() {
         ("/f.jar.sha1", bad_sha1.clone()),
     ]);
 
-    let path = format!("{dir}/f.jar");
+    let path = dir.join("f.jar");
     let mut task = new_task(format!("{server}/f.jar"), path.clone());
     task.sha1_url = Some(format!("{server}/f.jar.sha1"));
     let e = task.start().await.unwrap_err();
     assert!(e.to_string().contains("sha1 mismatch"), "{e}");
     assert!(!std::fs::exists(&path).unwrap());
     assert_eq!(
-        std::fs::read_to_string(format!("{path}.sha1")).unwrap(),
+        std::fs::read_to_string(sha1_cache(&path)).unwrap(),
         bad_sha1
     );
 }
@@ -149,11 +157,11 @@ async fn task_skips_verification_without_usable_sha1() {
     ]);
 
     for (name, sha1_path) in [("missing", "/missing.sha1"), ("garbage", "/not-sha1")] {
-        let path = format!("{dir}/{name}.jar");
+        let path = dir.join(format!("{name}.jar"));
         let mut task = new_task(format!("{server}/f.jar"), path.clone());
         task.sha1_url = Some(format!("{server}{sha1_path}"));
         task.start().await.unwrap();
         assert_eq!(std::fs::read_to_string(&path).unwrap(), HELLO, "{name}");
-        assert!(!std::fs::exists(format!("{path}.sha1")).unwrap(), "{name}");
+        assert!(!std::fs::exists(sha1_cache(&path)).unwrap(), "{name}");
     }
 }

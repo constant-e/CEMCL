@@ -85,11 +85,14 @@ impl AppRuntime {
                     .await
             }
             UICommand::AddJava(java_path) => {
-                self.java_manager.add_from_ui(java_path)?;
+                self.java_manager
+                    .add_from_ui(std::path::PathBuf::from(java_path))?;
                 let index_map = self.java_manager.take_index_map();
                 self.games.remap_java_indices(&index_map)
             }
-            UICommand::CheckJava(java_path) => self.java_manager.check(java_path),
+            UICommand::CheckJava(java_path) => {
+                self.java_manager.check(std::path::PathBuf::from(java_path))
+            }
             UICommand::DelAccount(index) => self.account_manager.del_from_ui(index),
             UICommand::DelGame(index) => self.games.del_game(index),
             UICommand::DelJava(index) => {

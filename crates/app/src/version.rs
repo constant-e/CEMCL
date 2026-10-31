@@ -6,6 +6,7 @@ use serde_json::json;
 use std::{
     collections::HashSet,
     fs::{exists, read_to_string, remove_dir_all, write},
+    path::{Path, PathBuf},
 };
 
 use mc::{MCInstallation, manifest::MCDL};
@@ -18,7 +19,7 @@ pub struct ConfigMC {
     /// 默认游戏窗口高度
     pub height: u32,
     /// .minecraft位置
-    pub path: String,
+    pub path: PathBuf,
     /// 默认游戏窗口宽度
     pub width: u32,
     /// 默认封装器
@@ -39,7 +40,7 @@ impl Default for ConfigMC {
     fn default() -> Self {
         ConfigMC {
             height: 600,
-            path: String::from(".minecraft"),
+            path: PathBuf::from(".minecraft"),
             width: 800,
             wrapper: String::new(),
             xms: String::from("1G"),
@@ -82,8 +83,8 @@ impl VersionManager {
 
     pub fn del(&mut self, index: u32) -> Result<(), LauncherError> {
         let version = &self.get(index).version;
-        let path = self.config.path.clone() + "/versions/" + version;
-        remove_dir_all(path)?;
+        let path = self.config.path.join("versions").join(version);
+        remove_dir_all(&path)?;
 
         self.version_list.remove(index as usize);
 
@@ -178,10 +179,12 @@ impl VersionManager {
             }
 
             // Read the MC version JSON to get javaVersion requirement
-            let json_path = format!(
-                "{}/versions/{}/{}.json",
-                self.config.path, installation.version, installation.version
-            );
+            let json_path = self
+                .config
+                .path
+                .join("versions")
+                .join(&installation.version)
+                .join(format!("{}.json", installation.version));
             let min_java = if let Ok(content) = std::fs::read_to_string(&json_path) {
                 if let Ok(json) = serde_json::from_str::<serde_json::Value>(&content) {
                     json["javaVersion"]["majorVersion"]
@@ -208,11 +211,11 @@ impl VersionManager {
         let mut current_name = None;
         let mut index = 0usize;
         let mut cleaned = false;
-        let dir = config.path + "/versions";
+        let dir = config.path.join("versions");
 
         if !exists(&dir)? {
             // 空目录
-            warn!("{dir} is empty.");
+            warn!("{} is empty.", dir.display());
             return Ok((Vec::new(), 0, false));
         }
 
@@ -228,9 +231,12 @@ impl VersionManager {
             current_name = versions.keys().nth(index).cloned();
 
             for (name, node) in versions {
-                let path = dir.clone() + "/" + name + "/" + name + ".json";
+                let path = dir.join(name).join(format!("{name}.json"));
                 if !exists(&path)? {
-                    warn!("Invalid version {name}: {path} not exists, removing it.");
+                    warn!(
+                        "Invalid version {name}: {} not exists, removing it.",
+                        path.display()
+                    );
                     cleaned = true;
                     continue;
                 }
@@ -267,9 +273,9 @@ impl VersionManager {
                 continue;
             }
 
-            let path = dir.clone() + "/" + &version + "/" + &version + ".json";
+            let path = dir.join(&version).join(format!("{version}.json"));
             if !exists(&path)? {
-                error!("{path} not exists.");
+                error!("{} not exists.", path.display());
                 continue;
             }
 
@@ -344,7 +350,7 @@ impl VersionManager {
         }
 
         write(
-            self.config.path.clone() + "/launcher_profiles.json",
+            self.config.path.join("launcher_profiles.json"),
             json.to_string(),
         )?;
         Ok(())
@@ -473,7 +479,7 @@ fn i_get_index(
 }
 
 /// 读取 .minecraft 版本 json 中的游戏类型
-fn i_type_from_json(path: &str) -> Result<mc::MCType, LauncherError> {
+fn i_type_from_json(path: &Path) -> Result<mc::MCType, LauncherError> {
     let json = serde_json::from_str::<serde_json::Value>(&read_to_string(path)?)?;
     to_mc_type(
         json["type"]

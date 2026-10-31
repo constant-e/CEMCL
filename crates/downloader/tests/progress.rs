@@ -3,13 +3,14 @@
 
 use downloader::task::TaskInfo;
 use downloader::taskset::TaskSet;
+use std::path::PathBuf;
 use std::sync::Arc;
 use tokio::sync::Semaphore;
 
 fn info(path: &str, expected_size: Option<u64>) -> TaskInfo {
     let mut info = TaskInfo::new(
         "http://127.0.0.1:1/obj".to_string(),
-        path.to_string(),
+        PathBuf::from(path),
         Some("0".repeat(40)),
         None,
         None,

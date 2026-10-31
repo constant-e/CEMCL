@@ -5,7 +5,7 @@ use sha1::{Digest, Sha1};
 use std::env::consts as env;
 use std::fs;
 use std::io::ErrorKind;
-use std::path::Path;
+use std::path::{Path, PathBuf};
 use tokio::io::AsyncReadExt;
 
 /// 检查参数是否可以添加
@@ -85,7 +85,7 @@ static CLIENT: std::sync::LazyLock<reqwest::Client> = std::sync::LazyLock::new(|
 });
 
 /// 计算文件的sha1（小写十六进制）
-pub async fn sha1_file(path: &str) -> std::io::Result<String> {
+pub async fn sha1_file(path: &Path) -> std::io::Result<String> {
     let mut file = tokio::fs::File::open(path).await?;
     let mut hasher = Sha1::new();
     let mut buf = vec![0u8; 64 * 1024];
@@ -109,14 +109,14 @@ pub fn to_hex(bytes: &[u8]) -> String {
 /// `sha1` 非空时校验下载内容，不一致则删除文件后重试
 pub async fn download(
     url: String,
-    path: String,
+    path: &Path,
     max: usize,
     sha1: Option<&str>,
 ) -> Result<(), DLError> {
     info!("Start downloading {url}");
     let mut c = 0; // retry times
     loop {
-        match download_once(&url, &path, sha1).await {
+        match download_once(&url, path, sha1).await {
             Ok(()) => {
                 info!("Finish downloading {url}");
                 return Ok(());
@@ -134,7 +134,7 @@ pub async fn download(
 }
 
 /// 下载并校验一次，校验失败时删除文件（不删除的话重试就会跳过写入）
-async fn download_once(url: &str, path: &str, sha1: Option<&str>) -> Result<(), DLError> {
+async fn download_once(url: &str, path: &Path, sha1: Option<&str>) -> Result<(), DLError> {
     let bytes = CLIENT.get(url).send().await?.bytes().await?;
     tokio::fs::write(path, bytes).await?;
     let Some(sha1) = sha1 else {
@@ -153,30 +153,37 @@ async fn download_once(url: &str, path: &str, sha1: Option<&str>) -> Result<(), 
     }
     remove_invalid(path).await;
     Err(DLError::IOError(std::io::Error::other(format!(
-        "sha1 mismatch for {path}: expected {sha1}, got {actual}"
+        "sha1 mismatch for {}: expected {sha1}, got {actual}",
+        path.display()
     ))))
 }
 
 /// 删除校验失败的文件，删除失败只记录日志（重试时会覆盖写入）
-async fn remove_invalid(path: &str) {
+async fn remove_invalid(path: &Path) {
     if let Err(e) = tokio::fs::remove_file(path).await {
-        warn!("Failed to remove the invalid file {path}. Reason: {e}");
+        warn!(
+            "Failed to remove the invalid file {}. Reason: {e}",
+            path.display()
+        );
     }
 }
 
-/// 获取文件所在文件夹
-pub fn get_parent_dir(path: &str) -> String {
-    Path::new(path)
-        .parent()
-        .and_then(|p| p.to_str())
-        .unwrap_or("")
-        .to_string()
+/// 获取文件所在文件夹；没有父目录时返回空路径
+pub fn get_parent_dir(path: &Path) -> &Path {
+    path.parent().unwrap_or_else(|| Path::new(""))
+}
+
+/// 在路径末尾追加后缀（不替换扩展名），用于 `<file>.sha1` 之类的同名缓存文件
+pub fn append_suffix(path: &Path, suffix: &str) -> PathBuf {
+    let mut path = path.as_os_str().to_os_string();
+    path.push(suffix);
+    PathBuf::from(path)
 }
 
 /// 列出目录下所有文件夹
-pub fn list_dir(path: &String) -> std::io::Result<Vec<String>> {
+pub fn list_dir(path: &Path) -> std::io::Result<Vec<String>> {
     let mut result: Vec<String> = Vec::new();
-    for entry in fs::read_dir(&Path::new(path))? {
+    for entry in fs::read_dir(path)? {
         let entry = entry?;
         let path = entry.path();
         if !path.is_dir() {

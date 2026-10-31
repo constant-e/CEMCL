@@ -1,5 +1,3 @@
-use serde_json::json;
-
 /// Minecraft Installation
 #[derive(Clone)]
 pub struct MCInstallation {

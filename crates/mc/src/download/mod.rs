@@ -1,6 +1,7 @@
 use log::warn;
 use std::fs::exists;
 use std::io::ErrorKind;
+use std::path::{Path, PathBuf};
 use utils::sha1_file;
 
 use crate::download::DownloadError::{DeserializeError, IOError, ReqwestError};
@@ -14,7 +15,7 @@ pub use libraries::download_libraries;
 
 pub struct TaskInfo {
     pub url: String,
-    pub save_path: String,
+    pub save_path: PathBuf,
     /// 文件预期大小，来自版本清单/资源索引；仅供进度显示，未知时为`None`
     pub size: Option<u64>,
     /// 下载后的预期sha1
@@ -23,7 +24,7 @@ pub struct TaskInfo {
 
 pub struct DownloadTask {
     pub url: String,
-    pub save_path: String,
+    pub save_path: PathBuf,
     /// 文件预期大小，来自版本清单/资源索引；仅供进度显示，未知时为`None`
     pub size: Option<u64>,
     /// 下载后的预期sha1；与`sha1_url`二选一，同时给出时以`sha1`为准
@@ -37,7 +38,7 @@ pub struct DownloadTask {
 impl DownloadTask {
     pub fn new(
         url: String,
-        save_path: String,
+        save_path: PathBuf,
         sha1: Option<String>,
         sha1_url: Option<String>,
         on_finish: Option<Box<dyn Fn() + Send + Sync>>,
@@ -56,7 +57,7 @@ impl DownloadTask {
 /// 已存在的文件是否需要重新下载：文件缺失，或与预期sha1不一致时为`true`
 ///
 /// 下载器以追加方式写入文件，返回`true`时调用方必须先删除旧文件
-pub async fn needs_redownload(path: &str, sha1: Option<&str>) -> Result<bool, DownloadError> {
+pub async fn needs_redownload(path: &Path, sha1: Option<&str>) -> Result<bool, DownloadError> {
     if !exists(path)? {
         return Ok(true);
     }
@@ -67,18 +68,24 @@ pub async fn needs_redownload(path: &str, sha1: Option<&str>) -> Result<bool, Do
     match sha1_file(path).await {
         Ok(actual) if actual.eq_ignore_ascii_case(sha1) => Ok(false),
         Ok(actual) => {
-            warn!("sha1 mismatch for {path}: expected {sha1}, got {actual}, redownloading");
+            warn!(
+                "sha1 mismatch for {}: expected {sha1}, got {actual}, redownloading",
+                path.display()
+            );
             Ok(true)
         }
         Err(e) => {
-            warn!("Failed to hash {path}. Reason: {e}, redownloading");
+            warn!(
+                "Failed to hash {}. Reason: {e}, redownloading",
+                path.display()
+            );
             Ok(true)
         }
     }
 }
 
 /// 删除失效的文件；文件不存在视为已删除
-pub(crate) fn remove_file_if_exists(path: &str) -> Result<(), DownloadError> {
+pub(crate) fn remove_file_if_exists(path: &Path) -> Result<(), DownloadError> {
     match std::fs::remove_file(path) {
         Ok(()) => Ok(()),
         Err(e) if e.kind() == ErrorKind::NotFound => Ok(()),
@@ -87,11 +94,36 @@ pub(crate) fn remove_file_if_exists(path: &str) -> Result<(), DownloadError> {
 }
 
 /// 读取下载器缓存的`<文件>.sha1`（maven格式，可能附带文件名），无效时返回`None`
-pub(crate) fn read_cached_sha1(path: &str) -> Option<String> {
-    let text = std::fs::read_to_string(path).ok()?;
+pub(crate) fn read_cached_sha1(cache_path: &Path) -> Option<String> {
+    let text = std::fs::read_to_string(cache_path).ok()?;
     let token = text.split_whitespace().next()?;
     (token.len() == 40 && token.bytes().all(|b| b.is_ascii_hexdigit()))
         .then(|| token.to_lowercase())
+}
+
+/// fabric库名（`group:artifact:version`）对应的maven相对路径
+pub(crate) fn maven_relative_path(name: &str) -> Option<PathBuf> {
+    let parts: Vec<&str> = name.split(':').collect();
+    if parts.len() < 3 {
+        return None;
+    }
+    let mut path = PathBuf::new();
+    for group in parts[0].split('.') {
+        path.push(group);
+    }
+    for part in &parts[1..] {
+        path.push(part);
+    }
+    path.push(format!("{}-{}.jar", parts[1], parts[2]));
+    Some(path)
+}
+
+/// 把相对路径转换为URL路径（始终使用`/`分隔）
+pub(crate) fn url_path(path: &Path) -> String {
+    path.iter()
+        .map(|part| part.to_string_lossy())
+        .collect::<Vec<_>>()
+        .join("/")
 }
 
 #[derive(Debug)]

@@ -2,6 +2,7 @@ use futures::StreamExt;
 use log::{error, info, warn};
 use reqwest::Client;
 use sha1::{Digest, Sha1};
+use std::path::{Path, PathBuf};
 use std::sync::{
     Arc,
     atomic::{AtomicBool, AtomicU64, Ordering},
@@ -126,7 +127,7 @@ pub enum DownloadTaskCommand {
 /// Download task info used for creating a task
 pub struct TaskInfo {
     pub url: String,
-    pub save_path: String,
+    pub save_path: PathBuf,
     /// 预期文件大小，用于在任务开始前也计入总体进度；未知时为`None`
     pub expected_size: Option<u64>,
     /// 下载后的预期sha1；与`sha1_url`二选一，同时给出时以`sha1`为准
@@ -143,7 +144,7 @@ pub struct TaskInfo {
 impl TaskInfo {
     pub fn new(
         url: String,
-        save_path: String,
+        save_path: PathBuf,
         sha1: Option<String>,
         sha1_url: Option<String>,
         on_failed: Option<Box<dyn Fn() + Send + Sync>>,
@@ -170,7 +171,7 @@ pub struct DownloadTask {
     client: Client,
     semaphore: Arc<Semaphore>,
     pub url: String,
-    pub save_path: String,
+    pub save_path: PathBuf,
     /// 预期文件大小（来自上层元数据），用于在任务开始前也计入总体进度
     pub expected_size: Option<u64>,
     /// 下载后的预期sha1；与`sha1_url`二选一，同时给出时以`sha1`为准
@@ -191,7 +192,7 @@ pub struct DownloadTask {
 }
 
 impl DownloadTask {
-    pub fn new(url: String, save_path: String, client: Client, semaphore: Arc<Semaphore>) -> Self {
+    pub fn new(url: String, save_path: PathBuf, client: Client, semaphore: Arc<Semaphore>) -> Self {
         let (sender, receiver) = tokio::sync::mpsc::channel::<DownloadTaskCommand>(10);
         DownloadTask {
             client,
@@ -244,7 +245,11 @@ impl DownloadTask {
     /// start the task
     /// the task may not start immediately due to the concurrency limit
     pub async fn start(&self) -> Result<(), DownloadTaskError> {
-        info!("created url={0} path={1}", self.url, self.save_path);
+        info!(
+            "created url={0} path={1}",
+            self.url,
+            self.save_path.display()
+        );
         let semaphore = self.semaphore.clone();
 
         let permit = match semaphore.acquire().await {
@@ -296,7 +301,7 @@ impl DownloadTask {
         {
             Ok(file) => file,
             Err(e) => {
-                error!("Failed to open {0}. Reason: {e}", self.save_path);
+                error!("Failed to open {0}. Reason: {e}", self.save_path.display());
                 *self.status.try_lock()? = DownloadTaskStatus::Failed;
                 return Err(e.into());
             }
@@ -348,7 +353,7 @@ impl DownloadTask {
                                 if let Err(e) = tokio::fs::remove_file(&self.save_path).await {
                                     error!(
                                         "Failed to remove incompleted file {0}. Reason: {e}",
-                                        self.save_path
+                                        self.save_path.display()
                                     );
                                 }
                                 if let Some(on_cancel) = &self.on_cancel {
@@ -364,7 +369,7 @@ impl DownloadTask {
                                 if let Err(e) = tokio::fs::remove_file(&self.save_path).await {
                                     error!(
                                         "Failed to remove incompleted file {0}. Reason: {e}",
-                                        self.save_path
+                                        self.save_path.display()
                                     );
                                 }
                                 if let Some(on_failed) = &self.on_failed {
@@ -382,7 +387,7 @@ impl DownloadTask {
                     if let Err(e) = tokio::fs::remove_file(&self.save_path).await {
                         error!(
                             "Failed to remove incompleted file {0}. Reason: {e}",
-                            self.save_path
+                            self.save_path.display()
                         );
                     }
                     if let Some(on_cancel) = &self.on_cancel {
@@ -398,7 +403,7 @@ impl DownloadTask {
                         if let Err(e) = tokio::fs::remove_file(&self.save_path).await {
                             error!(
                                 "Failed to remove incompleted file {0}. Reason: {e}",
-                                self.save_path
+                                self.save_path.display()
                             );
                         }
                         if let Some(on_failed) = &self.on_failed {
@@ -417,7 +422,10 @@ impl DownloadTask {
                     attempts = 0;
 
                     if let Err(e) = file.write_all(&chunk).await {
-                        error!("Failed to write chunk to {0}. Reason: {e}", self.save_path);
+                        error!(
+                            "Failed to write chunk to {0}. Reason: {e}",
+                            self.save_path.display()
+                        );
                         continue;
                     }
 
@@ -458,7 +466,7 @@ impl DownloadTask {
                         if let Err(e) = tokio::fs::remove_file(&self.save_path).await {
                             error!(
                                 "Failed to remove incompleted file {0}. Reason: {e}",
-                                self.save_path
+                                self.save_path.display()
                             );
                         }
                         *self.status.try_lock()? = DownloadTaskStatus::Failed;
@@ -498,17 +506,22 @@ impl DownloadTask {
         } else if let Some(url) = &self.sha1_url {
             match fetch_sha1(&self.client, url).await {
                 Some(sha1) => {
-                    if let Err(e) =
-                        tokio::fs::write(format!("{}.sha1", &self.save_path), &sha1).await
-                    {
-                        warn!("Failed to cache sha1 of {0}. Reason: {e}", self.save_path);
+                    let mut cache_path = self.save_path.clone().into_os_string();
+                    cache_path.push(".sha1");
+                    let cache_path = PathBuf::from(cache_path);
+                    if let Err(e) = tokio::fs::write(&cache_path, &sha1).await {
+                        warn!(
+                            "Failed to cache sha1 of {}. Reason: {e}",
+                            self.save_path.display()
+                        );
                     }
                     sha1
                 }
                 None => {
                     warn!(
                         "Failed to get sha1 of {0} from {1}, skip verification",
-                        self.save_path, url
+                        self.save_path.display(),
+                        url
                     );
                     return Ok(());
                 }
@@ -520,11 +533,11 @@ impl DownloadTask {
         let actual = match sha1_file(&self.save_path).await {
             Ok(actual) => actual,
             Err(e) => {
-                error!("Failed to hash {0}. Reason: {e}", self.save_path);
+                error!("Failed to hash {0}. Reason: {e}", self.save_path.display());
                 self.remove_invalid().await;
                 return Err(DownloadTaskError::Failed(Some(format!(
                     "Failed to hash {}: {e}",
-                    self.save_path
+                    self.save_path.display()
                 ))));
             }
         };
@@ -534,12 +547,12 @@ impl DownloadTask {
 
         error!(
             "sha1 mismatch for {0}: expected {expected}, got {actual}",
-            self.save_path
+            self.save_path.display()
         );
         self.remove_invalid().await;
         Err(DownloadTaskError::Failed(Some(format!(
             "sha1 mismatch for {}: expected {expected}, got {actual}",
-            self.save_path
+            self.save_path.display()
         ))))
     }
 
@@ -548,7 +561,7 @@ impl DownloadTask {
         if let Err(e) = tokio::fs::remove_file(&self.save_path).await {
             warn!(
                 "Failed to remove the invalid file {0}. Reason: {e}",
-                self.save_path
+                self.save_path.display()
             );
         }
     }
@@ -640,7 +653,7 @@ fn parse_sha1(text: &str) -> Option<String> {
 }
 
 /// 计算文件的sha1（小写十六进制）
-async fn sha1_file(path: &str) -> std::io::Result<String> {
+async fn sha1_file(path: &Path) -> std::io::Result<String> {
     let mut file = tokio::fs::File::open(path).await?;
     let mut hasher = Sha1::new();
     let mut buf = vec![0u8; 64 * 1024];

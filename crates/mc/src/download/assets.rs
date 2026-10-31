@@ -2,18 +2,19 @@
 
 use serde_json::Value;
 use std::collections::HashSet;
-use std::fs::{create_dir_all, exists, read_to_string};
+use std::fs::{create_dir_all, read_to_string};
+use std::path::Path;
 
 use super::{DownloadError, DownloadTask, needs_redownload, remove_file_if_exists};
 
 /// 下载assets
 pub async fn download_assets(
-    path: &str,
+    path: &Path,
     id: &str,
     mirror: &str,
 ) -> Result<Vec<DownloadTask>, DownloadError> {
-    let assets_dir = path.to_string() + "/assets";
-    let index_path = assets_dir.clone() + "/indexes/" + &id + ".json";
+    let assets_dir = path.join("assets");
+    let index_path = assets_dir.join("indexes").join(format!("{id}.json"));
     let json = serde_json::from_str::<Value>(&read_to_string(&index_path)?)?;
     let mut tasks = Vec::new();
     // 不同资产名可以引用同一个对象，按 hash 去重，避免多个任务写同一路径
@@ -26,16 +27,12 @@ pub async fn download_assets(
         if !scheduled.insert(hash) {
             continue;
         }
-        let dl_path = hash[0..2].to_string() + "/" + hash;
-        let obj_path = assets_dir.clone() + "/objects";
-        let save_path = obj_path.clone() + "/" + &dl_path;
+        let obj_dir = assets_dir.join("objects");
+        let save_path = obj_dir.join(&hash[0..2]).join(hash);
         if needs_redownload(&save_path, Some(hash)).await? {
             remove_file_if_exists(&save_path)?;
-            let dir = obj_path.clone() + "/" + &hash[0..2];
-            if !exists(&dir)? {
-                create_dir_all(&dir)?;
-            }
-            let url = mirror.to_string() + "/" + &dl_path;
+            create_dir_all(obj_dir.join(&hash[0..2]))?;
+            let url = format!("{mirror}/{}/{}", &hash[0..2], hash);
             let mut task = DownloadTask::new(url, save_path, Some(hash.to_string()), None, None);
             task.size = node["size"].as_u64();
             tasks.push(task);

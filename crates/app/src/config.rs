@@ -2,7 +2,7 @@
 
 use downloader::{Config as DownloaderConfig, DownloadManager};
 use serde_json::json;
-use std::{collections::HashMap, fs};
+use std::{collections::HashMap, fs, path::PathBuf};
 
 use crate::{
     LauncherError,
@@ -14,7 +14,7 @@ pub struct ConfigGeneral {
     /// 启动后关闭启动器
     pub close_after_launch: bool,
     /// .minecraft路径
-    pub game_path: String,
+    pub game_path: PathBuf,
     /// 进度显示方式
     pub progress_mode: frontend::ProgressMode,
 }
@@ -80,7 +80,7 @@ impl From<frontend::ConfigGeneral> for ConfigGeneral {
     fn from(value: frontend::ConfigGeneral) -> Self {
         Self {
             close_after_launch: value.close_after_launch,
-            game_path: value.game_path,
+            game_path: PathBuf::from(value.game_path),
             progress_mode: value.progress_mode,
         }
     }
@@ -90,7 +90,7 @@ impl From<frontend::ConfigMC> for ConfigMC {
     fn from(value: frontend::ConfigMC) -> Self {
         Self {
             height: value.height,
-            path: value.path,
+            path: PathBuf::from(value.path),
             width: value.width,
             wrapper: value.wrapper,
             xms: value.xms,
@@ -116,7 +116,7 @@ impl From<ConfigGeneral> for frontend::ConfigGeneral {
     fn from(value: ConfigGeneral) -> Self {
         Self {
             close_after_launch: value.close_after_launch,
-            game_path: value.game_path,
+            game_path: value.game_path.to_string_lossy().into_owned(),
             progress_mode: value.progress_mode,
         }
     }
@@ -126,7 +126,7 @@ impl From<ConfigMC> for frontend::ConfigMC {
     fn from(value: ConfigMC) -> Self {
         Self {
             height: value.height,
-            path: value.path,
+            path: value.path.to_string_lossy().into_owned(),
             width: value.width,
             wrapper: value.wrapper,
             xms: value.xms,
@@ -139,7 +139,7 @@ impl Default for ConfigGeneral {
     fn default() -> Self {
         ConfigGeneral {
             close_after_launch: false,
-            game_path: String::from(".minecraft"),
+            game_path: PathBuf::from(".minecraft"),
             progress_mode: frontend::ProgressMode::BySize,
         }
     }
@@ -208,7 +208,7 @@ impl ConfigManager {
                 .as_str()
                 .ok_or(LauncherError::LauncherConfigError)?,
         );
-        config_general.game_path = String::from(
+        config_general.game_path = PathBuf::from(
             json["game_path"]
                 .as_str()
                 .ok_or(LauncherError::LauncherConfigError)?,
@@ -300,7 +300,7 @@ impl ConfigManager {
                 "concurrency": config_dl.concurrency,
                 "fabric_source": config_dl.fabric_source,
                 "forge_source": config_dl.forge_source,
-                "game_path": config.game_path,
+                "game_path": config.game_path.to_string_lossy(),
                 "game_source": config_dl.game_source,
                 "height": config_mc.height,
                 "libraries_source": config_dl.libraries_source,

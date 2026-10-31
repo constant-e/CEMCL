@@ -2,6 +2,7 @@
 
 use frontend::{UIUpdate, home};
 use mc::launch::get_launch_command;
+use std::path::PathBuf;
 use std::process::Command;
 
 use crate::{
@@ -145,16 +146,15 @@ impl LaunchManager {
         // 如果未选择 Java，直接使用系统 PATH 中的 java
         let java_path = match version.java_index {
             Some(idx) => java.get_java_path_by_index(idx)?,
-            None => "java".to_string(),
+            None => PathBuf::from("java"),
         };
-        let mut cmd = Command::new(if version.wrapper.is_empty() {
-            java_path.clone()
+        let mut cmd = if version.wrapper.is_empty() {
+            Command::new(&java_path)
         } else {
-            version.wrapper.clone()
-        });
-        if !version.wrapper.is_empty() {
-            cmd.arg(java_path);
-        }
+            let mut cmd = Command::new(&version.wrapper);
+            cmd.arg(&java_path);
+            cmd
+        };
         cmd.args(cmd_list);
 
         std::thread::spawn(move || s.send(cmd.spawn()));

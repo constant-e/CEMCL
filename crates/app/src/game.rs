@@ -9,9 +9,9 @@ use mc::{
 };
 use std::{
     fs::{create_dir_all, exists, remove_dir_all},
+    path::{Path, PathBuf},
     process::Command,
 };
-use utils::get_parent_dir;
 
 use crate::{
     LauncherError,
@@ -178,7 +178,7 @@ impl GameManager {
     pub fn get_edit_game_config(
         &self,
         index: u32,
-        game_path: &str,
+        game_path: &Path,
         java: &JavaManager,
     ) -> Result<(), LauncherError> {
         let version = self.versions.get(index).clone();
@@ -230,13 +230,13 @@ impl GameManager {
         &mut self,
         mc_type: Option<frontend::game::MCType>,
         mc_index: u32,
-        game_path: &str,
+        game_path: &Path,
         java: &JavaManager,
     ) -> Result<(), LauncherError> {
         let mut list = if let Some(list) = &self.cache.dl_mc_list {
             list.clone()
         } else {
-            let list = mc::manifest::list_game(game_path.to_string()).await?;
+            let list = mc::manifest::list_game(game_path).await?;
             self.cache.dl_mc_list = Some(list.clone());
             list
         };
@@ -257,12 +257,12 @@ impl GameManager {
         &mut self,
         filter: Option<frontend::game::MCType>,
         combo_index: i32,
-        game_path: &str,
+        game_path: &Path,
     ) -> Result<(), LauncherError> {
         let mut list = if let Some(list) = &self.cache.dl_mc_list {
             list.clone()
         } else {
-            let list = mc::manifest::list_game(game_path.to_string()).await?;
+            let list = mc::manifest::list_game(game_path).await?;
             self.cache.dl_mc_list = Some(list.clone());
             list
         };
@@ -282,12 +282,12 @@ impl GameManager {
         index: u32,
         mc_combo: i32,
         mod_combo: i32,
-        game_path: &str,
+        game_path: &Path,
     ) -> Result<(), LauncherError> {
         let mut list = if let Some(list) = &self.cache.dl_mc_list {
             list.clone()
         } else {
-            let list = mc::manifest::list_game(game_path.to_string()).await?;
+            let list = mc::manifest::list_game(game_path).await?;
             self.cache.dl_mc_list = Some(list.clone());
             list
         };
@@ -323,12 +323,12 @@ impl GameManager {
         index: u32,
         mc_combo: i32,
         mod_combo: i32,
-        game_path: &str,
+        game_path: &Path,
     ) -> Result<(), LauncherError> {
         let mut list = if let Some(list) = &self.cache.dl_mc_list {
             list.clone()
         } else {
-            let list = mc::manifest::list_game(game_path.to_string()).await?;
+            let list = mc::manifest::list_game(game_path).await?;
             self.cache.dl_mc_list = Some(list.clone());
             list
         };
@@ -362,14 +362,14 @@ impl GameManager {
         mod_type: Option<ModType>,
         mod_index: u32,
         config: frontend::game::MCConfig,
-        game_path: &str,
+        game_path: &Path,
         java: &JavaManager,
         tasks: &TaskManager,
     ) -> Result<(), LauncherError> {
         let mut mc_list = if let Some(list) = self.cache.dl_mc_list.take() {
             list
         } else {
-            mc::manifest::list_game(game_path.to_string()).await?
+            mc::manifest::list_game(game_path).await?
         };
 
         if let Some(filter) = mc_type {
@@ -380,10 +380,10 @@ impl GameManager {
         let ver_type = version.game_type.clone();
 
         // 判断原版是否已下载，未下载则先下载
-        let mc_json_path = format!(
-            "{}/versions/{}/{}.json",
-            game_path, version.version, version.version
-        );
+        let mc_json_path = game_path
+            .join("versions")
+            .join(&version.version)
+            .join(format!("{}.json", version.version));
         if !exists(&mc_json_path)? {
             download_mc(game_path, version.clone()).await?;
         }
@@ -429,7 +429,11 @@ impl GameManager {
                     let task_info =
                         download_forge(&version.version, forge.clone(), "{forge_source}");
 
-                    let dir = get_parent_dir(&task_info.save_path);
+                    let dir = task_info
+                        .save_path
+                        .parent()
+                        .map(Path::to_path_buf)
+                        .unwrap_or_default();
                     if !exists(&dir)? {
                         create_dir_all(&dir)?;
                     }
@@ -437,7 +441,7 @@ impl GameManager {
                     let java_path = if config.java_index >= 0 {
                         java.get_java_path_by_index(config.java_index as u32)?
                     } else {
-                        "java".to_string()
+                        PathBuf::from("java")
                     };
                     let forge_path = task_info.save_path.clone();
                     let f = move || match Command::new(&java_path)

@@ -7,6 +7,7 @@ use java::java::JavaInstallation;
 use log::warn;
 use serde_json::json;
 use std::fs::{self, exists};
+use std::path::{Path, PathBuf};
 use std::process::Command;
 
 use crate::{LauncherError, ui::UiSender};
@@ -53,7 +54,7 @@ impl JavaManager {
                         java_list.push(installation);
                     }
                 }
-                Err(e) => warn!("Invalid Java at {path}: {e:?}, removing it."),
+                Err(e) => warn!("Invalid Java at {}: {e:?}, removing it.", path.display()),
             }
         }
 
@@ -68,7 +69,7 @@ impl JavaManager {
             } else {
                 match JavaInstallation::new(path.clone()) {
                     Ok(installation) => java_list.push(installation),
-                    Err(e) => warn!("Invalid Java at {path}: {e:?}."),
+                    Err(e) => warn!("Invalid Java at {}: {e:?}.", path.display()),
                 }
             }
         }
@@ -90,7 +91,7 @@ impl JavaManager {
                 .java_list
                 .iter()
                 .map(|j| j.get_path())
-                .ne(old_paths.iter().map(String::as_str))
+                .ne(old_paths.iter().map(|p| p.as_path()))
         {
             manager.save()?;
         }
@@ -104,7 +105,7 @@ impl JavaManager {
     }
 
     /// 添加 Java 安装并刷新界面
-    pub fn add_from_ui(&mut self, java_path: String) -> Result<(), LauncherError> {
+    pub fn add_from_ui(&mut self, java_path: PathBuf) -> Result<(), LauncherError> {
         self.add(java_path)?;
         self.refresh_ui_list()?;
         self.refresh_ui_config()?;
@@ -118,7 +119,7 @@ impl JavaManager {
         self.refresh_ui_config()
     }
 
-    pub fn check(&self, java_path: String) -> Result<(), LauncherError> {
+    pub fn check(&self, java_path: PathBuf) -> Result<(), LauncherError> {
         use java::java::JavaInstallationError;
         let (result, version) = match JavaInstallation::new(java_path) {
             Ok(installation) => (
@@ -149,7 +150,7 @@ impl JavaManager {
     }
 
     /// 构造 Java 列表；给出 MC 版本时标记是否满足该版本的最低 Java 要求
-    pub fn info_list(&self, game_path: &str, mc_version: Option<&str>) -> Vec<frontend::JavaInfo> {
+    pub fn info_list(&self, game_path: &Path, mc_version: Option<&str>) -> Vec<frontend::JavaInfo> {
         let min_java = mc_version.and_then(|version| min_java_version_for_mc(version, game_path));
         self.java_list
             .iter()
@@ -160,7 +161,7 @@ impl JavaManager {
                 };
                 frontend::JavaInfo {
                     version: j.get_version().to_string(),
-                    path: j.get_path().to_string(),
+                    path: j.get_path().to_string_lossy().into_owned(),
                     compatible,
                 }
             })
@@ -169,19 +170,19 @@ impl JavaManager {
 
     pub fn refresh_ui_list(&self) -> Result<(), LauncherError> {
         self.ui
-            .send(UIUpdate::SetJavaList(self.info_list("", None)))
+            .send(UIUpdate::SetJavaList(self.info_list(Path::new(""), None)))
     }
 
     fn refresh_ui_config(&self) -> Result<(), LauncherError> {
         self.ui
-            .send(UIUpdate::SetJavaModel(self.info_list("", None)))?;
+            .send(UIUpdate::SetJavaModel(self.info_list(Path::new(""), None)))?;
         self.ui.send(UIUpdate::SetJavaIndex(
             self.default.map(|i| i as i32).unwrap_or(-1),
         ))
     }
 
     /// 添加一个 Java 安装。如果路径（解析软链接后）已存在则忽略。
-    pub fn add(&mut self, java_path: String) -> Result<(), LauncherError> {
+    pub fn add(&mut self, java_path: PathBuf) -> Result<(), LauncherError> {
         let java_path = JavaManager::i_canonical_path(&java_path);
         let old_paths = self.paths();
         if self.java_list.iter().any(|j| j.get_path() == java_path) {
@@ -227,7 +228,7 @@ impl JavaManager {
     }
 
     /// 根据索引获取 java 可执行文件路径
-    pub fn get_java_path_by_index(&self, index: u32) -> Result<String, LauncherError> {
+    pub fn get_java_path_by_index(&self, index: u32) -> Result<PathBuf, LauncherError> {
         self.java_list
             .get(index as usize)
             .ok_or(LauncherError::OutOfRange)?
@@ -252,16 +253,16 @@ impl JavaManager {
 
     /// 自动寻找系统 Java，返回检测结果。尝试常见路径、JAVA_HOME 和 PATH 中的 java。
     fn i_auto_detect() -> Vec<JavaInstallation> {
-        let mut candidates: Vec<String> = vec![
-            "/usr/lib/jvm/default-java".to_string(),
-            "/usr/lib/jvm/java-21-openjdk".to_string(),
-            "/usr/lib/jvm/java-17-openjdk".to_string(),
-            "/usr/lib/jvm/java-11-openjdk".to_string(),
-            "/usr/lib/jvm/java-8-openjdk".to_string(),
-            "/usr/lib/jvm/java-21".to_string(),
-            "/usr/lib/jvm/java-17".to_string(),
-            "/usr/lib/jvm/java-11".to_string(),
-            "/usr/lib/jvm/java-8".to_string(),
+        let mut candidates: Vec<PathBuf> = vec![
+            PathBuf::from("/usr/lib/jvm/default-java"),
+            PathBuf::from("/usr/lib/jvm/java-21-openjdk"),
+            PathBuf::from("/usr/lib/jvm/java-17-openjdk"),
+            PathBuf::from("/usr/lib/jvm/java-11-openjdk"),
+            PathBuf::from("/usr/lib/jvm/java-8-openjdk"),
+            PathBuf::from("/usr/lib/jvm/java-21"),
+            PathBuf::from("/usr/lib/jvm/java-17"),
+            PathBuf::from("/usr/lib/jvm/java-11"),
+            PathBuf::from("/usr/lib/jvm/java-8"),
         ];
 
         // /usr/lib/jvm 下的实际安装目录
@@ -269,9 +270,7 @@ impl JavaManager {
             for entry in entries.flatten() {
                 let path = entry.path();
                 if path.is_dir() {
-                    if let Some(path) = path.to_str() {
-                        candidates.push(path.to_string());
-                    }
+                    candidates.push(path);
                 }
             }
         }
@@ -279,7 +278,7 @@ impl JavaManager {
         // Try to detect JAVA_HOME from environment
         if let Ok(java_home) = std::env::var("JAVA_HOME") {
             if !java_home.is_empty() {
-                candidates.push(java_home);
+                candidates.push(PathBuf::from(java_home));
             }
         }
 
@@ -296,7 +295,7 @@ impl JavaManager {
                     if key.trim() == "java.home" {
                         let home = value.trim();
                         if !home.is_empty() {
-                            candidates.push(home.to_string());
+                            candidates.push(PathBuf::from(home));
                         }
                         break;
                     }
@@ -314,7 +313,7 @@ impl JavaManager {
             }
             match JavaInstallation::new(path.clone()) {
                 Ok(installation) => detected.push(installation),
-                Err(e) => warn!("Invalid Java at {path}: {e:?}."),
+                Err(e) => warn!("Invalid Java at {}: {e:?}.", path.display()),
             }
         }
         detected
@@ -325,29 +324,27 @@ impl JavaManager {
         java_list.sort_by(|a, b| b.get_version().cmp(a.get_version()));
     }
 
-    fn paths(&self) -> Vec<String> {
+    fn paths(&self) -> Vec<PathBuf> {
         self.java_list
             .iter()
-            .map(|j| j.get_path().to_string())
+            .map(|j| j.get_path().to_path_buf())
             .collect()
     }
 
     /// 解析软链接等别名，返回 Java 的实际安装路径；无法解析时保留原路径
-    fn i_canonical_path(path: &str) -> String {
-        fs::canonicalize(path)
-            .map(|path| path.to_string_lossy().into_owned())
-            .unwrap_or_else(|_| path.to_string())
+    fn i_canonical_path(path: &Path) -> PathBuf {
+        fs::canonicalize(path).unwrap_or_else(|_| path.to_path_buf())
     }
 
     /// 旧列表路径 -> 新列表索引；按解析软链接后的实际路径匹配，旧项不存在时为 None
-    fn i_build_index_map(old_paths: &[String], new_list: &[JavaInstallation]) -> Vec<Option<u32>> {
+    fn i_build_index_map(old_paths: &[PathBuf], new_list: &[JavaInstallation]) -> Vec<Option<u32>> {
         old_paths
             .iter()
             .map(|path| {
                 let canonical = JavaManager::i_canonical_path(path);
                 new_list
                     .iter()
-                    .position(|j| j.get_path() == canonical)
+                    .position(|j| j.get_path() == canonical.as_path())
                     .map(|index| index as u32)
             })
             .collect()
@@ -358,14 +355,18 @@ impl JavaManager {
     }
 
     /// 列表变更后按路径更新 default，并记录旧索引到新索引的映射
-    fn i_remap(&mut self, old_paths: &[String]) {
+    fn i_remap(&mut self, old_paths: &[PathBuf]) {
         let index_map = JavaManager::i_build_index_map(old_paths, &self.java_list);
         self.default = JavaManager::i_remap_index(self.default, &index_map);
         self.index_map = index_map;
     }
 
     fn save(&self) -> Result<(), LauncherError> {
-        let paths: Vec<&str> = self.java_list.iter().map(|j| j.get_path()).collect();
+        let paths: Vec<String> = self
+            .java_list
+            .iter()
+            .map(|j| j.get_path().to_string_lossy().into_owned())
+            .collect();
         let json = json!({
             "default": self.default,
             "java_list": paths,
@@ -375,7 +376,7 @@ impl JavaManager {
     }
 
     /// 读取 java.json 中记录的默认索引与路径列表（路径尚未校验）
-    fn i_load() -> Result<(Option<u32>, Vec<String>), LauncherError> {
+    fn i_load() -> Result<(Option<u32>, Vec<PathBuf>), LauncherError> {
         if !exists("java.json")? {
             return Ok((None, Vec::new()));
         }
@@ -387,13 +388,13 @@ impl JavaManager {
         let paths = if let Some(array) = json["java_list"].as_array() {
             array
                 .iter()
-                .filter_map(|item| item.as_str().map(|path| path.to_string()))
+                .filter_map(|item| item.as_str().map(PathBuf::from))
                 .collect()
         } else if let Some(array) = json.as_array() {
             // 兼容旧格式：直接是路径数组
             array
                 .iter()
-                .filter_map(|item| item.as_str().map(|path| path.to_string()))
+                .filter_map(|item| item.as_str().map(PathBuf::from))
                 .collect()
         } else {
             warn!("java.json has unexpected format, starting fresh.");
@@ -409,16 +410,16 @@ impl JavaManager {
 /// Falls back to hardcoded rules if the JSON cannot be read.
 fn min_java_version_for_mc(
     mc_version: &str,
-    game_path: &str,
+    game_path: &Path,
 ) -> Option<::java::java_version::JavaVersion> {
     // Extract the base MC version from modded version strings like "fabric-loader-0.16.10-1.21.5"
     let base_version = extract_mc_version(mc_version);
 
     // Try to read from the MC version JSON file
-    let json_path = format!(
-        "{}/versions/{}/{}.json",
-        game_path, base_version, base_version
-    );
+    let json_path = game_path
+        .join("versions")
+        .join(base_version)
+        .join(format!("{base_version}.json"));
     if let Ok(content) = std::fs::read_to_string(&json_path) {
         if let Ok(json) = serde_json::from_str::<serde_json::Value>(&content) {
             if let Some(major) = json["javaVersion"]["majorVersion"].as_u64() {

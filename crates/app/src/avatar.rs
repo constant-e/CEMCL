@@ -9,6 +9,7 @@ use std::{
     collections::HashMap,
     fs::{self, create_dir_all, read, remove_file},
     io::ErrorKind,
+    path::{Path, PathBuf},
 };
 use tokio::sync::mpsc::{UnboundedReceiver, UnboundedSender, unbounded_channel};
 
@@ -112,7 +113,7 @@ impl AvatarManager {
         if let Err(e) = remove_file(&path)
             && e.kind() != ErrorKind::NotFound
         {
-            error!("Failed to remove {path}. Reason: {e}.");
+            error!("Failed to remove {}. Reason: {e}.", path.display());
         }
     }
 }
@@ -127,8 +128,8 @@ fn default_avatar(account: &Account) -> Avatar {
 }
 
 /// 缓存文件路径：uuid 统一成小写、不带连字符
-fn cache_path(uuid: &str) -> String {
-    format!("{CACHE_DIR}/{}.png", uuid.replace('-', "").to_lowercase())
+fn cache_path(uuid: &str) -> PathBuf {
+    Path::new(CACHE_DIR).join(format!("{}.png", uuid.replace('-', "").to_lowercase()))
 }
 
 /// 读取缓存的头像；没有缓存或缓存损坏时返回 None
@@ -137,7 +138,10 @@ fn read_cache(uuid: &str) -> Option<Avatar> {
     match Avatar::from_png(&read(&path).ok()?) {
         Ok(avatar) => Some(avatar),
         Err(e) => {
-            warn!("Ignore invalid avatar cache {path}. Reason: {e}.");
+            warn!(
+                "Ignore invalid avatar cache {}. Reason: {e}.",
+                path.display()
+            );
             None
         }
     }
@@ -155,6 +159,6 @@ fn save_cache(uuid: &str, avatar: &Avatar) {
 
     let path = cache_path(uuid);
     if let Err(e) = fs::write(&path, png) {
-        error!("Failed to write {path}. Reason: {e}.");
+        error!("Failed to write {}. Reason: {e}.", path.display());
     }
 }

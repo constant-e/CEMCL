@@ -34,7 +34,7 @@ fn remap_java_indices_after_list_change() {
 
     let config = ConfigMC {
         height: 600,
-        path: ".minecraft".to_string(),
+        path: PathBuf::from(".minecraft"),
         width: 800,
         wrapper: String::new(),
         xms: "1G".to_string(),

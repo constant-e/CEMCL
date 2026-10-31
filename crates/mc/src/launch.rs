@@ -5,14 +5,15 @@ use log::error;
 use serde_json::Value;
 use std::env::consts as env;
 use std::fs::{self, exists, read_to_string};
+use std::path::{Path, PathBuf};
 
 use utils::{check_rules, download};
 
 use crate::MCInstallation;
 use crate::account::Account;
 use crate::download::{
-    DownloadError, DownloadTask, download_assets, download_libraries, needs_redownload,
-    remove_file_if_exists,
+    DownloadError, DownloadTask, download_assets, download_libraries, maven_relative_path,
+    needs_redownload, remove_file_if_exists,
 };
 use crate::launch::LaunchError::{DeserializeError, IOError};
 
@@ -144,17 +145,17 @@ fn get_args(n: &Value) -> Result<(Vec<String>, Vec<String>), LaunchError> {
 }
 
 /// 获取-cp参数
-fn get_classpaths(n: &Value, game_path: &str) -> Result<Vec<String>, LaunchError> {
-    let mut result: Vec<String> = Vec::new();
+fn get_classpaths(n: &Value, game_path: &Path) -> Result<Vec<PathBuf>, LaunchError> {
+    let mut result: Vec<PathBuf> = Vec::new();
     for item in n.as_array().ok_or(LaunchError::DataInvalid)? {
         if !item["rules"].is_null() && !check_rules(&item["rules"]) {
             continue;
         }
 
-        let mut temp = game_path.to_string() + "/libraries/";
+        let mut temp = game_path.join("libraries");
 
         if let Some(p) = item["downloads"]["artifact"]["path"].as_str() {
-            temp += p;
+            temp.push(p);
         } else if item["downloads"]["classifiers"].is_object() {
             // classifers for old versions
             let os = if env::OS == "macOS" { "osx" } else { env::OS };
@@ -163,24 +164,15 @@ fn get_classpaths(n: &Value, game_path: &str) -> Result<Vec<String>, LaunchError
                 .as_str()
                 .ok_or(LaunchError::DataInvalid)?
                 .replace("${arch}", arch);
-            temp += item["downloads"]["classifiers"][&key]["path"]
-                .as_str()
-                .ok_or(LaunchError::DataInvalid)?;
+            temp.push(
+                item["downloads"]["classifiers"][&key]["path"]
+                    .as_str()
+                    .ok_or(LaunchError::DataInvalid)?,
+            );
         } else {
             // fabric
-            let mut path = String::new();
             let name = item["name"].as_str().ok_or(LaunchError::DataInvalid)?;
-            let split_1: Vec<&str> = name.split(":").collect();
-            let split_2: Vec<&str> = split_1[0].split(".").collect();
-            for name in split_2 {
-                path = path + name + "/";
-            }
-            for i in 1..split_1.len() {
-                let name = split_1[i];
-                path = path + name + "/";
-            }
-            path = path + split_1[1] + "-" + split_1[2] + ".jar";
-            temp += &path;
+            temp.push(maven_relative_path(name).ok_or(LaunchError::DataInvalid)?);
         }
 
         result.push(temp);
@@ -195,13 +187,13 @@ fn get_classpaths(n: &Value, game_path: &str) -> Result<Vec<String>, LaunchError
 pub async fn get_launch_command(
     account: &Account,
     game: &MCInstallation,
-    game_path: &str,
+    game_path: &Path,
 ) -> Result<(Vec<String>, Vec<DownloadTask>), LaunchError> {
     let mut result: Vec<String> = Vec::new();
-    let dir = game_path.to_string() + "/versions/" + game.version.as_str(); // 游戏目录
+    let dir = game_path.join("versions").join(game.version.as_str()); // 游戏目录
 
     // 读取json
-    let cfg_path = dir.clone() + "/" + game.version.as_str() + ".json";
+    let cfg_path = dir.join(format!("{}.json", game.version));
     let json = serde_json::from_str::<Value>(read_to_string(&cfg_path)?.as_str())?;
 
     // mod继承的参数
@@ -223,8 +215,8 @@ pub async fn get_launch_command(
         let parent_version = json["inheritsFrom"]
             .as_str()
             .ok_or(LaunchError::DataInvalid)?;
-        let parent_path = game_path.to_string() + "/versions/" + &parent_version;
-        let parent_json_path = parent_path.clone() + "/" + parent_version + ".json";
+        let parent_path = game_path.join("versions").join(parent_version);
+        let parent_json_path = parent_path.join(format!("{parent_version}.json"));
         if exists(&parent_json_path)? {
             let mut parent =
                 serde_json::from_str::<Value>(&read_to_string(&parent_json_path)?.as_str())?;
@@ -270,7 +262,7 @@ pub async fn get_launch_command(
                 jvm_args.append(&mut self_jvm_args);
             }
         } else {
-            error!("Failed to find {parent_path}.");
+            error!("Failed to find {}.", parent_path.display());
             return Err(LaunchError::NotFound);
         }
     } else {
@@ -298,20 +290,19 @@ pub async fn get_launch_command(
     }
 
     // classpaths列表
-    let mut classpaths: Vec<String> = Vec::new();
+    let mut classpaths: Vec<PathBuf> = Vec::new();
     classpaths.append(&mut get_classpaths(&libraries_json, game_path)?);
-    classpaths.push(dir.clone() + "/" + game.version.as_str() + ".jar"); // 游戏本身
+    classpaths.push(dir.join(format!("{}.jar", game.version))); // 游戏本身
 
-    // classpaths列表去重，获得最终字符串
-    let sep = if env::OS == "windows" { ";" } else { ":" };
-    let mut i = 0;
+    // classpaths列表去重，获得最终字符串（保留重复项的最后一次出现）
+    let sep = if env::OS == "windows" { ';' } else { ':' };
     let mut cp = String::new();
     let l = classpaths.len();
-    while i < l {
+    for i in 0..l {
         if !classpaths[i + 1..l].contains(&classpaths[i]) {
-            cp.push_str((classpaths[i].clone() + sep).as_str());
+            cp.push_str(&classpaths[i].to_string_lossy());
+            cp.push(sep);
         }
-        i += 1;
     }
 
     // 设置额外参数
@@ -342,29 +333,30 @@ pub async fn get_launch_command(
     let game_dir = if game.separated { &dir } else { game_path };
 
     let os = if env::OS == "macOS" { "osx" } else { env::OS };
+    let assets_root = game_path.join("assets").to_string_lossy().into_owned();
+    let library_dir = game_path.join("libraries").to_string_lossy().into_owned();
+    let natives_dir = dir
+        .join(format!("natives-{os}-{}", env::ARCH))
+        .to_string_lossy()
+        .into_owned();
+    let game_dir = game_dir.to_string_lossy().into_owned();
     // 替换模板
     for item in result.iter_mut() {
         *item = item
             .replace("${assets_index_name}", &asset_index)
-            .replace("${assets_root}", &(game_path.to_string() + "/assets"))
+            .replace("${assets_root}", &assets_root)
             .replace("${auth_access_token}", &account.access_token)
             .replace("${auth_player_name}", &account.user_name)
             .replace("${auth_uuid}", &account.uuid)
             // .replace("${authlib_injector_param}", "") // 暂不支持
             .replace("${classpath}", &cp)
             .replace("${classpath_separator}", ":")
-            .replace("${game_assets}", &(game_path.to_string() + "/assets")) // support old versions
+            .replace("${game_assets}", &assets_root) // support old versions
             .replace("${game_directory}", &game_dir)
             .replace("${launcher_name}", "\"CE Minecraft Launcher\"")
             .replace("${launcher_version}", env!("CARGO_PKG_VERSION"))
-            .replace(
-                "${library_directory}",
-                &(game_path.to_string() + "/libraries"),
-            )
-            .replace(
-                "${natives_directory}",
-                &(dir.clone() + "/natives-" + os + "-" + env::ARCH),
-            )
+            .replace("${library_directory}", &library_dir)
+            .replace("${natives_directory}", &natives_dir)
             .replace("${user_properties}", "{}")
             .replace("${user_type}", &String::from(account.account_type.clone()))
             .replace("${version_name}", &game.version)
@@ -373,7 +365,7 @@ pub async fn get_launch_command(
 
     // 处理依赖
     let mut tasks = Vec::new();
-    let jar_path = dir.clone() + "/" + game.version.as_str() + ".jar";
+    let jar_path = dir.join(format!("{}.jar", game.version));
     if needs_redownload(&jar_path, mc_sha1.as_deref()).await? {
         remove_file_if_exists(&jar_path)?;
         // 本体
@@ -388,16 +380,14 @@ pub async fn get_launch_command(
     // 处理依赖
 
     // json first
-    let index_dir = game_path.to_string() + "/assets/indexes/";
-    let index_path = index_dir.clone() + &asset_index + ".json";
+    let index_dir = game_path.join("assets").join("indexes");
+    let index_path = index_dir.join(format!("{asset_index}.json"));
     if needs_redownload(&index_path, asset_index_sha1.as_deref()).await? {
         remove_file_if_exists(&index_path)?;
-        if !exists(&index_dir)? {
-            fs::create_dir_all(&index_dir)?;
-        }
+        fs::create_dir_all(&index_dir)?;
         download(
             asset_index_url.clone(),
-            index_path,
+            &index_path,
             3,
             asset_index_sha1.as_deref(),
         )

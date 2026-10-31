@@ -1,6 +1,6 @@
 use std::fs::{File, exists};
 use std::io::{BufRead, BufReader};
-use std::path::Path;
+use std::path::{Path, PathBuf};
 use std::process::Command;
 
 use super::java_version::JavaVersion;
@@ -21,22 +21,22 @@ impl From<std::io::Error> for JavaInstallationError {
 
 pub struct JavaInstallation {
     /// path of java home
-    path: String,
+    path: PathBuf,
     version: JavaVersion,
 }
 
 impl JavaInstallation {
-    pub fn new(path: String) -> Result<Self, JavaInstallationError> {
-        if path.is_empty() {
+    pub fn new(path: PathBuf) -> Result<Self, JavaInstallationError> {
+        if path.as_os_str().is_empty() {
             return Err(JavaInstallationError::PathIsEmpty);
         }
         Ok(JavaInstallation {
-            path: path.clone(),
             version: Self::i_get_version(&path)?,
+            path,
         })
     }
 
-    pub fn get_path(&self) -> &str {
+    pub fn get_path(&self) -> &Path {
         &self.path
     }
 
@@ -44,26 +44,29 @@ impl JavaInstallation {
         &self.version
     }
 
-    pub fn get_java_path(&self) -> Result<String, JavaInstallationError> {
+    pub fn get_java_path(&self) -> Result<PathBuf, JavaInstallationError> {
         Self::i_get_java_path(&self.path)
     }
 
-    fn i_get_java_path(path: &str) -> Result<String, JavaInstallationError> {
-        let path = format!("{}/bin/java", path);
-        if exists(&path)? {
-            Ok(path)
-        } else if exists(format!("{}.exe", &path))? {
-            Ok(format!("{}.exe", &path))
+    fn i_get_java_path(path: &Path) -> Result<PathBuf, JavaInstallationError> {
+        let java_path = path.join("bin").join("java");
+        if exists(&java_path)? {
+            Ok(java_path)
         } else {
-            Err(JavaInstallationError::JavaExecutableNotFound)
+            let java_exe = java_path.with_extension("exe");
+            if exists(&java_exe)? {
+                Ok(java_exe)
+            } else {
+                Err(JavaInstallationError::JavaExecutableNotFound)
+            }
         }
     }
 
-    fn i_get_version(path: &str) -> Result<JavaVersion, JavaInstallationError> {
+    fn i_get_version(path: &Path) -> Result<JavaVersion, JavaInstallationError> {
         // try to read release file
-        let rel_path = format!("{}/release", &path);
+        let rel_path = path.join("release");
         if exists(&rel_path)? {
-            let file = File::open(Path::new(&rel_path))?;
+            let file = File::open(&rel_path)?;
             let reader = BufReader::new(file);
 
             for line in reader.lines() {

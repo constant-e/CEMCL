@@ -6,28 +6,28 @@ use std::collections::{HashMap, HashSet};
 use std::env::consts as env;
 use std::fs::{File, create_dir_all, exists};
 use std::io::copy;
+use std::path::Path;
 
-use utils::{check_rules, get_parent_dir};
+use utils::{append_suffix, check_rules};
 
 use super::{
-    DownloadError, DownloadTask, TaskInfo, needs_redownload, read_cached_sha1,
-    remove_file_if_exists,
+    DownloadError, DownloadTask, TaskInfo, maven_relative_path, needs_redownload, read_cached_sha1,
+    remove_file_if_exists, url_path,
 };
 
 /// 下载library
-fn download_lib(save_path: &str, node: &Value, mirror: &str) -> Result<TaskInfo, DownloadError> {
-    let dir = get_parent_dir(&save_path);
-    if !exists(&dir)? {
-        create_dir_all(&dir)?;
+fn download_lib(save_path: &Path, node: &Value, mirror: &str) -> Result<TaskInfo, DownloadError> {
+    if let Some(dir) = save_path.parent() {
+        create_dir_all(dir)?;
     }
     let mut url = node["url"]
         .as_str()
         .ok_or(DownloadError::DataInvalid)?
         .to_string();
-    url = url.replace("https://libraries.minecraft.net", &mirror);
+    url = url.replace("https://libraries.minecraft.net", mirror);
     Ok(TaskInfo {
         url,
-        save_path: save_path.to_string(),
+        save_path: save_path.to_path_buf(),
         size: node["size"].as_u64(),
         sha1: node["sha1"].as_str().map(String::from),
     })
@@ -36,25 +36,20 @@ fn download_lib(save_path: &str, node: &Value, mirror: &str) -> Result<TaskInfo,
 /// 下载libraries，node: mc json["libraries"]，返回Tasks
 pub async fn download_libraries(
     node: &Value,
-    path: &str,
-    game_dir: &str,
+    path: &Path,
+    game_dir: &Path,
     mirror: &str,
     fabric_mirror: &str,
 ) -> Result<Vec<DownloadTask>, DownloadError> {
     let mut tasks = Vec::new();
     // 同一个 jar 可能被多个 library 条目引用（如 1.12.2 的 text2speech），
     // 按最终路径去重，避免重复任务并发写同一文件
-    let mut scheduled: HashSet<String> = HashSet::new();
+    let mut scheduled: HashSet<_> = HashSet::new();
     for item in node.as_array().ok_or(DownloadError::DataInvalid)? {
-        let (node, path, game_dir, mirror) = (
-            item.clone(),
-            path.to_string(),
-            game_dir.to_string(),
-            mirror.to_string(),
-        );
-        let lib_dir = path.to_string() + "/libraries";
+        let node = item.clone();
+        let lib_dir = path.join("libraries");
         let os = if env::OS == "macOS" { "osx" } else { env::OS };
-        let natives_dir = game_dir.to_string() + "/natives-" + os + "-" + env::ARCH;
+        let natives_dir = game_dir.join(format!("natives-{os}-{}", env::ARCH));
         if node["rules"].is_array() {
             if !check_rules(&node["rules"]) {
                 continue;
@@ -71,13 +66,12 @@ pub async fn download_libraries(
                 ))?
                 .replace("${arch}", arch);
             let node = &node["downloads"]["classifiers"][&key];
-            let save_path =
-                lib_dir.clone() + "/" + node["path"].as_str().ok_or(DownloadError::DataInvalid)?; // 储存位置
+            let save_path = lib_dir.join(node["path"].as_str().ok_or(DownloadError::DataInvalid)?); // 储存位置
             let sha1 = node["sha1"].as_str().map(String::from);
             if scheduled.insert(save_path.clone()) {
                 if needs_redownload(&save_path, sha1.as_deref()).await? {
                     remove_file_if_exists(&save_path)?;
-                    let task_info = download_lib(&save_path, node, &mirror)?;
+                    let task_info = download_lib(&save_path, node, mirror)?;
                     let natives_dir_clone = natives_dir.clone();
                     tasks.push(DownloadTask {
                         url: task_info.url,
@@ -95,11 +89,11 @@ pub async fn download_libraries(
             }
         }
         if node["downloads"]["artifact"].is_object() {
-            let save_path = lib_dir.clone()
-                + "/"
-                + node["downloads"]["artifact"]["path"]
+            let save_path = lib_dir.join(
+                node["downloads"]["artifact"]["path"]
                     .as_str()
-                    .ok_or(DownloadError::DataInvalid)?;
+                    .ok_or(DownloadError::DataInvalid)?,
+            );
             let sha1 = node["downloads"]["artifact"]["sha1"]
                 .as_str()
                 .map(String::from);
@@ -107,7 +101,7 @@ pub async fn download_libraries(
                 if needs_redownload(&save_path, sha1.as_deref()).await? {
                     remove_file_if_exists(&save_path)?;
                     let task_info =
-                        download_lib(&save_path, &node["downloads"]["artifact"], &mirror)?;
+                        download_lib(&save_path, &node["downloads"]["artifact"], mirror)?;
                     let natives_dir_clone = natives_dir.clone();
                     tasks.push(DownloadTask {
                         url: task_info.url,
@@ -123,43 +117,30 @@ pub async fn download_libraries(
                     extract_lib_logged(&natives_dir, &save_path);
                 }
             }
-        } else {
-            if let Some(url) = node["url"].as_str() {
-                if url == "https://maven.fabricmc.net/" {
-                    // Fabric
-                    let mut path = String::new();
-                    let name = node["name"].as_str().ok_or(DownloadError::DataInvalid)?;
-                    let split_1: Vec<&str> = name.split(":").collect();
-                    let split_2: Vec<&str> = split_1[0].split(".").collect();
-                    for name in split_2 {
-                        path = path + name + "/";
-                    }
-                    for i in 1..split_1.len() {
-                        let name = split_1[i];
-                        path = path + name + "/";
-                    }
-                    path = path + split_1[1] + "-" + split_1[2] + ".jar";
-                    let local_path = lib_dir.clone() + "/" + &path;
-                    // fabric的profile json不带哈希，首次下载时从maven的<path>.sha1校验，
-                    // 校验得到的哈希缓存在<jar>.sha1，之后按缓存离线校验
-                    let cached_sha1 = read_cached_sha1(&(local_path.clone() + ".sha1"));
-                    if scheduled.insert(local_path.clone()) {
-                        if needs_redownload(&local_path, cached_sha1.as_deref()).await? {
-                            remove_file_if_exists(&local_path)?;
-                            let dir = get_parent_dir(&local_path);
-                            if !exists(&dir)? {
-                                create_dir_all(&dir)?;
-                            }
-                            let url = fabric_mirror.to_string() + "/" + &path;
-                            let sha1_url = url.clone() + ".sha1";
-                            tasks.push(DownloadTask::new(
-                                url,
-                                local_path,
-                                None,
-                                Some(sha1_url),
-                                None,
-                            ));
+        } else if let Some(url) = node["url"].as_str() {
+            if url == "https://maven.fabricmc.net/" {
+                // Fabric
+                let name = node["name"].as_str().ok_or(DownloadError::DataInvalid)?;
+                let rel_path = maven_relative_path(name).ok_or(DownloadError::DataInvalid)?;
+                let local_path = lib_dir.join(&rel_path);
+                // fabric的profile json不带哈希，首次下载时从maven的<path>.sha1校验，
+                // 校验得到的哈希缓存在<jar>.sha1，之后按缓存离线校验
+                let cached_sha1 = read_cached_sha1(&append_suffix(&local_path, ".sha1"));
+                if scheduled.insert(local_path.clone()) {
+                    if needs_redownload(&local_path, cached_sha1.as_deref()).await? {
+                        remove_file_if_exists(&local_path)?;
+                        if let Some(dir) = local_path.parent() {
+                            create_dir_all(dir)?;
                         }
+                        let file_url = format!("{fabric_mirror}/{}", url_path(&rel_path));
+                        let sha1_url = format!("{file_url}.sha1");
+                        tasks.push(DownloadTask::new(
+                            file_url,
+                            local_path,
+                            None,
+                            Some(sha1_url),
+                            None,
+                        ));
                     }
                 }
             }
@@ -170,9 +151,12 @@ pub async fn download_libraries(
 }
 
 /// 解压出natives，失败时记录日志（不阻断启动）
-fn extract_lib_logged(natives_dir: &str, local_path: &str) {
+fn extract_lib_logged(natives_dir: &Path, local_path: &Path) {
     if let Err(e) = extract_lib(natives_dir, local_path) {
-        error!("Failed to extract natives from {local_path}. Reason: {e}.");
+        error!(
+            "Failed to extract natives from {}. Reason: {e}.",
+            local_path.display()
+        );
     }
 }
 
@@ -275,7 +259,7 @@ fn native_score(name: &str) -> Option<(u8, bool)> {
 /// 只从jar中读出需要的本地库（`.dll`/`.dylib`/`.so`），目标文件已存在时跳过，
 /// 同名文件有多个平台/架构版本时取与本机最匹配的一个。
 /// 不再把整个jar解压到临时目录（旧实现每次启动都要在临时目录写/删上万个文件）。
-pub fn extract_lib(natives_dir: &str, local_path: &str) -> Result<(), DownloadError> {
+pub fn extract_lib(natives_dir: &Path, local_path: &Path) -> Result<(), DownloadError> {
     let mut zip = zip::ZipArchive::new(File::open(local_path)?).map_err(std::io::Error::from)?;
 
     // 文件名 -> ((架构匹配度, 系统是否匹配), 条目下标)
@@ -294,7 +278,11 @@ pub fn extract_lib(natives_dir: &str, local_path: &str) -> Result<(), DownloadEr
             continue;
         };
 
-        let file_name = name.rsplit('/').next().unwrap_or_default().to_string();
+        let file_name = Path::new(name)
+            .file_name()
+            .and_then(|name| name.to_str())
+            .unwrap_or_default()
+            .to_string();
         let best = selected.entry(file_name).or_insert((score, i));
         if score > best.0 {
             *best = (score, i);
@@ -306,7 +294,7 @@ pub fn extract_lib(natives_dir: &str, local_path: &str) -> Result<(), DownloadEr
 
     create_dir_all(natives_dir)?;
     for (file_name, (_, i)) in selected {
-        let target_path = natives_dir.to_string() + "/" + &file_name;
+        let target_path = natives_dir.join(&file_name);
         if exists(&target_path)? {
             continue;
         }
