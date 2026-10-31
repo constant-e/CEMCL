@@ -27,9 +27,8 @@ export component AddGameDialog inherits Dialog {
 
     in-out property <MCConfig> game-config;
 
-    // Java selector (separate from config)
+    // Java selector model (the selected index lives in game-config)
     in-out property <[string]> java-combo-model;
-    in-out property <int> java-index;
 
     callback get-default-game-config();
     callback get-game-list(int);
@@ -214,7 +213,7 @@ export component AddGameDialog inherits Dialog {
                                 MyText { text: @tr("Java version"); }
                                 JavaVersionSelector {
                                     model <=> root.java-combo-model;
-                                    current-index <=> root.java-index;
+                                    current-index <=> game-config.java-index;
                                 }
                             }
 

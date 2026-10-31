@@ -38,8 +38,10 @@ impl AppRuntime {
         let tasks = TaskManager::new(config_dl.into(), ui.clone());
         let account_manager = AccountManager::new(ui.clone())?;
         let mut java_manager = JavaManager::new(ui.clone())?;
-        java_manager.auto_detect_system_java();
         let mut games = GameManager::new(config_mc, ui.clone())?;
+        // java.json 中的失效项已删除、系统 Java 已合并并按版本排序；
+        // 先按路径修正版本中记录的 java_index，再为未选择 Java 的版本自动匹配
+        games.remap_java_indices(&java_manager.take_index_map())?;
         games.resolve_java_indices(&java_manager);
 
         Ok(Self {
@@ -82,11 +84,19 @@ impl AppRuntime {
                     )
                     .await
             }
-            UICommand::AddJava(java_path) => self.java_manager.add_from_ui(java_path),
+            UICommand::AddJava(java_path) => {
+                self.java_manager.add_from_ui(java_path)?;
+                let index_map = self.java_manager.take_index_map();
+                self.games.remap_java_indices(&index_map)
+            }
             UICommand::CheckJava(java_path) => self.java_manager.check(java_path),
             UICommand::DelAccount(index) => self.account_manager.del_from_ui(index),
             UICommand::DelGame(index) => self.games.del_game(index),
-            UICommand::DelJava(index) => self.java_manager.del_from_ui(index),
+            UICommand::DelJava(index) => {
+                self.java_manager.del_from_ui(index)?;
+                let index_map = self.java_manager.take_index_map();
+                self.games.remap_java_indices(&index_map)
+            }
             UICommand::EditAccount(index, account) => {
                 self.account_manager.edit_from_ui(index, account)
             }

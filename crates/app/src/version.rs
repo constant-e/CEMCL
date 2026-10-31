@@ -117,6 +117,29 @@ impl VersionManager {
         &self.version_list
     }
 
+    pub fn contains(&self, version: &str) -> bool {
+        self.version_list.iter().any(|v| v.version == version)
+    }
+
+    /// 按 Java 列表变更的索引映射（旧索引 -> 新索引）更新各版本的 java_index。
+    /// 引用的 Java 已被删除时置为 None；有变化时写回 versions.json。
+    pub fn remap_java_indices(&mut self, index_map: &[Option<u32>]) -> Result<(), LauncherError> {
+        let mut changed = false;
+        for installation in &mut self.version_list {
+            if let Some(index) = installation.java_index {
+                let mapped = index_map.get(index as usize).copied().flatten();
+                if mapped != installation.java_index {
+                    installation.java_index = mapped;
+                    changed = true;
+                }
+            }
+        }
+        if changed {
+            self.save()?;
+        }
+        Ok(())
+    }
+
     pub fn get_current_index(&self) -> u32 {
         self.current_index
     }

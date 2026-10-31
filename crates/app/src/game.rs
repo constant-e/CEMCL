@@ -51,6 +51,32 @@ struct PendingForge {
     installation: MCInstallation,
 }
 
+/// 由界面配置构造要加入版本列表的安装项
+fn i_installation(
+    config: &frontend::game::MCConfig,
+    version: String,
+    game_type: mc::MCType,
+) -> MCInstallation {
+    MCInstallation {
+        description: config.description.clone(),
+        game_args: config.game_args.clone(),
+        game_type,
+        height: config.height,
+        java_index: if config.java_index >= 0 {
+            Some(config.java_index as u32)
+        } else {
+            None
+        },
+        jvm_args: config.jvm_args.clone(),
+        separated: config.separated,
+        version,
+        width: config.width,
+        wrapper: config.wrapper.clone(),
+        xms: config.xms.clone(),
+        xmx: config.xmx.clone(),
+    }
+}
+
 pub struct GameManager {
     cache: CacheData,
     /// 等待 Forge 安装完成的待添加版本
@@ -71,6 +97,11 @@ impl GameManager {
 
     pub fn resolve_java_indices(&mut self, java: &JavaManager) {
         self.versions.resolve_java_indices(java);
+    }
+
+    /// Java 列表变更后，按旧索引到新索引的映射修正所有版本引用的 Java
+    pub fn remap_java_indices(&mut self, index_map: &[Option<u32>]) -> Result<(), LauncherError> {
+        self.versions.remap_java_indices(index_map)
     }
 
     pub fn version(&self, index: u32) -> &MCInstallation {
@@ -109,6 +140,14 @@ impl GameManager {
         self.versions.del(index)?;
         self.refresh_ui_version_list()?;
         self.ui.send(UIUpdate::QuitEditGameDialog)
+    }
+
+    /// 添加版本；已存在同名版本时保持原配置，避免添加原版 + mod 版时产生重复项
+    fn add_installation(&mut self, installation: MCInstallation) -> Result<(), LauncherError> {
+        if self.versions.contains(&installation.version) {
+            return Ok(());
+        }
+        self.versions.add(&installation)
     }
 
     pub fn edit_game(
@@ -338,7 +377,6 @@ impl GameManager {
         }
 
         let version = mc_list[mc_index as usize].clone();
-        let mut ver = version.version.clone();
         let ver_type = version.game_type.clone();
 
         // 判断原版是否已下载，未下载则先下载
@@ -350,7 +388,13 @@ impl GameManager {
             download_mc(game_path, version.clone()).await?;
         }
 
+        let vanilla = i_installation(&config, version.version.clone(), ver_type.clone());
+
         if let Some(filter) = mod_type {
+            // 两步执行：先添加原版，再添加 mod 版
+            self.add_installation(vanilla)?;
+            self.refresh_ui_version_list()?;
+
             match filter {
                 ModType::Fabric => {
                     let mod_list = match self.cache.dl_fabric_list.take() {
@@ -362,31 +406,15 @@ impl GameManager {
 
                     download_fabric(game_path, &version.version, fabric.clone()).await?;
 
-                    ver = format!(
-                        "fabric-loader-{fabric_version}-{ver}",
+                    let mod_version = format!(
+                        "fabric-loader-{fabric_version}-{mc_version}",
                         fabric_version = fabric.loader_version,
+                        mc_version = version.version,
                     );
 
                     // Fabric 无独立安装环节，直接添加
-                    let installation = MCInstallation {
-                        description: config.description,
-                        game_args: config.game_args,
-                        game_type: ver_type,
-                        height: config.height,
-                        java_index: if config.java_index >= 0 {
-                            Some(config.java_index as u32)
-                        } else {
-                            None
-                        },
-                        jvm_args: config.jvm_args,
-                        separated: config.separated,
-                        version: ver,
-                        width: config.width,
-                        wrapper: config.wrapper,
-                        xms: config.xms,
-                        xmx: config.xmx,
-                    };
-                    self.versions.add(&installation)?;
+                    let installation = i_installation(&config, mod_version, ver_type);
+                    self.add_installation(installation)?;
                     self.refresh_ui_version_list()?;
                     self.ui.send(UIUpdate::QuitAddGameDialog)?;
                 }
@@ -447,28 +475,15 @@ impl GameManager {
                     // 记录待添加的安装信息，Forge 安装成功后再加入版本列表
                     self.pending_forge = Some(PendingForge {
                         id,
-                        installation: MCInstallation {
-                            description: config.description,
-                            game_args: config.game_args,
-                            game_type: ver_type,
-                            height: config.height,
-                            java_index: if config.java_index >= 0 {
-                                Some(config.java_index as u32)
-                            } else {
-                                None
-                            },
-                            jvm_args: config.jvm_args,
-                            separated: config.separated,
-                            version: format!(
+                        installation: i_installation(
+                            &config,
+                            format!(
                                 "{mc_version}-forge-{forge_version}",
                                 mc_version = version.version,
                                 forge_version = forge.version,
                             ),
-                            width: config.width,
-                            wrapper: config.wrapper,
-                            xms: config.xms,
-                            xmx: config.xmx,
-                        },
+                            ver_type,
+                        ),
                     });
 
                     // 显示 Forge 下载弹窗
@@ -482,26 +497,8 @@ impl GameManager {
                 }
             }
         } else {
-            // 无 mod loader，直接添加
-            let installation = MCInstallation {
-                description: config.description,
-                game_args: config.game_args,
-                game_type: ver_type,
-                height: config.height,
-                java_index: if config.java_index >= 0 {
-                    Some(config.java_index as u32)
-                } else {
-                    None
-                },
-                jvm_args: config.jvm_args,
-                separated: config.separated,
-                version: ver,
-                width: config.width,
-                wrapper: config.wrapper,
-                xms: config.xms,
-                xmx: config.xmx,
-            };
-            self.versions.add(&installation)?;
+            // 无 mod loader，直接添加原版
+            self.add_installation(vanilla)?;
             self.refresh_ui_version_list()?;
             self.ui.send(UIUpdate::QuitAddGameDialog)?;
         }
@@ -541,7 +538,7 @@ impl GameManager {
                 // Forge 安装成功，将版本加入列表
                 let installation = pending.installation.clone();
                 self.pending_forge = None;
-                self.versions.add(&installation)?;
+                self.add_installation(installation)?;
                 self.refresh_ui_version_list()?;
                 self.ui.send(UIUpdate::QuitForgeDownloadDialog)?;
                 self.ui.send(UIUpdate::QuitAddGameDialog)?;
