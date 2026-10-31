@@ -1,7 +1,7 @@
 //! JavaManager：启动校验、软链接去重、检测结果合并与索引映射
 //!
 //! 测试只使用临时目录中的假 Java（release 文件）和显式传入的检测结果，
-//! 不读取本机 PATH/JAVA_HOME，也不扫描 /usr/lib/jvm。
+//! 不读取本机环境变量，也不执行本机 Java。
 
 use app::java::JavaManager;
 #[cfg(unix)]

@@ -251,29 +251,10 @@ impl JavaManager {
         None // 没有兼容版本
     }
 
-    /// 自动寻找系统 Java，返回检测结果。尝试常见路径、JAVA_HOME 和 PATH 中的 java。
+    /// 自动寻找系统 Java，返回检测结果。
+    /// 只使用环境变量：`JAVA_HOME`，以及 `PATH` 中的 `java` 报告的 `java.home`。
     fn i_auto_detect() -> Vec<JavaInstallation> {
-        let mut candidates: Vec<PathBuf> = vec![
-            PathBuf::from("/usr/lib/jvm/default-java"),
-            PathBuf::from("/usr/lib/jvm/java-21-openjdk"),
-            PathBuf::from("/usr/lib/jvm/java-17-openjdk"),
-            PathBuf::from("/usr/lib/jvm/java-11-openjdk"),
-            PathBuf::from("/usr/lib/jvm/java-8-openjdk"),
-            PathBuf::from("/usr/lib/jvm/java-21"),
-            PathBuf::from("/usr/lib/jvm/java-17"),
-            PathBuf::from("/usr/lib/jvm/java-11"),
-            PathBuf::from("/usr/lib/jvm/java-8"),
-        ];
-
-        // /usr/lib/jvm 下的实际安装目录
-        if let Ok(entries) = fs::read_dir("/usr/lib/jvm") {
-            for entry in entries.flatten() {
-                let path = entry.path();
-                if path.is_dir() {
-                    candidates.push(path);
-                }
-            }
-        }
+        let mut candidates: Vec<PathBuf> = Vec::new();
 
         // Try to detect JAVA_HOME from environment
         if let Ok(java_home) = std::env::var("JAVA_HOME") {
