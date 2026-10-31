@@ -1,14 +1,14 @@
 ---
-description: "CEMCL Slint UI 约定（改 crates/frontend/res/ui 前必读）：29 个 .slint 文件组织、无边框窗口（自绘标题栏 + 1px 窗口描边）、侧栏/页面切换骨架、组件规格、Palette/间距/交互/对话框/i18n 模式"
+description: "CEMCL Slint UI 约定（改 crates/frontend/res/ui 前必读）：30 个 .slint 文件组织、无边框窗口（自绘标题栏 + 1px 窗口描边）、侧栏/页面切换骨架、组件规格、Palette/间距/交互/对话框/i18n 模式"
 globs: crates/frontend/res/ui/**/*.slint
 ---
 
 # CEMCL UI 设计风格与布局规范
 
-> 依 `crates/frontend/res/ui/` 全部 29 个 `.slint` 文件核对于 2026-10-08（Slint 1.18.1）；§7 的账号头像位图 2026-09-22 复核。
+> 依 `crates/frontend/res/ui/` 全部 30 个 `.slint` 文件核对于 2026-10-08（Slint 1.18.1）；§7 的账号头像位图 2026-09-22 复核。
 > 配套：`rule://CEMCL-project-summary`。
 
-## 1. 文件组织（29 个文件）
+## 1. 文件组织（30 个文件）
 
 ```
 res/ui/
@@ -29,8 +29,8 @@ res/ui/
 │   ├── home.slint / games.slint / downloader.slint / java.slint / settings.slint
 │   └── accounts/{accounts.slint, accounts-list.slint, account-item.slint, account-inner.slint}
 └── dialogs/
-    ├── dialogs.slint                 # 总出口 + AskDialog + AskID
-    ├── add-java-dialog.slint / login-dialog.slint
+    ├── dialogs.slint                 # 总出口 + AskDialog + AskID + MsgBoxDialog
+    ├── add-java-dialog.slint / login-dialog.slint / msg-box-dialog.slint
     └── game/{add-game-dialog.slint, edit-game-dialog.slint, forge-download-dialog.slint, game.slint(MCConfig)}
 ```
 
@@ -38,7 +38,7 @@ res/ui/
 
 ## 2. 整体布局骨架
 
-- **无边框窗口**：**所有窗口**（`AppWindow` 与 6 个对话框）都设 `no-frame: true` + `resize-border-width: 5px`（winit 后端在窗口边缘 5px 内做缩放命中测试，其余后端忽略）。窗口装饰（标题栏、描边）完全自绘。
+- **无边框窗口**：**所有窗口**（`AppWindow` 与 7 个对话框）都设 `no-frame: true` + `resize-border-width: 5px`（winit 后端在窗口边缘 5px 内做缩放命中测试，其余后端忽略）。窗口装饰（标题栏、描边）完全自绘。
 - **窗口描边（WindowFrame）**：每个窗口的最外层是 `WindowFrame { width: 100%; height: 100%; ... }`（`components/window-frame.slint`）：`background: Palette.background` + `@children` + 末尾一个 `Rectangle { width/height: 100%; border-width: 1px; border-color: Palette.border; }` 覆盖层。描边画在最外层 1px 且**最后绘制**（Rectangle 不拦截输入），所以内容不需要为描边留内边距。主窗口里 WindowFrame 是 Window 的直接子元素；对话框里它是唯一的主子元素（见 §5）。
 - **主窗口** `AppWindow`（preferred 800×600，title "CE Minecraft Launcher"）：`WindowFrame` 内是 `HorizontalBox { padding: 0px; }`，左侧 `side-bar := SideBar`（`min-width: 150px`，`header-height: title-bar.height`），右侧 `VerticalBox { padding: 0px; }` = `title-bar := TitleBar` + 页面容器 `Rectangle { preferred-width: 100%; vertical-stretch: 1; }`。
 - **标题栏（TitleBar）**：`title-text: root.page-titles[side-bar.current-index]`；右上角三个按钮在同一行。窗口控制只在根元素里生效：`minimize => { root.minimized = true; }`、`maximize => { root.maximized = !root.maximized; }`、`close => { root.close(); }`、`drag => { root.drag-window(); }`（`drag-window` 是 Rust 回调，见 §4）。
@@ -91,9 +91,10 @@ res/ui/
   `WindowFrame { width: 100%; height: 100%; VerticalBox { padding: 0px; spacing: 0px; title-bar := TitleBar { show-minimize: false; show-maximize: false; ... }; <内容 VerticalBox（默认 8px padding/spacing）> } }`
 - **标题栏内容一致**：所有对话框用同一个 `TitleBar`，只显示右上角关闭按钮（`show-minimize/show-maximize: false`，46×40、悬停变红，与主窗口一致，贴窗口右上角）。`title-text` 与窗口 `title` 用同一条 `@tr()` 文案；正文里不再重复放同名的 `Title`/`SubTitle`。
 - **按钮不再交给 Dialog 自动布局**：`StandardButton`/动作按钮写进内容底部自己的 `HorizontalLayout { alignment: end; spacing: StyleMetrics.layout-spacing; ... }`，不能再用 `dialog-button-role`（非 Dialog 直接子元素会报错），也**不会**再生成 `<kind>-clicked` 自动回调 —— 需要 Rust 接的回调（如 `cancel-clicked`）在组件里显式声明，Rust 侧 `on_cancel_clicked` 调用方式不变。平台相关按钮顺序因此固定为声明顺序（ok → cancel；EditGameDialog 为 Delete → OK → Cancel）。
-- 尺寸：AddGameDialog 800×600；AddJavaDialog 450×200；EditGameDialog / ForgeDownloadDialog 400×200；LoginDialog、AskDialog 自适应（AskDialog 无 preferred-*，靠内容撑开）。
+- 尺寸：AddGameDialog 800×600；AddJavaDialog 450×200；EditGameDialog / ForgeDownloadDialog 400×200；MsgBoxDialog 宽 400px、高度随内容；LoginDialog、AskDialog 自适应（AskDialog 无 preferred-*，靠内容撑开）。
 - 内容容器：AddGameDialog 用 `VerticalBox` 包 `HorizontalBox { padding: 0px; }` + 设置区；AddJavaDialog 用 `GridBox { padding: 0px; }`（跨列 `colspan: 3`，末尾 `VerticalSpacing { colspan: 3; }` 把内容顶到上方）；EditGameDialog 是 `SettingsGroup`（`title: @tr("Edit {}", version)`）+ 底部按钮行；ForgeDownloadDialog / LoginDialog 用默认 8px 的 `VerticalBox`。
 - AskDialog：`title: root.title-text`，标题栏文案由 `states [ DelAccConfirm / DelGameConfirm ]` 与正文一起设置（`@tr("Delete Account")` / `@tr("Delete Game")`）。
+- MsgBoxDialog：`in property <MsgID> msgid` 选择本地化的错误描述（`states` 里每类一句详细说明，全部 `@tr`），`in property <string> detail` 为可选的原始明细（非空时显示 `@tr("Details: {0}", detail)`，技术明细保持原文），标题固定 `@tr("Error")`。`AppRuntime::run` 在 `handle` 返回 `Err` 时调用 `LauncherError::ui_msg()` 得到 `(MsgID, detail)` 并经 `UIUpdate::ShowMsgBox(msgid, detail)` 传入；`MsgID` 在 `frontend/src/msg_box.rs` 与 `dialogs/msg-box-dialog.slint` 各定义一份并逐一映射。AppWindow 保存其 `Weak` 并复用，连续错误只更新同一窗口。
 - 数据流：`XxxDialog::new()` → 设属性/绑定回调 → `show()`，`Weak` 存 `Arc<Mutex<Option<slint::Weak<...>>>>`；Rust 经 `UIUpdate` + `upgrade_in_event_loop` 设置属性；用户操作 → 回调 → `UICommand`。
 
 ## 6. 翻译（i18n）约定

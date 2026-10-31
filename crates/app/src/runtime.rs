@@ -222,6 +222,8 @@ impl AppRuntime {
                 Some(cmd) = cmd_receiver.recv() => {
                     if let Err(e) = self.handle(cmd).await {
                         error!("{e}");
+                        let (msgid, detail) = e.ui_msg();
+                        self.ui.send(UIUpdate::ShowMsgBox(msgid, detail))?;
                         self.ui.send(UIUpdate::SetHomePageStatus(frontend::home::State::Spare))?;
                         self.ui.send(UIUpdate::SetHomePageProgress(0.0, 0, 0))?;
                     }

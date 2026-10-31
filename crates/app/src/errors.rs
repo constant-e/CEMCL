@@ -2,6 +2,7 @@
 use std::io::ErrorKind;
 
 use downloader::DownloadManagerError;
+use frontend::MsgID;
 use java::java::JavaInstallationError;
 use mc::account::auth::AuthError;
 use mc::{DownloadError, launch::LaunchError};
@@ -222,6 +223,43 @@ impl std::fmt::Display for LauncherError {
             LauncherError::SendError => write!(f, "Send error"),
             LauncherError::TaskSetNotFound => write!(f, "Task set not found."),
             LauncherError::Unknown => write!(f, "Unknown error"),
+        }
+    }
+}
+
+impl LauncherError {
+    /// 前端展示用的本地化错误类别与明细文本（与日志的 `Display` 相互独立）
+    pub fn ui_msg(&self) -> (MsgID, String) {
+        match self {
+            LauncherError::AccountConfigError => (MsgID::AccountConfig, String::new()),
+            LauncherError::AuthSessionNotFound => (MsgID::AuthSession, String::new()),
+            LauncherError::ChannelClosed
+            | LauncherError::ChannelNotFound
+            | LauncherError::SendError
+            | LauncherError::RecvError => (MsgID::InternalChannel, String::new()),
+            LauncherError::ClientError(s) => (MsgID::Client, s.clone()),
+            LauncherError::ConnectionError => (MsgID::Connection, String::new()),
+            LauncherError::DirNotEmpty => (MsgID::DirectoryNotEmpty, String::new()),
+            LauncherError::DownloadFailed(s) => (MsgID::Download, s.clone()),
+            LauncherError::FileAlreadyExists => (MsgID::FileAlreadyExists, String::new()),
+            LauncherError::FileBusy => (MsgID::FileBusy, String::new()),
+            LauncherError::FileNotFound => (MsgID::FileNotFound, String::new()),
+            LauncherError::GameConfigError => (MsgID::GameConfig, String::new()),
+            LauncherError::Interrupted => (MsgID::Interrupted, String::new()),
+            LauncherError::JavaConfigError => (MsgID::JavaConfig, String::new()),
+            LauncherError::JavaExecutableNotFound => (MsgID::JavaNotFound, String::new()),
+            LauncherError::JavaReleaseFileInvalid => (MsgID::JavaReleaseInvalid, String::new()),
+            LauncherError::LauncherConfigError => (MsgID::LauncherConfig, String::new()),
+            LauncherError::LoginInvalid(s) => (MsgID::LoginInvalid, s.to_string()),
+            LauncherError::MutexError(s) | LauncherError::SemaphoreError(s) => {
+                (MsgID::InternalSync, s.clone())
+            }
+            LauncherError::NetworkError => (MsgID::Network, String::new()),
+            LauncherError::OutOfRange => (MsgID::OutOfRange, String::new()),
+            LauncherError::PermissionDenied => (MsgID::PermissionDenied, String::new()),
+            LauncherError::ReqwestError(err) => (MsgID::Request, err.to_string()),
+            LauncherError::TaskSetNotFound => (MsgID::TaskSetNotFound, String::new()),
+            LauncherError::Unknown => (MsgID::Unknown, String::new()),
         }
     }
 }

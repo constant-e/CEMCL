@@ -2,7 +2,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
-"POT-Creation-Date: 2026-10-31 05:04+0000\n"
+"POT-Creation-Date: 2026-10-31 07:19+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -647,26 +647,175 @@ msgctxt "AddJavaDialog"
 msgid "Failed to read Java information"
 msgstr ""
 
-#: dialogs/dialogs.slint:76
+#: dialogs/dialogs.slint:77
 msgctxt "AskDialog"
 msgid "Are you sure to delete this account?"
 msgstr ""
 
-#: dialogs/dialogs.slint:77
+#: dialogs/dialogs.slint:78
 msgctxt "AskDialog"
 msgid "Delete Account"
 msgstr ""
 
-#: dialogs/dialogs.slint:80
+#: dialogs/dialogs.slint:81
 msgctxt "AskDialog"
 msgid ""
 "All the files under this Minecraft installation's folder will be deleted. "
 "Continue?"
 msgstr ""
 
-#: dialogs/dialogs.slint:81
+#: dialogs/dialogs.slint:82
 msgctxt "AskDialog"
 msgid "Delete Game"
+msgstr ""
+
+#: dialogs/msg-box-dialog.slint:33 dialogs/msg-box-dialog.slint:59
+msgctxt "MsgBoxDialog"
+msgid "Error"
+msgstr ""
+
+#: dialogs/msg-box-dialog.slint:72
+msgctxt "MsgBoxDialog"
+msgid "Details: {0}"
+msgstr ""
+
+#: dialogs/msg-box-dialog.slint:91
+msgctxt "MsgBoxDialog"
+msgid ""
+"Failed to load the account list: the account configuration file is invalid. "
+"Check account.json or add the account again."
+msgstr ""
+
+#: dialogs/msg-box-dialog.slint:94
+msgctxt "MsgBoxDialog"
+msgid "No login session was found. Please log in again."
+msgstr ""
+
+#: dialogs/msg-box-dialog.slint:97
+msgctxt "MsgBoxDialog"
+msgid ""
+"The network client returned an error. Check the download source settings and "
+"retry."
+msgstr ""
+
+#: dialogs/msg-box-dialog.slint:100
+msgctxt "MsgBoxDialog"
+msgid ""
+"Connection failed. Check your network connection and the download source "
+"settings."
+msgstr ""
+
+#: dialogs/msg-box-dialog.slint:103
+msgctxt "MsgBoxDialog"
+msgid "The target directory is not empty. Choose an empty directory."
+msgstr ""
+
+#: dialogs/msg-box-dialog.slint:106
+msgctxt "MsgBoxDialog"
+msgid ""
+"Download failed. Check your network connection and the download source "
+"settings, then retry."
+msgstr ""
+
+#: dialogs/msg-box-dialog.slint:109
+msgctxt "MsgBoxDialog"
+msgid "The target file already exists. Delete or rename it and retry."
+msgstr ""
+
+#: dialogs/msg-box-dialog.slint:112
+msgctxt "MsgBoxDialog"
+msgid "A file is in use by another program. Close the program and retry."
+msgstr ""
+
+#: dialogs/msg-box-dialog.slint:115
+msgctxt "MsgBoxDialog"
+msgid "A required file was not found. It may have been moved or deleted."
+msgstr ""
+
+#: dialogs/msg-box-dialog.slint:118
+msgctxt "MsgBoxDialog"
+msgid ""
+"The Minecraft version configuration is invalid. Re-add the version or check "
+"its JSON file."
+msgstr ""
+
+#: dialogs/msg-box-dialog.slint:121
+msgctxt "MsgBoxDialog"
+msgid "The operation was interrupted."
+msgstr ""
+
+#: dialogs/msg-box-dialog.slint:124
+msgctxt "MsgBoxDialog"
+msgid ""
+"The Java path configuration is invalid. Check the configured Java "
+"installation path."
+msgstr ""
+
+#: dialogs/msg-box-dialog.slint:127
+msgctxt "MsgBoxDialog"
+msgid "No Java executable was found at the configured path."
+msgstr ""
+
+#: dialogs/msg-box-dialog.slint:130
+msgctxt "MsgBoxDialog"
+msgid ""
+"The Java release file is invalid. Check the Java installation or reinstall "
+"Java."
+msgstr ""
+
+#: dialogs/msg-box-dialog.slint:133
+msgctxt "MsgBoxDialog"
+msgid ""
+"The launcher configuration (config.json) is invalid. Fix or delete it and "
+"restart the launcher."
+msgstr ""
+
+#: dialogs/msg-box-dialog.slint:136
+msgctxt "MsgBoxDialog"
+msgid "The saved login data is invalid. Please log in again."
+msgstr ""
+
+#: dialogs/msg-box-dialog.slint:139
+msgctxt "MsgBoxDialog"
+msgid "The network is unavailable. Check your network connection."
+msgstr ""
+
+#: dialogs/msg-box-dialog.slint:142
+msgctxt "MsgBoxDialog"
+msgid "Permission denied. Check the permissions of the launcher data directory."
+msgstr ""
+
+#: dialogs/msg-box-dialog.slint:145
+msgctxt "MsgBoxDialog"
+msgid "A network request failed. Check your network connection and retry."
+msgstr ""
+
+#: dialogs/msg-box-dialog.slint:148
+msgctxt "MsgBoxDialog"
+msgid ""
+"The launcher's internal communication failed. Please restart the launcher."
+msgstr ""
+
+#: dialogs/msg-box-dialog.slint:151
+msgctxt "MsgBoxDialog"
+msgid ""
+"The launcher's internal state synchronization failed. Please retry or "
+"restart the launcher."
+msgstr ""
+
+#: dialogs/msg-box-dialog.slint:154
+msgctxt "MsgBoxDialog"
+msgid "The selected item no longer exists. Refresh the list and try again."
+msgstr ""
+
+#: dialogs/msg-box-dialog.slint:157
+msgctxt "MsgBoxDialog"
+msgid "The download task was not found. It may have finished or been removed."
+msgstr ""
+
+#: dialogs/msg-box-dialog.slint:160
+msgctxt "MsgBoxDialog"
+msgid "An unknown error occurred. Check the log for details."
 msgstr ""
 
 #. Localized suffix for incompatible Java versions, read from Rust

@@ -8,6 +8,7 @@ use crate::java::{self, JavaInfo};
 use crate::settings::Config;
 use crate::ui::{
     self, AddGameDialog, AddJavaDialog, EditGameDialog, ForgeDownloadDialog, LoginDialog,
+    MsgBoxDialog,
 };
 use crate::{
     account::{self, Account},
@@ -78,6 +79,8 @@ pub enum UIUpdate {
     SetOfflineAccount(Account),
     SetTaskSetList(Vec<crate::downloader::TaskSetInfo>),
     SetVersion(String),
+    /// Localized error category and its raw detail to display in the message box
+    ShowMsgBox(msg_box::MsgID, String),
     ShowForgeDownloadDialog(String),
     SetForgeDownloadProgress(f32),
     SetForgeDownloadInstalling(bool),
@@ -139,6 +142,7 @@ pub struct AppWindow {
     edit_game_dialog: Arc<Mutex<Option<slint::Weak<EditGameDialog>>>>,
     forge_download_dialog: Arc<Mutex<Option<slint::Weak<ForgeDownloadDialog>>>>,
     login_dialog: Arc<Mutex<Option<slint::Weak<LoginDialog>>>>,
+    msg_box_dialog: Arc<Mutex<Option<slint::Weak<MsgBoxDialog>>>>,
 }
 
 impl AppWindow {
@@ -151,6 +155,7 @@ impl AppWindow {
         let edit_game_dialog = Arc::new(Mutex::new(None));
         let forge_download_dialog = Arc::new(Mutex::new(None));
         let login_dialog = Arc::new(Mutex::new(None));
+        let msg_box_dialog = Arc::new(Mutex::new(None));
 
         let ui_weak = ui.as_weak();
 
@@ -342,6 +347,7 @@ impl AppWindow {
         let edit_game_dialog_clone = edit_game_dialog.clone();
         let forge_download_dialog_clone = forge_download_dialog.clone();
         let login_dialog_clone = login_dialog.clone();
+        let msg_box_dialog_clone = msg_box_dialog.clone();
         let cmd_tx_clone = cmd_tx.clone();
         tokio::spawn(async move {
             while let Some(update) = update_rx.recv().await {
@@ -353,6 +359,7 @@ impl AppWindow {
                     edit_game_dialog_clone.clone(),
                     forge_download_dialog_clone.clone(),
                     login_dialog_clone.clone(),
+                    msg_box_dialog_clone.clone(),
                     cmd_tx_clone.clone(),
                 )
                 .await;
@@ -368,6 +375,7 @@ impl AppWindow {
             edit_game_dialog,
             forge_download_dialog,
             login_dialog,
+            msg_box_dialog,
         })
     }
 
@@ -379,6 +387,7 @@ impl AppWindow {
         edit_game_dialog: Arc<Mutex<Option<slint::Weak<EditGameDialog>>>>,
         forge_download_dialog: Arc<Mutex<Option<slint::Weak<ForgeDownloadDialog>>>>,
         login_dialog: Arc<Mutex<Option<slint::Weak<LoginDialog>>>>,
+        msg_box_dialog: Arc<Mutex<Option<slint::Weak<MsgBoxDialog>>>>,
         cmd_sender: tokio::sync::mpsc::UnboundedSender<UICommand>,
     ) {
         match update {
@@ -670,6 +679,32 @@ impl AppWindow {
                     ui.set_version(version.into());
                 }) {
                     error!("{e}")
+                }
+            }
+            UIUpdate::ShowMsgBox(msgid, detail) => {
+                let dialog = msg_box_dialog.clone();
+                if let Err(e) = slint::invoke_from_event_loop(move || {
+                    let mut dialog = match dialog.lock() {
+                        Ok(d) => d,
+                        Err(e) => {
+                            error!("{e}");
+                            return;
+                        }
+                    };
+                    // Reuse the existing window instead of stacking message boxes
+                    if let Some(ui) = dialog.as_ref().and_then(|w| w.upgrade()) {
+                        msg_box::set_msg(&ui, msgid, detail);
+                        if let Err(e) = ui.show() {
+                            error!("{e}");
+                        }
+                        return;
+                    }
+                    match msg_box::msg_box(msgid, detail) {
+                        Ok(w) => *dialog = Some(w),
+                        Err(e) => error!("{e}"),
+                    }
+                }) {
+                    error!("{e}");
                 }
             }
             UIUpdate::ShowForgeDownloadDialog(message) => {
