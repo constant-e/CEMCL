@@ -211,7 +211,7 @@ export component AddGameDialog inherits Dialog {
                             }
 
                             Row {
-                                MyText { text: @tr("Java path"); }
+                                MyText { text: @tr("Java version"); }
                                 JavaVersionSelector {
                                     model <=> root.java-combo-model;
                                     current-index <=> root.java-index;

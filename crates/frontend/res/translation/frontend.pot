@@ -2,7 +2,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
-"POT-Creation-Date: 2026-10-22 10:00+0000\n"
+"POT-Creation-Date: 2026-10-31 05:04+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -199,7 +199,7 @@ msgstr ""
 
 #: pages/settings.slint:150
 msgctxt "SettingsPage"
-msgid "Java Path"
+msgid "Java version"
 msgstr ""
 
 #: pages/settings.slint:159
@@ -392,89 +392,89 @@ msgctxt "AddGameDialog"
 msgid "Old Beta"
 msgstr ""
 
-#: dialogs/game/add-game-dialog.slint:92
-#: dialogs/game/add-game-dialog.slint:92
+#: dialogs/game/add-game-dialog.slint:95
+#: dialogs/game/add-game-dialog.slint:95
 msgctxt "AddGameDialog"
 msgid "Version"
 msgstr ""
 
-#: dialogs/game/add-game-dialog.slint:93
+#: dialogs/game/add-game-dialog.slint:96
 msgctxt "AddGameDialog"
 msgid "Type"
 msgstr ""
 
-#: dialogs/game/add-game-dialog.slint:117
-#: dialogs/game/add-game-dialog.slint:117
+#: dialogs/game/add-game-dialog.slint:121
+#: dialogs/game/add-game-dialog.slint:121
 msgctxt "AddGameDialog"
 msgid "Loading..."
 msgstr ""
 
-#: dialogs/game/add-game-dialog.slint:129
+#: dialogs/game/add-game-dialog.slint:133
 msgctxt "AddGameDialog"
 msgid "Mod Loader"
 msgstr ""
 
-#: dialogs/game/add-game-dialog.slint:131
+#: dialogs/game/add-game-dialog.slint:135
 msgctxt "AddGameDialog"
 msgid "None"
 msgstr ""
 
-#: dialogs/game/add-game-dialog.slint:153
+#: dialogs/game/add-game-dialog.slint:160
 msgctxt "AddGameDialog"
 msgid "Modified"
 msgstr ""
 
-#: dialogs/game/add-game-dialog.slint:174
+#: dialogs/game/add-game-dialog.slint:182
 msgctxt "AddGameDialog"
 msgid "Customize"
 msgstr ""
 
-#: dialogs/game/add-game-dialog.slint:178
+#: dialogs/game/add-game-dialog.slint:186
 msgctxt "AddGameDialog"
 msgid "Window height"
 msgstr ""
 
-#: dialogs/game/add-game-dialog.slint:185
+#: dialogs/game/add-game-dialog.slint:193
 msgctxt "AddGameDialog"
 msgid "Window width"
 msgstr ""
 
-#: dialogs/game/add-game-dialog.slint:192
+#: dialogs/game/add-game-dialog.slint:200
 msgctxt "AddGameDialog"
 msgid "Description"
 msgstr ""
 
-#: dialogs/game/add-game-dialog.slint:199
+#: dialogs/game/add-game-dialog.slint:207
 msgctxt "AddGameDialog"
 msgid "Game args"
 msgstr ""
 
-#: dialogs/game/add-game-dialog.slint:206
+#: dialogs/game/add-game-dialog.slint:214
 msgctxt "AddGameDialog"
-msgid "Java path"
+msgid "Java version"
 msgstr ""
 
-#: dialogs/game/add-game-dialog.slint:214
+#: dialogs/game/add-game-dialog.slint:222
 msgctxt "AddGameDialog"
 msgid "JVM args"
 msgstr ""
 
-#: dialogs/game/add-game-dialog.slint:221
+#: dialogs/game/add-game-dialog.slint:229
 msgctxt "AddGameDialog"
 msgid "Wrapper"
 msgstr ""
 
-#: dialogs/game/add-game-dialog.slint:228
+#: dialogs/game/add-game-dialog.slint:236
 msgctxt "AddGameDialog"
 msgid "Minimum memory"
 msgstr ""
 
-#: dialogs/game/add-game-dialog.slint:235
+#: dialogs/game/add-game-dialog.slint:243
 msgctxt "AddGameDialog"
 msgid "Maximum memory"
 msgstr ""
 
-#: dialogs/game/add-game-dialog.slint:244
+#: dialogs/game/add-game-dialog.slint:252
 msgctxt "AddGameDialog"
 msgid "Separated"
 msgstr ""
@@ -485,62 +485,62 @@ msgctxt "EditGameDialog"
 msgid "Edit a Game"
 msgstr ""
 
-#: dialogs/game/edit-game-dialog.slint:49
+#: dialogs/game/edit-game-dialog.slint:48
 msgctxt "EditGameDialog"
 msgid "Edit {}"
 msgstr ""
 
-#: dialogs/game/edit-game-dialog.slint:53
+#: dialogs/game/edit-game-dialog.slint:52
 msgctxt "EditGameDialog"
 msgid "Window height"
 msgstr ""
 
-#: dialogs/game/edit-game-dialog.slint:60
+#: dialogs/game/edit-game-dialog.slint:59
 msgctxt "EditGameDialog"
 msgid "Window width"
 msgstr ""
 
-#: dialogs/game/edit-game-dialog.slint:67
+#: dialogs/game/edit-game-dialog.slint:66
 msgctxt "EditGameDialog"
 msgid "Description"
 msgstr ""
 
-#: dialogs/game/edit-game-dialog.slint:74
+#: dialogs/game/edit-game-dialog.slint:73
 msgctxt "EditGameDialog"
 msgid "Game args"
 msgstr ""
 
-#: dialogs/game/edit-game-dialog.slint:81
+#: dialogs/game/edit-game-dialog.slint:80
 msgctxt "EditGameDialog"
-msgid "Java path"
+msgid "Java version"
 msgstr ""
 
-#: dialogs/game/edit-game-dialog.slint:89
+#: dialogs/game/edit-game-dialog.slint:88
 msgctxt "EditGameDialog"
 msgid "JVM args"
 msgstr ""
 
-#: dialogs/game/edit-game-dialog.slint:96
+#: dialogs/game/edit-game-dialog.slint:95
 msgctxt "EditGameDialog"
 msgid "Wrapper"
 msgstr ""
 
-#: dialogs/game/edit-game-dialog.slint:103
+#: dialogs/game/edit-game-dialog.slint:102
 msgctxt "EditGameDialog"
 msgid "Minimum memory"
 msgstr ""
 
-#: dialogs/game/edit-game-dialog.slint:110
+#: dialogs/game/edit-game-dialog.slint:109
 msgctxt "EditGameDialog"
 msgid "Maximum memory"
 msgstr ""
 
-#: dialogs/game/edit-game-dialog.slint:119
+#: dialogs/game/edit-game-dialog.slint:118
 msgctxt "EditGameDialog"
 msgid "Separated"
 msgstr ""
 
-#: dialogs/game/edit-game-dialog.slint:131
+#: dialogs/game/edit-game-dialog.slint:130
 msgctxt "EditGameDialog"
 msgid "Delete"
 msgstr ""

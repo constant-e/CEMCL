@@ -147,7 +147,7 @@ export component SettingsPage inherits VerticalBox {
                     title: @tr("Default Minecraft Settings");
 
                     Row {
-                        MyText { text: @tr("Java Path"); }
+                        MyText { text: @tr("Java version"); }
                         java-combo-box := JavaVersionSelector {
                             model <=> root.java-combo-model;
                             current-index <=> root.java-index;
