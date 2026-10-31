@@ -42,6 +42,7 @@ impl TaskSet {
             .map(|info| {
                 let mut task =
                     DownloadTask::new(info.url, info.save_path, client.clone(), semaphore.clone());
+                task.expected_size = info.expected_size;
                 task.sha1 = info.sha1;
                 task.sha1_url = info.sha1_url;
                 if let Some(f) = info.on_cancel {
@@ -144,7 +145,14 @@ impl TaskSet {
 
     /// Get the progress of the task set based on the total file size.
     /// Returns (downloaded_bytes, total_bytes).
+    ///
+    /// Pending tasks have no measured size yet; use their expected size from the
+    /// upstream metadata so the total does not grow while downloads are in flight
+    /// (which would make the progress jump backwards). Unknown sizes fall back to
+    /// a rough per-file estimate, only for display purposes.
     pub fn get_progress(&self) -> (u64, u64) {
+        const UNKNOWN_TASK_SIZE_ESTIMATE: u64 = 1024 * 1024;
+
         let mut downloaded = 0;
         let mut total = 0;
         for task in &self.tasks {
@@ -152,8 +160,14 @@ impl TaskSet {
                 task.progress.0.load(Ordering::Relaxed),
                 task.progress.1.load(Ordering::Relaxed),
             );
+            let size = if t != 0 {
+                t
+            } else {
+                task.expected_size.unwrap_or(UNKNOWN_TASK_SIZE_ESTIMATE)
+            };
             downloaded += d;
-            total += t;
+            // Keep the total at least as large as what has already been written.
+            total += size.max(d);
         }
         (downloaded, total)
     }

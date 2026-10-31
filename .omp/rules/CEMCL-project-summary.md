@@ -1,10 +1,10 @@
 ---
-description: "CEMCL 项目结构与规范：6 个 crate 与依赖图、UICommand/UIUpdate 消息流、账号头像（皮肤头部正面）与缓存、~/.cemcl 数据文件与镜像替换、命名/错误/i18n 约定、sha1 哈希校验、2 条 TODO 精确位置"
+description: "CEMCL 项目结构与规范：6 个 crate 与依赖图、AppRuntime 与各 manager 分工、UICommand/UIUpdate 消息流、进度统计、账号头像（皮肤头部正面）与缓存、~/.cemcl 数据文件与镜像替换、命名/错误/i18n 约定、sha1 哈希校验、2 条 TODO 精确位置"
 ---
 
 # CEMCL 项目总结（结构、规范、风格）
 
-> 依源码核对于 2026-09-22。
+> 依源码核对于 2026-10-31。
 > 仓库 constant-e/CEMCL，版本 0.3.1，Rust edition 2024。
 
 ## 1. 项目概览
@@ -13,7 +13,7 @@ CEMCL（CE Minecraft Launcher）是一个 Rust + Slint 的 Minecraft 启动器�
 
 | Crate | 类型 | 职责 |
 |---|---|---|
-| `app` | bin（`cemcl`） | 应用入口与运行时：账号/版本/Java 管理器、账号头像、事件循环、启动流程编排 |
+| `app` | bin（`cemcl`） | 应用入口与运行时：`AppRuntime` 统合各 manager，账号/Java/游戏/下载/启动逻辑分别在对应 manager 中 |
 | `frontend` | lib | Slint UI 封装：`AppWindow`、`UICommand`/`UIUpdate`、各页面数据模型转换 |
 | `mc` | lib | MC 核心：版本清单解析、启动参数、认证（OAuth/离线）、皮肤与头像、下载清单构建（自带 `TaskInfo`） |
 | `downloader` | lib | 异步下载引擎：`DownloadTask` 状态机、`TaskSet`、`DownloadManager` 广播状态 |
@@ -22,6 +22,18 @@ CEMCL（CE Minecraft Launcher）是一个 Rust + Slint 的 Minecraft 启动器�
 
 **实际依赖（以各 Cargo.toml 为准）**：`app → {frontend, mc, downloader, java, utils}`（全部直接依赖）；`mc → utils`；`frontend` / `downloader` / `java` 不依赖任何内部 crate。`java` 仅被 app 使用，frontend 自带独立的 `JavaInfo`（`crates/frontend/src/java.rs`）。
 注意：`mc::download::TaskInfo` 与 `downloader::task::TaskInfo` 是两个独立类型（`crates/mc/src/download/mod.rs` / `crates/downloader/src/task.rs`），由 app 侧转换；mc 不依赖 downloader。
+
+**app 模块分工**（`crates/app/src/`）：
+- `runtime.rs` — `AppRuntime`：构造各 manager、事件循环、把 `UICommand` 分发给对应 manager，只保留统合与错误兜底。
+- `account.rs` — `AccountManager`：账号增删改、OAuth 登录/刷新、启动前刷新与账号列表 UI；持有 `AvatarManager`。
+- `avatar.rs` — `AvatarManager`：头像缓存与后台皮肤更新。
+- `java.rs` — `JavaManager`：Java 列表、默认项、检测结果、最低 Java 版本判断与 Java 页面 UI。
+- `version.rs` — `VersionManager`：versions.json/launcher_profiles.json 的读写与默认配置解析。
+- `game.rs` — `GameManager`：版本列表 UI、添加游戏（原版/Fabric/Forge 安装流程）、Forge 安装状态。
+- `tasks.rs` — `TaskManager`：`DownloadManager` 与任务集广播、下载页列表、暂停/恢复/取消。
+- `launch.rs` — `LaunchManager`：`Start` 的登录刷新、启动准备、下载进度汇总与游戏进程启动。
+- `config.rs` — `ConfigManager`：config.json 读写，并把设置应用到下载器/版本管理器。
+- `ui.rs` — `UiSender`：`UIUpdate` 通道的薄封装。
 
 ## 2. 架构与消息流
 
@@ -32,23 +44,31 @@ Slint UI (res/ui/*.slint)
 frontend::AppWindow ──UICommand──▶ tokio mpsc unbounded ──▶ AppRuntime::run (tokio::select!)
   ▲                                                              │
   │ UIUpdate（第二条 unbounded；AppWindow::handle + upgrade_in_event_loop）
-  │                                                              │
-DownloadManager ◀── add/start/pause/resume/cancel ────────────────┤
-（broadcast task-set 状态，500ms，容量 64）──▶ Runtime ────────────┤
-mc::download_*（返回 mc::TaskInfo 列表）──▶ Runtime 转成 downloader 任务
+  │                                                              ▼
+  │                                             AppRuntime::handle 按命令分发
+  │                        ┌──────────────┬──────────────┬───────────────┐
+  │                        ▼              ▼              ▼               ▼
+  │                  AccountManager  JavaManager    GameManager   LaunchManager
+  │                        │                             │               │
+  │                        └──────────┬──────────────────┘               │
+  │                                   ▼                                  │
+  │                              TaskManager ◀──────────────────────────┘
+  │                                   │
+  └────────── UIUpdate ◀── 任务集广播（500ms）─ DownloadManager
 ```
 
-- **UI → App**：`UICommand` 枚举（`crates/frontend/src/app_window.rs`），经 `tokio::sync::mpsc::unbounded_channel` 发送，`AppRuntime::run` 中 `tokio::select!` 消费。
-- **App → UI**：`UIUpdate` 枚举，经另一条 unbounded channel；`AppWindow::new` 内 spawn 的分发任务 `while let Some(update) = update_rx.recv().await` 调 `AppWindow::handle`，逐项用 `upgrade_in_event_loop` 更新主窗口/对话框。
-- **下载状态**：`DownloadManager` 内部 `broadcast::Sender<TaskSetStatusInfo>`（`channel(64)`），`start_broadcast` 每 500ms tick 广播全部任务集状态；runtime 在 select! 中接收并转成 `UIUpdate::SetTaskSetList`。
-- **账号头像**：正版账号的皮肤在启动时于后台更新（`app/src/avatar.rs`，见 §5），结果经第三条 unbounded channel 回到 `AppRuntime::run` 的 select! 分支，写入 `AvatarManager` 后 `refresh_ui_acc_list()`（整个列表带头像重发）。
+- **UI → App**：`UICommand` 枚举（`crates/frontend/src/app_window.rs`），经 `tokio::sync::mpsc::unbounded_channel` 发送，`AppRuntime::run` 中 `tokio::select!` 消费，`AppRuntime::handle` 只按命令调用对应 manager。
+- **App → UI**：`UIUpdate` 枚举，经另一条 unbounded channel；各 manager 通过 `UiSender`（`app/src/ui.rs`）发送；`AppWindow::new` 内 spawn 的分发任务 `while let Some(update) = update_rx.recv().await` 调 `AppWindow::handle`，逐项用 `upgrade_in_event_loop` 更新主窗口/对话框。
+- **下载状态**：`DownloadManager` 内部 `broadcast::Sender<TaskSetStatusInfo>`（`channel(64)`），`start_broadcast` 每 500ms tick 广播全部任务集状态；`TaskManager::recv` 接收，`handle_broadcast` 转成 `UIUpdate::SetTaskSetList`；`GameManager` 再处理 Forge 安装状态。
+- **进度统计**：按大小统计的是 `TaskSet::get_progress` 的 `(downloaded, total)`。`TaskInfo` 带 `expected_size`（来自资源索引/版本清单的 `size`），未开始的任务也计入总量；未知大小按每文件 1 MiB 估算；任务完成后总量按实际写入大小修正。这样新增任务开始下载时总量不会突增，进度不会先到 100% 再倒退。`LaunchManager` 还会把下载阶段按大小的百分比钳制为单调递增。
+- **账号头像**：正版账号的皮肤在启动时于后台更新（`app/src/avatar.rs`，见 §5），结果经独立 unbounded channel 回到 `AppRuntime::run` 的 select! 分支，交给 `AccountManager::handle_avatar_update()` 写入头像并重发账号列表。
 - **对话框**：5 个对话框的 `slint::Weak` 存于 `Arc<Mutex<Option<slint::Weak<...>>>>` 字段；`XxxDialog::new()` + `show()` 创建展示，`ForgeDownloadDialog` 在 UI 回调内用 `slint::invoke_from_event_loop` 创建后存入。
 
 ## 3. 配置与数据文件
 
 程序启动时 `main.rs` 将工作目录切到 `~/.cemcl`（不存在则创建），所有配置以 JSON 文件存放：
 
-- `config.json` — 全局配置（通用/下载/游戏）；`frontend::Config*` ↔ `app::Config*` ↔ `downloader::Config` 三层结构重复，靠手写 `From` 转换（结构性重复，有意保留）。
+- `config.json` — 全局配置（通用/下载/游戏）；`frontend::Config*` ↔ app 的 `ConfigGeneral`/`ConfigDL`（`app/src/config.rs`）/ `ConfigMC`（`app/src/version.rs`）↔ `downloader::Config` 三层结构重复，靠手写 `From` 转换（结构性重复，有意保留）。`ConfigManager` 负责读写与把设置应用到下载器/版本管理器。
 - `account.json` — 账号列表 + `current` 索引。
 - `avatar/<uuid>.png` — 账号头像缓存（皮肤头部正面，8×8 PNG；uuid 小写去连字符，见 §5）。
 - `versions.json` — MC 安装列表（CEMCL 格式）；另存 `<游戏路径>/launcher_profiles.json` 兼容原版启动器。2026-10-09 起：启动时与 `<游戏路径>/versions` 核对，删除无效项（缺版本 json）并写回，`current` 以版本名锚定、列表按名字排序；版本配置项缺省、为 null 或留空（0/空串/空列表）时使用 `config.json` 的默认值，与默认值相同的配置保存时省略（`app/src/version.rs`，测试 `cargo test -p app`）。
@@ -82,7 +102,8 @@ mc::download_*（返回 mc::TaskInfo 列表）──▶ Runtime 转成 downloade
 下载的每个可校验文件都会在下载后、以及启动准备时（本地已存在时）核对 sha1；不一致的文件会被删除并重新下载，坏文件不会留在磁盘上（下载器以追加方式写文件，重取前必须先删除）。
 
 - **utils**：`sha1_file`（流式读取，小写十六进制）、`to_hex`；`download(url, path, max, sha1)` 在写入后校验，失配时删除文件并按 `max` 重试；`DLError` 补了 `Display`/`Debug`。依赖 `sha1 = "0.11.0"`（与 zip 已用的同版本）。
-- **downloader**：`task::TaskInfo`/`DownloadTask` 增 `sha1`（预期哈希）与 `sha1_url`（maven 风格的 `<url>.sha1`，二者择一，`sha1` 优先）；任务流写完后 `verify()`：有 `sha1` 直接比对，只有 `sha1_url` 时先取回哈希（网络错误重试 3 次；取不到只 `warn` 并跳过校验，兼容不提供 .sha1 的镜像）并缓存到 `<save_path>.sha1` 供之后离线校验；不一致时删除文件、状态置 `Failed` 并返回 `DownloadTaskError::Failed`。`DownloadManager::add_taskset` 的镜像占位符替换同时作用于 `sha1_url`。
+- **downloader**：`task::TaskInfo`/`DownloadTask` 增 `sha1`（预期哈希）、`sha1_url`（maven 风格的 `<url>.sha1`，二者择一，`sha1` 优先）与 `expected_size`（预期文件大小，仅供进度统计）；任务流写完后 `verify()`：有 `sha1` 直接比对，只有 `sha1_url` 时先取回哈希（网络错误重试 3 次；取不到只 `warn` 并跳过校验，兼容不提供 .sha1 的镜像）并缓存到 `<save_path>.sha1` 供之后离线校验；不一致时删除文件、状态置 `Failed` 并返回 `DownloadTaskError::Failed`。`DownloadManager::add_taskset` 的镜像占位符替换同时作用于 `sha1_url`。
+- **进度大小来源**：`mc::download::DownloadTask.size` 从资源索引的 `objects.<name>.size`、版本清单的 `downloads.client.size`、library artifact/classifier 的 `size` 读取，转换到 `downloader::task::TaskInfo.expected_size`；Fabric/Forge 等无大小元数据的任务为 `None`，由 `TaskSet::get_progress` 按 1 MiB/文件估算。任务完成后 `progress.1` 写为实际下载大小，修正无 content-length 或长度不准的情况。
 - **mc**：`download::needs_redownload`（缺失或哈希不符，`pub`，供测试与调用方使用）、`remove_file_if_exists`、`read_cached_sha1`（解析 maven 格式，允许大写与文件名）。
   - `download_libraries`：natives classifier 与 artifact 按 json 中的 `sha1`；fabric 库的 profile json 不带哈希，下载时从 `{fabric_source}/<path>.sha1` 校验，之后按 `<jar>.sha1` 缓存离线校验（无缓存视为无法校验，保留文件）；fabric 分支现在会先建下载目录（此前缺失，首个 fabric 库会因父目录不存在而下载失败）。两个函数及 `download_assets` 因在校验时读文件改为 `async`。
   - `download_assets`：按资源索引中 `objects.<name>.hash` 校验。

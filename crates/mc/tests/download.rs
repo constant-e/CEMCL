@@ -48,6 +48,7 @@ async fn existing_artifact_is_checked_against_sha1() {
         "downloads": {"artifact": {
             "path": "com/example/lib/1.0/lib-1.0.jar",
             "sha1": HELLO_SHA1,
+            "size": 11,
             "url": "https://libraries.minecraft.net/com/example/lib/1.0/lib-1.0.jar",
         }},
     }]);
@@ -58,6 +59,7 @@ async fn existing_artifact_is_checked_against_sha1() {
         .unwrap();
     assert_eq!(tasks.len(), 1);
     assert_eq!(tasks[0].sha1.as_deref(), Some(HELLO_SHA1));
+    assert_eq!(tasks[0].size, Some(11));
     assert_eq!(
         tasks[0].url,
         "{libraries_source}/com/example/lib/1.0/lib-1.0.jar"
@@ -162,6 +164,7 @@ async fn existing_asset_is_checked_against_hash() {
         .unwrap();
     assert_eq!(tasks.len(), 1);
     assert_eq!(tasks[0].sha1.as_deref(), Some(HELLO_SHA1));
+    assert_eq!(tasks[0].size, Some(11));
 
     // 一致：跳过
     std::fs::write(&save_path, HELLO).unwrap();

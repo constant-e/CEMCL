@@ -35,6 +35,19 @@ pub struct VersionManager {
     config: ConfigMC,
 }
 
+impl Default for ConfigMC {
+    fn default() -> Self {
+        ConfigMC {
+            height: 600,
+            path: String::from(".minecraft"),
+            width: 800,
+            wrapper: String::new(),
+            xms: String::from("1G"),
+            xmx: String::from("2G"),
+        }
+    }
+}
+
 impl VersionManager {
     pub fn new(config: ConfigMC) -> Result<Self, LauncherError> {
         let (version_list, current_index, cleaned) = VersionManager::i_load(config.clone())?;

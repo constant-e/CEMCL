@@ -15,6 +15,8 @@ pub use libraries::download_libraries;
 pub struct TaskInfo {
     pub url: String,
     pub save_path: String,
+    /// 文件预期大小，来自版本清单/资源索引；仅供进度显示，未知时为`None`
+    pub size: Option<u64>,
     /// 下载后的预期sha1
     pub sha1: Option<String>,
 }
@@ -22,6 +24,8 @@ pub struct TaskInfo {
 pub struct DownloadTask {
     pub url: String,
     pub save_path: String,
+    /// 文件预期大小，来自版本清单/资源索引；仅供进度显示，未知时为`None`
+    pub size: Option<u64>,
     /// 下载后的预期sha1；与`sha1_url`二选一，同时给出时以`sha1`为准
     pub sha1: Option<String>,
     /// 获取预期sha1的地址（maven风格的`<url>.sha1`），下载成功后获取、校验，
@@ -41,6 +45,7 @@ impl DownloadTask {
         Self {
             url,
             save_path,
+            size: None,
             sha1,
             sha1_url,
             on_finish,

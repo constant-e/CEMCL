@@ -190,6 +190,7 @@ pub fn download_forge(mcversion: &str, forge: Forge, mirror: &str) -> TaskInfo {
     TaskInfo {
         url: forge_url,
         save_path: forge_path,
+        size: None,
         sha1: None,
     }
 }

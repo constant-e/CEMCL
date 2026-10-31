@@ -36,13 +36,9 @@ pub async fn download_assets(
                 create_dir_all(&dir)?;
             }
             let url = mirror.to_string() + "/" + &dl_path;
-            tasks.push(DownloadTask::new(
-                url,
-                save_path,
-                Some(hash.to_string()),
-                None,
-                None,
-            ));
+            let mut task = DownloadTask::new(url, save_path, Some(hash.to_string()), None, None);
+            task.size = node["size"].as_u64();
+            tasks.push(task);
         }
     }
 

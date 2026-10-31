@@ -127,6 +127,8 @@ pub enum DownloadTaskCommand {
 pub struct TaskInfo {
     pub url: String,
     pub save_path: String,
+    /// 预期文件大小，用于在任务开始前也计入总体进度；未知时为`None`
+    pub expected_size: Option<u64>,
     /// 下载后的预期sha1；与`sha1_url`二选一，同时给出时以`sha1`为准
     pub sha1: Option<String>,
     /// 获取预期sha1的地址（maven风格的`<url>.sha1`），下载成功后获取并校验，
@@ -152,6 +154,7 @@ impl TaskInfo {
         Self {
             url,
             save_path,
+            expected_size: None,
             sha1,
             sha1_url,
             on_failed,
@@ -168,6 +171,8 @@ pub struct DownloadTask {
     semaphore: Arc<Semaphore>,
     pub url: String,
     pub save_path: String,
+    /// 预期文件大小（来自上层元数据），用于在任务开始前也计入总体进度
+    pub expected_size: Option<u64>,
     /// 下载后的预期sha1；与`sha1_url`二选一，同时给出时以`sha1`为准
     pub sha1: Option<String>,
     /// 获取预期sha1的地址（maven风格的`<url>.sha1`），下载成功后获取并校验
@@ -193,6 +198,7 @@ impl DownloadTask {
             semaphore,
             url,
             save_path,
+            expected_size: None,
             sha1: None,
             sha1_url: None,
             started: AtomicBool::new(false),
@@ -462,12 +468,10 @@ impl DownloadTask {
             }
         }
         self.progress.0.fetch_add(c, Ordering::Relaxed);
-        if self.progress.1.load(Ordering::Relaxed) != 0 {
-            // This may happen when the total size is unknown at the beginning and the server sends more data than expected, or when the content length is wrong. In this case we just set the total size to the downloaded size to avoid confusion.
-            self.progress
-                .1
-                .store(self.progress.0.load(Ordering::Relaxed), Ordering::Relaxed);
-        }
+        // 完成后以实际写入大小为准：响应没有 content-length 时总量仍是 0，
+        // 按大小统计的进度会一直停在估算值；有值时也是为了修正不准确的长度。
+        let downloaded = self.progress.0.load(Ordering::Relaxed);
+        self.progress.1.store(downloaded, Ordering::Relaxed);
 
         drop(file);
         if let Err(e) = self.verify().await {

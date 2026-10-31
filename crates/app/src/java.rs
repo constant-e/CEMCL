@@ -2,25 +2,108 @@
 //! 管理Java安装列表，储存到java.json配置文件
 //! 使用 java crate 中的 JavaInstallation 来解析和管理 Java 版本
 
+use frontend::UIUpdate;
 use java::java::JavaInstallation;
 use log::warn;
 use serde_json::json;
 use std::fs::{self, exists};
 use std::process::Command;
 
-use crate::LauncherError;
+use crate::{LauncherError, ui::UiSender};
 
 pub struct JavaManager {
     /// 默认使用的 Java 版本索引，None 表示未选择
     default: Option<u32>,
     /// Java 安装列表，按版本降序排列
     java_list: Vec<JavaInstallation>,
+    ui: UiSender,
 }
 
 impl JavaManager {
-    pub fn new() -> Result<Self, LauncherError> {
+    pub fn new(ui: UiSender) -> Result<Self, LauncherError> {
         let (default, java_list) = JavaManager::i_load()?;
-        Ok(Self { default, java_list })
+        Ok(Self {
+            default,
+            java_list,
+            ui,
+        })
+    }
+
+    /// 添加 Java 安装并刷新界面
+    pub fn add_from_ui(&mut self, java_path: String) -> Result<(), LauncherError> {
+        self.add(java_path)?;
+        self.refresh_ui_list()?;
+        self.refresh_ui_config()?;
+        self.ui.send(UIUpdate::QuitAddJavaDialog)
+    }
+
+    /// 删除 Java 安装并刷新界面
+    pub fn del_from_ui(&mut self, index: u32) -> Result<(), LauncherError> {
+        self.del(index)?;
+        self.refresh_ui_list()?;
+        self.refresh_ui_config()
+    }
+
+    pub fn check(&self, java_path: String) -> Result<(), LauncherError> {
+        use java::java::JavaInstallationError;
+        let (result, version) = match JavaInstallation::new(java_path) {
+            Ok(installation) => (
+                frontend::ui::JavaCheckResult::Detected,
+                installation.get_version().to_string(),
+            ),
+            Err(e) => {
+                let result = match e {
+                    JavaInstallationError::PathIsEmpty => {
+                        frontend::ui::JavaCheckResult::PathIsEmpty
+                    }
+                    JavaInstallationError::JavaExecutableNotFound => {
+                        frontend::ui::JavaCheckResult::JavaExecutableNotFound
+                    }
+                    JavaInstallationError::ReleaseFileInvalid => {
+                        frontend::ui::JavaCheckResult::ReleaseFileInvalid
+                    }
+                    JavaInstallationError::IOError(_) => frontend::ui::JavaCheckResult::IOError,
+                };
+                (result, String::new())
+            }
+        };
+        self.ui.send(UIUpdate::SetJavaCheckResult(result, version))
+    }
+
+    pub fn set_default_from_ui(&mut self, index: i32) -> Result<(), LauncherError> {
+        self.set_default(if index >= 0 { Some(index as u32) } else { None })
+    }
+
+    /// 构造 Java 列表；给出 MC 版本时标记是否满足该版本的最低 Java 要求
+    pub fn info_list(&self, game_path: &str, mc_version: Option<&str>) -> Vec<frontend::JavaInfo> {
+        let min_java = mc_version.and_then(|version| min_java_version_for_mc(version, game_path));
+        self.java_list
+            .iter()
+            .map(|j| {
+                let compatible = match &min_java {
+                    Some(min) => j.get_version() >= min,
+                    None => true,
+                };
+                frontend::JavaInfo {
+                    version: j.get_version().to_string(),
+                    path: j.get_path().to_string(),
+                    compatible,
+                }
+            })
+            .collect()
+    }
+
+    pub fn refresh_ui_list(&self) -> Result<(), LauncherError> {
+        self.ui
+            .send(UIUpdate::SetJavaList(self.info_list("", None)))
+    }
+
+    fn refresh_ui_config(&self) -> Result<(), LauncherError> {
+        self.ui
+            .send(UIUpdate::SetJavaModel(self.info_list("", None)))?;
+        self.ui.send(UIUpdate::SetJavaIndex(
+            self.default.map(|i| i as i32).unwrap_or(-1),
+        ))
     }
 
     /// 添加一个 Java 安装。如果路径已存在则忽略。
@@ -211,4 +294,69 @@ impl JavaManager {
 
         Ok((default, java_list))
     }
+}
+
+/// Determine the minimum Java version required for a given Minecraft version.
+/// Reads the MC version JSON file to get the `javaVersion.majorVersion` field.
+/// Falls back to hardcoded rules if the JSON cannot be read.
+fn min_java_version_for_mc(
+    mc_version: &str,
+    game_path: &str,
+) -> Option<::java::java_version::JavaVersion> {
+    // Extract the base MC version from modded version strings like "fabric-loader-0.16.10-1.21.5"
+    let base_version = extract_mc_version(mc_version);
+
+    // Try to read from the MC version JSON file
+    let json_path = format!(
+        "{}/versions/{}/{}.json",
+        game_path, base_version, base_version
+    );
+    if let Ok(content) = std::fs::read_to_string(&json_path) {
+        if let Ok(json) = serde_json::from_str::<serde_json::Value>(&content) {
+            if let Some(major) = json["javaVersion"]["majorVersion"].as_u64() {
+                return Some(::java::java_version::JavaVersion::from(
+                    major.to_string().as_str(),
+                ));
+            }
+        }
+    }
+
+    // Fallback: hardcoded rules based on MC version
+    let parts: Vec<&str> = base_version.split(".").collect();
+    if parts.len() < 2 {
+        return None;
+    }
+    let major: u32 = parts[0].parse().ok()?;
+    let minor: u32 = parts[1].parse().ok()?;
+    let patch: u32 = parts.get(2).and_then(|p| p.parse().ok()).unwrap_or(0);
+
+    if major > 1 || (major == 1 && minor >= 21) || (major == 1 && minor == 20 && patch >= 5) {
+        Some(::java::java_version::JavaVersion::from("21"))
+    } else if major == 1 && minor >= 18 {
+        Some(::java::java_version::JavaVersion::from("17"))
+    } else if major == 1 && minor == 17 {
+        Some(::java::java_version::JavaVersion::from("16"))
+    } else {
+        Some(::java::java_version::JavaVersion::from("1.8"))
+    }
+}
+
+/// Extract the base Minecraft version from a modded version string.
+/// e.g. "fabric-loader-0.16.10-1.21.5" -> "1.21.5"
+///      "1.21.5-forge-52.0.0" -> "1.21.5"
+///      "1.21.5" -> "1.21.5"
+fn extract_mc_version(version: &str) -> &str {
+    // For fabric: "fabric-loader-X.Y.Z-MC_VERSION"
+    if let Some(rest) = version.strip_prefix("fabric-loader-") {
+        // Find the last '-' and take everything after it
+        if let Some(pos) = rest.rfind('-') {
+            return &rest[pos + 1..];
+        }
+        return rest;
+    }
+    // For forge: "MC_VERSION-forge-X.Y.Z"
+    if let Some(pos) = version.find("-forge-") {
+        return &version[..pos];
+    }
+    version
 }

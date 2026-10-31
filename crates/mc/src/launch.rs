@@ -210,6 +210,7 @@ pub async fn get_launch_command(
     let asset_index_url: String;
     let mc_url: String;
     let mc_sha1: Option<String>;
+    let mc_size: Option<u64>;
 
     // mod需要额外写入的参数
     let mut game_args: Vec<String> = game.game_args.clone();
@@ -239,6 +240,7 @@ pub async fn get_launch_command(
             mc_sha1 = parent["downloads"]["client"]["sha1"]
                 .as_str()
                 .map(String::from);
+            mc_size = parent["downloads"]["client"]["size"].as_u64();
             libraries_json
                 .as_array_mut()
                 .ok_or(std::io::Error::other("Failed to library list."))?
@@ -285,6 +287,7 @@ pub async fn get_launch_command(
         mc_sha1 = json["downloads"]["client"]["sha1"]
             .as_str()
             .map(String::from);
+        mc_size = json["downloads"]["client"]["size"].as_u64();
         let (mut temp_game_args, mut temp_jvm_args) = get_args(&json)?;
         asset_index = json["assetIndex"]["id"]
             .as_str()
@@ -377,13 +380,9 @@ pub async fn get_launch_command(
         let url = mc_url
             .clone()
             .replace("https://piston-meta.mojang.com", "{game_source}");
-        tasks.push(DownloadTask::new(
-            url,
-            jar_path,
-            mc_sha1.clone(),
-            None,
-            None,
-        ));
+        let mut task = DownloadTask::new(url, jar_path, mc_sha1.clone(), None, None);
+        task.size = mc_size;
+        tasks.push(task);
     }
 
     // 处理依赖

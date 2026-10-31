@@ -28,6 +28,7 @@ fn download_lib(save_path: &str, node: &Value, mirror: &str) -> Result<TaskInfo,
     Ok(TaskInfo {
         url,
         save_path: save_path.to_string(),
+        size: node["size"].as_u64(),
         sha1: node["sha1"].as_str().map(String::from),
     })
 }
@@ -81,6 +82,7 @@ pub async fn download_libraries(
                     tasks.push(DownloadTask {
                         url: task_info.url,
                         save_path: task_info.save_path,
+                        size: task_info.size,
                         sha1: task_info.sha1,
                         sha1_url: None,
                         on_finish: Some(Box::new(move || {
@@ -110,6 +112,7 @@ pub async fn download_libraries(
                     tasks.push(DownloadTask {
                         url: task_info.url,
                         save_path: task_info.save_path,
+                        size: task_info.size,
                         sha1: task_info.sha1,
                         sha1_url: None,
                         on_finish: Some(Box::new(move || {
