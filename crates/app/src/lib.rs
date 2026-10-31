@@ -5,7 +5,7 @@ mod avatar;
 mod config;
 mod errors;
 mod game;
-mod java;
+pub mod java;
 mod launch;
 pub mod runtime;
 mod tasks;

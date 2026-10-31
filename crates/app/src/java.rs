@@ -24,11 +24,26 @@ pub struct JavaManager {
 
 impl JavaManager {
     pub fn new(ui: UiSender) -> Result<Self, LauncherError> {
+        Self::i_new(ui, JavaManager::i_auto_detect())
+    }
+
+    /// 使用外部提供的检测结果构造管理器。
+    /// 正常启动使用 `new`（自动寻找本机 Java）；测试可借此排除本机环境。
+    pub fn new_with_detected(
+        update_sender: tokio::sync::mpsc::UnboundedSender<UIUpdate>,
+        detected: Vec<JavaInstallation>,
+    ) -> Result<Self, LauncherError> {
+        Self::i_new(UiSender::new(update_sender), detected)
+    }
+
+    fn i_new(ui: UiSender, detected: Vec<JavaInstallation>) -> Result<Self, LauncherError> {
         let (loaded_default, old_paths) = JavaManager::i_load()?;
 
         // 校验 java.json 中的路径：失效项直接删除
         let mut java_list: Vec<JavaInstallation> = Vec::new();
         for path in &old_paths {
+            // 软链接等别名统一解析到实际安装位置，避免同一 Java 被重复添加
+            let path = JavaManager::i_canonical_path(path);
             match JavaInstallation::new(path.clone()) {
                 Ok(installation) => {
                     if !java_list
@@ -42,8 +57,21 @@ impl JavaManager {
             }
         }
 
-        // 每次启动都自动寻找系统 Java，并与已有有效项合并
-        JavaManager::i_auto_detect(&mut java_list);
+        // 合并外部检测结果（启动时为系统 Java），按真实路径去重
+        for installation in detected {
+            let path = JavaManager::i_canonical_path(installation.get_path());
+            if java_list.iter().any(|j| j.get_path() == path) {
+                continue;
+            }
+            if path == installation.get_path() {
+                java_list.push(installation);
+            } else {
+                match JavaInstallation::new(path.clone()) {
+                    Ok(installation) => java_list.push(installation),
+                    Err(e) => warn!("Invalid Java at {path}: {e:?}."),
+                }
+            }
+        }
 
         JavaManager::sort(&mut java_list);
 
@@ -152,8 +180,9 @@ impl JavaManager {
         ))
     }
 
-    /// 添加一个 Java 安装。如果路径已存在则忽略。
+    /// 添加一个 Java 安装。如果路径（解析软链接后）已存在则忽略。
     pub fn add(&mut self, java_path: String) -> Result<(), LauncherError> {
+        let java_path = JavaManager::i_canonical_path(&java_path);
         let old_paths = self.paths();
         if self.java_list.iter().any(|j| j.get_path() == java_path) {
             self.index_map = JavaManager::i_build_index_map(&old_paths, &self.java_list);
@@ -221,8 +250,8 @@ impl JavaManager {
         None // 没有兼容版本
     }
 
-    /// 自动寻找系统 Java，并与已有列表合并。尝试常见路径、JAVA_HOME 和 PATH 中的 java。
-    fn i_auto_detect(java_list: &mut Vec<JavaInstallation>) {
+    /// 自动寻找系统 Java，返回检测结果。尝试常见路径、JAVA_HOME 和 PATH 中的 java。
+    fn i_auto_detect() -> Vec<JavaInstallation> {
         let mut candidates: Vec<String> = vec![
             "/usr/lib/jvm/default-java".to_string(),
             "/usr/lib/jvm/java-21-openjdk".to_string(),
@@ -275,17 +304,20 @@ impl JavaManager {
             }
         }
 
+        let mut detected: Vec<JavaInstallation> = Vec::new();
         for path in candidates {
-            if java_list.iter().any(|j| j.get_path() == path)
+            let path = JavaManager::i_canonical_path(&path);
+            if detected.iter().any(|j| j.get_path() == path)
                 || !std::fs::exists(&path).unwrap_or(false)
             {
                 continue;
             }
             match JavaInstallation::new(path.clone()) {
-                Ok(installation) => java_list.push(installation),
+                Ok(installation) => detected.push(installation),
                 Err(e) => warn!("Invalid Java at {path}: {e:?}."),
             }
         }
+        detected
     }
 
     /// 按版本降序排列（新的在前）
@@ -300,14 +332,22 @@ impl JavaManager {
             .collect()
     }
 
-    /// 旧列表路径 -> 新列表索引；旧项在新列表中不存在时为 None
+    /// 解析软链接等别名，返回 Java 的实际安装路径；无法解析时保留原路径
+    fn i_canonical_path(path: &str) -> String {
+        fs::canonicalize(path)
+            .map(|path| path.to_string_lossy().into_owned())
+            .unwrap_or_else(|_| path.to_string())
+    }
+
+    /// 旧列表路径 -> 新列表索引；按解析软链接后的实际路径匹配，旧项不存在时为 None
     fn i_build_index_map(old_paths: &[String], new_list: &[JavaInstallation]) -> Vec<Option<u32>> {
         old_paths
             .iter()
             .map(|path| {
+                let canonical = JavaManager::i_canonical_path(path);
                 new_list
                     .iter()
-                    .position(|j| j.get_path() == path)
+                    .position(|j| j.get_path() == canonical)
                     .map(|index| index as u32)
             })
             .collect()
@@ -427,132 +467,4 @@ fn extract_mc_version(version: &str) -> &str {
         return &version[..pos];
     }
     version
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-    use crate::ui::UiSender;
-
-    fn write_jdk(root: &std::path::Path, name: &str, version: &str) -> String {
-        let dir = root.join(name);
-        fs::create_dir_all(&dir).unwrap();
-        fs::write(dir.join("release"), format!("JAVA_VERSION=\"{version}\"\n")).unwrap();
-        dir.to_string_lossy().into_owned()
-    }
-
-    /// 启动时：删除无效路径、合并自动检测结果、按版本排序，默认项与索引映射按路径保持正确
-    #[test]
-    fn startup_validates_detects_merges_and_remaps() {
-        let root = std::env::temp_dir().join(format!("cemcl-java-manager-{}", std::process::id()));
-        let _ = fs::remove_dir_all(&root);
-        fs::create_dir_all(&root).unwrap();
-        let old_cwd = std::env::current_dir().unwrap();
-        let old_java_home = std::env::var_os("JAVA_HOME");
-        std::env::set_current_dir(&root).unwrap();
-
-        let jdk8 = write_jdk(&root, "jdk8", "1.8.0_402");
-        let jdk17 = write_jdk(&root, "jdk17", "17.0.11");
-        let jdk24 = write_jdk(&root, "jdk24", "24.0.1");
-        let invalid = root.join("removed-jdk").to_string_lossy().into_owned();
-
-        fs::write(
-            "java.json",
-            json!({
-                "default": 2,
-                "java_list": [invalid.clone(), jdk8.clone(), jdk17.clone()],
-            })
-            .to_string(),
-        )
-        .unwrap();
-
-        // 列表非空时也应合并 JAVA_HOME 中发现的新 Java
-        // SAFETY: 本测试是该测试二进制中唯一使用环境变量的测试
-        unsafe { std::env::set_var("JAVA_HOME", &jdk24) };
-
-        let (tx, _rx) = tokio::sync::mpsc::unbounded_channel();
-        let mut manager = JavaManager::new(UiSender::new(tx)).unwrap();
-
-        let paths: Vec<String> = manager
-            .get_java_list()
-            .iter()
-            .map(|j| j.get_path().to_string())
-            .collect();
-        assert!(!paths.contains(&invalid));
-        assert_eq!(paths.iter().filter(|path| *path == &jdk8).count(), 1);
-        assert!(paths.contains(&jdk17));
-        assert!(paths.contains(&jdk24));
-
-        // 按版本降序排列
-        for pair in manager.get_java_list().windows(2) {
-            assert!(pair[0].get_version() >= pair[1].get_version());
-        }
-
-        // 默认项仍指向原来的 Java
-        let default = manager.get_default().unwrap();
-        assert_eq!(manager.get_java_list()[default as usize].get_path(), jdk17);
-
-        // 旧索引 -> 新索引：失效项为 None，其余仍指向同一路径
-        let index_map = manager.take_index_map();
-        assert_eq!(index_map.len(), 3);
-        assert_eq!(index_map[0], None);
-        let new_index = |path: &str| paths.iter().position(|p| p == path).unwrap() as u32;
-        assert_eq!(index_map[1], Some(new_index(&jdk8)));
-        assert_eq!(index_map[2], Some(new_index(&jdk17)));
-
-        // 写回文件：失效项已删除，检测结果与默认索引已保存
-        let saved: serde_json::Value =
-            serde_json::from_str(&fs::read_to_string("java.json").unwrap()).unwrap();
-        let saved_paths: Vec<&str> = saved["java_list"]
-            .as_array()
-            .unwrap()
-            .iter()
-            .map(|path| path.as_str().unwrap())
-            .collect();
-        assert!(!saved_paths.contains(&invalid.as_str()));
-        assert!(saved_paths.contains(&jdk8.as_str()));
-        assert!(saved_paths.contains(&jdk24.as_str()));
-        assert_eq!(saved["default"].as_u64(), Some(default as u64));
-
-        // 运行时删除 Java：default 仍指向同一路径，旧索引正确映射
-        let jdk8_index = new_index(&jdk8);
-        let default_before = manager.get_default().unwrap();
-        manager.del(jdk8_index).unwrap();
-        let default_after = manager.get_default().unwrap();
-        assert_eq!(
-            manager.get_java_list()[default_after as usize].get_path(),
-            jdk17
-        );
-        let index_map = manager.take_index_map();
-        assert_eq!(index_map[jdk8_index as usize], None);
-        assert_eq!(index_map[default_before as usize], Some(default_after));
-
-        // 运行时添加 Java：重排后 default 仍指向同一路径
-        let jdk11 = write_jdk(&root, "jdk11", "11.0.22");
-        let default_before = manager.get_default().unwrap();
-        manager.add(jdk11.clone()).unwrap();
-        let default_after = manager.get_default().unwrap();
-        assert_eq!(
-            manager.get_java_list()[default_after as usize].get_path(),
-            jdk17
-        );
-        let index_map = manager.take_index_map();
-        assert_eq!(index_map[default_before as usize], Some(default_after));
-        assert!(
-            manager
-                .get_java_list()
-                .iter()
-                .any(|j| j.get_path() == jdk11)
-        );
-
-        std::env::set_current_dir(old_cwd).unwrap();
-        // SAFETY: 同上，恢复测试前状态
-        unsafe {
-            match old_java_home {
-                Some(value) => std::env::set_var("JAVA_HOME", value),
-                None => std::env::remove_var("JAVA_HOME"),
-            }
-        }
-        let _ = fs::remove_dir_all(&root);
-    }
 }
