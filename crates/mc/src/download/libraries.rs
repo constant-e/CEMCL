@@ -270,7 +270,8 @@ pub fn extract_lib(natives_dir: &Path, local_path: &Path) -> Result<(), Download
             continue;
         }
 
-        let name = entry.name();
+        let name = entry.name().map_err(std::io::Error::from)?;
+        let name = name.as_ref();
         if !(name.ends_with(".dll") || name.ends_with(".dylib") || name.ends_with(".so")) {
             continue;
         }
