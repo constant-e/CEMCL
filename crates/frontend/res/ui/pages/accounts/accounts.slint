@@ -1,7 +1,7 @@
 import { HorizontalBox, Palette, StyleMetrics, VerticalBox, Button, GroupBox, LineEdit } from "std-widgets.slint";
 import { HorizontalSpacing, SubTitle, SettingsGroup, MyText, VerticalSpacing } from "../../components/components.slint";
 import { Account } from "account-item.slint";
-import { AccountInner } from "account-inner.slint";
+import { AccountInner, AccountType } from "account-inner.slint";
 import { AccountsList } from "accounts-list.slint";
 
 export { AccountInner }
@@ -65,6 +65,8 @@ export component AccountsPage inherits VerticalBox {
                         }
                         LineEdit {
                             text: accounts[current-index].user-name;
+                            // 在线账户（MSA）账号信息不能修改
+                            read-only: accounts[current-index].account-type == AccountType.MSA;
                             edited(text) => {
                                 accounts[current-index].user-name = text;
                                 edit-acc(current-index, accounts[current-index])
@@ -77,6 +79,7 @@ export component AccountsPage inherits VerticalBox {
                         }
                         LineEdit {
                             text: accounts[current-index].uuid;
+                            read-only: accounts[current-index].account-type == AccountType.MSA;
                             edited(text) => {
                                 accounts[current-index].uuid = text;
                                 edit-acc(current-index, accounts[current-index])
@@ -89,6 +92,9 @@ export component AccountsPage inherits VerticalBox {
                         }
                         LineEdit {
                             text: accounts[current-index].token;
+                            read-only: accounts[current-index].account-type == AccountType.MSA;
+                            // 离线账户的 token 不可编辑
+                            enabled: accounts[current-index].account-type != AccountType.Legacy;
                             edited(text) => {
                                 accounts[current-index].token = text;
                                 edit-acc(current-index, accounts[current-index])
